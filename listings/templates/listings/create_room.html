@@ -1,0 +1,14 @@
+{% extends "base.html" %} {% block content %}
+
+<h2 class="page-title">Add New Room</h2>
+
+<form method="post" enctype="multipart/form-data" class="form-card">
+  {% csrf_token %} {{ form.as_p }}
+
+  <label>Upload up to 10 room images</label>
+  <input type="file" name="images" multiple accept="image/*" />
+
+  <button type="submit" class="btn-primary">Save Room</button>
+</form>
+
+{% endblock %}

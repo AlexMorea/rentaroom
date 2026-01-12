@@ -1,0 +1,35 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+
+<h1 class="page-title">Browse Rooms</h1>
+
+<div class="room-grid">
+  {% for room in rooms %}
+  <a href="{% url 'room_detail' room.id %}" class="room-card">
+    <div class="image-slider">
+      {% for img in room.images.all|slice:":10" %}
+      <img src="{{ img.image.url }}" alt="Room image" />
+      {% empty %}
+      <img src="{% static 'img/placeholder.jpg' %}" alt="No image" />
+      {% endfor %} {% if room.contact_count|default:0 >= 3 %}
+      <span class="badge popular">Popular</span>
+      {% endif %} {% if room.owner.profile.is_verified %}
+      <span class="badge verified">Verified</span>
+      {% endif %}
+    </div>
+
+    <div class="room-info">
+      <h3>{{ room.title }}</h3>
+      <p class="location">{{ room.location }}</p>
+      <p class="price">R {{ room.price }}</p>
+
+      {% if room.avg_rating %}
+      <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
+      {% endif %}
+    </div>
+  </a>
+  {% empty %}
+  <p class="empty-state">No rooms available.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

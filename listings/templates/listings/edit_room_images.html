@@ -1,0 +1,25 @@
+{% extends "base.html" %} {% block content %}
+
+<h2>Manage Images — {{ room.title }}</h2>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <input type="file" name="images" multiple accept="image/*" />
+  <button type="submit" class="btn-primary">Upload</button>
+
+  <div class="grid">
+    {% for img in room.images.all %}
+    <div class="card">
+      <img src="{{ img.image.url }}" />
+      <label>
+        <input type="checkbox" name="delete" value="{{ img.id }}" /> Delete
+      </label>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn-danger">Save Changes</button>
+</form>
+
+{% endblock %}

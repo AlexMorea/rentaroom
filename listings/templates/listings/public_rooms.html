@@ -1,0 +1,20 @@
+{% extends "base.html" %} {% block content %}
+<h2>Available Rooms</h2>
+
+<div class="grid">
+  {% for room in rooms %}
+  <div class="card">
+    <h3>{{ room.title }}</h3>
+    <p>R {{ room.price }}</p>
+
+    {% if room.avg_rating %}
+    <p>⭐ {{ room.avg_rating|floatformat:1 }} / 5</p>
+    {% else %}
+    <p>No ratings yet</p>
+    {% endif %}
+
+    <p>{{ room.description|truncatechars:100 }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

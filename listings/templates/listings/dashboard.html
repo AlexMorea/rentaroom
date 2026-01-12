@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% block content %}
+
+<h1 class="page-title">Landlord Dashboard</h1>
+
+<div class="dashboard-grid">
+  <div class="stat-card">Rooms: {{ rooms.count }}</div>
+  <div class="stat-card">Images: {{ image_count }}</div>
+  <div class="stat-card">Contacts: {{ contact_count }}</div>
+</div>
+
+<div class="dashboard-rooms">
+  {% for room in rooms %}
+  <div class="room-row">
+    <strong>{{ room.title }}</strong> — {{ room.location }}
+    <div class="room-actions">
+      <a href="{% url 'upload_room_images' room.id %}">Images</a> |
+      <a href="{% url 'edit_room' room.id %}">Edit</a> |
+      <a
+        href="{% url 'delete_room' room.id %}"
+        onclick="return confirm('Delete this room?');"
+        >Delete</a
+      >
+    </div>
+  </div>
+  {% empty %}
+  <p>You haven't added any rooms yet.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

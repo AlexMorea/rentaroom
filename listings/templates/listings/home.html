@@ -1,0 +1,35 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<h1 class="page-title">Find Your Next Home</h1>
+
+<div class="search-bar">
+  <input type="text" placeholder="Search by location or room type..." />
+  <select>
+    <option>Any Price</option>
+    <option>Under R2000</option>
+    <option>R2000 - R4000</option>
+    <option>Above R4000</option>
+  </select>
+  <button>Search</button>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card" data-count="{{ room_count }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Rooms</div>
+  </div>
+  <div class="stat-card" data-count="{{ contact_count }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Contacts</div>
+  </div>
+  <div class="stat-card" data-count="{{ review_count }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Reviews</div>
+  </div>
+  <div class="stat-card" data-count="{{ landlord_count }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Landlords</div>
+  </div>
+</div>
+
+{% endblock %}

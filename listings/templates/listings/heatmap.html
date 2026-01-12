@@ -1,0 +1,25 @@
+{% extends 'base.html' %} {% block content %}
+<h2>🔥 Demand Heatmap</h2>
+<div class="heatmap">
+  {% for city in heatmap %}
+  <div class="heat" style="opacity: {{ city.score }}">
+    {{ city.city }} ({{ city.count }})
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .heatmap {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .heat {
+    padding: 12px 16px;
+    background: #ff7043;
+    color: white;
+    border-radius: 12px;
+  }
+</style>
+
+{% endblock %}

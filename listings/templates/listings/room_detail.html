@@ -1,0 +1,68 @@
+{% extends 'listings/base.html' %} {% block content %}
+<h1>{{ room.title }}</h1>
+
+<div style="background: white; padding: 20px; border-radius: 8px">
+  <p>{{ room.description }}</p>
+  <p><strong>Location:</strong> {{ room.location }}</p>
+  <p><strong>Price:</strong> R{{ room.price }}</p>
+  <p><strong>Type:</strong> {{ room.get_room_type_display }}</p>
+
+  <hr />
+
+  <h3>Contact landlord</h3>
+
+  <div style="display: flex; gap: 12px; flex-wrap: wrap">
+    <p>
+      📞 <a href="{% url 'track_contact' room.id 'phone' %}">Call landlord</a>
+    </p>
+    <p>
+      💬
+      <a href="{% url 'track_contact' room.id 'whatsapp' %}"
+        >WhatsApp landlord</a
+      >
+    </p>
+    {% if room.owner.email %} {% endif %}
+    <p>
+      📧 <a href="{% url 'track_contact' room.id 'email' %}">Email landlord</a>
+    </p>
+  </div>
+  <hr />
+  <form method="post" action="{% url 'mark_success' room.id %}">
+    {% csrf_token %}
+    <button class="btn-success">I successfully found a place</button>
+  </form>
+  <form method="post" action="{% url 'mark_success' room.id %}">
+    {% csrf_token %}
+    <button type="submit">I contacted this landlord</button>
+  </form>
+
+  <h3>Leave a review</h3>
+
+  {% if user.is_authenticated %}
+  <form method="post" action="{% url 'add_review' room.id %}">
+    {% csrf_token %}
+    <label>Rating:</label>
+    <select name="rating">
+      {% for i in "12345" %}
+      <option value="{{ i }}">{{ i }}</option>
+      {% endfor %}
+    </select>
+
+    <br /><br />
+
+    <textarea
+      name="comment"
+      placeholder="Write your review..."
+      rows="4"
+      style="width: 100%"
+    ></textarea>
+
+    <br /><br />
+
+    <button type="submit">Submit Review</button>
+  </form>
+  {% else %}
+  <p><em>Please log in to leave a review.</em></p>
+  {% endif %}
+</div>
+{% endblock %}
