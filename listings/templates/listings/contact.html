@@ -1,0 +1,31 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<h1 class="page-title">Contact Us</h1>
+
+<div class="form-shell">
+  <div class="form-card">
+    <p style="margin-top: 0">
+      Need help, want to report a listing, or have suggestions to improve
+      RentARoom? Reach out using the details below.
+    </p>
+
+    <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px">
+      <a class="btn-primary" href="mailto:support@rentaroom.co.za"
+        >📧 Email Support</a
+      >
+      <a class="btn-secondary" href="{% url 'room_list' %}">Browse Rooms</a>
+    </div>
+
+    <hr style="margin: 18px 0; opacity: 0.2" />
+
+    <h3 style="margin: 0 0 10px">Support hours</h3>
+    <p style="margin: 0; opacity: 0.85">Mon – Fri: 09:00 – 17:00 (SAST)</p>
+
+    <p style="margin-top: 14px; opacity: 0.75; font-size: 0.9rem">
+      Tip: If you’re reporting a listing, include the room title + location so
+      we can find it quickly.
+    </p>
+  </div>
+</div>
+
+{% endblock %}

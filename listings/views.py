@@ -51,6 +51,18 @@ def home(request):
     return render(request, "listings/home.html", context)
 
 
+def about(request):
+    return render(request, "listings/about.html")
+
+
+def services(request):
+    return render(request, "listings/services.html")
+
+
+def contact(request):
+    return render(request, "listings/contact.html")
+
+
 def room_list(request):
     q = (request.GET.get("q") or "").strip()
     location = (request.GET.get("location") or "").strip()

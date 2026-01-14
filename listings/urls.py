@@ -32,4 +32,7 @@ urlpatterns = [
         name="track_contact",
     ),
     path("mark-success/<int:room_id>/", views.mark_success, name="mark_success"),
+    path("about/", views.about, name="about"),
+    path("services/", views.services, name="services"),
+    path("contact/", views.contact, name="contact"),
 ]
