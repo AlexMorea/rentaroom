@@ -6,6 +6,7 @@ from .forms import UserRegisterForm, RoomForm
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponseForbidden
 from django.contrib import messages
+import re
 
 
 def is_landlord(user):
@@ -13,19 +14,67 @@ def is_landlord(user):
 
 
 def home(request):
+    """
+    Home page:
+    - Shows counters
+    - Provides search form that redirects to /rooms/ with query params
+    """
+    # Read filters from GET (home page search)
+    q = (request.GET.get("q") or "").strip()
+    location = (request.GET.get("location") or "").strip()
+    room_type = (request.GET.get("type") or "").strip()
+
+    # If user searched on home, redirect to room_list with params
+    if request.GET.get("go") == "1":
+        params = []
+        if q:
+            params.append(f"q={q}")
+        if location:
+            params.append(f"location={location}")
+        if room_type:
+            params.append(f"type={room_type}")
+
+        querystring = "&".join(params)
+        return redirect(f"/rooms/?{querystring}" if querystring else "/rooms/")
+
     context = {
         "room_count": Room.objects.count(),
         "contact_count": Contact.objects.count(),
         "review_count": Review.objects.count(),
         "landlord_count": Profile.objects.filter(role="landlord").count(),
+        "values": {
+            "q": q,
+            "location": location,
+            "type": room_type,
+        },
     }
     return render(request, "listings/home.html", context)
 
 
 def room_list(request):
+    q = (request.GET.get("q") or "").strip()
+    location = (request.GET.get("location") or "").strip()
+    room_type = (request.GET.get("type") or "").strip()
+
+    rooms_qs = Room.objects.filter(is_available=True)
+
+    # Search logic
+    if q:
+        rooms_qs = rooms_qs.filter(
+            Q(title__icontains=q)
+            | Q(description__icontains=q)
+            | Q(location__icontains=q)
+            | Q(room_type__icontains=q)
+        )
+
+    if location:
+        rooms_qs = rooms_qs.filter(location__icontains=location)
+
+    if room_type:
+        rooms_qs = rooms_qs.filter(room_type=room_type)
+
     rooms = (
-        Room.objects.filter(is_available=True)
-        .annotate(
+        rooms_qs.annotate(
             avg_rating=Avg("reviews__rating"),
             review_count=Count("reviews"),
             contact_count=Count(
@@ -34,8 +83,17 @@ def room_list(request):
         )
         .select_related("owner__profile")
         .prefetch_related("images")
+        .order_by("-created_at")
     )
-    return render(request, "listings/room_list.html", {"rooms": rooms})
+
+    return render(
+        request,
+        "listings/room_list.html",
+        {
+            "rooms": rooms,
+            "values": {"q": q, "location": location, "type": room_type},
+        },
+    )
 
 
 def room_detail(request, pk):
@@ -60,11 +118,13 @@ def register(request):
 def user_login(request):
     if request.method == "POST":
         user = authenticate(
-            username=request.POST["username"], password=request.POST["password"]
+            username=request.POST.get("username"),
+            password=request.POST.get("password"),
         )
         if user:
             login(request, user)
             return redirect("room_list")
+        messages.error(request, "Invalid username or password.")
     return render(request, "listings/login.html")
 
 
@@ -161,7 +221,7 @@ def add_review(request, room_id):
     Review.objects.create(
         room=room,
         user=request.user,
-        rating=request.POST["rating"],
+        rating=request.POST.get("rating"),
         comment=request.POST.get("comment", ""),
     )
     return redirect("room_detail", pk=room.id)
@@ -169,8 +229,41 @@ def add_review(request, room_id):
 
 @login_required
 def track_contact(request, room_id, method):
-    room = get_object_or_404(Room, id=room_id)
-    RoomStat.objects.create(room=room, user=request.user, stat_type=f"contact_{method}")
+    room = get_object_or_404(Room, id=room_id, is_available=True)
+
+    # save stat (phone/whatsapp/email)
+    RoomStat.objects.create(
+        room=room,
+        user=request.user if request.user.is_authenticated else None,
+        stat_type=f"contact_{method}",
+    )
+
+    phone_raw = (room.contact_phone or "").strip()
+    # keep only digits for WhatsApp wa.me (no +, no spaces)
+    phone_digits = re.sub(r"\D", "", phone_raw)
+
+    landlord_email = (room.owner.email or "").strip()
+
+    if method == "phone":
+        # tel: should keep + if you have it
+        tel = phone_raw.replace(" ", "")
+        if not tel:
+            return redirect("room_detail", pk=room.id)
+        return redirect(f"tel:{tel}")
+
+    if method == "whatsapp":
+        if not phone_digits:
+            return redirect("room_detail", pk=room.id)
+        return redirect(f"https://wa.me/{phone_digits}")
+
+    if method == "email":
+        if not landlord_email:
+            return redirect("room_detail", pk=room.id)
+        subject = f"RentARoom enquiry: {room.title}"
+        body = f"Hi, I’m interested in your room listing ({room.title}) in {room.location}."
+        return redirect(f"mailto:{landlord_email}?subject={subject}&body={body}")
+
+    # fallback
     return redirect("room_detail", pk=room.id)
 
 

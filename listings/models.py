@@ -20,7 +20,12 @@ class Room(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
     location = models.CharField(max_length=200)
     room_type = models.CharField(max_length=20, choices=ROOM_TYPES)
+
+    # Contacts
     contact_phone = models.CharField(max_length=20)
+    contact_whatsapp = models.CharField(max_length=20, blank=True, default="")
+    contact_email = models.EmailField(blank=True, default="")
+
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

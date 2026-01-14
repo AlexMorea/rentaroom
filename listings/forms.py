@@ -31,8 +31,50 @@ class RoomForm(forms.ModelForm):
             "location",
             "room_type",
             "contact_phone",
+            "contact_whatsapp",
+            "contact_email",
             "is_available",
         ]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "input",
+                    "placeholder": "e.g. Spacious single room near TUT",
+                }
+            ),
+            "price": forms.NumberInput(
+                attrs={"class": "input", "placeholder": "e.g. 2500"}
+            ),
+            "location": forms.TextInput(
+                attrs={"class": "input", "placeholder": "e.g. Mamelodi East"}
+            ),
+            "room_type": forms.Select(attrs={"class": "input"}),
+            "contact_phone": forms.TextInput(
+                attrs={
+                    "class": "input",
+                    "placeholder": "Call number e.g. +27 71 234 5678",
+                }
+            ),
+            "contact_whatsapp": forms.TextInput(
+                attrs={
+                    "class": "input",
+                    "placeholder": "WhatsApp number (optional) e.g. +27 71 234 5678",
+                }
+            ),
+            "contact_email": forms.EmailInput(
+                attrs={
+                    "class": "input",
+                    "placeholder": "Email (optional) e.g. landlord@gmail.com",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "input textarea",
+                    "rows": 5,
+                    "placeholder": "Describe the room, amenities, rules, and nearby transport...",
+                }
+            ),
+        }
 
 
 class RoomImageForm(forms.ModelForm):

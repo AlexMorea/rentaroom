@@ -1,68 +1,94 @@
-{% extends 'listings/base.html' %} {% block content %}
-<h1>{{ room.title }}</h1>
+{% extends "listings/base.html" %} {% load static %} {% block content %}
 
-<div style="background: white; padding: 20px; border-radius: 8px">
-  <p>{{ room.description }}</p>
-  <p><strong>Location:</strong> {{ room.location }}</p>
-  <p><strong>Price:</strong> R{{ room.price }}</p>
-  <p><strong>Type:</strong> {{ room.get_room_type_display }}</p>
+<h1 class="page-title">{{ room.title }}</h1>
 
-  <hr />
-
-  <h3>Contact landlord</h3>
-
-  <div style="display: flex; gap: 12px; flex-wrap: wrap">
-    <p>
-      📞 <a href="{% url 'track_contact' room.id 'phone' %}">Call landlord</a>
-    </p>
-    <p>
-      💬
-      <a href="{% url 'track_contact' room.id 'whatsapp' %}"
-        >WhatsApp landlord</a
-      >
-    </p>
-    {% if room.owner.email %} {% endif %}
-    <p>
-      📧 <a href="{% url 'track_contact' room.id 'email' %}">Email landlord</a>
-    </p>
-  </div>
-  <hr />
-  <form method="post" action="{% url 'mark_success' room.id %}">
-    {% csrf_token %}
-    <button class="btn-success">I successfully found a place</button>
-  </form>
-  <form method="post" action="{% url 'mark_success' room.id %}">
-    {% csrf_token %}
-    <button type="submit">I contacted this landlord</button>
-  </form>
-
-  <h3>Leave a review</h3>
-
-  {% if user.is_authenticated %}
-  <form method="post" action="{% url 'add_review' room.id %}">
-    {% csrf_token %}
-    <label>Rating:</label>
-    <select name="rating">
-      {% for i in "12345" %}
-      <option value="{{ i }}">{{ i }}</option>
+<div class="room-card" style="max-width: 900px; margin: 0 auto">
+  <div class="room-media">
+    <div class="image-slider">
+      {% for img in room.images.all|slice:":10" %}
+      <img src="{{ img.image.url }}" alt="Room image" />
+      {% empty %}
+      <img src="{% static 'img/placeholder.jpg' %}" alt="No image" />
       {% endfor %}
-    </select>
+    </div>
+  </div>
 
-    <br /><br />
+  <div class="room-info">
+    <p class="room-meta"><strong>Location:</strong> {{ room.location }}</p>
+    <p class="room-price">R {{ room.price }}</p>
+    <p class="room-meta">
+      <strong>Type:</strong> {{ room.get_room_type_display }}
+    </p>
 
-    <textarea
-      name="comment"
-      placeholder="Write your review..."
-      rows="4"
-      style="width: 100%"
-    ></textarea>
+    <p style="margin-top: 10px">{{ room.description }}</p>
 
-    <br /><br />
+    <hr style="margin: 16px 0; opacity: 0.25" />
 
-    <button type="submit">Submit Review</button>
-  </form>
-  {% else %}
-  <p><em>Please log in to leave a review.</em></p>
-  {% endif %}
+    <h3 style="margin: 0 0 10px">Contact landlord</h3>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      {% if room.contact_phone %}
+      <a
+        class="btn-primary"
+        target="_blank"
+        rel="noopener"
+        href="{% url 'track_contact' room.id 'phone' %}"
+        >📞 Call</a
+      >
+      <a
+        class="btn-primary"
+        target="_blank"
+        rel="noopener"
+        href="{% url 'track_contact' room.id 'whatsapp' %}"
+        >💬 WhatsApp</a
+      >
+      {% endif %} {% if room.owner.email %}
+      <a
+        class="btn-primary"
+        target="_blank"
+        rel="noopener"
+        href="{% url 'track_contact' room.id 'email' %}"
+        >📧 Email</a
+      >
+      {% endif %}
+    </div>
+    <hr style="margin: 16px 0; opacity: 0.25" />
+
+    <form method="post" action="{% url 'mark_success' room.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-secondary">
+        ✅ I successfully found a place
+      </button>
+    </form>
+
+    <h3 style="margin-top: 18px">Leave a review</h3>
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'add_review' room.id %}">
+      {% csrf_token %}
+      <label>Rating:</label>
+      <select name="rating" class="input" style="max-width: 160px">
+        {% for i in "12345" %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
+
+      <div style="margin-top: 10px">
+        <textarea
+          name="comment"
+          class="input textarea"
+          placeholder="Write your review..."
+        ></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary" style="margin-top: 10px">
+        Submit Review
+      </button>
+    </form>
+    {% else %}
+    <p><em>Please log in to leave a review.</em></p>
+    {% endif %}
+  </div>
 </div>
+
 {% endblock %}

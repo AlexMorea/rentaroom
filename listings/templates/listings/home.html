@@ -1,31 +1,43 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %}
+{% block content %}
 
 <h1 class="page-title">Find Your Next Home</h1>
 
-<div class="search-bar">
-  <input type="text" placeholder="Search by location or room type..." />
-  <select>
-    <option>Any Price</option>
-    <option>Under R2000</option>
-    <option>R2000 - R4000</option>
-    <option>Above R4000</option>
+<form class="search-bar" method="get" action="{% url 'home' %}">
+  <input
+    type="text"
+    name="location"
+    placeholder="Search by location (e.g. Pretoria, Mamelodi)"
+    value="{{ values.location }}"
+  />
+
+  <select name="type">
+    <option value="">Any Type</option>
+    <option value="single" {% if values.type == "single" %}selected{% endif %}>Single</option>
+    <option value="shared" {% if values.type == "shared" %}selected{% endif %}>Shared</option>
+    <option value="flat" {% if values.type == "flat" %}selected{% endif %}>Flat / Apartment</option>
   </select>
-  <button>Search</button>
-</div>
+
+  <input type="hidden" name="go" value="1" />
+  <button type="submit">Search</button>
+</form>
 
 <div class="stat-grid">
   <div class="stat-card" data-count="{{ room_count }}">
     <div class="stat-number">0</div>
-    <div class="stat-label">Rooms</div>
+    <div class="stat-label">Rooms Listed</div>
   </div>
+
   <div class="stat-card" data-count="{{ contact_count }}">
     <div class="stat-number">0</div>
-    <div class="stat-label">Contacts</div>
+    <div class="stat-label">Contacts Made</div>
   </div>
+
   <div class="stat-card" data-count="{{ review_count }}">
     <div class="stat-number">0</div>
     <div class="stat-label">Reviews</div>
   </div>
+
   <div class="stat-card" data-count="{{ landlord_count }}">
     <div class="stat-number">0</div>
     <div class="stat-label">Landlords</div>
