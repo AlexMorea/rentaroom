@@ -10,10 +10,10 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
 
-DEBUG = os.environ.get("DEBUG", "0") == "1"
+DEBUG = os.environ.get("DEBUG", "1") == "1"
 
 if DEBUG:
-    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
 else:
     # Production default: allow Render host if env var is missing
     env_hosts = os.environ.get("ALLOWED_HOSTS", "").strip()

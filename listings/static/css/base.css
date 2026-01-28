@@ -454,3 +454,16 @@ a { text-decoration: none; color: inherit; }
     gap: 8px;
   }
 }
+
+.image-slider {
+  height: 170px;          /* lock height */
+}
+
+.image-slider img {
+  height: 170px;          /* force same height */
+  object-fit: cover;      /* no stretching */
+}
+
+.room-media { aspect-ratio: 16 / 9; }
+.image-slider { height: auto; }
+.image-slider img { height: 100%; }
