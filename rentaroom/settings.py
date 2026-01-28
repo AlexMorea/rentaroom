@@ -10,9 +10,18 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
 
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+if DEBUG:
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+else:
+    # Production default: allow Render host if env var is missing
+    env_hosts = os.environ.get("ALLOWED_HOSTS", "").strip()
+    if env_hosts:
+        ALLOWED_HOSTS = [h.strip() for h in env_hosts.split(",") if h.strip()]
+    else:
+        ALLOWED_HOSTS = ["rentaroom-djou.onrender.com"]
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
