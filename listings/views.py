@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout, authenticate
 from .forms import UserRegisterForm, RoomForm
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponseForbidden
+from urllib.parse import quote
 from django.contrib import messages
 import re
 
@@ -47,6 +48,12 @@ def home(request):
             "location": location,
             "type": room_type,
         },
+        "selected": {
+            "any": room_type == "",
+            "single": room_type == "single",
+            "shared": room_type == "shared",
+            "flat": room_type == "flat",
+        },
     }
     return render(request, "listings/home.html", context)
 
@@ -56,7 +63,15 @@ def about(request):
 
 
 def services(request):
-    return render(request, "listings/services.html")
+    context = {
+        "rooms_available": Room.objects.filter(is_available=True).count(),
+        "total_rooms": Room.objects.count(),
+        "contacts_made": RoomStat.objects.filter(
+            stat_type__startswith="contact"
+        ).count(),
+        "success_matches": RoomStat.objects.filter(stat_type="success").count(),
+    }
+    return render(request, "listings/services.html", context)
 
 
 def contact(request):
@@ -104,6 +119,12 @@ def room_list(request):
         {
             "rooms": rooms,
             "values": {"q": q, "location": location, "type": room_type},
+            "selected": {
+                "any": room_type == "",
+                "single": room_type == "single",
+                "shared": room_type == "shared",
+                "flat": room_type == "flat",
+            },
         },
     )
 
@@ -193,7 +214,7 @@ def delete_room_image(request, image_id):
 @login_required
 @user_passes_test(is_landlord)
 def create_room(request):
-    form = RoomForm(request.POST or None, request.FILES or None)
+    form = RoomForm(request.POST or None, request.FILES or None, user=request.user)
     if form.is_valid():
         room = form.save(commit=False)
         room.owner = request.user
@@ -209,7 +230,7 @@ def create_room(request):
 @login_required
 def edit_room(request, pk):
     room = get_object_or_404(Room, pk=pk, owner=request.user)
-    form = RoomForm(request.POST or None, instance=room)
+    form = RoomForm(request.POST or None, instance=room, user=request.user)
     if form.is_valid():
         form.save()
         return redirect("dashboard")
@@ -243,21 +264,26 @@ def add_review(request, room_id):
 def track_contact(request, room_id, method):
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
-    # save stat (phone/whatsapp/email)
+    # save stat
     RoomStat.objects.create(
         room=room,
-        user=request.user if request.user.is_authenticated else None,
+        user=request.user,
         stat_type=f"contact_{method}",
     )
 
-    phone_raw = (room.contact_phone or "").strip()
-    # keep only digits for WhatsApp wa.me (no +, no spaces)
-    phone_digits = re.sub(r"\D", "", phone_raw)
+    # allow review after at least one contact attempt
+    Contact.objects.get_or_create(room=room, user=request.user)
 
-    landlord_email = (room.owner.email or "").strip()
+    phone_raw = (room.contact_phone or "").strip()
+    whatsapp_raw = (room.contact_whatsapp or "").strip() or phone_raw
+
+    # digits only for wa.me
+    phone_digits = re.sub(r"\D", "", whatsapp_raw)
+
+    # prefer explicit contact_email, fallback to owner email
+    landlord_email = (room.contact_email or room.owner.email or "").strip()
 
     if method == "phone":
-        # tel: should keep + if you have it
         tel = phone_raw.replace(" ", "")
         if not tel:
             return redirect("room_detail", pk=room.id)
@@ -271,11 +297,12 @@ def track_contact(request, room_id, method):
     if method == "email":
         if not landlord_email:
             return redirect("room_detail", pk=room.id)
-        subject = f"RentARoom enquiry: {room.title}"
-        body = f"Hi, I’m interested in your room listing ({room.title}) in {room.location}."
+        subject = quote(f"RentARoom enquiry: {room.title}")
+        body = quote(
+            f"Hi, I’m interested in your room listing ({room.title}) in {room.location}."
+        )
         return redirect(f"mailto:{landlord_email}?subject={subject}&body={body}")
 
-    # fallback
     return redirect("room_detail", pk=room.id)
 
 

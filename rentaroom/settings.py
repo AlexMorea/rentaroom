@@ -1,14 +1,18 @@
 from pathlib import Path
-import dj_database_url
 import os
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
 
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -56,6 +60,7 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+MEDIA_ROOT = BASE_DIR / "media"
 
 AUTH_PASSWORD_VALIDATORS = [
     {

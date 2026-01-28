@@ -1,5 +1,4 @@
-{% extends "listings/base.html" %}
-{% block content %}
+{% extends "listings/base.html" %} {% block content %}
 
 <h1 class="page-title">Find Your Next Home</h1>
 
@@ -8,14 +7,19 @@
     type="text"
     name="location"
     placeholder="Search by location (e.g. Pretoria, Mamelodi)"
-    value="{{ values.location }}"
+    value="{{ values.location|default:'' }}"
   />
-
   <select name="type">
-    <option value="">Any Type</option>
-    <option value="single" {% if values.type == "single" %}selected{% endif %}>Single</option>
-    <option value="shared" {% if values.type == "shared" %}selected{% endif %}>Shared</option>
-    <option value="flat" {% if values.type == "flat" %}selected{% endif %}>Flat / Apartment</option>
+    <option value="" {% if selected.any %}selected{% endif %}>Any Type</option>
+    <option value="single" {% if selected.single %}selected{% endif %}>
+      Single
+    </option>
+    <option value="shared" {% if selected.shared %}selected{% endif %}>
+      Shared
+    </option>
+    <option value="flat" {% if selected.flat %}selected{% endif %}>
+      Flat / Apartment
+    </option>
   </select>
 
   <input type="hidden" name="go" value="1" />

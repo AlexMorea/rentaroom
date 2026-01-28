@@ -1,36 +1,40 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %} {% load static %} {% block content %}
 
 <h1 class="page-title">Our Services</h1>
 
-<div class="form-shell">
-  <div class="form-card">
-    <div class="dashboard-grid" style="margin-bottom: 0">
-      <div class="stat-card">
-        <div class="stat-number">🏠</div>
-        <div class="stat-label">Room Listings</div>
-        <p style="margin: 12px 0 0; opacity: 0.9; font-size: 0.95rem">
-          Landlords can post rooms with details, price, location, and up to 10
-          images.
-        </p>
-      </div>
+<div class="stat-grid">
+  <div class="stat-card" data-count="{{ rooms_available }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Rooms Available Right Now</div>
+  </div>
 
-      <div class="stat-card">
-        <div class="stat-number">🔎</div>
-        <div class="stat-label">Search & Filters</div>
-        <p style="margin: 12px 0 0; opacity: 0.9; font-size: 0.95rem">
-          Tenants can search by location and room type to find the best match.
-        </p>
-      </div>
+  <div class="stat-card" data-count="{{ total_rooms }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Total Rooms Posted</div>
+  </div>
 
-      <div class="stat-card">
-        <div class="stat-number">📞</div>
-        <div class="stat-label">Easy Contact</div>
-        <p style="margin: 12px 0 0; opacity: 0.9; font-size: 0.95rem">
-          Contact landlords directly via call, WhatsApp, or email — one click.
-        </p>
-      </div>
-    </div>
+  <div class="stat-card" data-count="{{ contacts_made }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Contacts Made by Tenants</div>
+  </div>
+
+  <div class="stat-card" data-count="{{ success_matches }}">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Successful Matches</div>
   </div>
 </div>
 
+<div class="form-shell" style="margin-top: 22px">
+  <div class="form-card">
+    <h3 style="margin: 0 0 10px">What we do</h3>
+    <ul style="margin: 0; padding-left: 18px; line-height: 1.7">
+      <li>Help tenants find safe, affordable rooms fast.</li>
+      <li>Help landlords connect with serious tenants.</li>
+      <li>One-click contact: call, WhatsApp, or email.</li>
+    </ul>
+  </div>
+</div>
+
+{% endblock %} {% block extra_js %}
+<script src="{% static 'js/counter.js' %}"></script>
 {% endblock %}

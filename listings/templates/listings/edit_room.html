@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block content %}
+{% extends "listings/base.html" %} {% block content %}
 <h2>Edit Room</h2>
 <form method="post">
   {% csrf_token %} {{ form.as_p }}

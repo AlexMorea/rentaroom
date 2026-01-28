@@ -28,30 +28,20 @@
 
     <div style="display: flex; gap: 10px; flex-wrap: wrap">
       {% if room.contact_phone %}
-      <a
-        class="btn-primary"
-        target="_blank"
-        rel="noopener"
-        href="{% url 'track_contact' room.id 'phone' %}"
+      <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}"
         >📞 Call</a
       >
-      <a
-        class="btn-primary"
-        target="_blank"
-        rel="noopener"
-        href="{% url 'track_contact' room.id 'whatsapp' %}"
+      {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
+      <a class="btn-primary" href="{% url 'track_contact' room.id 'whatsapp' %}"
         >💬 WhatsApp</a
       >
-      {% endif %} {% if room.owner.email %}
-      <a
-        class="btn-primary"
-        target="_blank"
-        rel="noopener"
-        href="{% url 'track_contact' room.id 'email' %}"
+      {% endif %} {% if room.owner.email or room.contact_email %}
+      <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}"
         >📧 Email</a
       >
       {% endif %}
     </div>
+
     <hr style="margin: 16px 0; opacity: 0.25" />
 
     <form method="post" action="{% url 'mark_success' room.id %}">

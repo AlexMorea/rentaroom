@@ -1,66 +1,105 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>RentARoom</title>
+    <title>Rooms4You</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{% static 'css/base.css' %}" />
   </head>
-  <body>
+
+  <body
+    data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
+    data-role="{% if user.is_authenticated %}{{ user.profile.role }}{% endif %}"
+  >
     <header class="site-header">
       <div class="nav-container">
-        <a href="/" class="logo">
-          <img src="{% static 'images/rentaroom-logo.png' %}" />
-          <span class="logo-text">Rent<span>A</span>Room</span>
+        <a href="{% url 'home' %}" class="logo">
+          <img
+            class="logo-img"
+            src="{% static 'images/rentaroom-logo.png' %}"
+            alt="Logo"
+          />
         </a>
 
         <nav class="nav-links" id="navLinks">
           <a href="{% url 'room_list' %}">Browse</a>
-
-          {% if user.is_authenticated and user.profile.role == "landlord" %}
-          <a href="{% url 'dashboard' %}">Dashboard</a>
-          {% endif %} {% if user.is_authenticated %}
-          <a href="{% url 'logout' %}">Logout</a>
-          {% endif %} {% if not user.is_authenticated %}
-          <a href="{% url 'login' %}">Login</a>
-          <a href="{% url 'register' %}">Register</a>
           <a href="{% url 'services' %}">Services</a>
           <a href="{% url 'about' %}">About</a>
           <a href="{% url 'contact' %}">Contact</a>
-          {% endif %}
+
+          <!-- Auth-only -->
+          <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>
+          <a href="{% url 'logout' %}" data-show="auth">Logout</a>
+
+          <!-- Guest-only -->
+          <a href="{% url 'login' %}" data-show="guest">Login</a>
+          <a href="{% url 'register' %}" data-show="guest">Register</a>
         </nav>
 
-        <button class="burger" id="burgerBtn">☰</button>
+        <button class="burger" id="burgerBtn" aria-label="Open menu">☰</button>
       </div>
     </header>
 
     <main class="container">{% block content %}{% endblock %}</main>
 
-    <footer class="site-footer">© 2026 RentARoom</footer>
-
-    <script src="{% static 'js/counter.js' %}"></script>
+    <footer class="site-footer">
+      <p>© 2026 Rooms4You • Your data is protected and never sold.</p>
+      <p
+        style="
+          max-width: 900px;
+          margin: 10px auto 0;
+          opacity: 0.8;
+          line-height: 1.5;
+        "
+      >
+        Terms: Listings are posted by landlords. We are not responsible for
+        false or harmful uploads, but we actively review reports and take action
+        to protect users and maintain integrity.
+      </p>
+    </footer>
 
     <script>
-      document.getElementById("burgerBtn").onclick = function () {
-        document.getElementById("navLinks").classList.toggle("show");
-      };
+      // burger
+      const burger = document.getElementById("burgerBtn");
+      const nav = document.getElementById("navLinks");
+      if (burger && nav) burger.onclick = () => nav.classList.toggle("show");
+
+      // auth-based nav visibility (no template if/else needed)
+      const root = document.body;
+      const isAuth = root.dataset.auth === "1";
+      const role = (root.dataset.role || "").toLowerCase();
+
+      document.querySelectorAll("[data-show]").forEach((el) => {
+        const rule = el.getAttribute("data-show");
+
+        if (rule === "auth") el.style.display = isAuth ? "" : "none";
+        if (rule === "guest") el.style.display = isAuth ? "none" : "";
+        if (rule === "landlord")
+          el.style.display = isAuth && role === "landlord" ? "" : "none";
+      });
     </script>
+
     <script>
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.style.opacity = 1;
-            entry.target.style.transform = "translateY(0)";
-          }
+      // card animations (safe even if no cards)
+      const cards = document.querySelectorAll(".room-card");
+      if (cards.length) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = 1;
+              entry.target.style.transform = "translateY(0)";
+            }
+          });
         });
-      });
-
-      document.querySelectorAll(".room-card").forEach((card) => {
-        card.style.opacity = 0;
-        card.style.transform = "translateY(20px)";
-        observer.observe(card);
-      });
+        cards.forEach((card) => {
+          card.style.opacity = 0;
+          card.style.transform = "translateY(20px)";
+          observer.observe(card);
+        });
+      }
     </script>
+
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

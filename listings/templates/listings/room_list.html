@@ -1,6 +1,36 @@
 {% extends "listings/base.html" %} {% load static %} {% block content %}
 
 <h1 class="page-title">Browse Rooms</h1>
+<form class="search-bar" method="get" action="{% url 'room_list' %}">
+  <input
+    type="text"
+    name="q"
+    placeholder="Search (title, location, type...)"
+    value="{{ values.q }}"
+  />
+
+  <input
+    type="text"
+    name="location"
+    placeholder="Location (e.g. Pretoria, Mamelodi)"
+    value="{{ values.location }}"
+  />
+
+  <select name="type">
+    <option value="" {% if selected.any %}selected{% endif %}>Any Type</option>
+    <option value="single" {% if selected.single %}selected{% endif %}>
+      Single
+    </option>
+    <option value="shared" {% if selected.shared %}selected{% endif %}>
+      Shared
+    </option>
+    <option value="flat" {% if selected.flat %}selected{% endif %}>
+      Flat / Apartment
+    </option>
+  </select>
+
+  <button type="submit">Search</button>
+</form>
 
 <div class="room-grid">
   {% for room in rooms %}
