@@ -34,11 +34,13 @@ a { text-decoration: none; color: inherit; }
 .nav-container {
   max-width: 1200px;
   margin: auto;
-  padding: 12px 20px;
+  padding: 8px 20px;              
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
+
 
 .logo { display:flex; align-items:center; }
 
@@ -619,4 +621,26 @@ a { text-decoration: none; color: inherit; }
 
 @keyframes toast-out {
   to { opacity: 0; transform: translateY(-10px); }
+}
+
+.brand-tagline{
+  font-size: .55rem;              
+  font-weight: 600;
+  opacity: .55;
+  letter-spacing: .02em;
+  line-height: 1;
+  margin-top: -6px;               
+  transform: translateY(-2px);
+  animation: taglineIn .5s ease-out both;
+}
+
+/* hover animation */
+.logo:hover .brand-tagline{
+  opacity: .85;
+  transform: translateY(-3px);
+}
+
+@keyframes taglineIn{
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: .55; transform: translateY(-2px); }
 }

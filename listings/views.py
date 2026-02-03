@@ -102,15 +102,31 @@ def room_list(request):
 
     rooms = (
         rooms_qs.annotate(
+            # Per-room stats
             avg_rating=Avg("reviews__rating"),
-            review_count=Count("reviews"),
+            review_count=Count("reviews", distinct=True),
             contact_count=Count(
-                "roomstat", filter=Q(roomstat__stat_type__startswith="contact")
+                "roomstat",
+                filter=Q(roomstat__stat_type__startswith="contact"),
+                distinct=True,
+            ),
+            # Per-landlord totals (across all their rooms)
+            landlord_review_total=Count("owner__rooms__reviews", distinct=True),
+            landlord_contact_total=Count(
+                "owner__rooms__roomstat",
+                filter=Q(owner__rooms__roomstat__stat_type__startswith="contact"),
+                distinct=True,
             ),
         )
         .select_related("owner__profile")
         .prefetch_related("images")
-        .order_by("-created_at")
+        .order_by(
+            "-landlord_contact_total",
+            "-landlord_review_total",
+            "-contact_count",
+            "-review_count",
+            "-created_at",
+        )
     )
 
     return render(
@@ -398,3 +414,8 @@ def edit_room_images(request, pk):
             "max_images": 10,
         },
     )
+
+
+@login_required
+def heatmap(request):
+    return render(request, "listings/heatmap.html")

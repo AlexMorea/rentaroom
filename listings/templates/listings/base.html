@@ -20,19 +20,23 @@
   >
     <header class="site-header">
       <div class="nav-container">
-        <a href="{% url 'home' %}" class="logo">
-          <img
-            class="logo-img"
-            src="{% static 'images/rentaroom-logo.png' %}"
-            alt="Logo"
-          />
-        </a>
+        <div class="brand">
+          <a href="{% url 'home' %}" class="logo">
+            <img
+              class="logo-img"
+              src="{% static 'images/rentaroom-logo.png' %}"
+              alt="Logo"
+            />
+            <span class="brand-tagline">Connecting spaces to faces.</span>
+          </a>
+        </div>
 
         <nav class="nav-links" id="navLinks">
           <a href="{% url 'room_list' %}">Browse</a>
           <a href="{% url 'services' %}">Services</a>
           <a href="{% url 'about' %}">About</a>
           <a href="{% url 'contact' %}">Contact</a>
+          <a href="{% url 'heatmap' %}">Heatmap</a>
 
           <!-- Auth-only -->
           <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>
