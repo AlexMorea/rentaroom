@@ -4,29 +4,65 @@
   <div class="auth-card">
     <h2 class="auth-title">Create account</h2>
 
-    <form method="post" class="auth-form">
-      {% csrf_token %} {{ form.non_field_errors }}
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %} {% if form.non_field_errors %}
+      <div
+        class="auth-small"
+        style="color: #dc2626; font-weight: 700; margin-bottom: 10px"
+      >
+        {{ form.non_field_errors|striptags }}
+      </div>
+      {% endif %}
 
       <div class="field">
-        {{ form.username.label_tag }} {{ form.username }} {{
-        form.username.errors }}
+        <label class="auth-label" for="{{ form.username.id_for_label }}"
+          >Username</label
+        >
+        {{ form.username }} {% if form.username.errors %}
+        <div class="auth-small" style="color: #dc2626; font-weight: 700">
+          {{ form.username.errors|striptags }}
+        </div>
+        {% endif %}
       </div>
 
       <div class="field">
-        {{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}
+        <label class="auth-label" for="{{ form.email.id_for_label }}"
+          >Email address</label
+        >
+        {{ form.email }} {% if form.email.errors %}
+        <div class="auth-small" style="color: #dc2626; font-weight: 700">
+          {{ form.email.errors|striptags }}
+        </div>
+        {% endif %}
       </div>
 
       <div class="field">
-        {{ form.password.label_tag }} {{ form.password }} {{
-        form.password.errors }}
+        <label class="auth-label" for="{{ form.password.id_for_label }}"
+          >Password</label
+        >
+        {{ form.password }}
+
+        <!-- Your own clean hint (not Django help_text) -->
         <small class="auth-small">
-          Password: 8+ characters. Avoid common passwords. Use a mix of letters
-          and numbers.
+          8+ characters. Avoid common passwords. Mix letters & numbers.
         </small>
+
+        {% if form.password.errors %}
+        <div class="auth-small" style="color: #dc2626; font-weight: 700">
+          {{ form.password.errors|striptags }}
+        </div>
+        {% endif %}
       </div>
 
       <div class="field">
-        {{ form.role.label_tag }} {{ form.role }} {{ form.role.errors }}
+        <label class="auth-label" for="{{ form.role.id_for_label }}"
+          >Role</label
+        >
+        {{ form.role }} {% if form.role.errors %}
+        <div class="auth-small" style="color: #dc2626; font-weight: 700">
+          {{ form.role.errors|striptags }}
+        </div>
+        {% endif %}
       </div>
 
       <button class="btn-primary auth-btn" type="submit">Create account</button>

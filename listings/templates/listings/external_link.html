@@ -1,0 +1,23 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="auth-shell">
+  <div class="auth-card" style="text-align: center">
+    <h2 class="auth-title">{{ title }}</h2>
+    <p style="opacity: 0.8; margin: 0 0 14px">{{ fallback_text }}</p>
+
+    <a class="btn-primary auth-btn" href="{{ link }}">{{ button_text }}</a>
+
+    <p class="auth-small" style="margin-top: 12px; opacity: 0.75">
+      If nothing happens, your browser may block opening apps automatically.
+    </p>
+  </div>
+</div>
+
+<script>
+  // Try auto-open once (mobile-friendly)
+  setTimeout(() => {
+    window.location.href = "{{ link }}";
+  }, 200);
+</script>
+
+{% endblock %}

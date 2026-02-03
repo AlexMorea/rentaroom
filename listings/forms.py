@@ -7,8 +7,10 @@ from django.contrib.auth.password_validation import validate_password
 
 class UserRegisterForm(forms.ModelForm):
     password = forms.CharField(
-        widget=forms.PasswordInput,
-        help_text="Use at least 8 characters and avoid simple passwords.",
+        widget=forms.PasswordInput(
+            attrs={"class": "input", "placeholder": "Create a password"}
+        ),
+        help_text="",  #  prevent Django help_text from showing “raw”
     )
     role = forms.ChoiceField(
         choices=Profile.ROLE_CHOICES, widget=forms.Select(attrs={"class": "input"})

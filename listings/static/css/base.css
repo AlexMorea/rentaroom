@@ -467,3 +467,156 @@ a { text-decoration: none; color: inherit; }
 .room-media { aspect-ratio: 16 / 9; }
 .image-slider { height: auto; }
 .image-slider img { height: 100%; }
+
+
+/* ================= IMAGE MANAGER ================= */
+
+.imgmgr-shell{
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.imgmgr-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.imgmgr-title{
+  margin: 0;
+  font-weight: 900;
+}
+
+.imgmgr-sub{
+  margin: 6px 0 0;
+  opacity: .8;
+}
+
+.imgmgr-card{
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.imgmgr-upload{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.imgmgr-label{
+  font-weight: 800;
+  opacity: .9;
+}
+
+.imgmgr-upload-row{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+
+.imgmgr-file{
+  flex: 1 1 320px;
+  padding: 10px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.imgmgr-hint{
+  opacity: .75;
+}
+
+.imgmgr-line{
+  border: none;
+  height: 1px;
+  background: #e5e7eb;
+  margin: 18px 0;
+}
+
+.imgmgr-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.imgmgr-item{
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 22px rgba(0,0,0,.05);
+}
+
+.imgmgr-img{
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display:block;
+}
+
+.imgmgr-del{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-weight: 700;
+  opacity: .85;
+}
+
+.imgmgr-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top: 16px;
+}
+
+.imgmgr-empty{
+  opacity: .7;
+  margin: 0;
+}
+
+/* ================= TOASTS ================= */
+
+.toast-wrap {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: #111827;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: toast-in 0.3s ease forwards,
+             toast-out 0.3s ease forwards 3.2s;
+}
+
+.toast-success {
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+}
+
+.toast-error {
+  background: #dc2626;
+}
+
+@keyframes toast-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-out {
+  to { opacity: 0; transform: translateY(-10px); }
+}

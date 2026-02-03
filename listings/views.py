@@ -156,13 +156,22 @@ def user_login(request):
         )
         if user:
             login(request, user)
+
+            # 🎉 Toast welcome message
+            messages.success(request, f"Hello, {user.username} 👋")
+
+            # Redirect by role
+            if hasattr(user, "profile") and user.profile.role == "landlord":
+                return redirect("dashboard")
             return redirect("room_list")
+
         messages.error(request, "Invalid username or password.")
     return render(request, "listings/login.html")
 
 
 def user_logout(request):
     logout(request)
+    messages.info(request, "You’ve been logged out.")
     return redirect("room_list")
 
 
@@ -260,19 +269,16 @@ def add_review(request, room_id):
     return redirect("room_detail", pk=room.id)
 
 
-@login_required
 def track_contact(request, room_id, method):
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
-    # save stat
-    RoomStat.objects.create(
-        room=room,
-        user=request.user,
-        stat_type=f"contact_{method}",
-    )
-
-    # allow review after at least one contact attempt
-    Contact.objects.get_or_create(room=room, user=request.user)
+    if request.user.is_authenticated:
+        RoomStat.objects.create(
+            room=room,
+            user=request.user,
+            stat_type=f"contact_{method}",
+        )
+        Contact.objects.get_or_create(room=room, user=request.user)
 
     phone_raw = (room.contact_phone or "").strip()
     whatsapp_raw = (room.contact_whatsapp or "").strip() or phone_raw
@@ -287,7 +293,16 @@ def track_contact(request, room_id, method):
         tel = phone_raw.replace(" ", "")
         if not tel:
             return redirect("room_detail", pk=room.id)
-        return redirect(f"tel:{tel}")
+        return render(
+            request,
+            "listings/external_link.html",
+            {
+                "title": "Calling landlord…",
+                "link": f"tel:{tel}",
+                "button_text": "Tap to Call",
+                "fallback_text": "If your phone didn’t open the dialer automatically, tap the button below.",
+            },
+        )
 
     if method == "whatsapp":
         if not phone_digits:
@@ -297,11 +312,24 @@ def track_contact(request, room_id, method):
     if method == "email":
         if not landlord_email:
             return redirect("room_detail", pk=room.id)
-        subject = quote(f"RentARoom enquiry: {room.title}")
+
+        subject = quote(f"Rooms4You enquiry: {room.title}")
         body = quote(
             f"Hi, I’m interested in your room listing ({room.title}) in {room.location}."
         )
-        return redirect(f"mailto:{landlord_email}?subject={subject}&body={body}")
+        mailto = f"mailto:{landlord_email}?subject={subject}&body={body}"
+
+        # DON'T redirect to mailto: (Django blocks it)
+        return render(
+            request,
+            "listings/external_link.html",
+            {
+                "title": "Opening email…",
+                "link": mailto,
+                "button_text": "Open Email",
+                "fallback_text": "If your email app didn’t open automatically, tap the button below.",
+            },
+        )
 
     return redirect("room_detail", pk=room.id)
 
@@ -314,19 +342,59 @@ def mark_success(request, room_id):
     return redirect("room_detail", pk=room.id)
 
 
+MAX_IMAGES_PER_ROOM = 10
+
+
 @login_required
 def edit_room_images(request, pk):
     room = get_object_or_404(Room, pk=pk, owner=request.user)
 
     if request.method == "POST":
-        for img in request.FILES.getlist("images")[:10]:
-            RoomImage.objects.create(room=room, image=img)
+        # --- Delete first (frees up slots) ---
+        delete_ids = request.POST.getlist("delete")
+        deleted_count = 0
+        if delete_ids:
+            qs = RoomImage.objects.filter(room=room, id__in=delete_ids)
+            deleted_count = qs.count()
+            qs.delete()
+            if deleted_count:
+                messages.success(request, f"Deleted {deleted_count} image(s).")
 
-        if "delete" in request.POST:
-            RoomImage.objects.filter(
-                id__in=request.POST.getlist("delete"), room=room
-            ).delete()
+        # --- Upload next (respect total max) ---
+        current_count = RoomImage.objects.filter(room=room).count()
+        remaining_slots = max(0, MAX_IMAGES_PER_ROOM - current_count)
+
+        uploads = request.FILES.getlist("images")
+        if uploads:
+            if remaining_slots <= 0:
+                messages.error(
+                    request,
+                    f"You already have {MAX_IMAGES_PER_ROOM} images. Delete some first to upload new ones.",
+                )
+            else:
+                to_add = uploads[:remaining_slots]
+                for img in to_add:
+                    RoomImage.objects.create(room=room, image=img)
+
+                messages.success(
+                    request,
+                    f"Uploaded {len(to_add)} image(s). ({RoomImage.objects.filter(room=room).count()}/{MAX_IMAGES_PER_ROOM})",
+                )
+
+                if len(uploads) > remaining_slots:
+                    messages.warning(
+                        request,
+                        f"Only {remaining_slots} image(s) were added (max {MAX_IMAGES_PER_ROOM} per room).",
+                    )
 
         return redirect("edit_room_images", pk=pk)
 
-    return render(request, "listings/edit_room_images.html", {"room": room})
+    return render(
+        request,
+        "listings/edit_room_images.html",
+        {
+            "room": room,
+            "img_count": room.images.count(),
+            "max_images": 10,
+        },
+    )

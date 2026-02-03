@@ -1,25 +1,67 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %} {% load static %} {% block content %}
 
-<h2>Manage Images — {{ room.title }}</h2>
+<div class="imgmgr-shell">
+  <div class="imgmgr-head">
+    <div>
+      <h2 class="imgmgr-title">Manage Photos</h2>
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
+      <p style="margin: 6px 0 14px; opacity: 0.8">
+        You have <strong>{{ img_count }}/{{ max_images }}</strong> images used.
+      </p>
 
-  <input type="file" name="images" multiple accept="image/*" />
-  <button type="submit" class="btn-primary">Upload</button>
-
-  <div class="grid">
-    {% for img in room.images.all %}
-    <div class="card">
-      <img src="{{ img.image.url }}" />
-      <label>
-        <input type="checkbox" name="delete" value="{{ img.id }}" /> Delete
-      </label>
+      <p class="imgmgr-sub">Room: <strong>{{ room.title }}</strong></p>
     </div>
-    {% endfor %}
   </div>
 
-  <button type="submit" class="btn-danger">Save Changes</button>
-</form>
+  <form method="post" enctype="multipart/form-data" class="imgmgr-card">
+    {% csrf_token %}
+
+    <!-- Upload area -->
+    <div class="imgmgr-upload">
+      <label class="imgmgr-label">Add new photos</label>
+
+      <div class="imgmgr-upload-row">
+        <input
+          class="imgmgr-file"
+          type="file"
+          name="images"
+          multiple
+          accept="image/*"
+        />
+        <button type="submit" class="btn-primary">Upload</button>
+      </div>
+
+      <small class="imgmgr-hint"
+        >Tip: You can select multiple images at once. Max 10 per upload.</small
+      >
+    </div>
+
+    <hr class="imgmgr-line" />
+
+    <!-- Existing images -->
+    <div class="imgmgr-label" style="margin-bottom: 10px">Current photos</div>
+
+    <div class="imgmgr-grid">
+      {% for img in room.images.all %}
+      <div class="imgmgr-item">
+        <img class="imgmgr-img" src="{{ img.image.url }}" alt="Room photo" />
+
+        <label class="imgmgr-del">
+          <input type="checkbox" name="delete" value="{{ img.id }}" />
+          Delete
+        </label>
+      </div>
+      {% empty %}
+      <p class="imgmgr-empty">No photos yet. Upload your first images above.</p>
+      {% endfor %}
+    </div>
+
+    {% if room.images.all %}
+    <div class="imgmgr-actions">
+      <button type="submit" class="btn-secondary">Save Changes</button>
+    </div>
+    {% endif %}
+  </form>
+</div>
 
 {% endblock %}

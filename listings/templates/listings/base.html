@@ -5,6 +5,12 @@
     <meta charset="UTF-8" />
     <title>Rooms4You</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link
+      rel="icon"
+      href="{% static 'images/favicon.png' %}"
+      type="image/x-icon"
+    />
     <link rel="stylesheet" href="{% static 'css/base.css' %}?v=2" />
   </head>
 
@@ -41,7 +47,26 @@
       </div>
     </header>
 
-    <main class="container">{% block content %}{% endblock %}</main>
+    <main class="container">
+      {% if messages %}
+      <div class="messages" style="max-width: 1200px; margin: 0 auto 14px">
+        {% for message in messages %}
+        <div
+          style="
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: #fff;
+            box-shadow: var(--shadow);
+            border: 1px solid #e5e7eb;
+          "
+        >
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} {% block content %}{% endblock %}
+    </main>
 
     <footer class="site-footer">
       <p>© 2026 Rooms4You • Your data is protected and never sold.</p>
