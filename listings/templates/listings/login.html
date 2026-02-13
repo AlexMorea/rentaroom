@@ -17,16 +17,27 @@
       />
 
       <label class="auth-label" style="margin-top: 10px">Password</label>
-      <input
-        class="input"
-        type="password"
-        name="password"
-        placeholder="Your password"
-        required
-      />
+
+      <div class="pw-wrap">
+        <input
+          id="loginPassword"
+          class="input pw-input"
+          type="password"
+          name="password"
+          placeholder="Your password"
+          required
+        />
+        <button class="pw-toggle" type="button" aria-label="Show password" data-toggle="#loginPassword">
+          👁
+        </button>
+      </div>
 
       <button class="btn-primary auth-btn" type="submit">Login</button>
     </form>
+
+    <p class="auth-hint" style="margin-top: 10px">
+      <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
+    </p>
 
     <p class="auth-hint">
       Don’t have an account?
@@ -35,4 +46,21 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll("[data-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sel = btn.getAttribute("data-toggle");
+      const input = document.querySelector(sel);
+      if (!input) return;
+
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      btn.textContent = isHidden ? "🙈" : "👁";
+      btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+    });
+  });
+</script>
 {% endblock %}

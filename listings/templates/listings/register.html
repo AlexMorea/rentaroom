@@ -4,69 +4,44 @@
   <div class="auth-card">
     <h2 class="auth-title">Create account</h2>
 
-    <form method="post" class="auth-form" novalidate>
-      {% csrf_token %} {% if form.non_field_errors %}
-      <div
-        class="auth-small"
-        style="color: #dc2626; font-weight: 700; margin-bottom: 10px"
-      >
-        {{ form.non_field_errors|striptags }}
-      </div>
-      {% endif %}
+    <form method="post" class="auth-form">
+      {% csrf_token %} {{ form.non_field_errors }}
 
       <div class="field">
-        <label class="auth-label" for="{{ form.username.id_for_label }}"
-          >Username</label
-        >
-        {{ form.username }} {% if form.username.errors %}
-        <div class="auth-small" style="color: #dc2626; font-weight: 700">
-          {{ form.username.errors|striptags }}
+        {{ form.username.label_tag }} {{ form.username }} {{ form.username.errors }}
+      </div>
+
+      <div class="field">
+        {{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}
+      </div>
+
+      <div class="field">
+        {{ form.password.label_tag }}
+
+        <div class="pw-wrap">
+          {{ form.password }}
+          <button class="pw-toggle" type="button" aria-label="Show password" data-toggle="#id_password">
+            👁
+          </button>
         </div>
-        {% endif %}
-      </div>
 
-      <div class="field">
-        <label class="auth-label" for="{{ form.email.id_for_label }}"
-          >Email address</label
-        >
-        {{ form.email }} {% if form.email.errors %}
-        <div class="auth-small" style="color: #dc2626; font-weight: 700">
-          {{ form.email.errors|striptags }}
-        </div>
-        {% endif %}
-      </div>
+        {{ form.password.errors }}
 
-      <div class="field">
-        <label class="auth-label" for="{{ form.password.id_for_label }}"
-          >Password</label
-        >
-        {{ form.password }}
-
-        <!-- Your own clean hint (not Django help_text) -->
         <small class="auth-small">
-          8+ characters. Avoid common passwords. Mix letters & numbers.
+          Password: 8+ characters. Avoid common passwords. Use a mix of letters and numbers.
         </small>
-
-        {% if form.password.errors %}
-        <div class="auth-small" style="color: #dc2626; font-weight: 700">
-          {{ form.password.errors|striptags }}
-        </div>
-        {% endif %}
       </div>
 
       <div class="field">
-        <label class="auth-label" for="{{ form.role.id_for_label }}"
-          >Role</label
-        >
-        {{ form.role }} {% if form.role.errors %}
-        <div class="auth-small" style="color: #dc2626; font-weight: 700">
-          {{ form.role.errors|striptags }}
-        </div>
-        {% endif %}
+        {{ form.role.label_tag }} {{ form.role }} {{ form.role.errors }}
       </div>
 
       <button class="btn-primary auth-btn" type="submit">Create account</button>
     </form>
+
+    <p class="auth-hint" style="margin-top: 10px">
+      <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
+    </p>
 
     <p class="auth-hint">
       Already registered?
@@ -75,4 +50,21 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll("[data-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sel = btn.getAttribute("data-toggle");
+      const input = document.querySelector(sel);
+      if (!input) return;
+
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      btn.textContent = isHidden ? "🙈" : "👁";
+      btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+    });
+  });
+</script>
 {% endblock %}

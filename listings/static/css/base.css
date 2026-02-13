@@ -404,6 +404,35 @@ a { text-decoration: none; color: inherit; }
   font-size: .82rem;
 }
 
+/* ================= PASSWORD TOGGLE ================= */
+
+.pw-wrap{
+  position: relative;
+  display: block;
+}
+
+.pw-wrap .pw-input,
+.pw-wrap input{
+  padding-right: 44px; /* space for the eye button */
+}
+
+.pw-toggle{
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  opacity: .85;
+}
+
+.pw-toggle:hover{ opacity: 1; }
+
+
 
 /* ================= FOOTER ================= */
 
@@ -643,4 +672,8 @@ a { text-decoration: none; color: inherit; }
 @keyframes taglineIn{
   from { opacity: 0; transform: translateY(2px); }
   to   { opacity: .55; transform: translateY(-2px); }
+}
+
+@media (max-width: 480px){
+  .brand-tagline{ display:none; }
 }

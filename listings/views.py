@@ -176,6 +176,11 @@ def user_login(request):
             # 🎉 Toast welcome message
             messages.success(request, f"Hello, {user.username} 👋")
 
+            # ✅ Redirect back to where user came from (room detail etc.)
+            next_url = request.POST.get("next") or request.GET.get("next")
+            if next_url:
+                return redirect(next_url)
+
             # Redirect by role
             if hasattr(user, "profile") and user.profile.role == "landlord":
                 return redirect("dashboard")
@@ -183,6 +188,7 @@ def user_login(request):
 
         messages.error(request, "Invalid username or password.")
     return render(request, "listings/login.html")
+
 
 
 def user_logout(request):
@@ -284,17 +290,17 @@ def add_review(request, room_id):
     )
     return redirect("room_detail", pk=room.id)
 
-
+@login_required
 def track_contact(request, room_id, method):
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
-    if request.user.is_authenticated:
-        RoomStat.objects.create(
-            room=room,
-            user=request.user,
-            stat_type=f"contact_{method}",
-        )
-        Contact.objects.get_or_create(room=room, user=request.user)
+    # save stat + allow review after contact
+    RoomStat.objects.create(
+        room=room,
+        user=request.user,
+        stat_type=f"contact_{method}",
+    )
+    Contact.objects.get_or_create(room=room, user=request.user)
 
     phone_raw = (room.contact_phone or "").strip()
     whatsapp_raw = (room.contact_whatsapp or "").strip() or phone_raw
@@ -309,6 +315,7 @@ def track_contact(request, room_id, method):
         tel = phone_raw.replace(" ", "")
         if not tel:
             return redirect("room_detail", pk=room.id)
+
         return render(
             request,
             "listings/external_link.html",
@@ -335,7 +342,7 @@ def track_contact(request, room_id, method):
         )
         mailto = f"mailto:{landlord_email}?subject={subject}&body={body}"
 
-        # DON'T redirect to mailto: (Django blocks it)
+        # DON'T redirect to mailto: (Django can block it). Use a safe template button.
         return render(
             request,
             "listings/external_link.html",
@@ -348,7 +355,6 @@ def track_contact(request, room_id, method):
         )
 
     return redirect("room_detail", pk=room.id)
-
 
 @login_required
 def mark_success(request, room_id):
