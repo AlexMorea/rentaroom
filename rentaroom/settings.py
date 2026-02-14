@@ -98,7 +98,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/rooms/"
 LOGOUT_REDIRECT_URL = "/rooms/"
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 def env_bool(name, default="False"):
     return os.environ.get(name, default).strip().lower() in ("1", "true", "yes", "on")
