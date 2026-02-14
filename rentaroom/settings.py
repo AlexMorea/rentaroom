@@ -100,21 +100,26 @@ LOGIN_REDIRECT_URL = "/rooms/"
 LOGOUT_REDIRECT_URL = "/rooms/"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# ================= EMAIL (Brevo SMTP for Password Reset) =================
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+def env_bool(name, default="False"):
+    return os.environ.get(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend"
+)
 
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", "True")
 
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL",
-    "Rooms4You <no-reply@onrender.com>"  # placeholder; you will override in Render env vars
-)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@rooms4you.app")
 
-# Render proxy (helps Django generate correct https links)
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Helps Django build correct reset links on Render
+CSRF_TRUSTED_ORIGINS = [
+    "https://rentaroom-djou.onrender.com",
+]
+
+
