@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.request
+import logging
 from django.core.mail.backends.base import BaseEmailBackend
 
 
@@ -76,3 +77,12 @@ class BrevoEmailBackend(BaseEmailBackend):
                     raise
 
         return sent_count
+
+logger = logging.getLogger("rooms4you_email")
+
+try:
+    # your Brevo API send call here
+    logger.info("Brevo send requested for %s", to_email)
+except Exception as e:
+    logger.exception("Brevo send failed: %s", e)
+    raise

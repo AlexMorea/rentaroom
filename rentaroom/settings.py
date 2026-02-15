@@ -106,14 +106,28 @@ def env_bool(name, default="False"):
 BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "").strip()
 
 if BREVO_API_KEY:
-    EMAIL_BACKEND = "listings.brevo_email_backend.BrevoEmailBackend"
+    EMAIL_BACKEND = "listings.email_backend.BrevoEmailBackend"
 else:
     # Local fallback (prints reset link in terminal)
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
-    "Rooms4You <thabisomorea@gmail.com>"
+    "thabisomorea@gmail.com"
 )
+FAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 
 BREVO_SANDBOX = env_bool("BREVO_SANDBOX", "0")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "loggers": {
+        "django": {"handlers": ["console"], "level": "INFO"},
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": True},
+        "rooms4you_email": {"handlers": ["console"], "level": "INFO"},
+    },
+}
