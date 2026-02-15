@@ -102,23 +102,18 @@ LOGOUT_REDIRECT_URL = "/rooms/"
 def env_bool(name, default="False"):
     return os.environ.get(name, default).strip().lower() in ("1", "true", "yes", "on")
 
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.smtp.EmailBackend"
+
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "").strip()
+
+if BREVO_API_KEY:
+    EMAIL_BACKEND = "listings.brevo_email_backend.BrevoEmailBackend"
+else:
+    # Local fallback (prints reset link in terminal)
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "Rooms4You <thabisomorea@gmail.com>"
 )
 
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", "True")
-
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@rooms4you.app")
-
-# Helps Django build correct reset links on Render
-CSRF_TRUSTED_ORIGINS = [
-    "https://rentaroom-djou.onrender.com",
-]
-
-
+BREVO_SANDBOX = env_bool("BREVO_SANDBOX", "0")
