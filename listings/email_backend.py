@@ -1,8 +1,12 @@
 import json
 import os
 import urllib.request
+import urllib.error
 import logging
+
 from django.core.mail.backends.base import BaseEmailBackend
+
+logger = logging.getLogger(__name__)
 
 
 class BrevoEmailBackend(BaseEmailBackend):
@@ -14,37 +18,42 @@ class BrevoEmailBackend(BaseEmailBackend):
     API_URL = "https://api.brevo.com/v3/smtp/email"
 
     def send_messages(self, email_messages):
-        api_key = os.environ.get("BREVO_API_KEY", "").strip()
+        api_key = (os.environ.get("BREVO_API_KEY") or "").strip()
         if not api_key:
-            # No API key configured -> nothing sent
+            logger.error("BREVO_API_KEY is missing. No emails sent.")
             return 0
 
-        sandbox = os.environ.get("BREVO_SANDBOX", "0").strip().lower() in ("1", "true", "yes", "on")
+        sandbox = (os.environ.get("BREVO_SANDBOX") or "0").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+
+        default_from = (os.environ.get("DEFAULT_FROM_EMAIL") or "").strip()
 
         sent_count = 0
+
         for m in email_messages:
             try:
-                from_email = (m.from_email or os.environ.get("DEFAULT_FROM_EMAIL") or "").strip()
+                from_email = (m.from_email or default_from or "").strip()
                 if not from_email:
-                    # Brevo requires a sender email
+                    logger.error("DEFAULT_FROM_EMAIL missing and message has no from_email.")
                     continue
 
-                # m.to is a list of recipient emails
-                to_list = [{"email": addr} for addr in (m.to or []) if addr]
+                to_emails = [addr for addr in (m.to or []) if addr]
+                if not to_emails:
+                    logger.warning("Email has no recipients. Skipping.")
+                    continue
 
-                # Build payload
                 payload = {
-                    "sender": {
-                        "name": "Rooms4You",
-                        "email": from_email,
-                    },
-                    "to": to_list,
+                    "sender": {"name": "Rooms4You", "email": from_email},
+                    "to": [{"email": addr} for addr in to_emails],
                     "subject": m.subject or "",
-                    # Django password reset uses body text by default
                     "textContent": m.body or "",
                 }
 
-                # If Django builds alternatives (html), use the html version too
+                # Use HTML if present
                 if getattr(m, "alternatives", None):
                     for content, mimetype in m.alternatives:
                         if mimetype == "text/html":
@@ -57,9 +66,11 @@ class BrevoEmailBackend(BaseEmailBackend):
                     "api-key": api_key,
                 }
 
-                # Brevo sandbox mode: doesn't actually deliver email, but returns success
+                # Sandbox mode -> Brevo returns success but does NOT deliver
                 if sandbox:
                     payload["headers"] = {"X-Sib-Sandbox": "drop"}
+
+                logger.info("Brevo send requested to=%s subject=%s sandbox=%s", to_emails, m.subject, sandbox)
 
                 req = urllib.request.Request(
                     self.API_URL,
@@ -69,20 +80,22 @@ class BrevoEmailBackend(BaseEmailBackend):
                 )
 
                 with urllib.request.urlopen(req, timeout=20) as resp:
+                    body = resp.read().decode("utf-8", errors="ignore")
                     if 200 <= resp.status < 300:
                         sent_count += 1
+                        logger.info("Brevo send OK status=%s response=%s", resp.status, body[:300])
+                    else:
+                        logger.error("Brevo send FAILED status=%s response=%s", resp.status, body[:500])
 
-            except Exception:
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode("utf-8", errors="ignore")
+                logger.error("Brevo HTTPError %s: %s", e.code, err_body[:800])
+                if not self.fail_silently:
+                    raise
+
+            except Exception as e:
+                logger.exception("Brevo send exception: %s", e)
                 if not self.fail_silently:
                     raise
 
         return sent_count
-
-logger = logging.getLogger("rooms4you_email")
-
-try:
-    # your Brevo API send call here
-    logger.info("Brevo send requested for %s", to_email)
-except Exception as e:
-    logger.exception("Brevo send failed: %s", e)
-    raise
