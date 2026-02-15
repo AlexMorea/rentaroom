@@ -1,0 +1,66 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+  <h1 class="page-title" style="margin:0;">Contacts Analytics</h1>
+  <a href="{% url 'dashboard' %}" class="btn-secondary">← Back to Dashboard</a>
+</div>
+
+<div class="dashboard-grid" style="margin-bottom:16px;">
+  <div class="stat-card">
+    <div class="stat-number">{{ totals.views }}</div>
+    <div class="stat-label">Total Views</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ totals.contacts }}</div>
+    <div class="stat-label">Total Contacts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ totals.success }}</div>
+    <div class="stat-label">Success Clicks</div>
+  </div>
+</div>
+
+<div class="form-shell">
+  <div class="form-card" style="overflow:auto;">
+    <h3 style="margin:0 0 12px;">Per-room clickthrough</h3>
+
+    <table style="width:100%;border-collapse:collapse;min-width:820px;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
+          <th style="padding:10px 8px;">Room</th>
+          <th style="padding:10px 8px;">Views</th>
+          <th style="padding:10px 8px;">Contacts</th>
+          <th style="padding:10px 8px;">CTR</th>
+          <th style="padding:10px 8px;">Phone</th>
+          <th style="padding:10px 8px;">WhatsApp</th>
+          <th style="padding:10px 8px;">Email</th>
+          <th style="padding:10px 8px;">Success</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rooms %}
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:10px 8px;">
+            <strong>{{ r.title }}</strong>
+            <div style="opacity:.75;font-size:.9rem;">{{ r.location }}</div>
+          </td>
+          <td style="padding:10px 8px;">{{ r.view_count }}</td>
+          <td style="padding:10px 8px;">{{ r.contact_total }}</td>
+          <td style="padding:10px 8px;">{{ r.ctr }}%</td>
+          <td style="padding:10px 8px;">{{ r.phone_count }}</td>
+          <td style="padding:10px 8px;">{{ r.whatsapp_count }}</td>
+          <td style="padding:10px 8px;">{{ r.email_count }}</td>
+          <td style="padding:10px 8px;">{{ r.success_count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td style="padding:12px 8px;" colspan="8">No rooms yet. Add a room to start tracking contacts.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+{% endblock %}

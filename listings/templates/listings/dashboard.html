@@ -15,27 +15,57 @@
   <a href="{% url 'create_room' %}" class="btn-primary">+ Add Room</a>
 </div>
 
+{% if show_profile_warning %}
+<div
+  style="
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  "
+>
+  <strong>Complete your profile</strong> — add at least one room listing and ensure your contact details are set so tenants can reach you smoothly.
+</div>
+{% endif %}
+
 <div class="dashboard-grid">
-  <div class="stat-card">
+  <a href="#your-rooms" class="stat-card stat-link">
     <div class="stat-number">{{ rooms.count }}</div>
     <div class="stat-label">Rooms</div>
-  </div>
-  <div class="stat-card">
+  </a>
+
+  {% if rooms.count > 0 %}
+  <a href="{% url 'upload_room_images' rooms.0.id %}" class="stat-card stat-link">
     <div class="stat-number">{{ image_count }}</div>
     <div class="stat-label">Images</div>
-  </div>
-  <div class="stat-card">
+  </a>
+  {% else %}
+  <a href="{% url 'create_room' %}" class="stat-card stat-link">
+    <div class="stat-number">{{ image_count }}</div>
+    <div class="stat-label">Images</div>
+  </a>
+  {% endif %}
+
+  <a href="{% url 'contacts_analytics' %}" class="stat-card stat-link">
     <div class="stat-number">{{ contact_count }}</div>
     <div class="stat-label">Contacts</div>
-  </div>
+  </a>
 </div>
 
-<div class="dashboard-rooms">
+<div class="dashboard-rooms" id="your-rooms">
   {% for room in rooms %}
   <div class="room-row">
     <div>
       <strong>{{ room.title }}</strong>
       <div style="opacity: 0.75; font-size: 0.9rem">{{ room.location }}</div>
+
+      <!-- ✅ tiny per-room stats preview (optional but useful) -->
+      <div style="opacity: 0.75; font-size: 0.85rem; margin-top: 4px">
+        Views: {{ room.view_count }} • Contacts: {{ room.contact_total }} • CTR: {{ room.ctr }}%
+      </div>
     </div>
 
     <div class="room-actions">

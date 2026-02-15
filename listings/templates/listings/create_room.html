@@ -23,6 +23,16 @@
       </div>
 
       <div class="form-field">
+        <label for="id_full_address">Full Address (Required)</label>
+        {{ form.full_address }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_postal_code">Area / Postal Code (Required)</label>
+        {{ form.postal_code }}
+      </div>
+
+      <div class="form-field">
         <label for="id_room_type">Room Type</label>
         {{ form.room_type }}
       </div>
@@ -40,6 +50,28 @@
       <div class="form-field">
         <label for="id_contact_email">Email Address</label>
         {{ form.contact_email }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_total_units">Total Units (Identical rooms)</label>
+        {{ form.total_units }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_available_units">Units Available Now</label>
+        {{ form.available_units }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_availability_status">Availability Status</label>
+        {{ form.availability_status }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_available_from"
+          >Available From (if occupied / next opening)</label
+        >
+        {{ form.available_from }}
       </div>
 
       <div class="form-field inline">

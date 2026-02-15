@@ -5,6 +5,8 @@ from django.contrib.auth import login, logout, authenticate
 from .forms import UserRegisterForm, RoomForm
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponseForbidden
+from django.contrib.auth.views import PasswordResetView
+from django.core.cache import cache
 from urllib.parse import quote
 from django.contrib import messages
 import re
@@ -157,10 +159,20 @@ def room_detail(request, pk):
 
 def register(request):
     form = UserRegisterForm(request.POST or None)
+
     if form.is_valid():
         user = form.save()
         login(request, user)
+
+        user.refresh_from_db()  # fully reload (safe)
+
+        messages.success(request, f"Welcome, {user.username} 👋")
+
+        if hasattr(user, "profile") and user.profile.role == "landlord":
+            return redirect("dashboard")
+
         return redirect("room_list")
+
     return render(request, "listings/register.html", {"form": form})
 
 
@@ -170,23 +182,30 @@ def user_login(request):
             username=request.POST.get("username"),
             password=request.POST.get("password"),
         )
+
         if user:
             login(request, user)
 
             # 🎉 Toast welcome message
             messages.success(request, f"Hello, {user.username} 👋")
 
-            # ✅ Redirect back to where user came from (room detail etc.)
+            # ✅ Always refresh profile (prevents edge case where profile isn't loaded)
+            user.refresh_from_db()
+
             next_url = request.POST.get("next") or request.GET.get("next")
+
+            # ✅ If landlord, always go dashboard (ignore browse next)
+            if hasattr(user, "profile") and user.profile.role == "landlord":
+                return redirect("dashboard")
+
+            # ✅ For tenants: go to next if it exists
             if next_url:
                 return redirect(next_url)
 
-            # Redirect by role
-            if hasattr(user, "profile") and user.profile.role == "landlord":
-                return redirect("dashboard")
             return redirect("room_list")
 
         messages.error(request, "Invalid username or password.")
+
     return render(request, "listings/login.html")
 
 
@@ -200,11 +219,23 @@ def user_logout(request):
 @login_required
 @user_passes_test(is_landlord)
 def dashboard(request):
-    rooms = Room.objects.filter(owner=request.user)
+    rooms_qs = Room.objects.filter(owner=request.user)
+
     image_count = RoomImage.objects.filter(room__owner=request.user).count()
     contact_count = RoomStat.objects.filter(
         room__owner=request.user, stat_type__startswith="contact"
     ).count()
+
+    rooms = rooms_qs.annotate(
+        view_count=Count("roomstat", filter=Q(roomstat__stat_type="view")),
+        contact_total=Count("roomstat", filter=Q(roomstat__stat_type__startswith="contact")),
+    ).order_by("-created_at")
+
+    for r in rooms:
+        r.ctr = round((r.contact_total / r.view_count) * 100, 1) if r.view_count else 0
+
+    show_profile_warning = (rooms_qs.count() == 0) or (not (request.user.email or "").strip())
+
     return render(
         request,
         "listings/dashboard.html",
@@ -212,8 +243,10 @@ def dashboard(request):
             "rooms": rooms,
             "image_count": image_count,
             "contact_count": contact_count,
+            "show_profile_warning": show_profile_warning,
         },
     )
+
 
 
 @login_required
@@ -420,6 +453,68 @@ def edit_room_images(request, pk):
             "max_images": 10,
         },
     )
+
+class RateLimitedPasswordResetView(PasswordResetView):
+    # Use our templates
+    subject_template_name = "registration/password_reset_subject.txt"
+    email_template_name = "registration/password_reset_email.txt"
+    html_email_template_name = "registration/password_reset_email.html"
+
+    # limits
+    COOLDOWN_SECONDS = 60          # 1 request per minute per email+IP
+    MAX_PER_HOUR = 5               # max 5 per hour per email+IP
+
+    def form_valid(self, form):
+        email = (form.cleaned_data.get("email") or "").strip().lower()
+        ip = self.request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip() \
+             or self.request.META.get("REMOTE_ADDR", "unknown")
+
+        base_key = f"pwreset:{ip}:{email}"
+
+        # cooldown key
+        cooldown_key = base_key + ":cooldown"
+        if cache.get(cooldown_key):
+            messages.error(self.request, "Please wait a bit before requesting another reset email.")
+            return self.form_invalid(form)
+
+        # hourly count key
+        hour_key = base_key + ":hour"
+        count = cache.get(hour_key, 0)
+        if count >= self.MAX_PER_HOUR:
+            messages.error(self.request, "Too many reset attempts. Please try again later.")
+            return self.form_invalid(form)
+
+        # record
+        cache.set(cooldown_key, 1, timeout=self.COOLDOWN_SECONDS)
+        cache.set(hour_key, count + 1, timeout=3600)
+
+        return super().form_valid(form)
+
+@login_required
+@user_passes_test(is_landlord)
+def contacts_analytics(request):
+    rooms_qs = Room.objects.filter(owner=request.user)
+
+    rooms = rooms_qs.annotate(
+        view_count=Count("roomstat", filter=Q(roomstat__stat_type="view")),
+        contact_total=Count("roomstat", filter=Q(roomstat__stat_type__startswith="contact")),
+        phone_count=Count("roomstat", filter=Q(roomstat__stat_type="contact_phone")),
+        whatsapp_count=Count("roomstat", filter=Q(roomstat__stat_type="contact_whatsapp")),
+        email_count=Count("roomstat", filter=Q(roomstat__stat_type="contact_email")),
+        success_count=Count("roomstat", filter=Q(roomstat__stat_type="success")),
+    ).order_by("-contact_total", "-view_count", "-created_at")
+
+    totals = {
+        "views": RoomStat.objects.filter(room__owner=request.user, stat_type="view").count(),
+        "contacts": RoomStat.objects.filter(room__owner=request.user, stat_type__startswith="contact").count(),
+        "success": RoomStat.objects.filter(room__owner=request.user, stat_type="success").count(),
+    }
+
+    # CTR safe calc
+    for r in rooms:
+        r.ctr = round((r.contact_total / r.view_count) * 100, 1) if r.view_count else 0
+
+    return render(request, "listings/contacts_analytics.html", {"rooms": rooms, "totals": totals})
 
 
 @login_required

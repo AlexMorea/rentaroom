@@ -19,6 +19,7 @@
     <p class="room-meta">
       <strong>Type:</strong> {{ room.get_room_type_display }}
     </p>
+    <p class="availability-badge">{{ room.availability_badge_text }}</p>
 
     <p style="margin-top: 10px">{{ room.description }}</p>
 
@@ -32,27 +33,34 @@
       <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}">
         📞 Call
       </a>
-      {% endif %}
-
-      {% if room.contact_whatsapp or room.contact_phone %}
-      <a class="btn-primary" href="{% url 'track_contact' room.id 'whatsapp' %}">
+      {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
+      <a
+        class="btn-primary"
+        href="{% url 'track_contact' room.id 'whatsapp' %}"
+      >
         <!-- WhatsApp SVG -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-          viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2a10 10 0 0 0-8.49 15.28L2 22l4.83-1.46A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.13-1.14l-.3-.18-2.86.87.93-2.78-.2-.3A8 8 0 1 1 12 20Z"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M12 2a10 10 0 0 0-8.49 15.28L2 22l4.83-1.46A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.13-1.14l-.3-.18-2.86.87.93-2.78-.2-.3A8 8 0 1 1 12 20Z"
+          />
         </svg>
         WhatsApp
       </a>
-      {% endif %}
-
-      {% if room.owner.email or room.contact_email %}
+      {% endif %} {% if room.owner.email or room.contact_email %}
       <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}">
         📧 Email
       </a>
       {% endif %}
     </div>
     {% else %}
-    <div style="
+    <div
+      style="
         background: white;
         padding: 16px;
         border-radius: 14px;
@@ -60,24 +68,32 @@
         border: 1px solid #e5e7eb;
         text-align: center;
         margin: 10px 0;
-      ">
+      "
+    >
       <p style="margin: 0 0 10px; opacity: 0.85">
         Please log in to contact the landlord.
       </p>
 
-      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-        <a class="btn-primary"
-           href="{% url 'login' %}?next={% url 'room_detail' room.id %}">
-           Login
+      <div
+        style="
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          flex-wrap: wrap;
+        "
+      >
+        <a
+          class="btn-primary"
+          href="{% url 'login' %}?next={% url 'room_detail' room.id %}"
+        >
+          Login
         </a>
         <a class="btn-secondary" href="{% url 'register' %}">
           Create account
         </a>
       </div>
     </div>
-    {% endif %}
-
-    {% if user.is_authenticated %}
+    {% endif %} {% if user.is_authenticated %}
 
     <hr style="margin: 16px 0; opacity: 0.25" />
 
@@ -85,7 +101,7 @@
     <form method="post" action="{% url 'mark_success' room.id %}">
       {% csrf_token %}
       <button type="submit" class="btn-secondary">
-        ✅ I successfully found a place
+        I successfully found a place
       </button>
     </form>
 
@@ -101,9 +117,11 @@
       </select>
 
       <div style="margin-top: 10px">
-        <textarea name="comment"
+        <textarea
+          name="comment"
           class="input textarea"
-          placeholder="Write your review...">
+          placeholder="Write your review..."
+        >
         </textarea>
       </div>
 
@@ -113,7 +131,6 @@
     </form>
 
     {% endif %}
-
   </div>
 </div>
 

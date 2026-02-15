@@ -55,6 +55,7 @@
       <h3 class="room-title">{{ room.title }}</h3>
       <p class="room-meta">{{ room.location }}</p>
       <p class="room-price">R {{ room.price }} p.m</p>
+      <p class="availability-badge">{{ room.availability_badge_text }}</p>
 
       {% if room.avg_rating %}
       <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
