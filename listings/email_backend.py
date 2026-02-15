@@ -29,14 +29,14 @@ class BrevoEmailBackend(BaseEmailBackend):
         for m in email_messages:
             # --- Resolve sender ---
             raw_from = (m.from_email or os.environ.get("DEFAULT_FROM_EMAIL") or "").strip()
-            name, email = parseaddr(raw_from)  # <- IMPORTANT (extracts pure email)
+            name, sender_email = parseaddr(raw_from)  # extracts pure email
 
-            # fallback: if DEFAULT_FROM_EMAIL had no brackets, parseaddr may return email in name
-            if not email and "@" in raw_from and "<" not in raw_from:
-                email = raw_from
+            # fallback: if DEFAULT_FROM_EMAIL had no brackets, parseaddr may put email in name
+            if not sender_email and "@" in raw_from and "<" not in raw_from:
+                sender_email = raw_from
                 name = "Rooms4You"
 
-            if not email:
+            if not sender_email:
                 logger.error("No valid sender email. DEFAULT_FROM_EMAIL=%r", raw_from)
                 continue
 
@@ -50,19 +50,38 @@ class BrevoEmailBackend(BaseEmailBackend):
 
             to_list = [{"email": addr} for addr in to_emails]
 
-            payload = {
-                "sender": {"name": sender_name, "email": email},
-                "to": to_list,
-                "subject": m.subject or "Rooms4You Notification",
-                "textContent": m.body or "",
-            }
+            # --- Subject ---
+            subject = (m.subject or "Rooms4You Notification").strip() or "Rooms4You Notification"
 
-            # If html alternative exists, add it
+            # --- Extract HTML alternative (if exists) ---
+            html_body = ""
             if getattr(m, "alternatives", None):
                 for content, mimetype in m.alternatives:
-                    if mimetype == "text/html":
-                        payload["htmlContent"] = content
+                    if mimetype == "text/html" and content:
+                        html_body = content.strip()
                         break
+
+            # --- TEXT: Brevo requires non-empty textContent ---
+            text_body = (m.body or "").strip()
+
+            # If Django produced html-only, body may be empty -> give a safe fallback
+            if not text_body:
+                text_body = (
+                    "Rooms4You\n\n"
+                    "We received a request to reset your password.\n"
+                    "If you requested this, use the reset link in this email.\n"
+                    "If you did not request this, you can ignore this message.\n"
+                )
+
+            payload = {
+                "sender": {"name": sender_name, "email": sender_email},
+                "to": to_list,
+                "subject": subject,
+                "textContent": text_body,  # ✅ never empty
+            }
+
+            if html_body:
+                payload["htmlContent"] = html_body
 
             headers = {
                 "accept": "application/json",
@@ -87,7 +106,6 @@ class BrevoEmailBackend(BaseEmailBackend):
                         logger.error("Brevo non-2xx (%s): %s", resp.status, body)
 
             except urllib.error.HTTPError as e:
-                # 🔥 This will show the REAL Brevo reason for 400/401/403
                 err_body = e.read().decode("utf-8", errors="ignore")
                 logger.error("Brevo HTTPError %s: %s", e.code, err_body)
                 if not self.fail_silently:
