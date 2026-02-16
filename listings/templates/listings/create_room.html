@@ -3,43 +3,157 @@
 <h1 class="page-title">Add New Room</h1>
 
 <div class="form-shell">
-  <!-- ✅ Guidance box -->
-  <div class="guide-box">
-    <h3 class="guide-title">How to fill this form (Landlords)</h3>
+  <!-- ✅ Guidance tabs (4 cards/tabs like before) -->
+  <div class="guide-box" aria-label="Landlord form guide">
+    <div class="guide-head">
+      <h3 class="guide-title">How to fill this form (Landlords)</h3>
+      <p class="guide-sub">
+        Quick tips so tenants understand your listing and you don’t get rejected
+        during checks.
+      </p>
+    </div>
 
-    <div class="guide-grid">
-      <div class="guide-item">
-        <div class="guide-label">📍 Location (Public)</div>
-        <div class="guide-text">
-          Tenants will see this. Use suburb/town only.<br />
-          <strong>Example:</strong> “Mamelodi East, Pretoria”
+    <div class="guide-tabs" role="tablist" aria-label="Form guide tabs">
+      <button
+        type="button"
+        class="guide-tab is-active"
+        role="tab"
+        aria-selected="true"
+        aria-controls="guide-panel-1"
+        id="guide-tab-1"
+        data-guide-tab="1"
+      >
+        📍 Location (Public)
+      </button>
+
+      <button
+        type="button"
+        class="guide-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="guide-panel-2"
+        id="guide-tab-2"
+        data-guide-tab="2"
+      >
+        🏠 Full Address (Required)
+      </button>
+
+      <button
+        type="button"
+        class="guide-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="guide-panel-3"
+        id="guide-tab-3"
+        data-guide-tab="3"
+      >
+        📦 Availability (1 unit)
+      </button>
+
+      <button
+        type="button"
+        class="guide-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="guide-panel-4"
+        id="guide-tab-4"
+        data-guide-tab="4"
+      >
+        🏘️ Availability (multiple units)
+      </button>
+    </div>
+
+    <div class="guide-panels">
+      <div
+        class="guide-panel is-active"
+        role="tabpanel"
+        tabindex="0"
+        id="guide-panel-1"
+        aria-labelledby="guide-tab-1"
+      >
+        <div class="guide-card">
+          <div class="guide-label">📍 Location (Public)</div>
+          <div class="guide-text">
+            Tenants will see this on the cards and search results. Use
+            suburb/town only (no street number).<br />
+            <strong>Example:</strong> “Mamelodi East, Pretoria”
+          </div>
+
+          <div class="guide-mini">
+            <span class="guide-pill">✅ Good:</span> “Soshanguve, Pretoria”
+          </div>
+          <div class="guide-mini">
+            <span class="guide-pill bad">🚫 Avoid:</span> “123 Tsutsuma St,
+            Mamelodi”
+          </div>
         </div>
       </div>
 
-      <div class="guide-item">
-        <div class="guide-label">🏠 Full Address (Required)</div>
-        <div class="guide-text">
-          For safety & authenticity checks. Tenants will see this in the details
-          view (as requested).<br />
-          <strong>Example:</strong> “123 Tsutsuma St, Mamelodi East, Pretoria”
+      <div
+        class="guide-panel"
+        role="tabpanel"
+        tabindex="0"
+        id="guide-panel-2"
+        aria-labelledby="guide-tab-2"
+      >
+        <div class="guide-card">
+          <div class="guide-label">🏠 Full Address (Required)</div>
+          <div class="guide-text">
+            Used for safety & authenticity checks. Keep it accurate so tenants
+            don’t get misled.<br />
+            <strong>Example:</strong> “123 Tsutsuma St, Mamelodi East, Pretoria”
+          </div>
+
+          <div class="guide-mini">
+            <span class="guide-pill">Tip:</span> Include street + suburb + city.
+          </div>
         </div>
       </div>
 
-      <div class="guide-item">
-        <div class="guide-label">📦 Availability for 1 unit</div>
-        <div class="guide-text">
-          If it’s a single room: set <strong>Total units = 1</strong>.<br />
-          - Available now → <strong>Available units = 1</strong><br />
-          - Occupied → choose “Occupied (available from)” (units auto → 0)
+      <div
+        class="guide-panel"
+        role="tabpanel"
+        tabindex="0"
+        id="guide-panel-3"
+        aria-labelledby="guide-tab-3"
+      >
+        <div class="guide-card">
+          <div class="guide-label">📦 Availability for 1 unit</div>
+          <div class="guide-text">
+            If it’s a single room: set <strong>Total units = 1</strong>.<br />
+            - Available now → <strong>Available units = 1</strong><br />
+            - Occupied → choose
+            <strong>Occupied (available from)</strong> (units auto →
+            <strong>0</strong> + date becomes required)
+          </div>
+
+          <div class="guide-mini">
+            <span class="guide-pill">Rule:</span> Occupied listings must show a
+            future “Available from” date.
+          </div>
         </div>
       </div>
 
-      <div class="guide-item">
-        <div class="guide-label">🏘️ Availability for multiple units</div>
-        <div class="guide-text">
-          If you have identical rooms: set total units (e.g. 12) and available
-          now (e.g. 6).<br />
-          Choose “Some available now” to show <strong>6/12 available</strong>.
+      <div
+        class="guide-panel"
+        role="tabpanel"
+        tabindex="0"
+        id="guide-panel-4"
+        aria-labelledby="guide-tab-4"
+      >
+        <div class="guide-card">
+          <div class="guide-label">🏘️ Availability for multiple units</div>
+          <div class="guide-text">
+            If you have identical rooms: set total units (e.g. 12) and units
+            available now (e.g. 6).<br />
+            Choose <strong>Some available now</strong> to display
+            <strong>6/12 available</strong>.
+          </div>
+
+          <div class="guide-mini">
+            <span class="guide-pill">Example:</span> Total = 12, Available now =
+            6
+          </div>
         </div>
       </div>
     </div>
@@ -172,6 +286,46 @@
 
 {% endblock %} {% block extra_js %}
 <script>
+  // ✅ Guide tabs
+  (function () {
+    const tabs = document.querySelectorAll(".guide-tab[data-guide-tab]");
+    const panels = document.querySelectorAll(".guide-panel");
+
+    if (!tabs.length || !panels.length) return;
+
+    function activate(n) {
+      tabs.forEach((t) => {
+        const isActive = t.dataset.guideTab === String(n);
+        t.classList.toggle("is-active", isActive);
+        t.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+
+      panels.forEach((p) => {
+        const isActive = p.id === `guide-panel-${n}`;
+        p.classList.toggle("is-active", isActive);
+      });
+    }
+
+    tabs.forEach((t) => {
+      t.addEventListener("click", () => activate(t.dataset.guideTab));
+    });
+
+    // keyboard: left/right navigation
+    tabs.forEach((t, idx) => {
+      t.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        const dir = e.key === "ArrowRight" ? 1 : -1;
+        const next = (idx + dir + tabs.length) % tabs.length;
+        tabs[next].focus();
+        activate(tabs[next].dataset.guideTab);
+      });
+    });
+  })();
+</script>
+
+<script>
+  // ✅ Availability rules (keep your logic)
   (function () {
     const status = document.getElementById("id_availability_status");
     const totalUnits = document.getElementById("id_total_units");
@@ -203,7 +357,7 @@
         availableFrom.style.opacity = "0.7";
       }
 
-      // Safety: if totalUnits blank, ensure it defaults to 1 visually
+      // Safety: if totalUnits blank/invalid, default to 1 visually
       if (
         totalUnits &&
         (totalUnits.value === "" || Number(totalUnits.value) < 1)

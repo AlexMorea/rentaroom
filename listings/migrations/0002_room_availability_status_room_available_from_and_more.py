@@ -14,13 +14,13 @@ class Migration(migrations.Migration):
             model_name="room",
             name="availability_status",
             field=models.CharField(
+                max_length=10,
                 choices=[
                     ("now", "Available now"),
                     ("from", "Occupied (available from)"),
                     ("mixed", "Some available now"),
                 ],
                 default="now",
-                max_length=10,
             ),
         ),
         migrations.AddField(
@@ -36,13 +36,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="room",
             name="full_address",
-            field=models.CharField(default=0, max_length=255),
+            field=models.CharField(max_length=255, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name="room",
             name="postal_code",
-            field=models.CharField(default="Unknown address", max_length=10),
+            field=models.CharField(max_length=10, default="0000"),
             preserve_default=False,
         ),
         migrations.AddField(

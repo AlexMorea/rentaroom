@@ -1,7 +1,252 @@
-{% extends 'listings/base.html' %} {% block content %}
-<h2>Add Room</h2>
-<form method="post">
-  {% csrf_token %} {{ form.as_p }}
-  <button type="submit">Save</button>
-</form>
+{% extends "listings/base.html" %} {% load static %} {% block content %}
+
+<h1 class="page-title">Add New Room</h1>
+
+<div class="form-shell">
+  <!-- ✅ Guidance: 4 beautiful cards (always visible, NOT clickable) -->
+  <div class="guide-box" aria-label="Landlord form guide">
+    <div class="guide-head">
+      <h3 class="guide-title">How to fill this form (Landlords)</h3>
+      <p class="guide-sub">
+        Quick tips so tenants understand your listing and you don’t get rejected
+        during checks.
+      </p>
+    </div>
+
+    <div class="guide-grid">
+      <div class="guide-item">
+        <div class="guide-label">📍 Location (Public)</div>
+        <div class="guide-text">
+          Tenants will see this on the cards and search results. Use suburb/town
+          only (no street number).<br />
+          <strong>Example:</strong> “Mamelodi East, Pretoria”
+        </div>
+
+        <div class="guide-mini">
+          <span class="guide-pill">✅ Good:</span> “Soshanguve, Pretoria”
+        </div>
+        <div class="guide-mini">
+          <span class="guide-pill bad">🚫 Avoid:</span> “123 Tsutsuma St,
+          Mamelodi”
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-label">🏠 Full Address (Required)</div>
+        <div class="guide-text">
+          Used for safety & authenticity checks. Keep it accurate so tenants
+          don’t get misled.<br />
+          <strong>Example:</strong> “123 Tsutsuma St, Mamelodi East, Pretoria”
+        </div>
+
+        <div class="guide-mini">
+          <span class="guide-pill">Tip:</span> Include street + suburb + city.
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-label">📦 Availability (1 unit)</div>
+        <div class="guide-text">
+          If it’s a single room: set <strong>Total units = 1</strong>.<br />
+          - Available now → <strong>Available units = 1</strong><br />
+          - Occupied → choose <strong>Occupied (available from)</strong> (units
+          auto → <strong>0</strong> + date becomes required)
+        </div>
+
+        <div class="guide-mini">
+          <span class="guide-pill">Rule:</span> Occupied listings must show a
+          future “Available from” date.
+        </div>
+      </div>
+
+      <div class="guide-item">
+        <div class="guide-label">🏘️ Availability (multiple units)</div>
+        <div class="guide-text">
+          If you have identical rooms: set total units (e.g. 12) and units
+          available now (e.g. 6).<br />
+          Choose <strong>Some available now</strong> to display
+          <strong>6/12 available</strong>.
+        </div>
+
+        <div class="guide-mini">
+          <span class="guide-pill">Example:</span> Total = 12, Available now = 6
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="form-card">
+    {% csrf_token %}
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="id_title">Title</label>
+        {{ form.title }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_price">Price (ZAR)</label>
+        {{ form.price }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_location">Location</label>
+        {{ form.location }}
+        <small class="field-hint"
+          >Public area only. Example: “Mamelodi East, Pretoria”.</small
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="id_full_address">Full Address (Required)</label>
+        {{ form.full_address }}
+        <small class="field-hint"
+          >Street address for safety verification. Example: “123 Tsutsuma St,
+          Mamelodi East, Pretoria”.</small
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="id_postal_code">Area / Postal Code (Required)</label>
+        {{ form.postal_code }}
+        <small class="field-hint">Example: “0122”.</small>
+      </div>
+
+      <div class="form-field">
+        <label for="id_room_type">Room Type</label>
+        {{ form.room_type }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_contact_phone">Call Phone</label>
+        {{ form.contact_phone }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_contact_whatsapp">WhatsApp Number</label>
+        {{ form.contact_whatsapp }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_contact_email">Email Address</label>
+        {{ form.contact_email }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_total_units">Total Units (Identical rooms)</label>
+        {{ form.total_units }}
+        <small class="field-hint"
+          >If you only have one room, keep this as <strong>1</strong>.</small
+        >
+      </div>
+
+      <div class="form-field">
+        <label for="id_available_units">Units Available Now</label>
+        {{ form.available_units }}
+        <small class="field-hint">
+          If you choose <strong>Occupied (available from)</strong>, this
+          auto-sets to <strong>0</strong>.
+        </small>
+      </div>
+
+      <div class="form-field">
+        <label for="id_availability_status">Availability Status</label>
+        {{ form.availability_status }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_available_from"
+          >Available From (if occupied / next opening)</label
+        >
+        {{ form.available_from }}
+        <small class="field-hint">
+          Only required if you choose
+          <strong>Occupied (available from)</strong>.
+        </small>
+      </div>
+
+      <div class="form-field inline">
+        <label for="id_is_available">Available</label>
+        <div class="checkbox-wrap">
+          {{ form.is_available }}
+          <span>Yes, show this room publicly</span>
+        </div>
+      </div>
+
+      <div class="form-field full">
+        <label for="id_description">Description</label>
+        {{ form.description }}
+      </div>
+
+      <div class="form-field full">
+        <label>Room images (max 10)</label>
+        <input
+          type="file"
+          name="images"
+          multiple
+          accept="image/*"
+          class="file-input"
+        />
+        <p class="help-text">
+          Tip: upload bright, wide photos (front view + room corners).
+        </p>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'dashboard' %}" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary">Save Room</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %} {% block extra_js %}
+
+<script>
+  // ✅ Availability rules (kept exactly)
+  (function () {
+    const status = document.getElementById("id_availability_status");
+    const totalUnits = document.getElementById("id_total_units");
+    const availableUnits = document.getElementById("id_available_units");
+    const availableFrom = document.getElementById("id_available_from");
+
+    if (!status || !availableUnits || !availableFrom) return;
+
+    function applyAvailabilityRules() {
+      const v = status.value;
+
+      if (v === "from") {
+        // Occupied -> no units available now
+        availableUnits.value = 0;
+        availableUnits.setAttribute("readonly", "readonly");
+        availableUnits.style.opacity = "0.7";
+
+        // date enabled
+        availableFrom.disabled = false;
+        availableFrom.style.opacity = "1";
+      } else {
+        // allow editing units
+        availableUnits.removeAttribute("readonly");
+        availableUnits.style.opacity = "1";
+
+        // date disabled + cleared
+        availableFrom.value = "";
+        availableFrom.disabled = true;
+        availableFrom.style.opacity = "0.7";
+      }
+
+      // Safety: if totalUnits blank/invalid, default to 1 visually
+      if (
+        totalUnits &&
+        (totalUnits.value === "" || Number(totalUnits.value) < 1)
+      ) {
+        totalUnits.value = 1;
+      }
+    }
+
+    applyAvailabilityRules();
+    status.addEventListener("change", applyAvailabilityRules);
+  })();
+</script>
+
 {% endblock %}

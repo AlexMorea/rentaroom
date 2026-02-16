@@ -100,9 +100,15 @@ a {
 .nav-links a {
   font-weight: 600;
   opacity: 0.9;
+  transition:
+    color 0.18s ease,
+    opacity 0.18s ease;
 }
+
+/* ✅ Navbar hover orange like popular badge */
 .nav-links a:hover {
   opacity: 1;
+  color: var(--orange);
 }
 
 .burger {
@@ -529,6 +535,137 @@ a {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 14px;
+}
+
+/* ✅ Helpful hints (you use these in templates) */
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  opacity: 0.75;
+  line-height: 1.35;
+}
+
+/* ================= LANDLORD GUIDE (4 TABS/CARDS) ================= */
+
+.guide-box {
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  margin: 0 0 16px;
+}
+
+.guide-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.guide-title {
+  margin: 0;
+  font-weight: 900;
+}
+
+.guide-sub {
+  margin: 0;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+.guide-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 12px;
+}
+
+@media (max-width: 900px) {
+  .guide-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.guide-tab {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 12px;
+  font-weight: 900;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.2;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.guide-tab:hover {
+  transform: translateY(-1px);
+  border-color: #dbe7ff;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.06);
+}
+
+.guide-tab.is-active {
+  border-color: rgba(249, 115, 22, 0.45);
+  box-shadow: 0 12px 28px rgba(249, 115, 22, 0.12);
+}
+
+.guide-panels {
+  position: relative;
+}
+
+.guide-panel {
+  display: none;
+}
+
+.guide-panel.is-active {
+  display: block;
+}
+
+.guide-card {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 14px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.04);
+}
+
+.guide-label {
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.guide-text {
+  opacity: 0.85;
+  line-height: 1.55;
+}
+
+.guide-mini {
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
+.guide-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 0.78rem;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  margin-right: 8px;
+}
+
+.guide-pill.bad {
+  background: #fff7ed;
+  border-color: rgba(249, 115, 22, 0.35);
 }
 
 /* ================= AUTH (LOGIN/REGISTER) ================= */
