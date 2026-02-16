@@ -2,14 +2,41 @@
 
 <h1 class="page-title">{{ room.title }}</h1>
 
-<div class="room-card" style="max-width: 900px; margin: 0 auto">
-  <div class="room-media">
-    <div class="image-slider">
-      {% for img in room.images.all|slice:":10" %}
-      <img src="{{ img.image.url }}" alt="Room image" />
-      {% empty %}
-      <img src="{% static 'img/placeholder.jpg' %}" alt="No image" />
-      {% endfor %}
+<div
+  class="room-card room-detail-card"
+  style="max-width: 900px; margin: 0 auto"
+>
+  <div class="room-media room-detail-media">
+    <!-- ✅ Bigger slider for detail page, ordered images, perfect sizing -->
+    <div class="slider-shell slider-shell-detail" data-slider>
+      <div class="image-slider image-slider-detail" data-slider-track>
+        {% for img in room.images.all|slice:":10" %}
+        <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
+        {% empty %}
+        <img
+          src="{% static 'img/placeholder.jpg' %}"
+          alt="No image"
+          loading="lazy"
+        />
+        {% endfor %}
+      </div>
+
+      <button
+        type="button"
+        class="slider-btn slider-prev"
+        data-slider-prev
+        aria-label="Previous image"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="slider-btn slider-next"
+        data-slider-next
+        aria-label="Next image"
+      >
+        ›
+      </button>
     </div>
   </div>
 
@@ -19,6 +46,7 @@
     <p class="room-meta">
       <strong>Type:</strong> {{ room.get_room_type_display }}
     </p>
+
     <p class="availability-badge">{{ room.availability_badge_text }}</p>
 
     <p style="margin-top: 10px">{{ room.description }}</p>
@@ -38,7 +66,6 @@
         class="btn-primary"
         href="{% url 'track_contact' room.id 'whatsapp' %}"
       >
-        <!-- WhatsApp SVG -->
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -58,6 +85,7 @@
       </a>
       {% endif %}
     </div>
+
     {% else %}
     <div
       style="
@@ -94,10 +122,8 @@
       </div>
     </div>
     {% endif %} {% if user.is_authenticated %}
-
     <hr style="margin: 16px 0; opacity: 0.25" />
 
-    <!-- SUCCESS BUTTON -->
     <form method="post" action="{% url 'mark_success' room.id %}">
       {% csrf_token %}
       <button type="submit" class="btn-secondary">
@@ -121,15 +147,13 @@
           name="comment"
           class="input textarea"
           placeholder="Write your review..."
-        >
-        </textarea>
+        ></textarea>
       </div>
 
       <button type="submit" class="btn-primary" style="margin-top: 10px">
         Submit Review
       </button>
     </form>
-
     {% endif %}
   </div>
 </div>

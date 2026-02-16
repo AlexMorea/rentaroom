@@ -11,12 +11,13 @@
       href="{% static 'images/favicon.png' %}"
       type="image/x-icon"
     />
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=2" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=3" />
   </head>
 
   <body
     data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
     data-role="{% if user.is_authenticated %}{{ user.profile.role }}{% endif %}"
+    data-logout-url="{% url 'logout' %}"
   >
     <header class="site-header">
       <div class="nav-container">
@@ -53,24 +54,41 @@
 
     <main class="container">
       {% if messages %}
-      <div class="messages" style="max-width: 1200px; margin: 0 auto 14px">
+      <!-- ✅ Toasts: auto dismiss -->
+      <div class="toast-wrap" id="toastWrap">
         {% for message in messages %}
-        <div
-          style="
-            padding: 12px 14px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            background: #fff;
-            box-shadow: var(--shadow);
-            border: 1px solid #e5e7eb;
-          "
-        >
+        <div class="toast toast-{{ message.tags|default:'info' }}">
           {{ message }}
         </div>
         {% endfor %}
       </div>
       {% endif %} {% block content %}{% endblock %}
     </main>
+
+    <!-- ✅ Inactivity warning modal -->
+    <div class="idle-modal" id="idleModal" aria-hidden="true">
+      <div
+        class="idle-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="idleTitle"
+      >
+        <h3 id="idleTitle" class="idle-title">Still there?</h3>
+        <p class="idle-text">
+          For your security, you’ll be logged out in
+          <strong><span id="idleCountdown">60</span>s</strong>
+          due to inactivity.
+        </p>
+        <div class="idle-actions">
+          <button type="button" class="btn-secondary" id="stayLoggedInBtn">
+            Stay logged in
+          </button>
+          <a class="btn-primary" id="logoutNowBtn" href="{% url 'logout' %}"
+            >Logout now</a
+          >
+        </div>
+      </div>
+    </div>
 
     <footer class="site-footer">
       <p>© 2026 Rooms4You • Your data is protected and never sold.</p>
@@ -110,6 +128,133 @@
     </script>
 
     <script>
+      // ✅ Toast auto-dismiss (smooth fade)
+      (function () {
+        const wrap = document.getElementById("toastWrap");
+        if (!wrap) return;
+
+        const toasts = wrap.querySelectorAll(".toast");
+        if (!toasts.length) return;
+
+        // show in
+        requestAnimationFrame(() => {
+          toasts.forEach((t) => t.classList.add("show"));
+        });
+
+        // dismiss after ~3.5s each
+        const DISPLAY_MS = 3500;
+        const STAGGER_MS = 250;
+
+        toasts.forEach((toast, idx) => {
+          const delay = DISPLAY_MS + idx * STAGGER_MS;
+
+          setTimeout(() => {
+            toast.classList.remove("show");
+            toast.classList.add("hide");
+
+            // remove from DOM after animation
+            setTimeout(() => {
+              if (toast && toast.parentNode)
+                toast.parentNode.removeChild(toast);
+              // remove wrapper if empty
+              if (wrap && wrap.children.length === 0) wrap.remove();
+            }, 400);
+          }, delay);
+        });
+      })();
+    </script>
+
+    <script>
+      // ✅ Auto-logout on inactivity (professional pattern)
+      (function () {
+        const root = document.body;
+        const isAuth = root.dataset.auth === "1";
+        if (!isAuth) return;
+
+        // --- Settings (professional defaults) ---
+        // 15 minutes idle -> warn
+        // 1 minute after warning -> logout
+        const IDLE_LIMIT_MS = 15 * 60 * 1000;
+        const WARNING_SECONDS = 60;
+
+        const logoutUrl = root.dataset.logoutUrl || "/logout/";
+
+        const modal = document.getElementById("idleModal");
+        const countdownEl = document.getElementById("idleCountdown");
+        const stayBtn = document.getElementById("stayLoggedInBtn");
+        const logoutNowBtn = document.getElementById("logoutNowBtn");
+
+        if (!modal || !countdownEl || !stayBtn || !logoutNowBtn) return;
+
+        let idleTimer = null;
+        let countdownTimer = null;
+        let remaining = WARNING_SECONDS;
+        let modalOpen = false;
+
+        function closeModal() {
+          modal.classList.remove("show");
+          modal.setAttribute("aria-hidden", "true");
+          modalOpen = false;
+        }
+
+        function openModal() {
+          remaining = WARNING_SECONDS;
+          countdownEl.textContent = String(remaining);
+          modal.classList.add("show");
+          modal.setAttribute("aria-hidden", "false");
+          modalOpen = true;
+
+          // start countdown
+          clearInterval(countdownTimer);
+          countdownTimer = setInterval(() => {
+            remaining -= 1;
+            countdownEl.textContent = String(Math.max(0, remaining));
+            if (remaining <= 0) {
+              clearInterval(countdownTimer);
+              window.location.href = logoutUrl;
+            }
+          }, 1000);
+        }
+
+        function resetIdleTimer() {
+          // if user interacts while warning is open, keep them logged in
+          if (modalOpen) {
+            clearInterval(countdownTimer);
+            closeModal();
+          }
+
+          clearTimeout(idleTimer);
+          idleTimer = setTimeout(openModal, IDLE_LIMIT_MS);
+        }
+
+        // Stay logged in
+        stayBtn.addEventListener("click", () => {
+          resetIdleTimer();
+        });
+
+        // Make sure logout button goes to correct url
+        logoutNowBtn.setAttribute("href", logoutUrl);
+
+        // Track "real user activity"
+        const events = [
+          "mousemove",
+          "mousedown",
+          "keydown",
+          "touchstart",
+          "scroll",
+          "click",
+        ];
+
+        events.forEach((evt) => {
+          window.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+
+        // Start timer
+        resetIdleTimer();
+      })();
+    </script>
+
+    <script>
       // card animations (safe even if no cards)
       const cards = document.querySelectorAll(".room-card");
       if (cards.length) {
@@ -127,6 +272,68 @@
           observer.observe(card);
         });
       }
+    </script>
+    <script>
+      // ✅ Beautiful slider arrows for all sliders (cards + detail)
+      (function () {
+        const shells = document.querySelectorAll("[data-slider]");
+        if (!shells.length) return;
+
+        shells.forEach((shell) => {
+          const track = shell.querySelector("[data-slider-track]");
+          const prev = shell.querySelector("[data-slider-prev]");
+          const next = shell.querySelector("[data-slider-next]");
+          if (!track || !prev || !next) return;
+
+          const slides = track.querySelectorAll("img");
+          const multiple = slides.length > 1;
+
+          // Only show arrows if multiple images
+          if (!multiple) {
+            prev.style.display = "none";
+            next.style.display = "none";
+            shell.classList.remove("has-multiple");
+            return;
+          }
+
+          shell.classList.add("has-multiple");
+
+          function getStep() {
+            // one "page" = visible width of slider
+            return Math.max(1, track.clientWidth);
+          }
+
+          function updateDisabled() {
+            // allow tiny rounding tolerance
+            const maxScroll = track.scrollWidth - track.clientWidth - 2;
+            prev.disabled = track.scrollLeft <= 2;
+            next.disabled = track.scrollLeft >= maxScroll;
+          }
+
+          function scrollByStep(dir) {
+            track.scrollBy({ left: dir * getStep(), behavior: "smooth" });
+          }
+
+          prev.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            scrollByStep(-1);
+          });
+
+          next.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            scrollByStep(1);
+          });
+
+          // keep buttons accurate
+          track.addEventListener("scroll", updateDisabled, { passive: true });
+          window.addEventListener("resize", updateDisabled, { passive: true });
+
+          // initial
+          updateDisabled();
+        });
+      })();
     </script>
 
     {% block extra_js %}{% endblock %}

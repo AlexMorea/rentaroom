@@ -36,12 +36,36 @@
   {% for room in rooms %}
   <a href="{% url 'room_detail' room.id %}" class="room-card">
     <div class="room-media">
-      <div class="image-slider">
-        {% for img in room.images.all|slice:":10" %}
-        <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
-        {% empty %}
-        <img src="{% static 'img/placeholder.jpg' %}" alt="No image" />
-        {% endfor %}
+      <!-- ✅ Slider shell: arrows appear only if multiple images -->
+      <div class="slider-shell" data-slider>
+        <div class="image-slider" data-slider-track>
+          {% for img in room.images.all|slice:":10" %}
+          <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
+          {% empty %}
+          <img
+            src="{% static 'img/placeholder.jpg' %}"
+            alt="No image"
+            loading="lazy"
+          />
+          {% endfor %}
+        </div>
+
+        <button
+          type="button"
+          class="slider-btn slider-prev"
+          data-slider-prev
+          aria-label="Previous image"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="slider-btn slider-next"
+          data-slider-next
+          aria-label="Next image"
+        >
+          ›
+        </button>
       </div>
 
       {% if room.contact_count|default:0 >= 3 %}

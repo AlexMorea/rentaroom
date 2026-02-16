@@ -56,6 +56,40 @@ a {
   display: block;
 }
 
+/* tagline under logo */
+.brand-tagline {
+  font-size: 0.55rem;
+  font-weight: 600;
+  opacity: 0.55;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin-top: -6px;
+  transform: translateY(-2px);
+  animation: taglineIn 0.5s ease-out both;
+}
+
+.logo:hover .brand-tagline {
+  opacity: 0.85;
+  transform: translateY(-3px);
+}
+
+@keyframes taglineIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 0.55;
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-tagline {
+    display: none;
+  }
+}
+
 .nav-links {
   display: flex;
   gap: 18px;
@@ -152,6 +186,17 @@ a {
   letter-spacing: 0.04em;
 }
 
+.stat-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.stat-link:hover {
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
 /* ================= DASHBOARD ================= */
 
 .dashboard-grid {
@@ -230,32 +275,108 @@ a {
   overflow: hidden;
 }
 
+/* ✅ slider wrapper (needed for arrows overlay) */
+.slider-shell {
+  position: relative;
+  width: 100%;
+}
+
+/* ✅ Cards: enforce professional size without changing card layout */
 .image-slider {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   width: 100%;
-  height: 170px;
+  height: 170px; /* locked to keep cards consistent */
+  scroll-behavior: smooth;
 }
 
 .image-slider img {
   flex: 0 0 100%;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: 170px; /* match container */
+  object-fit: cover; /* perfect fill, no stretch */
+  object-position: center;
   scroll-snap-align: start;
   display: block;
+  background: #e5e7eb;
 }
 
+/* Keep swipe, hide scrollbar */
 .image-slider::-webkit-scrollbar {
-  height: 8px;
+  height: 0px;
 }
 .image-slider::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 999px;
+  background: transparent;
 }
 
+/* ✅ Slider arrows ON TOP of image (mid-left / mid-right) */
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  z-index: 50;
+
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(15, 23, 42, 0.45);
+  color: #fff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.slider-prev {
+  left: 12px; /* mid-left */
+}
+
+.slider-next {
+  right: 12px; /* mid-right */
+}
+
+/* show on hover (desktop) only when multiple images */
+.slider-shell.has-multiple:hover .slider-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* mobile: visible */
+@media (max-width: 720px) {
+  .slider-shell.has-multiple .slider-btn {
+    opacity: 0.95;
+    pointer-events: auto;
+  }
+}
+
+.slider-btn:hover {
+  background: rgba(15, 23, 42, 0.65);
+  transform: translateY(-50%) scale(1.06);
+}
+
+.slider-btn:disabled {
+  opacity: 0.35 !important;
+  cursor: default;
+  transform: translateY(-50%);
+}
+
+/* badges must sit above images too */
 .badge {
   position: absolute;
   top: 10px;
@@ -266,6 +387,7 @@ a {
   color: #fff;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(6px);
+  z-index: 60;
 }
 
 .badge-popular {
@@ -308,6 +430,51 @@ a {
   color: #facc15;
   font-size: 0.85rem;
   margin: 0;
+}
+
+/* availability badge (yours) */
+.availability-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: #0f172a;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  width: fit-content;
+  margin: 6px 0 0;
+  opacity: 0.85;
+}
+
+/* ✅ Detail page image sizing (only if you add those classes in template) */
+.room-detail-media .image-slider-detail {
+  height: 420px;
+}
+
+.room-detail-media .image-slider-detail img {
+  height: 420px;
+}
+
+@media (max-width: 900px) {
+  .room-detail-media .image-slider-detail {
+    height: 320px;
+  }
+  .room-detail-media .image-slider-detail img {
+    height: 320px;
+  }
+}
+
+@media (max-width: 520px) {
+  .room-detail-media .image-slider-detail {
+    height: 240px;
+  }
+  .room-detail-media .image-slider-detail img {
+    height: 240px;
+  }
 }
 
 /* ================= BUTTONS ================= */
@@ -433,7 +600,7 @@ a {
 
 .pw-wrap .pw-input,
 .pw-wrap input {
-  padding-right: 44px; /* space for the eye button */
+  padding-right: 44px;
 }
 
 .pw-toggle {
@@ -461,12 +628,8 @@ a {
   padding: 30px;
   text-align: center;
   font-size: 0.9rem;
-
-  /* pick a logo color */
   background: linear-gradient(135deg, var(--blue-dark), var(--blue));
   color: #fff;
-
-  /*make it crisp (don’t fade the whole footer) */
   opacity: 1;
 }
 
@@ -475,7 +638,7 @@ a {
 }
 
 .site-footer p:last-child {
-  opacity: 0.85; /* subtle, but readable */
+  opacity: 0.85;
 }
 
 /* ================= MOBILE NAV ================= */
@@ -497,6 +660,7 @@ a {
   .nav-links.show {
     display: flex;
   }
+
   .burger {
     display: block;
   }
@@ -506,25 +670,6 @@ a {
     align-items: flex-start;
     gap: 8px;
   }
-}
-
-.image-slider {
-  height: 170px; /* lock height */
-}
-
-.image-slider img {
-  height: 170px; /* force same height */
-  object-fit: cover; /* no stretching */
-}
-
-.room-media {
-  aspect-ratio: 16 / 9;
-}
-.image-slider {
-  height: auto;
-}
-.image-slider img {
-  height: 100%;
 }
 
 /* ================= IMAGE MANAGER ================= */
@@ -638,7 +783,7 @@ a {
   margin: 0;
 }
 
-/* ================= TOASTS ================= */
+/* ================= TOASTS (AUTO DISMISS READY) ================= */
 
 .toast-wrap {
   position: fixed;
@@ -648,6 +793,7 @@ a {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 360px;
 }
 
 .toast {
@@ -656,12 +802,22 @@ a {
   padding: 12px 16px;
   border-radius: 12px;
   box-shadow: var(--shadow);
-  font-weight: 700;
+  font-weight: 800;
   opacity: 0;
   transform: translateY(-10px);
-  animation:
-    toast-in 0.3s ease forwards,
-    toast-out 0.3s ease forwards 3.2s;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.hide {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .toast-success {
@@ -672,76 +828,58 @@ a {
   background: #dc2626;
 }
 
-@keyframes toast-in {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.toast-info {
+  background: #111827;
 }
 
-@keyframes toast-out {
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
+.toast-warning {
+  background: #f59e0b;
+  color: #111827;
 }
 
-.brand-tagline {
-  font-size: 0.55rem;
-  font-weight: 600;
-  opacity: 0.55;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  margin-top: -6px;
-  transform: translateY(-2px);
-  animation: taglineIn 0.5s ease-out both;
-}
+/* ================= IDLE AUTO-LOGOUT MODAL (READY) ================= */
 
-/* hover animation */
-.logo:hover .brand-tagline {
-  opacity: 0.85;
-  transform: translateY(-3px);
-}
-
-@keyframes taglineIn {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 0.55;
-    transform: translateY(-2px);
-  }
-}
-
-@media (max-width: 480px) {
-  .brand-tagline {
-    display: none;
-  }
-}
-
-.stat-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-}
-
-.stat-link:hover {
-  transform: translateY(-2px);
-  cursor: pointer;
-}
-
-.availability-badge {
-  display: inline-flex;
+.idle-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.78rem;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.idle-modal.show {
+  display: flex;
+}
+
+.idle-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+}
+
+.idle-title {
+  margin: 0 0 8px;
+  font-weight: 900;
   color: #0f172a;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  width: fit-content;
+}
+
+.idle-text {
+  margin: 0 0 14px;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.idle-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }

@@ -1,7 +1,89 @@
 {% extends "listings/base.html" %} {% block content %}
-<h2>Edit Room</h2>
-<form method="post">
-  {% csrf_token %} {{ form.as_p }}
-  <button class="btn-primary">Save changes</button>
-</form>
+
+<h1 class="page-title">Edit Room</h1>
+
+<div class="form-shell">
+  <div class="guide-box">
+    <h3 class="guide-title">Quick guide</h3>
+    <div class="guide-grid">
+      <div class="guide-item">
+        <div class="guide-label">📍 Location</div>
+        <div class="guide-text">
+          Public area tenants see. Example: “Mamelodi East, Pretoria”.
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-label">🏠 Full Address</div>
+        <div class="guide-text">
+          Required for safety verification. Example: “123 Tsutsuma St, Mamelodi
+          East, Pretoria”.
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-label">🏘️ Units</div>
+        <div class="guide-text">
+          Multi-unit example: <strong>6/12</strong> available now. Occupied-from
+          auto-sets <strong>available units = 0</strong>.
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-label">📅 Available from</div>
+        <div class="guide-text">
+          Only enabled when status is “Occupied (available from)”.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" class="form-card">
+    {% csrf_token %} {{ form.as_p }}
+
+    <div class="form-actions">
+      <a href="{% url 'dashboard' %}" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary">Save changes</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %} {% block extra_js %}
+<script>
+  (function () {
+    const status = document.getElementById("id_availability_status");
+    const totalUnits = document.getElementById("id_total_units");
+    const availableUnits = document.getElementById("id_available_units");
+    const availableFrom = document.getElementById("id_available_from");
+
+    if (!status || !availableUnits || !availableFrom) return;
+
+    function applyAvailabilityRules() {
+      const v = status.value;
+
+      if (v === "from") {
+        availableUnits.value = 0;
+        availableUnits.setAttribute("readonly", "readonly");
+        availableUnits.style.opacity = "0.7";
+
+        availableFrom.disabled = false;
+        availableFrom.style.opacity = "1";
+      } else {
+        availableUnits.removeAttribute("readonly");
+        availableUnits.style.opacity = "1";
+
+        availableFrom.value = "";
+        availableFrom.disabled = true;
+        availableFrom.style.opacity = "0.7";
+      }
+
+      if (
+        totalUnits &&
+        (totalUnits.value === "" || Number(totalUnits.value) < 1)
+      ) {
+        totalUnits.value = 1;
+      }
+    }
+
+    applyAvailabilityRules();
+    status.addEventListener("change", applyAvailabilityRules);
+  })();
+</script>
 {% endblock %}
