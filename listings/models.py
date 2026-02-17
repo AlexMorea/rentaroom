@@ -4,6 +4,8 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from cloudinary.models import CloudinaryField
+
 
 
 class Room(models.Model):
@@ -152,11 +154,6 @@ class RoomStat(models.Model):
 
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-
-    # ✅ IMPORTANT:
-    # your code stores strings like "contact_phone", "contact_whatsapp", etc,
-    # but you also sometimes filter stat_type__startswith="contact"
-    # This supports your real values cleanly.
     stat_type = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -165,8 +162,9 @@ class RoomStat(models.Model):
 
 
 class RoomImage(models.Model):
-    room = models.ForeignKey(Room, related_name="images", on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="rooms/")
+    room = models.ForeignKey("Room", related_name="images", on_delete=models.CASCADE)
+    image = CloudinaryField("image")  # stored on Cloudinary
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Image for {self.room.title}"
+        return f"Room {self.room_id} image"

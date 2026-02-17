@@ -36,7 +36,7 @@
   {% for room in rooms %}
   <a href="{% url 'room_detail' room.id %}" class="room-card">
     <div class="room-media">
-      <!-- ✅ Slider shell: arrows appear only if multiple images -->
+      <!-- Slider shell: arrows appear only if multiple images -->
       <div class="slider-shell" data-slider>
         <div class="image-slider" data-slider-track>
           {% for img in room.images.all|slice:":10" %}
