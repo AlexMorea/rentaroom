@@ -1,8 +1,5 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 try:
     import dj_database_url
@@ -116,7 +113,7 @@ CLOUDINARY_STORAGE = {
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
-MEDIA_URL = "/media/"  # Cloudinary returns full URLs anyway; safe to keep
+MEDIA_URL = "/media/"  
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
