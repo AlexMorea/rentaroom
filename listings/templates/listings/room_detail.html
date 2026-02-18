@@ -1,7 +1,163 @@
-{% if user.is_authenticated %} {% if user.profile.role == "tenant" %}
-<div style="margin-bottom: 12px">
-  <a class="btn-secondary" href="{% url 'toggle_favorite' room.id %}">
-    {% if is_saved %}✅ Saved{% else %}❤️ Save{% endif %}
-  </a>
+{% extends "listings/base.html" %} {% load static %} {% block content %}
+
+<h1 class="page-title">{{ room.title }}</h1>
+
+<div
+  class="room-card room-detail-card"
+  style="max-width: 900px; margin: 0 auto"
+>
+  <div class="room-media room-detail-media">
+    <div class="slider-shell slider-shell-detail" data-slider>
+      <div class="image-slider image-slider-detail" data-slider-track>
+        {% for img in room.images.all|slice:":10" %}
+        <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
+        {% empty %}
+        <img
+          src="{% static 'img/placeholder.jpg' %}"
+          alt="No image"
+          loading="lazy"
+        />
+        {% endfor %}
+      </div>
+
+      <button
+        type="button"
+        class="slider-btn slider-prev"
+        data-slider-prev
+        aria-label="Previous image"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="slider-btn slider-next"
+        data-slider-next
+        aria-label="Next image"
+      >
+        ›
+      </button>
+    </div>
+  </div>
+
+  <div class="room-info">
+    <p class="room-meta"><strong>Location:</strong> {{ room.location }}</p>
+    <p class="room-price">R {{ room.price }}</p>
+    <p class="room-meta">
+      <strong>Type:</strong> {{ room.get_room_type_display }}
+    </p>
+
+    <p class="availability-badge">{{ room.availability_badge_text }}</p>
+    <p style="margin-top: 10px">{{ room.description }}</p>
+
+    <hr style="margin: 16px 0; opacity: 0.25" />
+
+    <h3 style="margin: 0 0 10px">Contact landlord</h3>
+
+    {% if user.is_authenticated %} {% if user.profile.role == "tenant" %}
+    <div style="margin-bottom: 12px">
+      <a class="btn-secondary" href="{% url 'toggle_favorite' room.id %}">
+        {% if is_saved %}✅ Saved{% else %}❤️ Save{% endif %}
+      </a>
+    </div>
+    {% endif %}
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      {% if room.contact_phone %}
+      <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}"
+        >📞 Call</a
+      >
+      {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
+      <a
+        class="btn-primary"
+        href="{% url 'track_contact' room.id 'whatsapp' %}"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path
+            d="M12 2a10 10 0 0 0-8.49 15.28L2 22l4.83-1.46A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.13-1.14l-.3-.18-2.86.87.93-2.78-.2-.3A8 8 0 1 1 12 20Z"
+          />
+        </svg>
+        WhatsApp
+      </a>
+      {% endif %} {% if room.owner.email or room.contact_email %}
+      <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}"
+        >📧 Email</a
+      >
+      {% endif %}
+    </div>
+
+    <hr style="margin: 16px 0; opacity: 0.25" />
+
+    <form method="post" action="{% url 'mark_success' room.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-secondary">
+        I successfully found a place
+      </button>
+    </form>
+
+    <h3 style="margin-top: 18px">Leave a review</h3>
+
+    <form method="post" action="{% url 'add_review' room.id %}">
+      {% csrf_token %}
+      <label>Rating:</label>
+      <select name="rating" class="input" style="max-width: 160px">
+        {% for i in "12345" %}
+        <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+      </select>
+
+      <div style="margin-top: 10px">
+        <textarea
+          name="comment"
+          class="input textarea"
+          placeholder="Write your review..."
+        ></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary" style="margin-top: 10px">
+        Submit Review
+      </button>
+    </form>
+
+    {% else %}
+    <div
+      style="
+        background: white;
+        padding: 16px;
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        border: 1px solid #e5e7eb;
+        text-align: center;
+        margin: 10px 0;
+      "
+    >
+      <p style="margin: 0 0 10px; opacity: 0.85">
+        Please log in to contact the landlord.
+      </p>
+
+      <div
+        style="
+          display: flex;
+          gap: 10px;
+          justify-content: center;
+          flex-wrap: wrap;
+        "
+      >
+        <a
+          class="btn-primary"
+          href="{% url 'login' %}?next={% url 'room_detail' room.id %}"
+          >Login</a
+        >
+        <a class="btn-secondary" href="{% url 'register' %}">Create account</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </div>
-{% endif %}
+
+{% endblock %}
