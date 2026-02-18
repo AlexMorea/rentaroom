@@ -1,0 +1,60 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div
+  style="
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  "
+>
+  <h1 class="page-title" style="margin: 0">My Rooms</h1>
+
+  <div style="display: flex; gap: 10px; flex-wrap: wrap">
+    <a href="{% url 'dashboard' %}" class="btn-secondary">← Back</a>
+    <a href="{% url 'create_room' %}" class="btn-primary">+ Add Room</a>
+  </div>
+</div>
+
+<div class="dashboard-rooms">
+  {% for room in rooms %}
+  <div class="room-row">
+    <div>
+      <strong>{{ room.title }}</strong>
+      <div style="opacity: 0.75; font-size: 0.9rem">{{ room.location }}</div>
+      <div style="opacity: 0.75; font-size: 0.85rem; margin-top: 4px">
+        {{ room.availability_badge_text }}
+      </div>
+    </div>
+
+    <div class="room-actions">
+      <a href="{% url 'upload_room_images' room.id %}">Images</a> |
+      <a href="{% url 'edit_room' room.id %}">Edit</a> |
+      <a
+        href="{% url 'delete_room' room.id %}"
+        onclick="return confirm('Delete this room?');"
+        >Delete</a
+      >
+    </div>
+  </div>
+  {% empty %}
+  <div
+    style="
+      background: white;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    "
+  >
+    <p style="margin: 0 0 12px">You haven't added any rooms yet.</p>
+    <a href="{% url 'create_room' %}" class="btn-primary"
+      >+ Add your first room</a
+    >
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

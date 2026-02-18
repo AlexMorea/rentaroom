@@ -15,6 +15,18 @@ import re
 def is_landlord(user):
     return hasattr(user, "profile") and user.profile.role == "landlord"
 
+@login_required
+def landlord_rooms(request):
+    rooms = Room.objects.filter(owner=request.user).order_by("-created_at")
+    return render(request, "listings/landlord_rooms.html", {"rooms": rooms})
+
+@login_required
+def landlord_images_hub(request):
+    room = Room.objects.filter(owner=request.user).order_by("-created_at").first()
+    if not room:
+        return redirect("create_room")
+    return redirect("edit_room_images", pk=room.id)
+
 
 def home(request):
     """
@@ -189,16 +201,16 @@ def user_login(request):
             # 🎉 Toast welcome message
             messages.success(request, f"Hello, {user.username} 👋")
 
-            # ✅ Always refresh profile (prevents edge case where profile isn't loaded)
+            #
             user.refresh_from_db()
 
             next_url = request.POST.get("next") or request.GET.get("next")
 
-            # ✅ If landlord, always go dashboard (ignore browse next)
+            
             if hasattr(user, "profile") and user.profile.role == "landlord":
                 return redirect("dashboard")
 
-            # ✅ For tenants: go to next if it exists
+            
             if next_url:
                 return redirect(next_url)
 

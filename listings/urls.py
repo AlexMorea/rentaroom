@@ -14,6 +14,8 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("dashboard/add/", views.create_room, name="add_room"),
     path("dashboard/contacts/", views.contacts_analytics, name="contacts_analytics"),
+    path("landlord/rooms/", views.landlord_rooms, name="landlord_rooms"),
+    path("landlord/images/", views.landlord_images_hub, name="landlord_images_hub"),
     path("rooms/<int:pk>/edit/", views.edit_room, name="edit_room"),
     path("rooms/<int:pk>/delete/", views.delete_room, name="delete_room"),
     path(
