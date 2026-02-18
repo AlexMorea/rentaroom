@@ -4,6 +4,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponseForbidden
 from django.contrib.auth.views import PasswordResetView
+from django.urls import reverse
 from django.core.cache import cache
 from urllib.parse import quote
 from django.contrib import messages
@@ -289,8 +290,19 @@ def profile(request):
     user = request.user
     p = user.profile
 
-    # NOTE TO SELF: tenant panels (saved + viewed)
-    favorites_qs = Favorite.objects.filter(user=user).select_related("room").order_by("-created_at")
+    def dash(value):
+        """Return a clean display value instead of blanks/None (prevents 'code leak' looking output)."""
+        value = (value or "").strip() if isinstance(value, str) else value
+        return value if value else "—"
+
+    # =========================
+    # Tenant panels (saved + viewed)
+    # =========================
+    favorites_qs = (
+        Favorite.objects.filter(user=user)
+        .select_related("room")
+        .order_by("-created_at")
+    )
     saved_rooms = [f.room for f in favorites_qs]
 
     viewed_stats = (
@@ -299,7 +311,7 @@ def profile(request):
         .order_by("-created_at")
     )
 
-    # NOTE TO SELF: dedupe viewed rooms without breaking sqlite
+    # dedupe viewed rooms without breaking sqlite
     seen = set()
     viewed_rooms = []
     for s in viewed_stats:
@@ -310,27 +322,93 @@ def profile(request):
         seen.add(s.room_id)
         viewed_rooms.append(s.room)
 
-    context = {
-        "p": p,
-        "saved_rooms": saved_rooms,
-        "viewed_rooms": viewed_rooms,
-        "saved_count": len(saved_rooms),
-        "viewed_count": len(viewed_rooms),
-    }
+    # =========================
+    # Landlord analytics
+    # =========================
+    rooms_count = 0
+    image_count = 0
+    contact_count = 0
 
     if p.role == "landlord":
         rooms = Room.objects.filter(owner=user).order_by("-created_at")
+        rooms_count = rooms.count()
         image_count = RoomImage.objects.filter(room__owner=user).count()
-        contact_count = RoomStat.objects.filter(room__owner=user, stat_type__startswith="contact").count()
+        contact_count = RoomStat.objects.filter(
+            room__owner=user, stat_type__startswith="contact"
+        ).count()
 
-        context.update(
-            {
-                "rooms": rooms,
-                "rooms_count": rooms.count(),
-                "image_count": image_count,
-                "contact_count": contact_count,
-            }
+    # =========================
+    # Header badge (template doesn't need if/else)
+    # =========================
+    persona_text = p.get_persona_display() if getattr(p, "persona", None) else "Not set"
+    badge_text = f"{persona_text}" if p.role == "tenant" else "Landlord"
+    verified_badge = "Verified" if (p.role == "landlord" and getattr(p, "is_verified", False)) else ""
+
+    # =========================
+    # Stats (split into link stats + plain stats to avoid template if)
+    # =========================
+    stat_cards = []
+    stat_links = []
+
+    if p.role == "tenant":
+        stat_cards = [
+            {"number": len(saved_rooms), "label": "Saved rooms"},
+            {"number": len(viewed_rooms), "label": "Viewed rooms"},
+        ]
+    else:
+        stat_links = [
+            {"href": reverse("landlord_rooms"), "number": rooms_count, "label": "Rooms"},
+            {"href": reverse("landlord_images_hub"), "number": image_count, "label": "Images"},
+            {"href": reverse("contacts_analytics"), "number": contact_count, "label": "Contacts"},
+        ]
+
+    # =========================
+    # Details rows (both roles)
+    # =========================
+    detail_rows = [
+        {"label": "Name", "value": f"{dash(user.first_name)} {dash(user.last_name)}"},
+        {"label": "Email", "value": dash(user.email)},
+    ]
+
+    if p.role == "tenant":
+        detail_rows.append({"label": "Persona", "value": persona_text})
+    else:
+        detail_rows.extend(
+            [
+                {"label": "Cell", "value": dash(getattr(p, "cell_no", ""))},
+                {"label": "Alt", "value": dash(getattr(p, "alt_no", ""))},
+                {"label": "Address", "value": dash(getattr(p, "home_address", ""))},
+                {"label": "Postal", "value": dash(getattr(p, "postal_code", ""))},
+            ]
         )
+
+    # =========================
+    # Tenant sections (empty list for landlord, so template just renders nothing)
+    # =========================
+    tenant_sections = []
+    if p.role == "tenant":
+        tenant_sections = [
+            {"title": "Saved rooms", "rooms": saved_rooms},
+            {"title": "Viewed rooms", "rooms": viewed_rooms},
+        ]
+
+    context = {
+        "p": p,
+
+        # header
+        "badge_text": badge_text,
+        "verified_badge": verified_badge,
+
+        # stats
+        "stat_cards": stat_cards,
+        "stat_links": stat_links,
+
+        # details
+        "detail_rows": detail_rows,
+
+        # tenant lists
+        "tenant_sections": tenant_sections,
+    }
 
     return render(request, "listings/profile.html", context)
 
