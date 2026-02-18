@@ -8,39 +8,117 @@
       {% csrf_token %} {{ form.non_field_errors }}
 
       <div class="field">
-        {{ form.username.label_tag }} {{ form.username }} {{ form.username.errors }}
+        <label class="auth-label">Username</label>
+        {{ form.username }} {{ form.username.errors }}
       </div>
 
       <div class="field">
-        {{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}
+        <label class="auth-label">First name</label>
+        {{ form.first_name }} {{ form.first_name.errors }}
       </div>
 
       <div class="field">
-        {{ form.password.label_tag }}
+        <label class="auth-label">Last name</label>
+        {{ form.last_name }} {{ form.last_name.errors }}
+      </div>
 
+      <div class="field">
+        <label class="auth-label">Email</label>
+        {{ form.email }} {{ form.email.errors }}
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Account type</label>
+        {{ form.role }} {{ form.role.errors }}
+      </div>
+
+      <!-- Tenant-only -->
+      <div class="field" id="tenantFields">
+        <label class="auth-label">Persona</label>
+        {{ form.persona }} {{ form.persona.errors }}
+      </div>
+
+      <!-- Landlord-only -->
+      <div id="landlordFields" style="display: none">
+        <div class="field">
+          <label class="auth-label">Cell number</label>
+          {{ form.cell_no }} {{ form.cell_no.errors }}
+        </div>
+
+        <div class="field">
+          <label class="auth-label">Alternative number</label>
+          {{ form.alt_no }} {{ form.alt_no.errors }}
+        </div>
+
+        <div class="field">
+          <label class="auth-label">Home address</label>
+          {{ form.home_address }} {{ form.home_address.errors }}
+          <small class="auth-small"
+            >For verification & integrity. Not public.</small
+          >
+        </div>
+
+        <div class="field">
+          <label class="auth-label">Postal code</label>
+          {{ form.postal_code }} {{ form.postal_code.errors }}
+        </div>
+
+        <div class="field" style="margin-top: 10px">
+          <label
+            style="
+              display: flex;
+              gap: 10px;
+              align-items: flex-start;
+              font-weight: 800;
+              opacity: 0.9;
+            "
+          >
+            {{ form.terms_accepted }}
+            <span>{{ form.terms_accepted.label }}</span>
+          </label>
+          {{ form.terms_accepted.errors }}
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Password</label>
         <div class="pw-wrap">
-          {{ form.password }}
-          <button class="pw-toggle" type="button" aria-label="Show password" data-toggle="#id_password">
+          {{ form.password1 }}
+          <button
+            class="pw-toggle"
+            type="button"
+            aria-label="Show password"
+            data-toggle="#id_password1"
+          >
             👁
           </button>
         </div>
-
-        {{ form.password.errors }}
-
-        <small class="auth-small">
-          Password: 8+ characters. Avoid common passwords. Use a mix of letters and numbers.
-        </small>
+        {{ form.password1.errors }}
       </div>
 
       <div class="field">
-        {{ form.role.label_tag }} {{ form.role }} {{ form.role.errors }}
+        <label class="auth-label">Repeat password</label>
+        <div class="pw-wrap">
+          {{ form.password2 }}
+          <button
+            class="pw-toggle"
+            type="button"
+            aria-label="Show password"
+            data-toggle="#id_password2"
+          >
+            👁
+          </button>
+        </div>
+        {{ form.password2.errors }}
       </div>
 
       <button class="btn-primary auth-btn" type="submit">Create account</button>
     </form>
 
     <p class="auth-hint" style="margin-top: 10px">
-      <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
+      <a class="auth-link" href="{% url 'password_reset' %}"
+        >Forgot password?</a
+      >
     </p>
 
     <p class="auth-hint">
@@ -50,20 +128,37 @@
   </div>
 </div>
 
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
+  // NOTE TO SELF: role switch = show correct fields
+  const roleSel = document.getElementById("id_role");
+  const landlord = document.getElementById("landlordFields");
+  const tenant = document.getElementById("tenantFields");
+
+  function syncRoleUI() {
+    const role = (roleSel?.value || "").toLowerCase();
+    if (role === "landlord") {
+      landlord.style.display = "block";
+      tenant.style.display = "none";
+    } else {
+      landlord.style.display = "none";
+      tenant.style.display = "block";
+    }
+  }
+  if (roleSel) {
+    roleSel.addEventListener("change", syncRoleUI);
+    syncRoleUI();
+  }
+
+  // password toggles
   document.querySelectorAll("[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const sel = btn.getAttribute("data-toggle");
       const input = document.querySelector(sel);
       if (!input) return;
-
       const isHidden = input.type === "password";
       input.type = isHidden ? "text" : "password";
       btn.textContent = isHidden ? "🙈" : "👁";
-      btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
     });
   });
 </script>

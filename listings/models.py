@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
 
 
-
 class Room(models.Model):
     ROOM_TYPES = [
         ("single", "Single Room"),
@@ -28,21 +27,17 @@ class Room(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
-    # Public-friendly location
     location = models.CharField(max_length=200)
 
-    # Safety/authenticity (required)
     full_address = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=10)
 
     room_type = models.CharField(max_length=20, choices=ROOM_TYPES)
 
-    # Contacts
     contact_phone = models.CharField(max_length=20)
     contact_whatsapp = models.CharField(max_length=20, blank=True, default="")
     contact_email = models.EmailField(blank=True, default="")
 
-    # Units + availability
     total_units = models.PositiveIntegerField(default=1)
     available_units = models.PositiveIntegerField(default=1)
     availability_status = models.CharField(
@@ -54,7 +49,6 @@ class Room(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
-        # ✅ Enforce "Occupied (available from)" rule
         if self.availability_status == "from":
             self.available_units = 0
 
@@ -76,7 +70,6 @@ class Room(models.Model):
                     "available_units": "For 'Some available now', set a number between 1 and total_units-1."
                 })
 
-        # Optional: if not "from", we don't want a random date sitting there
         if self.availability_status != "from":
             self.available_from = None
 
@@ -87,16 +80,12 @@ class Room(models.Model):
     @property
     def availability_badge_text(self):
         units = f"{self.available_units}/{self.total_units} units"
-
         if self.availability_status == "now":
             return f"{units} • Available now"
-
         if self.availability_status == "from":
             if self.available_from:
                 return f"{units} • Available from {self.available_from.strftime('%d %b %Y')}"
             return f"{units} • Available from (date not set)"
-
-        # mixed
         return f"{units} • Some available now"
 
     def __str__(self):
@@ -120,9 +109,32 @@ class Profile(models.Model):
         ("landlord", "Landlord"),
     ]
 
+    PERSONA_CHOICES = [
+        ("student", "Student"),
+        ("worker", "Worker"),
+        ("family", "Family"),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tenant")
     is_verified = models.BooleanField(default=False)
+
+    # NOTE TO SELF: tenant-only vibe badge (safe default)
+    persona = models.CharField(
+        max_length=20,
+        choices=PERSONA_CHOICES,
+        blank=True,
+        default="worker",
+    )
+
+    # NOTE TO SELF: landlord identity/contact fields (kept optional in DB to protect existing users)
+    cell_no = models.CharField(max_length=20, blank=True, default="")
+    alt_no = models.CharField(max_length=20, blank=True, default="")
+    home_address = models.CharField(max_length=255, blank=True, default="")
+    postal_code = models.CharField(max_length=10, blank=True, default="")
+
+    # NOTE TO SELF: landlord must tick this on signup (validation in form)
+    terms_accepted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.username} ({self.role})"
@@ -130,8 +142,9 @@ class Profile(models.Model):
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
+    # NOTE TO SELF: always create a profile on signup, safe defaults
     if created:
-        Profile.objects.create(user=instance, role="tenant")
+        Profile.objects.create(user=instance, role="tenant", persona="worker")
 
 
 class Contact(models.Model):
@@ -144,14 +157,6 @@ class Contact(models.Model):
 
 
 class RoomStat(models.Model):
-    STAT_CHOICES = [
-        ("view", "View"),
-        ("contact_phone", "Phone"),
-        ("contact_whatsapp", "WhatsApp"),
-        ("contact_email", "Email"),
-        ("success", "Success"),
-    ]
-
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     stat_type = models.CharField(max_length=20)
@@ -163,8 +168,21 @@ class RoomStat(models.Model):
 
 class RoomImage(models.Model):
     room = models.ForeignKey("Room", related_name="images", on_delete=models.CASCADE)
-    image = CloudinaryField("image")  # stored on Cloudinary
+    image = CloudinaryField("image")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Room {self.room_id} image"
+
+
+class Favorite(models.Model):
+    # NOTE TO SELF: tenant saves (favoured) rooms
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorites")
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="favorited_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "room")
+
+    def __str__(self):
+        return f"{self.user.username} ♥ {self.room.title}"

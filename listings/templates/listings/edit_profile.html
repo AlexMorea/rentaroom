@@ -1,0 +1,80 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="form-shell">
+  <div
+    style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    "
+  >
+    <h1 class="page-title" style="text-align: left; margin: 0">Edit Profile</h1>
+    <a class="btn-secondary" href="{% url 'profile' %}">Back</a>
+  </div>
+
+  <div class="form-card">
+    <form method="post">
+      {% csrf_token %}
+
+      <h3 style="margin: 0 0 10px; font-weight: 900">Basic</h3>
+
+      <div class="field">
+        <label class="auth-label">First name</label>
+        {{ u_form.first_name }} {{ u_form.first_name.errors }}
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Last name</label>
+        {{ u_form.last_name }} {{ u_form.last_name.errors }}
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Email</label>
+        {{ u_form.email }} {{ u_form.email.errors }}
+      </div>
+
+      <hr style="margin: 16px 0; opacity: 0.25" />
+
+      {% if p.role == "tenant" %}
+      <h3 style="margin: 0 0 10px; font-weight: 900">Persona</h3>
+      <div class="field">
+        <label class="auth-label">Persona</label>
+        {{ p_form.persona }} {{ p_form.persona.errors }}
+      </div>
+      {% else %}
+      <h3 style="margin: 0 0 10px; font-weight: 900">
+        Landlord verification details
+      </h3>
+
+      <div class="field">
+        <label class="auth-label">Cell number</label>
+        {{ p_form.cell_no }} {{ p_form.cell_no.errors }}
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Alternative number</label>
+        {{ p_form.alt_no }} {{ p_form.alt_no.errors }}
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Home address</label>
+        {{ p_form.home_address }} {{ p_form.home_address.errors }}
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Postal code</label>
+        {{ p_form.postal_code }} {{ p_form.postal_code.errors }}
+      </div>
+      {% endif %}
+
+      <div class="form-actions">
+        <button class="btn-primary" type="submit">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

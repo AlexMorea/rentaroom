@@ -1,0 +1,120 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div
+  style="
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  "
+>
+  <div>
+    <h1 class="page-title" style="text-align: left; margin: 0">My Profile</h1>
+
+    {% if p.role == "tenant" %}
+    <p style="margin: 6px 0 0; opacity: 0.8">
+      Persona:
+      <span
+        class="badge"
+        style="
+          position: static;
+          display: inline-flex;
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+        "
+      >
+        {{ p.get_persona_display }}
+      </span>
+    </p>
+    {% else %}
+    <p style="margin: 6px 0 0; opacity: 0.8">
+      Role: <strong>Landlord</strong>
+      {% if p.is_verified %}
+      <span class="badge" style="position: static; display: inline-flex"
+        >Verified</span
+      >
+      {% endif %}
+    </p>
+    {% endif %}
+  </div>
+
+  <a href="{% url 'edit_profile' %}" class="btn-primary">Edit profile</a>
+</div>
+
+<div class="dashboard-grid">
+  {% if p.role == "tenant" %}
+  <div class="stat-card">
+    <div class="stat-number">{{ saved_count }}</div>
+    <div class="stat-label">Saved rooms</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ viewed_count }}</div>
+    <div class="stat-label">Viewed rooms</div>
+  </div>
+  {% else %}
+  <a href="{% url 'landlord_rooms' %}" class="stat-card stat-link">
+    <div class="stat-number">{{ rooms_count|default:0 }}</div>
+    <div class="stat-label">Rooms</div>
+  </a>
+  <a href="{% url 'landlord_images_hub' %}" class="stat-card stat-link">
+    <div class="stat-number">{{ image_count|default:0 }}</div>
+    <div class="stat-label">Images</div>
+  </a>
+  <a href="{% url 'contacts_analytics' %}" class="stat-card stat-link">
+    <div class="stat-number">{{ contact_count|default:0 }}</div>
+    <div class="stat-label">Contacts</div>
+  </a>
+  {% endif %}
+</div>
+
+{% if p.role == "tenant" %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+  <div class="form-card">
+    <h3 style="margin: 0 0 10px; font-weight: 900">Saved rooms</h3>
+    {% for r in saved_rooms %}
+    <div class="room-row">
+      <div>
+        <strong>{{ r.title }}</strong>
+        <div style="opacity: 0.75; font-size: 0.9rem">{{ r.location }}</div>
+      </div>
+      <div class="room-actions">
+        <a href="{% url 'room_detail' r.id %}">Open</a>
+      </div>
+    </div>
+    {% empty %}
+    <p style="opacity: 0.7; margin: 0">No saved rooms yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="form-card">
+    <h3 style="margin: 0 0 10px; font-weight: 900">Viewed rooms</h3>
+    {% for r in viewed_rooms %}
+    <div class="room-row">
+      <div>
+        <strong>{{ r.title }}</strong>
+        <div style="opacity: 0.75; font-size: 0.9rem">{{ r.location }}</div>
+      </div>
+      <div class="room-actions">
+        <a href="{% url 'room_detail' r.id %}">Open</a>
+      </div>
+    </div>
+    {% empty %}
+    <p style="opacity: 0.7; margin: 0">Nothing viewed yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="form-card">
+  <h3 style="margin: 0 0 10px; font-weight: 900">Your details</h3>
+  <p style="margin: 0; opacity: 0.85">
+    <strong>Name:</strong> {{ request.user.first_name }} {{
+    request.user.last_name }}<br />
+    <strong>Email:</strong> {{ request.user.email }}<br />
+    <strong>Cell:</strong> {{ p.cell_no }}<br />
+    <strong>Alt:</strong> {{ p.alt_no|default:"—" }}<br />
+    <strong>Address:</strong> {{ p.home_address }}<br />
+    <strong>Postal:</strong> {{ p.postal_code }}
+  </p>
+</div>
+{% endif %} {% endblock %}
