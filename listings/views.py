@@ -67,10 +67,27 @@ def landlord_rooms(request):
 
 @login_required
 def landlord_images_hub(request):
-    room = Room.objects.filter(owner=request.user).order_by("-created_at").first()
-    if not room:
-        return redirect("create_room")
-    return redirect("edit_room_images", pk=room.id)
+    """
+    Landlord 'Images' stat page:
+    shows ALL images across ALL rooms owned by the landlord.
+    """
+    rooms = Room.objects.filter(owner=request.user).order_by("-created_at")
+    images = (
+        RoomImage.objects
+        .filter(room__owner=request.user)
+        .select_related("room")
+        .order_by("-created_at")
+    )
+
+    return render(
+        request,
+        "listings/landlord_images.html",
+        {
+            "rooms": rooms,
+            "images": images,
+            "image_count": images.count(),
+        }
+    )
 
 
 # -----------------------------
@@ -523,16 +540,36 @@ def add_room(request):
 @login_required
 @user_passes_test(is_landlord)
 def create_room(request):
-    form = RoomForm(request.POST or None, request.FILES or None, user=request.user)
-    if form.is_valid():
+    form = RoomForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
         room = form.save(commit=False)
         room.owner = request.user
         room.save()
 
-        for img in request.FILES.getlist("images")[:10]:
-            RoomImage.objects.create(room=room, image=img)
+        # ✅ MULTI-IMAGE UPLOAD (up to 10)
+        uploaded_images = request.FILES.getlist("images")  # name="images"
+        if uploaded_images:
+            uploaded_images = uploaded_images[:10]  # hard cap
+            for f in uploaded_images:
+                RoomImage.objects.create(room=room, image=f)
 
-        return redirect("dashboard")
+            if len(request.FILES.getlist("images")) > 10:
+                messages.warning(request, "Only the first 10 images were uploaded.")
+
+            messages.success(
+                request,
+                "Room saved ✅ Images uploaded. You can upload more anytime in Images → Manage images."
+            )
+        else:
+            messages.success(
+                request,
+                "Room saved ✅ You can add images now or later from Images → Manage images."
+            )
+
+        # ✅ AFTER UPLOAD: give them a clear option to add more
+        # We redirect to the per-room image manager so they immediately see "add more" option.
+        return redirect("upload_room_images", room.id)
 
     return render(request, "listings/create_room.html", {"form": form})
 
@@ -561,13 +598,32 @@ def delete_room(request, pk):
 # -----------------------------
 # IMAGES (upload/delete/manage)
 # -----------------------------
+
 @login_required
 def upload_room_images(request, room_id):
     room = get_object_or_404(Room, id=room_id, owner=request.user)
 
     if request.method == "POST":
-        for img in request.FILES.getlist("images")[:10]:
+        existing_count = RoomImage.objects.filter(room=room).count()
+        remaining = max(0, 10 - existing_count)
+
+        new_files = request.FILES.getlist("images")
+
+        # If room already has 10 images
+        if remaining == 0:
+            messages.warning(request, "This room already has 10 images (max). Delete one to add more.")
+            return redirect("edit_room_images", pk=room.id)
+
+        # Save only up to remaining slots
+        for img in new_files[:remaining]:
             RoomImage.objects.create(room=room, image=img)
+
+        # If they tried to upload too many
+        if len(new_files) > remaining:
+            messages.warning(request, f"Only {remaining} more images were allowed (max 10 per room).")
+        else:
+            messages.success(request, "Images uploaded ✅")
+
         return redirect("edit_room_images", pk=room.id)
 
     return render(request, "listings/upload_images.html", {"room": room})
