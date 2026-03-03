@@ -1,5 +1,5 @@
-{% extends "listings/base.html" %} {% block content %}
-
+{% extends "listings/base.html" %} {% block title %}Create account • Rooms4You{%
+endblock %} {% block body_class %}auth-page{% endblock %} {% block content %}
 <div class="auth-shell">
   <div class="auth-card">
     <h2 class="auth-title">Create account</h2>
@@ -127,10 +127,9 @@
     </p>
   </div>
 </div>
-
 {% endblock %} {% block extra_js %}
 <script>
-  // NOTE TO SELF: role switch = show correct fields
+  // role switch = show correct fields
   const roleSel = document.getElementById("id_role");
   const landlord = document.getElementById("landlordFields");
   const tenant = document.getElementById("tenantFields");
@@ -145,6 +144,7 @@
       tenant.style.display = "block";
     }
   }
+
   if (roleSel) {
     roleSel.addEventListener("change", syncRoleUI);
     syncRoleUI();
@@ -156,9 +156,14 @@
       const sel = btn.getAttribute("data-toggle");
       const input = document.querySelector(sel);
       if (!input) return;
+
       const isHidden = input.type === "password";
       input.type = isHidden ? "text" : "password";
       btn.textContent = isHidden ? "🙈" : "👁";
+      btn.setAttribute(
+        "aria-label",
+        isHidden ? "Hide password" : "Show password",
+      );
     });
   });
 </script>

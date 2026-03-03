@@ -11,7 +11,7 @@
       href="{% static 'images/favicon.png' %}"
       type="image/x-icon"
     />
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=7" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=10" />
   </head>
 
   <body
@@ -23,7 +23,7 @@
     <header class="site-header">
       <div class="nav-container">
         <div class="brand">
-          <a href="{% url 'home' %}" class="logo" aria-label="Go to home">
+          <a href="{% url 'home' %}" class="logo">
             <img
               class="logo-img"
               src="{% static 'images/rentaroom-logo.png' %}"
@@ -33,53 +33,44 @@
           </a>
         </div>
 
-        <nav class="nav-links" id="navLinks" aria-label="Primary navigation">
+        <nav class="nav-links" id="navLinks">
           <a href="{% url 'room_list' %}">Browse</a>
           <a href="{% url 'services' %}">Services</a>
           <a href="{% url 'about' %}">About</a>
           <a href="{% url 'contact' %}">Contact</a>
           <a href="{% url 'heatmap' %}">Heatmap</a>
 
-          <!-- Auth-only -->
+          <!-- Auth only -->
           <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>
           <a href="{% url 'profile' %}" data-show="auth">Profile</a>
           <a href="{% url 'logout' %}" data-show="auth">Logout</a>
 
-          <!-- Guest-only -->
+          <!-- Guest only -->
           <a href="{% url 'login' %}" data-show="guest">Login</a>
           <a href="{% url 'register' %}" data-show="guest">Register</a>
         </nav>
 
-        <button
-          class="burger"
-          id="burgerBtn"
-          aria-label="Open menu"
-          aria-controls="navLinks"
-          aria-expanded="false"
-        >
-          ☰
-        </button>
+        <button class="burger" id="burgerBtn">☰</button>
       </div>
 
-      <!-- ✅ Trust strip (public-ready) -->
-      <div class="trust-strip">
+      <!-- TRUST STRIP -->
+      <div class="trust-strip" id="trustStrip">
         <div class="trust-inner">
           <span class="trust-pill">✅ Verified landlords</span>
           <span class="trust-pill">🔒 Secure accounts</span>
           <span class="trust-pill">🚫 Never pay before viewing</span>
+
           <a class="trust-link" href="{% url 'safety' %}">Safety tips</a>
         </div>
       </div>
     </header>
 
+    <!-- MOBILE NAV BACKDROP -->
+    <div class="nav-backdrop" id="navBackdrop"></div>
+
     <main class="container">
       {% if messages %}
-      <div
-        class="toast-wrap"
-        id="toastWrap"
-        aria-live="polite"
-        aria-atomic="true"
-      >
+      <div class="toast-wrap" id="toastWrap">
         {% for message in messages %}
         <div class="toast toast-{{ message.tags|default:'info' }}">
           {{ message }}
@@ -89,30 +80,31 @@
       {% endif %} {% block content %}{% endblock %}
     </main>
 
-    <!-- ✅ Inactivity warning modal -->
-    <div class="idle-modal" id="idleModal" aria-hidden="true">
-      <div
-        class="idle-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="idleTitle"
-      >
-        <h3 id="idleTitle" class="idle-title">Still there?</h3>
+    {% if user.is_authenticated %}
+
+    <div class="idle-modal" id="idleModal">
+      <div class="idle-card">
+        <h3 class="idle-title">Still there?</h3>
+
         <p class="idle-text">
-          For your security, you’ll be logged out in
+          For your security, you'll be logged out in
           <strong><span id="idleCountdown">60</span>s</strong>
           due to inactivity.
         </p>
+
         <div class="idle-actions">
-          <button type="button" class="btn-secondary" id="stayLoggedInBtn">
+          <button class="btn-secondary" id="stayLoggedInBtn">
             Stay logged in
           </button>
-          <a class="btn-primary" id="logoutNowBtn" href="{% url 'logout' %}"
-            >Logout now</a
-          >
+
+          <a class="btn-primary" id="logoutNowBtn" href="{% url 'logout' %}">
+            Logout now
+          </a>
         </div>
       </div>
     </div>
+
+    {% endif %}
 
     <footer class="site-footer">
       <p>© 2026 Rooms4You • Your data is protected.</p>
@@ -129,29 +121,20 @@
 
       <p class="footer-small">
         Listings are posted by landlords. We actively review reports and take
-        action to protect users and maintain integrity.
+        action to protect users.
       </p>
     </footer>
 
     <script>
-      // burger
-      const burger = document.getElementById("burgerBtn");
-      const nav = document.getElementById("navLinks");
-      if (burger && nav) {
-        burger.onclick = () => {
-          nav.classList.toggle("show");
-          const open = nav.classList.contains("show");
-          burger.setAttribute("aria-expanded", open ? "true" : "false");
-        };
-      }
+      /* auth based nav visibility */
 
-      // auth-based nav visibility
       const root = document.body;
       const isAuth = root.dataset.auth === "1";
       const role = (root.dataset.role || "").toLowerCase();
 
       document.querySelectorAll("[data-show]").forEach((el) => {
         const rule = el.getAttribute("data-show");
+
         if (rule === "auth") el.style.display = isAuth ? "" : "none";
         if (rule === "guest") el.style.display = isAuth ? "none" : "";
         if (rule === "landlord")
@@ -160,168 +143,161 @@
     </script>
 
     <script>
-      // Toast auto-dismiss
-      (function () {
-        const wrap = document.getElementById("toastWrap");
-        if (!wrap) return;
+      /* trust strip hide on scroll */
 
+      let lastY = window.scrollY;
+
+      window.addEventListener(
+        "scroll",
+        () => {
+          const y = window.scrollY;
+
+          if (y > lastY && y > 120) {
+            document.body.classList.add("scroll-down");
+          } else {
+            document.body.classList.remove("scroll-down");
+          }
+
+          lastY = y;
+        },
+        { passive: true },
+      );
+    </script>
+
+    <script>
+      /* burger menu */
+
+      const burger = document.getElementById("burgerBtn");
+      const nav = document.getElementById("navLinks");
+      const backdrop = document.getElementById("navBackdrop");
+
+      function openMenu() {
+        nav.classList.add("show");
+        backdrop.classList.add("show");
+        document.body.classList.add("nav-open");
+      }
+
+      function closeMenu() {
+        nav.classList.remove("show");
+        backdrop.classList.remove("show");
+        document.body.classList.remove("nav-open");
+      }
+
+      burger.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        nav.classList.contains("show") ? closeMenu() : openMenu();
+      });
+
+      backdrop.addEventListener("click", closeMenu);
+
+      nav.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", closeMenu);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeMenu();
+      });
+    </script>
+
+    <script>
+      /* toast auto dismiss */
+
+      const wrap = document.getElementById("toastWrap");
+
+      if (wrap) {
         const toasts = wrap.querySelectorAll(".toast");
-        if (!toasts.length) return;
 
         requestAnimationFrame(() =>
           toasts.forEach((t) => t.classList.add("show")),
         );
 
-        const DISPLAY_MS = 3500;
-        const STAGGER_MS = 250;
+        toasts.forEach((toast, i) => {
+          setTimeout(
+            () => {
+              toast.classList.remove("show");
+              toast.classList.add("hide");
 
-        toasts.forEach((toast, idx) => {
-          const delay = DISPLAY_MS + idx * STAGGER_MS;
-
-          setTimeout(() => {
-            toast.classList.remove("show");
-            toast.classList.add("hide");
-
-            setTimeout(() => {
-              if (toast && toast.parentNode)
-                toast.parentNode.removeChild(toast);
-              if (wrap && wrap.children.length === 0) wrap.remove();
-            }, 400);
-          }, delay);
+              setTimeout(() => toast.remove(), 400);
+            },
+            3500 + i * 200,
+          );
         });
-      })();
+      }
     </script>
 
     <script>
-      // Auto-logout on inactivity (auth only)
-      (function () {
-        const root = document.body;
-        const isAuth = root.dataset.auth === "1";
-        if (!isAuth) return;
+      /* idle logout */
 
-        const IDLE_LIMIT_MS = 15 * 60 * 1000;
-        const WARNING_SECONDS = 60;
-        const logoutUrl = root.dataset.logoutUrl || "/logout/";
+      if (document.body.dataset.auth === "1") {
+        const IDLE = 15 * 60 * 1000;
+        const WARN = 60;
 
         const modal = document.getElementById("idleModal");
-        const countdownEl = document.getElementById("idleCountdown");
-        const stayBtn = document.getElementById("stayLoggedInBtn");
-        const logoutNowBtn = document.getElementById("logoutNowBtn");
+        const countdown = document.getElementById("idleCountdown");
 
-        if (!modal || !countdownEl || !stayBtn || !logoutNowBtn) return;
-
-        let idleTimer = null;
-        let countdownTimer = null;
-        let remaining = WARNING_SECONDS;
-        let modalOpen = false;
-
-        function closeModal() {
-          modal.classList.remove("show");
-          modal.setAttribute("aria-hidden", "true");
-          modalOpen = false;
-        }
+        let idleTimer;
+        let countTimer;
+        let remaining = WARN;
 
         function openModal() {
-          remaining = WARNING_SECONDS;
-          countdownEl.textContent = String(remaining);
           modal.classList.add("show");
-          modal.setAttribute("aria-hidden", "false");
-          modalOpen = true;
 
-          clearInterval(countdownTimer);
-          countdownTimer = setInterval(() => {
-            remaining -= 1;
-            countdownEl.textContent = String(Math.max(0, remaining));
+          countTimer = setInterval(() => {
+            remaining--;
+            countdown.textContent = remaining;
+
             if (remaining <= 0) {
-              clearInterval(countdownTimer);
-              window.location.href = logoutUrl;
+              window.location.href = document.body.dataset.logoutUrl;
             }
           }, 1000);
         }
 
-        function resetIdleTimer() {
-          if (modalOpen) {
-            clearInterval(countdownTimer);
-            closeModal();
-          }
+        function reset() {
           clearTimeout(idleTimer);
-          idleTimer = setTimeout(openModal, IDLE_LIMIT_MS);
+          clearInterval(countTimer);
+
+          remaining = WARN;
+
+          if (modal) modal.classList.remove("show");
+
+          idleTimer = setTimeout(openModal, IDLE);
         }
 
-        stayBtn.addEventListener("click", resetIdleTimer);
-        logoutNowBtn.setAttribute("href", logoutUrl);
+        ["mousemove", "mousedown", "keydown", "scroll", "touchstart"].forEach(
+          (e) => window.addEventListener(e, reset, { passive: true }),
+        );
 
-        [
-          "mousemove",
-          "mousedown",
-          "keydown",
-          "touchstart",
-          "scroll",
-          "click",
-        ].forEach((evt) => {
-          window.addEventListener(evt, resetIdleTimer, { passive: true });
-        });
-
-        resetIdleTimer();
-      })();
+        reset();
+      }
     </script>
 
     <script>
-      // slider arrows (cards + detail)
-      (function () {
-        const shells = document.querySelectorAll("[data-slider]");
-        if (!shells.length) return;
+      /* image sliders */
 
-        shells.forEach((shell) => {
-          const track = shell.querySelector("[data-slider-track]");
-          const prev = shell.querySelector("[data-slider-prev]");
-          const next = shell.querySelector("[data-slider-next]");
-          if (!track || !prev || !next) return;
+      document.querySelectorAll("[data-slider]").forEach((shell) => {
+        const track = shell.querySelector("[data-slider-track]");
+        const prev = shell.querySelector("[data-slider-prev]");
+        const next = shell.querySelector("[data-slider-next]");
 
-          const slides = track.querySelectorAll("img");
-          const multiple = slides.length > 1;
+        if (!track) return;
 
-          if (!multiple) {
-            prev.style.display = "none";
-            next.style.display = "none";
-            shell.classList.remove("has-multiple");
-            return;
-          }
+        function step(dir) {
+          track.scrollBy({ left: dir * track.clientWidth, behavior: "smooth" });
+        }
 
-          shell.classList.add("has-multiple");
-
-          function getStep() {
-            return Math.max(1, track.clientWidth);
-          }
-
-          function updateDisabled() {
-            const maxScroll = track.scrollWidth - track.clientWidth - 2;
-            prev.disabled = track.scrollLeft <= 2;
-            next.disabled = track.scrollLeft >= maxScroll;
-          }
-
-          function scrollByStep(dir) {
-            track.scrollBy({ left: dir * getStep(), behavior: "smooth" });
-          }
-
-          prev.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            scrollByStep(-1);
-          });
-
-          next.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            scrollByStep(1);
-          });
-
-          track.addEventListener("scroll", updateDisabled, { passive: true });
-          window.addEventListener("resize", updateDisabled, { passive: true });
-
-          updateDisabled();
+        prev?.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          step(-1);
         });
-      })();
+
+        next?.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          step(1);
+        });
+      });
     </script>
 
     {% block extra_js %}{% endblock %}

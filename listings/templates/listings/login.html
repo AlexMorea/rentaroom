@@ -1,5 +1,5 @@
-{% extends "listings/base.html" %} {% block content %}
-
+{% extends "listings/base.html" %} {% block title %}Login • Rooms4You{% endblock
+%} {% block body_class %}auth-page{% endblock %} {% block content %}
 <div class="auth-shell">
   <div class="auth-card">
     <h2 class="auth-title">Login</h2>
@@ -7,34 +7,37 @@
     <form method="post" class="auth-form">
       {% csrf_token %}
 
-      <label class="auth-label">Username</label>
-      <input
-        class="input"
-        type="text"
-        name="username"
-        placeholder="e.g. alexmorea"
-        required
-      />
-
-      <label class="auth-label" style="margin-top: 10px">Password</label>
-
-      <div class="pw-wrap">
+      <div class="field">
+        <label class="auth-label">Username</label>
         <input
-          id="loginPassword"
-          class="input pw-input"
-          type="password"
-          name="password"
-          placeholder="Your password"
+          class="input"
+          type="text"
+          name="username"
+          placeholder="e.g. alexmorea"
           required
         />
-        <button
-          class="pw-toggle"
-          type="button"
-          aria-label="Show password"
-          data-toggle="#loginPassword"
-        >
-          👁
-        </button>
+      </div>
+
+      <div class="field">
+        <label class="auth-label">Password</label>
+        <div class="pw-wrap">
+          <input
+            id="loginPassword"
+            class="input pw-input"
+            type="password"
+            name="password"
+            placeholder="Your password"
+            required
+          />
+          <button
+            class="pw-toggle"
+            type="button"
+            aria-label="Show password"
+            data-toggle="#loginPassword"
+          >
+            👁
+          </button>
+        </div>
       </div>
 
       <button class="btn-primary auth-btn" type="submit">Login</button>
@@ -52,7 +55,6 @@
     </p>
   </div>
 </div>
-
 {% endblock %} {% block extra_js %}
 <script>
   document.querySelectorAll("[data-toggle]").forEach((btn) => {

@@ -66,37 +66,6 @@
   <button type="submit">Search</button>
 </form>
 
-<!-- ✅ Persona quick chips (students/workers/family) -->
-<div class="browse-tools">
-  <div class="chips">
-    <a
-      class="chip {% if selected.any %}is-active{% endif %}"
-      href="{% url 'room_list' %}?q={{ values.q|urlencode }}&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
-      >All</a
-    >
-    <a
-      class="chip {% if selected.single %}is-active{% endif %}"
-      href="{% url 'room_list' %}?type=single&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
-      >🧑‍🎓 Students</a
-    >
-    <a
-      class="chip {% if selected.shared %}is-active{% endif %}"
-      href="{% url 'room_list' %}?type=shared&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
-      >🧑‍💼 Workers</a
-    >
-    <a
-      class="chip {% if selected.flat %}is-active{% endif %}"
-      href="{% url 'room_list' %}?type=flat&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
-      >👨‍👩‍👧 Families</a
-    >
-  </div>
-
-  <div class="sort-wrap">
-    <span style="font-weight: 900; opacity: 0.75">Tip:</span>
-    <span style="opacity: 0.75">Try “Newest” or “Price Low → High”.</span>
-  </div>
-</div>
-
 <div class="room-grid" id="roomGrid">
   {% include "listings/_room_cards.html" with rooms=rooms %}
 </div>
