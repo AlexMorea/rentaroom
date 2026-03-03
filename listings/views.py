@@ -8,6 +8,11 @@ from django.urls import reverse
 from django.core.cache import cache
 from urllib.parse import quote
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
 import re
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
@@ -200,11 +205,38 @@ def room_list(request):
         )
     )
 
+    # ✅ Pagination wrapper (no logic change)
+    page_number = request.GET.get("page") or 1
+    paginator = Paginator(rooms, 6)
+    page_obj = paginator.get_page(page_number)
+
+    # ✅ AJAX branch: returns HTML fragment + pagination metadata (no full page refresh)
+    is_ajax = request.GET.get("ajax") == "1" or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    if is_ajax:
+        html = render_to_string(
+            "listings/_room_cards.html",
+            {"rooms": page_obj.object_list},
+            request=request,
+        )
+        return JsonResponse(
+            {
+                "html": html,
+                "page": page_obj.number,
+                "num_pages": paginator.num_pages,
+                "has_next": page_obj.has_next(),
+                "has_prev": page_obj.has_previous(),
+                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+                "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+            }
+        )
+
     return render(
         request,
         "listings/room_list.html",
         {
-            "rooms": rooms,
+            "rooms": page_obj.object_list,
+            "page_obj": page_obj,
+            "paginator": paginator,
             "values": {"q": q, "location": location, "type": room_type},
             "selected": {
                 "any": room_type == "",
@@ -214,7 +246,6 @@ def room_list(request):
             },
         },
     )
-
 
 def room_detail(request, pk):
     room = get_object_or_404(Room, pk=pk, is_available=True)
@@ -540,12 +571,22 @@ def add_room(request):
 @login_required
 @user_passes_test(is_landlord)
 def create_room(request):
-    form = RoomForm(request.POST or None)
+    form = RoomForm(request.POST or None, user=request.user)  # ✅ PASS USER
 
     if request.method == "POST" and form.is_valid():
-        room = form.save(commit=False)
-        room.owner = request.user
-        room.save()
+        try:
+            with transaction.atomic():
+                room = form.save(commit=False)
+                room.owner = request.user
+                room.full_clean()  # ✅ ensures model.clean + DB constraints are respected
+                room.save()
+        except ValidationError as e:
+            form.add_error(None, e)
+            return render(request, "listings/create_room.html", {"form": form})
+        except IntegrityError:
+            # ✅ if DB uniqueness constraint triggers (after we add it)
+            form.add_error(None, "This listing already exists (same title, location, type and price).")
+            return render(request, "listings/create_room.html", {"form": form})
 
         # ✅ MULTI-IMAGE UPLOAD (up to 10)
         uploaded_images = request.FILES.getlist("images")  # name="images"
@@ -567,12 +608,9 @@ def create_room(request):
                 "Room saved ✅ You can add images now or later from Images → Manage images."
             )
 
-        # ✅ AFTER UPLOAD: give them a clear option to add more
-        # We redirect to the per-room image manager so they immediately see "add more" option.
         return redirect("upload_room_images", room.id)
 
     return render(request, "listings/create_room.html", {"form": form})
-
 
 @login_required
 @user_passes_test(is_landlord)

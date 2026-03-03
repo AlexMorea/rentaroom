@@ -1,6 +1,7 @@
 {% extends "listings/base.html" %} {% load static %} {% block content %}
 
 <h1 class="page-title">Browse Rooms</h1>
+
 <form class="search-bar" method="get" action="{% url 'room_list' %}">
   <input
     type="text"
@@ -32,63 +33,173 @@
   <button type="submit">Search</button>
 </form>
 
-<div class="room-grid">
-  {% for room in rooms %}
-  <a href="{% url 'room_detail' room.id %}" class="room-card">
-    <div class="room-media">
-      <!-- Slider shell: arrows appear only if multiple images -->
-      <div class="slider-shell" data-slider>
-        <div class="image-slider" data-slider-track>
-          {% for img in room.images.all|slice:":10" %}
-          <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
-          {% empty %}
-          <img
-            src="{% static 'img/placeholder.jpg' %}"
-            alt="No image"
-            loading="lazy"
-          />
-          {% endfor %}
-        </div>
-
-        <button
-          type="button"
-          class="slider-btn slider-prev"
-          data-slider-prev
-          aria-label="Previous image"
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          class="slider-btn slider-next"
-          data-slider-next
-          aria-label="Next image"
-        >
-          ›
-        </button>
-      </div>
-
-      {% if room.contact_count|default:0 >= 3 %}
-      <span class="badge badge-popular">Popular</span>
-      {% endif %} {% if room.owner.profile.is_verified %}
-      <span class="badge badge-verified">Verified</span>
-      {% endif %}
-    </div>
-
-    <div class="room-info">
-      <h3 class="room-title">{{ room.title }}</h3>
-      <p class="room-meta">{{ room.location }}</p>
-      <p class="room-price">R {{ room.price }} p.m</p>
-      <p class="availability-badge">{{ room.availability_badge_text }}</p>
-
-      {% if room.avg_rating %}
-      <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
-      {% endif %}
-    </div>
-  </a>
-  {% empty %}
-  <p class="empty-state">No rooms available.</p>
-  {% endfor %}
+<div class="room-grid" id="roomGrid">
+  {% include "listings/_room_cards.html" with rooms=rooms %}
 </div>
+
+{% if paginator and paginator.num_pages > 1 %}
+<div
+  class="pagination-wrap"
+  id="paginationWrap"
+  data-q="{{ values.q|default:'' }}"
+  data-location="{{ values.location|default:'' }}"
+  data-type="{{ values.type|default:'' }}"
+  data-page="{{ page_obj.number }}"
+  data-pages="{{ paginator.num_pages }}"
+>
+  <a
+    href="#"
+    class="pagination-btn pagination-back"
+    id="btnBack"
+    {%
+    if
+    not
+    page_obj.has_previous
+    %}style="display:none"
+    {%
+    endif
+    %}
+  >
+    ← Back
+  </a>
+
+  <div class="page-indicator" id="pageIndicator">
+    Page {{ page_obj.number }} of {{ paginator.num_pages }}
+  </div>
+
+  <a
+    href="#"
+    class="pagination-btn pagination-next"
+    id="btnNext"
+    {%
+    if
+    not
+    page_obj.has_next
+    %}style="display:none"
+    {%
+    endif
+    %}
+  >
+    Browse More Rooms →
+  </a>
+</div>
+{% endif %}
+
+<script>
+  (function () {
+    const wrap = document.getElementById("paginationWrap");
+    const grid = document.getElementById("roomGrid");
+    const btnNext = document.getElementById("btnNext");
+    const btnBack = document.getElementById("btnBack");
+    const indicator = document.getElementById("pageIndicator");
+
+    if (!wrap || !grid || !btnNext || !btnBack || !indicator) return;
+
+    function getBaseParams() {
+      return {
+        q: wrap.dataset.q || "",
+        location: wrap.dataset.location || "",
+        type: wrap.dataset.type || "",
+      };
+    }
+
+    function buildUrl(page) {
+      const { q, location, type } = getBaseParams();
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (location) params.set("location", location);
+      if (type) params.set("type", type);
+      params.set("page", String(page));
+      params.set("ajax", "1");
+      return "?" + params.toString();
+    }
+
+    function setLoading(isLoading) {
+      [btnNext, btnBack].forEach((btn) => {
+        btn.style.pointerEvents = isLoading ? "none" : "auto";
+        btn.style.opacity = isLoading ? "0.6" : "1";
+      });
+    }
+
+    function updateUI(meta) {
+      wrap.dataset.page = String(meta.page);
+      wrap.dataset.pages = String(meta.num_pages);
+
+      indicator.textContent = `Page ${meta.page} of ${meta.num_pages}`;
+
+      btnNext.style.display = meta.has_next ? "inline-block" : "none";
+      btnBack.style.display = meta.has_prev ? "inline-block" : "none";
+
+      // store next/prev pages safely (can be null)
+      btnNext.dataset.nextPage = meta.next_page ? String(meta.next_page) : "";
+      btnBack.dataset.prevPage = meta.prev_page ? String(meta.prev_page) : "";
+      // Hard-guard: Back must never show on page 1
+      if (meta.page <= 1) {
+        btnBack.style.display = "none";
+      }
+    }
+
+    async function fetchPage(page) {
+      setLoading(true);
+      try {
+        const res = await fetch(buildUrl(page), {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        if (!res.ok) throw new Error("Request failed");
+        return await res.json();
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Init indicator from dataset
+    indicator.textContent = `Page ${wrap.dataset.page} of ${wrap.dataset.pages}`;
+
+    // Hard-guard: Back must never show on page 1
+    const initialPage = parseInt(wrap.dataset.page || "1", 10);
+    if (initialPage <= 1) {
+      btnBack.style.display = "none";
+    }
+
+    // ✅ Load More: append next page (no refresh) + smooth scroll
+    btnNext.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const current = parseInt(wrap.dataset.page || "1", 10);
+      const nextFromMeta = btnNext.dataset.nextPage;
+      const next = parseInt(nextFromMeta || String(current + 1), 10);
+      if (!next || next < 1) return;
+
+      const data = await fetchPage(next);
+
+      // Append cards
+      grid.insertAdjacentHTML("beforeend", data.html);
+      updateUI(data);
+
+      // Smooth scroll to newly loaded content
+      const cards = grid.querySelectorAll(".room-card");
+      const target = cards[cards.length - 1];
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "end" });
+    });
+
+    // ✅ Back: replace with previous page (no refresh) + smooth scroll top
+    btnBack.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const current = parseInt(wrap.dataset.page || "1", 10);
+      const prevFromMeta = btnBack.dataset.prevPage;
+      const prev = parseInt(prevFromMeta || String(current - 1), 10);
+      if (!prev || prev < 1) return;
+
+      const data = await fetchPage(prev);
+
+      // Replace cards
+      grid.innerHTML = data.html;
+      updateUI(data);
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  })();
+</script>
 
 {% endblock %}

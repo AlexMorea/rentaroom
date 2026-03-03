@@ -1,0 +1,55 @@
+{% load static %} {% for room in rooms %}
+<a href="{% url 'room_detail' room.id %}" class="room-card">
+  <div class="room-media">
+    <div class="slider-shell" data-slider>
+      <div class="image-slider" data-slider-track>
+        {% for img in room.images.all|slice:":10" %}
+        <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
+        {% empty %}
+        <img
+          src="{% static 'img/placeholder.jpg' %}"
+          alt="No image"
+          loading="lazy"
+        />
+        {% endfor %}
+      </div>
+
+      <button
+        type="button"
+        class="slider-btn slider-prev"
+        data-slider-prev
+        aria-label="Previous image"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="slider-btn slider-next"
+        data-slider-next
+        aria-label="Next image"
+      >
+        ›
+      </button>
+    </div>
+
+    {% if room.contact_count|default:0 >= 3 %}
+    <span class="badge badge-popular">Popular</span>
+    {% endif %} {% if room.owner.profile.is_verified %}
+    <span class="badge badge-verified">Verified</span>
+    {% endif %}
+  </div>
+
+  <div class="room-info">
+    <h3 class="room-title">{{ room.title }}</h3>
+    <p class="room-meta">{{ room.location }}</p>
+    <p class="room-price">R {{ room.price }} p.m</p>
+    <p class="availability-badge">{{ room.availability_badge_text }}</p>
+
+    {% if room.avg_rating %}
+    <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
+    {% endif %}
+  </div>
+</a>
+{% empty %}
+<p class="empty-state">No rooms available.</p>
+{% endfor %}

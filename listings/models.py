@@ -5,9 +5,22 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
+from django.db.models.functions import Lower
 
 
 class Room(models.Model):
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("title"),
+                Lower("location"),
+                "room_type",
+                "price",
+                "owner",
+                name="uniq_room_owner_title_location_type_price",
+            )
+        ]
+        
     ROOM_TYPES = [
         ("single", "Single Room"),
         ("shared", "Shared Room"),

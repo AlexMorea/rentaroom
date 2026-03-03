@@ -41,7 +41,7 @@
 
   <div class="room-info">
     <p class="room-meta"><strong>Location:</strong> {{ room.location }}</p>
-    <p class="room-price">R {{ room.price }}</p>
+    <p class="room-price">R {{ room.price }} p.m</p>
     <p class="room-meta">
       <strong>Type:</strong> {{ room.get_room_type_display }}
     </p>
@@ -159,5 +159,13 @@
     {% endif %}
   </div>
 </div>
-
-{% endblock %}
+{% if page_obj and page_obj.has_next %}
+<div class="pagination-wrap">
+  <a
+    class="load-more-btn"
+    href="?q={{ values.q|urlencode }}&location={{ values.location|urlencode }}&type={{ values.type|urlencode }}&page={{ page_obj.next_page_number }}"
+  >
+    Load More
+  </a>
+</div>
+{% endif %} {% endblock %}
