@@ -47,7 +47,52 @@
     </p>
 
     <p class="availability-badge">{{ room.availability_badge_text }}</p>
-    <p style="margin-top: 10px">{{ room.description }}</p>
+
+    <div style="margin-top: 10px; opacity: 0.92; line-height: 1.6">
+      {{ room.description }}
+    </div>
+
+    <hr style="margin: 16px 0; opacity: 0.25" />
+
+    <!-- ✅ Secondary actions -->
+    <div
+      style="
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      "
+    >
+      <button type="button" class="btn-secondary" id="shareBtn">
+        🔗 Share
+      </button>
+
+      <form
+        method="post"
+        action="{% url 'report_room' room.id %}"
+        style="display: flex; gap: 10px; flex-wrap: wrap"
+      >
+        {% csrf_token %}
+        <select
+          name="reason"
+          class="input"
+          style="
+            min-width: 220px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+          "
+        >
+          <option value="">Report reason…</option>
+          <option value="spam">Spam / duplicate</option>
+          <option value="scam">Scam / suspicious</option>
+          <option value="abuse">Harassment / abuse</option>
+          <option value="wrong_info">Wrong info</option>
+        </select>
+        <button type="submit" class="btn-secondary">🚩 Report</button>
+      </form>
+    </div>
 
     <hr style="margin: 16px 0; opacity: 0.25" />
 
@@ -61,34 +106,24 @@
     </div>
     {% endif %}
 
-    <div style="display: flex; gap: 10px; flex-wrap: wrap">
-      {% if room.contact_phone %}
-      <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}"
-        >📞 Call</a
-      >
-      {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
-      <a
-        class="btn-primary"
-        href="{% url 'track_contact' room.id 'whatsapp' %}"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="currentColor"
+    <div class="detail-cta">
+      <div class="cta-row">
+        {% if room.contact_phone %}
+        <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}"
+          >📞 Call</a
         >
-          <path
-            d="M12 2a10 10 0 0 0-8.49 15.28L2 22l4.83-1.46A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.13-1.14l-.3-.18-2.86.87.93-2.78-.2-.3A8 8 0 1 1 12 20Z"
-          />
-        </svg>
-        WhatsApp
-      </a>
-      {% endif %} {% if room.owner.email or room.contact_email %}
-      <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}"
-        >📧 Email</a
-      >
-      {% endif %}
+        {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
+        <a
+          class="btn-primary"
+          href="{% url 'track_contact' room.id 'whatsapp' %}"
+          >💬 WhatsApp</a
+        >
+        {% endif %} {% if room.owner.email or room.contact_email %}
+        <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}"
+          >📧 Email</a
+        >
+        {% endif %}
+      </div>
     </div>
 
     <hr style="margin: 16px 0; opacity: 0.25" />
@@ -104,8 +139,17 @@
 
     <form method="post" action="{% url 'add_review' room.id %}">
       {% csrf_token %}
-      <label>Rating:</label>
-      <select name="rating" class="input" style="max-width: 160px">
+      <label style="font-weight: 800">Rating:</label>
+      <select
+        name="rating"
+        class="input"
+        style="
+          max-width: 160px;
+          border-radius: 12px;
+          border: 1px solid #ddd;
+          padding: 10px 12px;
+        "
+      >
         {% for i in "12345" %}
         <option value="{{ i }}">{{ i }}</option>
         {% endfor %}
@@ -116,6 +160,13 @@
           name="comment"
           class="input textarea"
           placeholder="Write your review..."
+          style="
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            padding: 12px 12px;
+            min-height: 120px;
+          "
         ></textarea>
       </div>
 
@@ -125,21 +176,10 @@
     </form>
 
     {% else %}
-    <div
-      style="
-        background: white;
-        padding: 16px;
-        border-radius: 14px;
-        box-shadow: var(--shadow);
-        border: 1px solid #e5e7eb;
-        text-align: center;
-        margin: 10px 0;
-      "
-    >
+    <div class="empty-card" style="margin: 10px 0">
       <p style="margin: 0 0 10px; opacity: 0.85">
         Please log in to contact the landlord.
       </p>
-
       <div
         style="
           display: flex;
@@ -159,13 +199,32 @@
     {% endif %}
   </div>
 </div>
-{% if page_obj and page_obj.has_next %}
-<div class="pagination-wrap">
-  <a
-    class="load-more-btn"
-    href="?q={{ values.q|urlencode }}&location={{ values.location|urlencode }}&type={{ values.type|urlencode }}&page={{ page_obj.next_page_number }}"
-  >
-    Load More
-  </a>
-</div>
-{% endif %} {% endblock %}
+
+{% block extra_js %}
+<script>
+  // Share button
+  (function () {
+    const btn = document.getElementById("shareBtn");
+    if (!btn) return;
+
+    btn.addEventListener("click", async () => {
+      const url = window.location.href;
+
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: document.title, url });
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = "✅ Copied link";
+        setTimeout(() => (btn.textContent = "🔗 Share"), 1600);
+      } catch (e) {
+        window.prompt("Copy this link:", url);
+      }
+    });
+  })();
+</script>
+{% endblock %} {% endblock %}

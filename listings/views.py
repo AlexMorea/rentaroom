@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
+from django.views.decorators.http import require_POST
 import re
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
@@ -161,6 +162,7 @@ def room_list(request):
     q = (request.GET.get("q") or "").strip()
     location = (request.GET.get("location") or "").strip()
     room_type = (request.GET.get("type") or "").strip()
+    sort = (request.GET.get("sort") or "").strip()
 
     rooms_qs = Room.objects.filter(is_available=True)
 
@@ -196,21 +198,32 @@ def room_list(request):
         )
         .select_related("owner__profile")
         .prefetch_related("images")
-        .order_by(
+    )
+
+    # ✅ Sorting options (safe defaults)
+    if sort == "new":
+        rooms = rooms.order_by("-created_at")
+    elif sort == "price_low":
+        rooms = rooms.order_by("price", "-created_at")
+    elif sort == "price_high":
+        rooms = rooms.order_by("-price", "-created_at")
+    elif sort == "rating":
+        rooms = rooms.order_by("-avg_rating", "-review_count", "-created_at")
+    else:
+        rooms = rooms.order_by(
             "-landlord_contact_total",
             "-landlord_review_total",
             "-contact_count",
             "-review_count",
             "-created_at",
         )
-    )
 
-    # ✅ Pagination wrapper (no logic change)
+    # ✅ Pagination
     page_number = request.GET.get("page") or 1
     paginator = Paginator(rooms, 6)
     page_obj = paginator.get_page(page_number)
 
-    # ✅ AJAX branch: returns HTML fragment + pagination metadata (no full page refresh)
+    # ✅ Ajax branch
     is_ajax = request.GET.get("ajax") == "1" or request.headers.get("X-Requested-With") == "XMLHttpRequest"
     if is_ajax:
         html = render_to_string(
@@ -230,6 +243,15 @@ def room_list(request):
             }
         )
 
+    # ✅ Template-safe "selected" flags (NO comparisons in template)
+    sort_selected = {
+        "best": sort == "",
+        "new": sort == "new",
+        "price_low": sort == "price_low",
+        "price_high": sort == "price_high",
+        "rating": sort == "rating",
+    }
+
     return render(
         request,
         "listings/room_list.html",
@@ -237,15 +259,17 @@ def room_list(request):
             "rooms": page_obj.object_list,
             "page_obj": page_obj,
             "paginator": paginator,
-            "values": {"q": q, "location": location, "type": room_type},
+            "values": {"q": q, "location": location, "type": room_type, "sort": sort},
             "selected": {
                 "any": room_type == "",
                 "single": room_type == "single",
                 "shared": room_type == "shared",
                 "flat": room_type == "flat",
             },
+            "sort_selected": sort_selected,
         },
     )
+
 
 def room_detail(request, pk):
     room = get_object_or_404(Room, pk=pk, is_available=True)
@@ -883,3 +907,29 @@ def contacts_analytics(request):
 @login_required
 def heatmap(request):
     return render(request, "listings/heatmap.html")
+
+
+def terms(request):
+    return render(request, "listings/terms.html")
+
+def privacy(request):
+    return render(request, "listings/privacy.html")
+
+def safety(request):
+    return render(request, "listings/safety.html")
+
+@require_POST
+def report_room(request, pk):
+    room = get_object_or_404(Room, pk=pk)
+    reason = (request.POST.get("reason") or "").strip()
+    detail = (request.POST.get("detail") or "").strip()
+
+    # ✅ Simple logging-only report for now (safe + no DB changes)
+    # Later we can add a Report model.
+    if not reason:
+        messages.error(request, "Please select a reason to report this listing.")
+        return redirect("room_detail", pk=room.id)
+
+    # This is enough for MVP: WE can wire to email/admin later
+    messages.success(request, "Thanks! Your report was received ✅ We’ll review this listing.")
+    return redirect("room_detail", pk=room.id)

@@ -1,31 +1,93 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<h1 class="page-title">Find Your Next Home</h1>
+<section class="home-hero">
+  <div class="home-hero-inner">
+    <div class="home-hero-copy">
+      <h1 class="home-title">Find Your Next Home</h1>
+      <p class="home-subtitle">
+        Browse rooms faster — built for <strong>students</strong>,
+        <strong>workers</strong>, and <strong>families</strong>. Verified
+        landlords stand out so you can make confident decisions.
+      </p>
 
-<form class="search-bar" method="get" action="{% url 'home' %}">
-  <input
-    type="text"
-    name="location"
-    placeholder="Search by location (e.g. Pretoria, Mamelodi)"
-    value="{{ values.location|default:'' }}"
-  />
-  <select name="type">
-    <option value="" {% if selected.any %}selected{% endif %}>Any Type</option>
-    <option value="single" {% if selected.single %}selected{% endif %}>
-      Single
-    </option>
-    <option value="shared" {% if selected.shared %}selected{% endif %}>
-      Shared
-    </option>
-    <option value="flat" {% if selected.flat %}selected{% endif %}>
-      Flat / Apartment
-    </option>
-  </select>
+      <div class="home-actions">
+        <a class="btn-primary" href="{% url 'room_list' %}">Browse rooms</a>
+        <a class="btn-secondary" href="{% url 'safety' %}">Safety tips</a>
+      </div>
+    </div>
 
-  <input type="hidden" name="go" value="1" />
-  <button type="submit">Search</button>
-</form>
+    <div class="home-hero-card">
+      <h3 class="home-card-title">Search by area</h3>
+      <p class="home-card-sub">Start with a suburb/town and a room type.</p>
 
+      <form
+        class="search-bar home-search"
+        method="get"
+        action="{% url 'home' %}"
+      >
+        <input
+          type="text"
+          name="location"
+          placeholder="Location (e.g. Pretoria, Mamelodi)"
+          value="{{ values.location|default:'' }}"
+          aria-label="Location"
+        />
+
+        <select name="type" aria-label="Room type">
+          <option value="" {% if selected.any %}selected{% endif %}>
+            Any Type
+          </option>
+          <option value="single" {% if selected.single %}selected{% endif %}>
+            Single
+          </option>
+          <option value="shared" {% if selected.shared %}selected{% endif %}>
+            Shared
+          </option>
+          <option value="flat" {% if selected.flat %}selected{% endif %}>
+            Flat / Apartment
+          </option>
+        </select>
+
+        <input type="hidden" name="go" value="1" />
+        <button type="submit">Search</button>
+      </form>
+
+      <!-- ✅ Persona quick paths -->
+      <div class="persona-grid" aria-label="Persona quick paths">
+        <a class="persona-card" href="{% url 'home' %}?type=single&go=1">
+          <div class="persona-emoji">🧑‍🎓</div>
+          <div>
+            <div class="persona-title">Student</div>
+            <div class="persona-sub">Single rooms near campus</div>
+          </div>
+        </a>
+
+        <a class="persona-card" href="{% url 'home' %}?type=shared&go=1">
+          <div class="persona-emoji">🧑‍💼</div>
+          <div>
+            <div class="persona-title">Worker</div>
+            <div class="persona-sub">Shared rooms, easy commute</div>
+          </div>
+        </a>
+
+        <a class="persona-card" href="{% url 'home' %}?type=flat&go=1">
+          <div class="persona-emoji">👨‍👩‍👧</div>
+          <div>
+            <div class="persona-title">Family</div>
+            <div class="persona-sub">Flats & apartments</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="home-note">
+        <strong>Tip:</strong> Never pay before viewing. If anything feels
+        suspicious, use <strong>Report</strong> on the listing.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ✅ Stats -->
 <div class="stat-grid">
   <div class="stat-card" data-count="{{ room_count }}">
     <div class="stat-number">0</div>
@@ -48,4 +110,63 @@
   </div>
 </div>
 
-{% endblock %}
+<!-- ✅ “How it works” (public polish) -->
+<section class="how-it-works">
+  <div class="how-inner">
+    <h2 class="how-title">How it works</h2>
+
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-badge">1</div>
+        <h3>Search smart</h3>
+        <p>
+          Use location + type filters. Sort by newest or price to find great
+          options fast.
+        </p>
+      </div>
+
+      <div class="how-card">
+        <div class="how-badge">2</div>
+        <h3>Contact safely</h3>
+        <p>
+          Use in-app contact buttons so we can monitor suspicious patterns and
+          improve safety.
+        </p>
+      </div>
+
+      <div class="how-card">
+        <div class="how-badge">3</div>
+        <h3>Confirm & review</h3>
+        <p>
+          After meeting, leave a review to help the community and improve
+          landlord trust.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% block extra_js %}
+<script>
+  // ✅ Stat counter animation (safe even if missing)
+  (function () {
+    document.querySelectorAll(".stat-card").forEach((card) => {
+      const target = Number(card.dataset.count) || 0;
+      const numberEl = card.querySelector(".stat-number");
+      if (!numberEl) return;
+
+      let current = 0;
+      const step = Math.max(1, Math.floor(target / 40));
+
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        numberEl.textContent = current;
+      }, 20);
+    });
+  })();
+</script>
+{% endblock %} {% endblock %}

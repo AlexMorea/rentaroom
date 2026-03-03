@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Rooms4You</title>
+    <title>{% block title %}Rooms4You{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link
@@ -11,28 +11,29 @@
       href="{% static 'images/favicon.png' %}"
       type="image/x-icon"
     />
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=3" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=7" />
   </head>
 
   <body
     data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
     data-role="{% if user.is_authenticated %}{{ user.profile.role }}{% endif %}"
+    data-persona="{% if user.is_authenticated and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
     data-logout-url="{% url 'logout' %}"
   >
     <header class="site-header">
       <div class="nav-container">
         <div class="brand">
-          <a href="{% url 'home' %}" class="logo">
+          <a href="{% url 'home' %}" class="logo" aria-label="Go to home">
             <img
               class="logo-img"
               src="{% static 'images/rentaroom-logo.png' %}"
-              alt="Logo"
+              alt="Rooms4You Logo"
             />
             <span class="brand-tagline">Connecting spaces to faces.</span>
           </a>
         </div>
 
-        <nav class="nav-links" id="navLinks">
+        <nav class="nav-links" id="navLinks" aria-label="Primary navigation">
           <a href="{% url 'room_list' %}">Browse</a>
           <a href="{% url 'services' %}">Services</a>
           <a href="{% url 'about' %}">About</a>
@@ -49,14 +50,36 @@
           <a href="{% url 'register' %}" data-show="guest">Register</a>
         </nav>
 
-        <button class="burger" id="burgerBtn" aria-label="Open menu">☰</button>
+        <button
+          class="burger"
+          id="burgerBtn"
+          aria-label="Open menu"
+          aria-controls="navLinks"
+          aria-expanded="false"
+        >
+          ☰
+        </button>
+      </div>
+
+      <!-- ✅ Trust strip (public-ready) -->
+      <div class="trust-strip">
+        <div class="trust-inner">
+          <span class="trust-pill">✅ Verified landlords</span>
+          <span class="trust-pill">🔒 Secure accounts</span>
+          <span class="trust-pill">🚫 Never pay before viewing</span>
+          <a class="trust-link" href="{% url 'safety' %}">Safety tips</a>
+        </div>
       </div>
     </header>
 
     <main class="container">
       {% if messages %}
-      <!-- ✅ Toasts: auto dismiss -->
-      <div class="toast-wrap" id="toastWrap">
+      <div
+        class="toast-wrap"
+        id="toastWrap"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {% for message in messages %}
         <div class="toast toast-{{ message.tags|default:'info' }}">
           {{ message }}
@@ -92,18 +115,21 @@
     </div>
 
     <footer class="site-footer">
-      <p>© 2026 Rooms4You • Your data is protected and never sold.</p>
-      <p
-        style="
-          max-width: 900px;
-          margin: 10px auto 0;
-          opacity: 0.8;
-          line-height: 1.5;
-        "
-      >
-        Terms: Listings are posted by landlords. We are not responsible for
-        false or harmful uploads, but we actively review reports and take action
-        to protect users and maintain integrity.
+      <p>© 2026 Rooms4You • Your data is protected.</p>
+
+      <div class="footer-links">
+        <a href="{% url 'terms' %}">Terms</a>
+        <span>•</span>
+        <a href="{% url 'privacy' %}">Privacy</a>
+        <span>•</span>
+        <a href="{% url 'safety' %}">Safety</a>
+        <span>•</span>
+        <a href="{% url 'contact' %}">Support</a>
+      </div>
+
+      <p class="footer-small">
+        Listings are posted by landlords. We actively review reports and take
+        action to protect users and maintain integrity.
       </p>
     </footer>
 
@@ -111,16 +137,21 @@
       // burger
       const burger = document.getElementById("burgerBtn");
       const nav = document.getElementById("navLinks");
-      if (burger && nav) burger.onclick = () => nav.classList.toggle("show");
+      if (burger && nav) {
+        burger.onclick = () => {
+          nav.classList.toggle("show");
+          const open = nav.classList.contains("show");
+          burger.setAttribute("aria-expanded", open ? "true" : "false");
+        };
+      }
 
-      // auth-based nav visibility (no template if/else needed)
+      // auth-based nav visibility
       const root = document.body;
       const isAuth = root.dataset.auth === "1";
       const role = (root.dataset.role || "").toLowerCase();
 
       document.querySelectorAll("[data-show]").forEach((el) => {
         const rule = el.getAttribute("data-show");
-
         if (rule === "auth") el.style.display = isAuth ? "" : "none";
         if (rule === "guest") el.style.display = isAuth ? "none" : "";
         if (rule === "landlord")
@@ -129,7 +160,7 @@
     </script>
 
     <script>
-      // ✅ Toast auto-dismiss (smooth fade)
+      // Toast auto-dismiss
       (function () {
         const wrap = document.getElementById("toastWrap");
         if (!wrap) return;
@@ -137,12 +168,10 @@
         const toasts = wrap.querySelectorAll(".toast");
         if (!toasts.length) return;
 
-        // show in
-        requestAnimationFrame(() => {
-          toasts.forEach((t) => t.classList.add("show"));
-        });
+        requestAnimationFrame(() =>
+          toasts.forEach((t) => t.classList.add("show")),
+        );
 
-        // dismiss after ~3.5s each
         const DISPLAY_MS = 3500;
         const STAGGER_MS = 250;
 
@@ -153,11 +182,9 @@
             toast.classList.remove("show");
             toast.classList.add("hide");
 
-            // remove from DOM after animation
             setTimeout(() => {
               if (toast && toast.parentNode)
                 toast.parentNode.removeChild(toast);
-              // remove wrapper if empty
               if (wrap && wrap.children.length === 0) wrap.remove();
             }, 400);
           }, delay);
@@ -166,18 +193,14 @@
     </script>
 
     <script>
-      // ✅ Auto-logout on inactivity (professional pattern)
+      // Auto-logout on inactivity (auth only)
       (function () {
         const root = document.body;
         const isAuth = root.dataset.auth === "1";
         if (!isAuth) return;
 
-        // --- Settings (professional defaults) ---
-        // 15 minutes idle -> warn
-        // 1 minute after warning -> logout
         const IDLE_LIMIT_MS = 15 * 60 * 1000;
         const WARNING_SECONDS = 60;
-
         const logoutUrl = root.dataset.logoutUrl || "/logout/";
 
         const modal = document.getElementById("idleModal");
@@ -205,7 +228,6 @@
           modal.setAttribute("aria-hidden", "false");
           modalOpen = true;
 
-          // start countdown
           clearInterval(countdownTimer);
           countdownTimer = setInterval(() => {
             remaining -= 1;
@@ -218,64 +240,34 @@
         }
 
         function resetIdleTimer() {
-          // if user interacts while warning is open, keep them logged in
           if (modalOpen) {
             clearInterval(countdownTimer);
             closeModal();
           }
-
           clearTimeout(idleTimer);
           idleTimer = setTimeout(openModal, IDLE_LIMIT_MS);
         }
 
-        // Stay logged in
-        stayBtn.addEventListener("click", () => {
-          resetIdleTimer();
-        });
-
-        // Make sure logout button goes to correct url
+        stayBtn.addEventListener("click", resetIdleTimer);
         logoutNowBtn.setAttribute("href", logoutUrl);
 
-        // Track "real user activity"
-        const events = [
+        [
           "mousemove",
           "mousedown",
           "keydown",
           "touchstart",
           "scroll",
           "click",
-        ];
-
-        events.forEach((evt) => {
+        ].forEach((evt) => {
           window.addEventListener(evt, resetIdleTimer, { passive: true });
         });
 
-        // Start timer
         resetIdleTimer();
       })();
     </script>
 
     <script>
-      // card animations (safe even if no cards)
-      const cards = document.querySelectorAll(".room-card");
-      if (cards.length) {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.style.opacity = 1;
-              entry.target.style.transform = "translateY(0)";
-            }
-          });
-        });
-        cards.forEach((card) => {
-          card.style.opacity = 0;
-          card.style.transform = "translateY(20px)";
-          observer.observe(card);
-        });
-      }
-    </script>
-    <script>
-      // ✅ Beautiful slider arrows for all sliders (cards + detail)
+      // slider arrows (cards + detail)
       (function () {
         const shells = document.querySelectorAll("[data-slider]");
         if (!shells.length) return;
@@ -289,7 +281,6 @@
           const slides = track.querySelectorAll("img");
           const multiple = slides.length > 1;
 
-          // Only show arrows if multiple images
           if (!multiple) {
             prev.style.display = "none";
             next.style.display = "none";
@@ -300,12 +291,10 @@
           shell.classList.add("has-multiple");
 
           function getStep() {
-            // one "page" = visible width of slider
             return Math.max(1, track.clientWidth);
           }
 
           function updateDisabled() {
-            // allow tiny rounding tolerance
             const maxScroll = track.scrollWidth - track.clientWidth - 2;
             prev.disabled = track.scrollLeft <= 2;
             next.disabled = track.scrollLeft >= maxScroll;
@@ -327,11 +316,9 @@
             scrollByStep(1);
           });
 
-          // keep buttons accurate
           track.addEventListener("scroll", updateDisabled, { passive: true });
           window.addEventListener("resize", updateDisabled, { passive: true });
 
-          // initial
           updateDisabled();
         });
       })();

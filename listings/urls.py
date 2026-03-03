@@ -14,12 +14,20 @@ urlpatterns = [
     path("login/", views.user_login, name="login"),
     path("logout/", views.user_logout, name="logout"),
 
-    # ✅ profiles
+    # profiles
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
 
-    # ✅ tenant save/unsave
+    # tenant save/unsave
     path("favorite/<int:room_id>/toggle/", views.toggle_favorite, name="toggle_favorite"),
+
+    # ✅ Public legal/safety pages
+    path("terms/", views.terms, name="terms"),
+    path("privacy/", views.privacy, name="privacy"),
+    path("safety/", views.safety, name="safety"),
+
+    # ✅ Report listing (public)
+    path("room/<int:pk>/report/", views.report_room, name="report_room"),
 
     path("dashboard/", views.dashboard, name="dashboard"),
     path("dashboard/add/", views.create_room, name="add_room"),

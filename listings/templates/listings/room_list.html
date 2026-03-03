@@ -9,7 +9,6 @@
     placeholder="Search (title, location, type...)"
     value="{{ values.q }}"
   />
-
   <input
     type="text"
     name="location"
@@ -30,8 +29,73 @@
     </option>
   </select>
 
+  <select name="sort">
+    <option value="" {% if sort_selected.best %}selected{% endif %}>
+      Best match
+    </option>
+    <option value="new" {% if sort_selected.new %}selected{% endif %}>
+      Newest
+    </option>
+    <option
+      value="price_low"
+      {%
+      if
+      sort_selected.price_low
+      %}selected{%
+      endif
+      %}
+    >
+      Price: Low → High
+    </option>
+    <option
+      value="price_high"
+      {%
+      if
+      sort_selected.price_high
+      %}selected{%
+      endif
+      %}
+    >
+      Price: High → Low
+    </option>
+    <option value="rating" {% if sort_selected.rating %}selected{% endif %}>
+      Best rated
+    </option>
+  </select>
+
   <button type="submit">Search</button>
 </form>
+
+<!-- ✅ Persona quick chips (students/workers/family) -->
+<div class="browse-tools">
+  <div class="chips">
+    <a
+      class="chip {% if selected.any %}is-active{% endif %}"
+      href="{% url 'room_list' %}?q={{ values.q|urlencode }}&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
+      >All</a
+    >
+    <a
+      class="chip {% if selected.single %}is-active{% endif %}"
+      href="{% url 'room_list' %}?type=single&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
+      >🧑‍🎓 Students</a
+    >
+    <a
+      class="chip {% if selected.shared %}is-active{% endif %}"
+      href="{% url 'room_list' %}?type=shared&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
+      >🧑‍💼 Workers</a
+    >
+    <a
+      class="chip {% if selected.flat %}is-active{% endif %}"
+      href="{% url 'room_list' %}?type=flat&location={{ values.location|urlencode }}&sort={{ values.sort|urlencode }}"
+      >👨‍👩‍👧 Families</a
+    >
+  </div>
+
+  <div class="sort-wrap">
+    <span style="font-weight: 900; opacity: 0.75">Tip:</span>
+    <span style="opacity: 0.75">Try “Newest” or “Price Low → High”.</span>
+  </div>
+</div>
 
 <div class="room-grid" id="roomGrid">
   {% include "listings/_room_cards.html" with rooms=rooms %}
@@ -44,6 +108,7 @@
   data-q="{{ values.q|default:'' }}"
   data-location="{{ values.location|default:'' }}"
   data-type="{{ values.type|default:'' }}"
+  data-sort="{{ values.sort|default:'' }}"
   data-page="{{ page_obj.number }}"
   data-pages="{{ paginator.num_pages }}"
 >
@@ -51,14 +116,7 @@
     href="#"
     class="pagination-btn pagination-back"
     id="btnBack"
-    {%
-    if
-    not
-    page_obj.has_previous
-    %}style="display:none"
-    {%
-    endif
-    %}
+    style="{% if not page_obj.has_previous %}display:none{% endif %}"
   >
     ← Back
   </a>
@@ -71,14 +129,7 @@
     href="#"
     class="pagination-btn pagination-next"
     id="btnNext"
-    {%
-    if
-    not
-    page_obj.has_next
-    %}style="display:none"
-    {%
-    endif
-    %}
+    style="{% if not page_obj.has_next %}display:none{% endif %}"
   >
     Browse More Rooms →
   </a>
@@ -100,15 +151,17 @@
         q: wrap.dataset.q || "",
         location: wrap.dataset.location || "",
         type: wrap.dataset.type || "",
+        sort: wrap.dataset.sort || "",
       };
     }
 
     function buildUrl(page) {
-      const { q, location, type } = getBaseParams();
+      const { q, location, type, sort } = getBaseParams();
       const params = new URLSearchParams();
       if (q) params.set("q", q);
       if (location) params.set("location", location);
       if (type) params.set("type", type);
+      if (sort) params.set("sort", sort);
       params.set("page", String(page));
       params.set("ajax", "1");
       return "?" + params.toString();
@@ -121,6 +174,20 @@
       });
     }
 
+    function addSkeletons(count = 3) {
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < count; i++) {
+        const s = document.createElement("div");
+        s.className = "skeleton";
+        frag.appendChild(s);
+      }
+      grid.appendChild(frag);
+    }
+
+    function clearSkeletons() {
+      grid.querySelectorAll(".skeleton").forEach((s) => s.remove());
+    }
+
     function updateUI(meta) {
       wrap.dataset.page = String(meta.page);
       wrap.dataset.pages = String(meta.num_pages);
@@ -130,17 +197,16 @@
       btnNext.style.display = meta.has_next ? "inline-block" : "none";
       btnBack.style.display = meta.has_prev ? "inline-block" : "none";
 
-      // store next/prev pages safely (can be null)
       btnNext.dataset.nextPage = meta.next_page ? String(meta.next_page) : "";
       btnBack.dataset.prevPage = meta.prev_page ? String(meta.prev_page) : "";
+
       // Hard-guard: Back must never show on page 1
-      if (meta.page <= 1) {
-        btnBack.style.display = "none";
-      }
+      if (meta.page <= 1) btnBack.style.display = "none";
     }
 
     async function fetchPage(page) {
       setLoading(true);
+      addSkeletons(3);
       try {
         const res = await fetch(buildUrl(page), {
           headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -148,52 +214,46 @@
         if (!res.ok) throw new Error("Request failed");
         return await res.json();
       } finally {
+        clearSkeletons();
         setLoading(false);
       }
     }
 
-    // Init indicator from dataset
     indicator.textContent = `Page ${wrap.dataset.page} of ${wrap.dataset.pages}`;
 
-    // Hard-guard: Back must never show on page 1
     const initialPage = parseInt(wrap.dataset.page || "1", 10);
-    if (initialPage <= 1) {
-      btnBack.style.display = "none";
-    }
+    if (initialPage <= 1) btnBack.style.display = "none";
 
-    // ✅ Load More: append next page (no refresh) + smooth scroll
     btnNext.addEventListener("click", async (e) => {
       e.preventDefault();
 
       const current = parseInt(wrap.dataset.page || "1", 10);
-      const nextFromMeta = btnNext.dataset.nextPage;
-      const next = parseInt(nextFromMeta || String(current + 1), 10);
+      const next = parseInt(
+        btnNext.dataset.nextPage || String(current + 1),
+        10,
+      );
       if (!next || next < 1) return;
 
       const data = await fetchPage(next);
-
-      // Append cards
       grid.insertAdjacentHTML("beforeend", data.html);
       updateUI(data);
 
-      // Smooth scroll to newly loaded content
       const cards = grid.querySelectorAll(".room-card");
       const target = cards[cards.length - 1];
       if (target) target.scrollIntoView({ behavior: "smooth", block: "end" });
     });
 
-    // ✅ Back: replace with previous page (no refresh) + smooth scroll top
     btnBack.addEventListener("click", async (e) => {
       e.preventDefault();
 
       const current = parseInt(wrap.dataset.page || "1", 10);
-      const prevFromMeta = btnBack.dataset.prevPage;
-      const prev = parseInt(prevFromMeta || String(current - 1), 10);
+      const prev = parseInt(
+        btnBack.dataset.prevPage || String(current - 1),
+        10,
+      );
       if (!prev || prev < 1) return;
 
       const data = await fetchPage(prev);
-
-      // Replace cards
       grid.innerHTML = data.html;
       updateUI(data);
 
