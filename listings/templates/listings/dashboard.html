@@ -56,15 +56,15 @@
       <strong>{{ room.title }}</strong>
       <div style="opacity: 0.75; font-size: 0.9rem">{{ room.location }}</div>
 
-      <div style="opacity: 0.75; font-size: 0.85rem; margin-top: 4px">
+      <div style="opacity: 0.75; font-size: 0.85rem; margin-top: 6px">
         Views: {{ room.view_count }} • Contacts: {{ room.contact_total }} • CTR:
         {{ room.ctr }}%
       </div>
     </div>
 
     <div class="room-actions">
-      <a href="{% url 'upload_room_images' room.id %}">Images</a> |
-      <a href="{% url 'edit_room' room.id %}">Edit</a> |
+      <a href="{% url 'upload_room_images' room.id %}">Images</a>
+      <a href="{% url 'edit_room' room.id %}">Edit</a>
       <a
         href="{% url 'delete_room' room.id %}"
         onclick="return confirm('Delete this room?');"

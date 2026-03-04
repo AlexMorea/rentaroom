@@ -2782,3 +2782,507 @@ body.auth-page .auth-link:hover {
   background: rgba(220, 38, 38, 0.08);
   color: rgba(220, 38, 38, 0.95);
 }
+
+/* ------------------------------ */
+/* 1) TRUST STRIP: NO FLICKER     */
+/* ------------------------------ */
+/*
+  Your freeze/flicker is coming from max-height transitions (layout reflow)
+  while scroll handler toggles class rapidly.
+
+  This override removes layout collapse and uses transform only (GPU friendly).
+*/
+.trust-strip {
+  max-height: none !important;
+  height: 48px; /* stable height = no reflow */
+  opacity: 1;
+  overflow: hidden;
+  transform: translateY(0);
+  transition:
+    transform 0.22s ease,
+    opacity 0.18s ease;
+  will-change: transform, opacity;
+}
+
+/* Hide using transform only */
+body.scroll-down .trust-strip {
+  transform: translateY(-110%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Ensure inner aligns nicely inside fixed height */
+.trust-inner {
+  height: 48px;
+  padding: 0 20px; /* remove vertical padding (prevents overflow jitter) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ------------------------------ */
+/* 2) STATS / COUNTERS CONSISTENT */
+/* ------------------------------ */
+
+/* SERVICES counters grid */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* SERVICES stat cards: footer-blue background + white numbers */
+.stat-grid .stat-card {
+  background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: var(--shadow);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.stat-grid .stat-number {
+  color: #ffffff;
+  font-weight: 1000;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat-grid .stat-label {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  opacity: 0.95;
+  margin-top: 6px;
+}
+
+/* DASHBOARD cards: footer-blue background, BUT numbers must be black */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 12px 0 22px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-grid .stat-card {
+  background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-grid .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* dashboard number BLACK */
+.dashboard-grid .stat-number {
+  color: #0f172a; /* black-ish */
+  font-weight: 1000;
+  font-size: 1.9rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* dashboard label white */
+.dashboard-grid .stat-label {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  opacity: 0.95;
+}
+
+/* ------------------------------ */
+/* DASHBOARD ROOM ROWS (CLEAN)    */
+/* ------------------------------ */
+.dashboard-rooms {
+  margin-top: 6px;
+}
+
+.room-row {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 16px;
+  margin-bottom: 14px;
+
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.room-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 720px) {
+  .room-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.room-row strong {
+  display: block;
+  font-weight: 1000;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: 1rem;
+}
+
+/* Actions become buttons */
+.room-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .room-actions {
+    justify-content: flex-start;
+  }
+}
+
+.room-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 900;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.room-actions a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+}
+
+/* Images/Edit primary */
+.room-actions a[href*="upload_room_images"],
+.room-actions a[href*="edit_room"] {
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+}
+
+/* Delete danger */
+.room-actions a[href*="delete_room"] {
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  background: rgba(220, 38, 38, 0.08);
+  color: rgba(220, 38, 38, 0.95);
+}
+
+/* ------------------------------ */
+/* 3) AUTH LINK (blue)            */
+/* ------------------------------ */
+/* Even before we scope auth fully, make sure auth links look correct */
+.auth-link {
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   ADD ROOM PAGE (Create Room) — SAFE, SCOPED STYLES ONLY
+   ========================================================= */
+
+/* --- Guide box (tabs) --- */
+.guide-box {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.guide-head {
+  margin-bottom: 12px;
+}
+
+.guide-title {
+  margin: 0;
+  font-weight: 1000;
+  letter-spacing: 0.01em;
+}
+
+.guide-sub {
+  margin: 6px 0 0;
+  opacity: 0.75;
+  line-height: 1.45;
+}
+
+.guide-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 10px;
+}
+
+.guide-tab {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  opacity: 0.95;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.guide-tab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  opacity: 1;
+}
+
+.guide-tab.is-active {
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--blue-dark);
+}
+
+.guide-panels {
+  margin-top: 10px;
+}
+
+.guide-panel {
+  display: none;
+}
+
+.guide-panel.is-active {
+  display: block;
+}
+
+.guide-card {
+  background: rgba(248, 250, 252, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.guide-label {
+  font-weight: 1000;
+  margin-bottom: 6px;
+}
+
+.guide-text {
+  opacity: 0.82;
+  line-height: 1.5;
+}
+
+.guide-mini {
+  margin-top: 10px;
+  font-weight: 800;
+  opacity: 0.9;
+}
+
+.guide-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  margin-right: 8px;
+}
+
+.guide-pill.bad {
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+/* --- Form layout grid --- */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 860px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Each field block */
+.form-field label {
+  display: block;
+  font-weight: 900;
+  margin: 0 0 7px;
+  opacity: 0.92;
+}
+
+/* Make Django widgets look consistent even without custom classes */
+.form-card input[type="text"],
+.form-card input[type="number"],
+.form-card input[type="email"],
+.form-card input[type="tel"],
+.form-card input[type="date"],
+.form-card input[type="url"],
+.form-card input[type="password"],
+.form-card select,
+.form-card textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.form-card textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+/* Focus */
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* Full-width fields */
+.form-field.full {
+  grid-column: 1 / -1;
+}
+
+/* Checkbox field */
+.form-field.inline {
+  grid-column: 1 / -1;
+}
+
+.checkbox-wrap {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 12px 12px;
+  border-radius: 14px;
+}
+
+.checkbox-wrap input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+/* Errors + alerts */
+.form-alert {
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.form-alert-error {
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: rgba(220, 38, 38, 0.95);
+}
+
+.field-error {
+  margin-top: 8px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: rgba(220, 38, 38, 0.95);
+}
+
+.help-text {
+  margin: 8px 0 0;
+  opacity: 0.75;
+}
+
+/* File input */
+.file-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  background: rgba(248, 250, 252, 0.8);
+}
+
+/* Image preview grid */
+.img-preview-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .img-preview-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .img-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.img-preview-item {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+  background: #fff;
+}
+
+.img-preview-item img {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+}
