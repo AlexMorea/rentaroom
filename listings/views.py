@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
+from difflib import get_close_matches
 import re
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
@@ -166,6 +167,9 @@ def room_list(request):
 
     rooms_qs = Room.objects.filter(is_available=True)
 
+    suggested_location = ""
+    searched_location = location
+
     if q:
         rooms_qs = rooms_qs.filter(
             Q(title__icontains=q)
@@ -175,7 +179,55 @@ def room_list(request):
         )
 
     if location:
-        rooms_qs = rooms_qs.filter(location__icontains=location)
+        exact_location_qs = rooms_qs.filter(location__icontains=location)
+
+        if exact_location_qs.exists():
+            rooms_qs = exact_location_qs
+        else:
+            all_locations = list(
+                Room.objects.filter(is_available=True)
+                .exclude(location__isnull=True)
+                .exclude(location__exact="")
+                .values_list("location", flat=True)
+                .distinct()
+            )
+
+            lowered_map = {}
+            for loc in all_locations:
+                key = loc.strip().lower()
+                if key and key not in lowered_map:
+                    lowered_map[key] = loc.strip()
+
+            location_lower = location.lower()
+
+            partial_matches = [
+                original
+                for key, original in lowered_map.items()
+                if location_lower in key or key in location_lower
+            ]
+
+            close_keys = get_close_matches(
+                location_lower,
+                list(lowered_map.keys()),
+                n=5,
+                cutoff=0.6,
+            )
+            close_matches = [lowered_map[key] for key in close_keys]
+
+            candidate_locations = []
+            for loc_name in partial_matches + close_matches:
+                if loc_name not in candidate_locations:
+                    candidate_locations.append(loc_name)
+
+            if candidate_locations:
+                location_filter = Q()
+                for loc_name in candidate_locations:
+                    location_filter |= Q(location__icontains=loc_name)
+
+                rooms_qs = rooms_qs.filter(location_filter)
+                suggested_location = candidate_locations[0]
+            else:
+                rooms_qs = rooms_qs.none()
 
     if room_type:
         rooms_qs = rooms_qs.filter(room_type=room_type)
@@ -200,7 +252,6 @@ def room_list(request):
         .prefetch_related("images")
     )
 
-    # ✅ Sorting options (safe defaults)
     if sort == "new":
         rooms = rooms.order_by("-created_at")
     elif sort == "price_low":
@@ -218,12 +269,10 @@ def room_list(request):
             "-created_at",
         )
 
-    # ✅ Pagination
     page_number = request.GET.get("page") or 1
     paginator = Paginator(rooms, 6)
     page_obj = paginator.get_page(page_number)
 
-    # ✅ Ajax branch
     is_ajax = request.GET.get("ajax") == "1" or request.headers.get("X-Requested-With") == "XMLHttpRequest"
     if is_ajax:
         html = render_to_string(
@@ -240,10 +289,11 @@ def room_list(request):
                 "has_prev": page_obj.has_previous(),
                 "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
                 "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+                "suggested_location": suggested_location,
+                "searched_location": searched_location,
             }
         )
 
-    # ✅ Template-safe "selected" flags (NO comparisons in template)
     sort_selected = {
         "best": sort == "",
         "new": sort == "new",
@@ -251,6 +301,12 @@ def room_list(request):
         "price_high": sort == "price_high",
         "rating": sort == "rating",
     }
+
+    show_location_suggestion = (
+        bool(suggested_location)
+        and bool(searched_location)
+        and suggested_location.strip().lower() != searched_location.strip().lower()
+    )
 
     return render(
         request,
@@ -267,9 +323,11 @@ def room_list(request):
                 "flat": room_type == "flat",
             },
             "sort_selected": sort_selected,
+            "suggested_location": suggested_location,
+            "searched_location": searched_location,
+            "show_location_suggestion": show_location_suggestion,
         },
     )
-
 
 def room_detail(request, pk):
     room = get_object_or_404(Room, pk=pk, is_available=True)

@@ -107,7 +107,7 @@
         <a href="{% url 'contact' %}">Support</a>
       </div>
 
-      <p class="footer-small">
+      <p class="site-footer">
         Listings are posted by landlords. We actively review reports and take
         action to protect users.
       </p>
@@ -279,29 +279,55 @@
 
     <script>
       /* image sliders */
-      document.querySelectorAll("[data-slider]").forEach((shell) => {
-        const track = shell.querySelector("[data-slider-track]");
-        const prev = shell.querySelector("[data-slider-prev]");
-        const next = shell.querySelector("[data-slider-next]");
+      (function () {
+        function initSliders(scope = document) {
+          scope.querySelectorAll("[data-slider]").forEach((shell) => {
+            if (shell.dataset.sliderReady === "1") return;
 
-        if (!track) return;
+            const track = shell.querySelector("[data-slider-track]");
+            const prev = shell.querySelector("[data-slider-prev]");
+            const next = shell.querySelector("[data-slider-next]");
 
-        function step(dir) {
-          track.scrollBy({ left: dir * track.clientWidth, behavior: "smooth" });
+            if (!track) return;
+
+            const slides = track.querySelectorAll("img");
+            const hasMultiple = slides.length > 1;
+
+            if (hasMultiple) {
+              shell.classList.add("has-multiple");
+            } else {
+              shell.classList.remove("has-multiple");
+            }
+
+            if (prev) prev.style.display = hasMultiple ? "" : "none";
+            if (next) next.style.display = hasMultiple ? "" : "none";
+
+            function step(dir) {
+              track.scrollBy({
+                left: dir * track.clientWidth,
+                behavior: "smooth",
+              });
+            }
+
+            prev?.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              step(-1);
+            });
+
+            next?.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              step(1);
+            });
+
+            shell.dataset.sliderReady = "1";
+          });
         }
 
-        prev?.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          step(-1);
-        });
-
-        next?.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          step(1);
-        });
-      });
+        window.initRoomSliders = initSliders;
+        initSliders(document);
+      })();
     </script>
 
     {% block extra_js %}{% endblock %}

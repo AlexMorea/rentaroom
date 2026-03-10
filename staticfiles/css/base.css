@@ -3286,3 +3286,31 @@ body.scroll-down .trust-strip {
   height: 110px;
   object-fit: cover;
 }
+
+/* ================= IMAGE SLIDER ARROWS FIX ================= */
+/* Show arrows only for sliders with multiple images */
+
+.slider-shell .slider-btn {
+  z-index: 70;
+}
+
+.slider-shell:not(.has-multiple) .slider-btn {
+  display: none !important;
+}
+
+.slider-shell.has-multiple .slider-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.slider-shell.has-multiple:hover .slider-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  .slider-shell.has-multiple .slider-btn {
+    opacity: 0.95;
+    pointer-events: auto;
+  }
+}
