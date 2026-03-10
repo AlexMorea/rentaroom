@@ -6,11 +6,8 @@
     <title>{% block title %}Rooms4You{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link
-      rel="icon"
-      href="{% static 'images/favicon.png' %}"
-      type="image/x-icon"
-    />
+    <link rel="icon" href="{% static 'icons/favicon.png' %}" />
+
     <link rel="stylesheet" href="{% static 'css/base.css' %}?v=10" />
   </head>
 
@@ -39,7 +36,6 @@
           <a href="{% url 'services' %}">Services</a>
           <a href="{% url 'about' %}">About</a>
           <a href="{% url 'contact' %}">Contact</a>
-          <a href="{% url 'heatmap' %}">Heatmap</a>
 
           <!-- Auth only -->
           <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>

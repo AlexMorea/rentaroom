@@ -8,11 +8,6 @@
       {% csrf_token %} {{ form.non_field_errors }}
 
       <div class="field">
-        <label class="auth-label">Username</label>
-        {{ form.username }} {{ form.username.errors }}
-      </div>
-
-      <div class="field">
         <label class="auth-label">First name</label>
         {{ form.first_name }} {{ form.first_name.errors }}
       </div>
@@ -32,13 +27,11 @@
         {{ form.role }} {{ form.role.errors }}
       </div>
 
-      <!-- Tenant-only -->
       <div class="field" id="tenantFields">
         <label class="auth-label">Persona</label>
         {{ form.persona }} {{ form.persona.errors }}
       </div>
 
-      <!-- Landlord-only -->
       <div id="landlordFields" style="display: none">
         <div class="field">
           <label class="auth-label">Cell number</label>
@@ -129,7 +122,6 @@
 </div>
 {% endblock %} {% block extra_js %}
 <script>
-  // role switch = show correct fields
   const roleSel = document.getElementById("id_role");
   const landlord = document.getElementById("landlordFields");
   const tenant = document.getElementById("tenantFields");
@@ -150,7 +142,6 @@
     syncRoleUI();
   }
 
-  // password toggles
   document.querySelectorAll("[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const sel = btn.getAttribute("data-toggle");

@@ -15,11 +15,16 @@ from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
 from difflib import get_close_matches
+from django.contrib.auth.models import User
 import re
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 
+
+
+def get_display_name(user):
+    return (user.first_name or "").strip() or (user.email or "").strip() or "there"
 
 # -----------------------------
 # Profile completeness gate
@@ -30,34 +35,30 @@ def profile_needs_update(user):
 
     p = user.profile
 
-    # NOTE TO SELF: tenants must have persona
+    # basic user identity fields
+    has_first_name = bool((user.first_name or "").strip())
+    has_last_name = bool((user.last_name or "").strip())
+    has_email = bool((user.email or "").strip())
+
     if p.role == "tenant":
-        return not (getattr(p, "persona", "") or "").strip()
+        has_persona = bool((getattr(p, "persona", "") or "").strip())
+        return not (has_first_name and has_last_name and has_email and has_persona)
 
-    # NOTE TO SELF: landlords must have verification fields
     if p.role == "landlord":
-        missing = []
-        if not (user.first_name or "").strip():
-            missing.append("first name")
-        if not (user.last_name or "").strip():
-            missing.append("last name")
-        if not (user.email or "").strip():
-            missing.append("email")
+        has_cell = bool((getattr(p, "cell_no", "") or "").strip())
+        has_address = bool((getattr(p, "home_address", "") or "").strip())
+        has_postal = bool((getattr(p, "postal_code", "") or "").strip())
 
-        if not (getattr(p, "cell_no", "") or "").strip():
-            missing.append("cell number")
-        if not (getattr(p, "home_address", "") or "").strip():
-            missing.append("home address")
-        if not (getattr(p, "postal_code", "") or "").strip():
-            missing.append("postal code")
-
-        if getattr(p, "terms_accepted", False) is not True:
-            missing.append("terms agreement")
-
-        return len(missing) > 0
+        return not (
+            has_first_name
+            and has_last_name
+            and has_email
+            and has_cell
+            and has_address
+            and has_postal
+        )
 
     return False
-
 
 def is_landlord(user):
     return hasattr(user, "profile") and user.profile.role == "landlord"
@@ -359,7 +360,7 @@ def register(request):
         user = form.save()
         login(request, user)
 
-        messages.success(request, f"Welcome, {user.username} 👋")
+        messages.success(request, f"Welcome, {get_display_name(user)} 👋")
         user.refresh_from_db()
 
         if hasattr(user, "profile") and user.profile.role == "landlord":
@@ -369,19 +370,27 @@ def register(request):
 
     return render(request, "listings/register.html", {"form": form})
 
-
 def user_login(request):
     if request.method == "POST":
-        user = authenticate(
-            username=request.POST.get("username"),
-            password=request.POST.get("password"),
-        )
+        login_value = (request.POST.get("email") or "").strip()
+        password = request.POST.get("password") or ""
+
+        user = None
+        matched_user = User.objects.filter(
+            Q(email__iexact=login_value) | Q(username__iexact=login_value)
+        ).first()
+
+        if matched_user:
+            user = authenticate(
+                request,
+                username=matched_user.username,
+                password=password,
+            )
 
         if user:
             login(request, user)
             user.refresh_from_db()
 
-            # NOTE TO SELF: existing users must update profile
             if profile_needs_update(user):
                 messages.warning(
                     request,
@@ -389,7 +398,7 @@ def user_login(request):
                 )
                 return redirect("edit_profile")
 
-            messages.success(request, f"Hello, {user.username} 👋")
+            messages.success(request, f"Hello, {get_display_name(user)} 👋")
 
             next_url = request.POST.get("next") or request.GET.get("next")
 
@@ -401,7 +410,7 @@ def user_login(request):
 
             return redirect("room_list")
 
-        messages.error(request, "Invalid username or password.")
+        messages.error(request, "Invalid email or password.")
 
     return render(request, "listings/login.html")
 

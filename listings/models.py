@@ -150,9 +150,10 @@ class Profile(models.Model):
     terms_accepted = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username} ({self.role})"
-
-
+        display_name = (self.user.first_name or "").strip() or (self.user.email or "").strip()
+        return f"{display_name} ({self.role})"
+    
+    
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     # NOTE TO SELF: always create a profile on signup, safe defaults

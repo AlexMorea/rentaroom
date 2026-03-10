@@ -7,10 +7,6 @@ from .models import Profile, Room, RoomImage
 
 
 class UserRegisterForm(forms.Form):
-    # NOTE TO SELF: shared fields
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Choose a username"})
-    )
     first_name = forms.CharField(
         widget=forms.TextInput(attrs={"class": "input", "placeholder": "First name"})
     )
@@ -65,19 +61,13 @@ class UserRegisterForm(forms.Form):
         help_text="",
     )
 
-    def clean_username(self):
-        username = (self.cleaned_data.get("username") or "").strip()
-        if not username:
-            raise ValidationError("Username is required.")
-        if User.objects.filter(username__iexact=username).exists():
-            raise ValidationError("That username is already taken.")
-        return username
-
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
         if not email:
             raise ValidationError("Email is required.")
         if User.objects.filter(email__iexact=email).exists():
+            raise ValidationError("This email is already registered.")
+        if User.objects.filter(username__iexact=email).exists():
             raise ValidationError("This email is already registered.")
         return email
 
@@ -91,16 +81,13 @@ class UserRegisterForm(forms.Form):
         if p1 != p2:
             self.add_error("password2", "Passwords do not match.")
 
-        # password strength (django validators)
         if p1:
             validate_password(p1)
 
-        # NOTE TO SELF: tenant rules
         if role == "tenant":
             if not cleaned.get("persona"):
                 self.add_error("persona", "Please select your persona (student/worker/family).")
 
-        # NOTE TO SELF: landlord rules
         if role == "landlord":
             if not (cleaned.get("cell_no") or "").strip():
                 self.add_error("cell_no", "Cell number is required for landlords.")
@@ -113,13 +100,17 @@ class UserRegisterForm(forms.Form):
 
         return cleaned
 
+    
     def save(self):
-        # NOTE TO SELF: create user + profile cleanly (no funny business)
+        email = (self.cleaned_data["email"] or "").strip().lower()
+        first_name = (self.cleaned_data["first_name"] or "").strip()
+        last_name = (self.cleaned_data["last_name"] or "").strip()
+
         user = User.objects.create(
-            username=self.cleaned_data["username"],
-            email=self.cleaned_data["email"],
-            first_name=self.cleaned_data["first_name"],
-            last_name=self.cleaned_data["last_name"],
+            username=email,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
         )
         user.set_password(self.cleaned_data["password1"])
         user.save()
@@ -139,7 +130,6 @@ class UserRegisterForm(forms.Form):
 
         profile.save()
         return user
-
 
 class UserUpdateForm(forms.ModelForm):
     class Meta:
