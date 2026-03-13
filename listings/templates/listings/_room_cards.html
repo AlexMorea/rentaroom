@@ -1,7 +1,11 @@
 {% load static %} {% load humanize %} {% for room in rooms %}
-<a href="{% url 'room_detail' room.id %}" class="room-card">
+<div class="room-card">
   <div class="room-media">
-    <div class="slider-shell" data-slider>
+    <div
+      class="slider-shell"
+      data-slider
+      data-room-url="{% url 'room_detail' room.id %}"
+    >
       <div class="image-slider" data-slider-track>
         {% for img in room.images.all|slice:":10" %}
         <img src="{{ img.image.url }}" alt="Room image" loading="lazy" />
@@ -14,22 +18,12 @@
         {% endfor %}
       </div>
 
-      <button
-        type="button"
-        class="slider-btn slider-prev"
-        data-slider-prev
-        aria-label="Previous image"
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        class="slider-btn slider-next"
-        data-slider-next
-        aria-label="Next image"
-      >
-        ›
-      </button>
+      {% if room.images.count > 1 %}
+      <button class="slider-btn slider-prev" data-slider-prev>‹</button>
+      <button class="slider-btn slider-next" data-slider-next>›</button>
+      {% endif %}
+
+      <div class="slider-dots" data-slider-dots></div>
     </div>
 
     {% if room.contact_count|default:0 >= 3 %}
@@ -39,29 +33,21 @@
     {% endif %}
   </div>
 
-  <div class="room-info">
-    <h3 class="room-title">{{ room.title }}</h3>
-    <p class="room-meta">{{ room.location }}</p>
-
-    <p class="room-price">R {{ room.price }} p.m</p>
-    <p class="availability-badge">{{ room.availability_badge_text }}</p>
-
-    <p class="room-meta" style="margin-top: 6px">
-      Posted {{ room.created_at|timesince }} ago
-    </p>
-
-    {% if room.avg_rating %}
-    <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
-    {% endif %}
-  </div>
-</a>
-
-{% empty %}
-<div class="empty-card" style="grid-column: 1 / -1">
-  <h3 style="margin: 0 0 6px; font-weight: 900">No rooms found</h3>
-  <p style="margin: 0 0 12px">
-    Try changing the location, removing filters, or sorting by “Newest”.
-  </p>
-  <a class="btn-primary" href="{% url 'room_list' %}">Reset filters</a>
+  <!-- Only the info section is clickable -->
+  <a href="{% url 'room_detail' room.id %}" class="room-link">
+    <div class="room-info">
+      <h3 class="room-title">{{ room.title }}</h3>
+      <p class="room-meta">{{ room.location }}</p>
+      <p class="room-price">R {{ room.price }} p.m</p>
+      <p class="availability-badge">{{ room.availability_badge_text }}</p>
+      <p class="room-meta" style="margin-top: 6px">
+        Posted {{ room.created_at|timesince }} ago
+      </p>
+      {% if room.avg_rating %}
+      <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
+      {% endif %}
+    </div>
+  </a>
 </div>
+
 {% endfor %}

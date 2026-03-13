@@ -448,56 +448,115 @@
     </script>
 
     <script>
-      /* image sliders */
-      (function () {
-        function initSliders(scope = document) {
-          scope.querySelectorAll("[data-slider]").forEach((shell) => {
-            if (shell.dataset.sliderReady === "1") return;
+      /* Rooms4You slider system */
 
-            const track = shell.querySelector("[data-slider-track]");
-            const prev = shell.querySelector("[data-slider-prev]");
-            const next = shell.querySelector("[data-slider-next]");
+      function initRoomSliders() {
+        document
+          .querySelectorAll("[data-slider]:not(.slider-ready)")
+          .forEach((slider) => {
+            slider.classList.add("slider-ready");
 
-            if (!track) return;
+            const track = slider.querySelector("[data-slider-track]");
+            const prev = slider.querySelector("[data-slider-prev]");
+            const next = slider.querySelector("[data-slider-next]");
+            const dotsWrap = slider.querySelector("[data-slider-dots]");
+            const roomUrl = slider.dataset.roomUrl;
 
-            const slides = track.querySelectorAll("img");
-            const hasMultiple = slides.length > 1;
+            const slides = track.children;
+            const total = slides.length;
 
-            if (hasMultiple) {
-              shell.classList.add("has-multiple");
-            } else {
-              shell.classList.remove("has-multiple");
+            let index = 0;
+
+            /* create dots */
+
+            if (dotsWrap && total > 1) {
+              dotsWrap.innerHTML = "";
+
+              for (let i = 0; i < total; i++) {
+                const dot = document.createElement("div");
+                dot.className = "slider-dot";
+
+                if (i === 0) dot.classList.add("active");
+
+                dotsWrap.appendChild(dot);
+              }
             }
 
-            if (prev) prev.style.display = hasMultiple ? "" : "none";
-            if (next) next.style.display = hasMultiple ? "" : "none";
+            const dots = dotsWrap ? dotsWrap.children : [];
 
-            function step(dir) {
-              track.scrollBy({
-                left: dir * track.clientWidth,
+            function update() {
+              track.scrollTo({
+                left: track.clientWidth * index,
                 behavior: "smooth",
               });
+
+              if (dots.length) {
+                [...dots].forEach((d) => d.classList.remove("active"));
+                dots[index].classList.add("active");
+              }
             }
 
-            prev?.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              step(-1);
-            });
+            /* next */
 
             next?.addEventListener("click", (e) => {
               e.preventDefault();
               e.stopPropagation();
-              step(1);
+
+              index = (index + 1) % total;
+              update();
             });
 
-            shell.dataset.sliderReady = "1";
-          });
-        }
+            /* prev */
 
-        window.initRoomSliders = initSliders;
-        initSliders(document);
-      })();
+            prev?.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+
+              index = (index - 1 + total) % total;
+              update();
+            });
+
+            /* swipe */
+
+            let startX = 0;
+
+            track.addEventListener("touchstart", (e) => {
+              startX = e.touches[0].clientX;
+            });
+
+            track.addEventListener("touchend", (e) => {
+              const diff = e.changedTouches[0].clientX - startX;
+
+              if (Math.abs(diff) < 40) return;
+
+              if (diff < 0) {
+                index = (index + 1) % total;
+              } else {
+                index = (index - 1 + total) % total;
+              }
+
+              update();
+            });
+
+            /* click image to open room */
+
+            slider.addEventListener("click", (e) => {
+              if (e.target.closest(".slider-btn")) return;
+
+              window.location.href = roomUrl;
+            });
+          });
+      }
+
+      /* run on page load */
+
+      document.addEventListener("DOMContentLoaded", initRoomSliders);
+
+      /* run again when new rooms load */
+
+      document.addEventListener("click", () => {
+        setTimeout(initRoomSliders, 100);
+      });
     </script>
 
     {% block extra_js %}{% endblock %}

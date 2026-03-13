@@ -137,13 +137,17 @@
 
     function buildUrl(page) {
       const { q, location, type, sort } = getBaseParams();
+
       const params = new URLSearchParams();
+
       if (q) params.set("q", q);
       if (location) params.set("location", location);
       if (type) params.set("type", type);
       if (sort) params.set("sort", sort);
+
       params.set("page", String(page));
       params.set("ajax", "1");
+
       return "?" + params.toString();
     }
 
@@ -156,11 +160,13 @@
 
     function addSkeletons(count = 3) {
       const frag = document.createDocumentFragment();
+
       for (let i = 0; i < count; i++) {
         const s = document.createElement("div");
         s.className = "skeleton";
         frag.appendChild(s);
       }
+
       grid.appendChild(frag);
     }
 
@@ -180,18 +186,20 @@
       btnNext.dataset.nextPage = meta.next_page ? String(meta.next_page) : "";
       btnBack.dataset.prevPage = meta.prev_page ? String(meta.prev_page) : "";
 
-      // Hard-guard: Back must never show on page 1
       if (meta.page <= 1) btnBack.style.display = "none";
     }
 
     async function fetchPage(page) {
       setLoading(true);
       addSkeletons(3);
+
       try {
         const res = await fetch(buildUrl(page), {
           headers: { "X-Requested-With": "XMLHttpRequest" },
         });
+
         if (!res.ok) throw new Error("Request failed");
+
         return await res.json();
       } finally {
         clearSkeletons();
@@ -202,47 +210,60 @@
     indicator.textContent = `Page ${wrap.dataset.page} of ${wrap.dataset.pages}`;
 
     const initialPage = parseInt(wrap.dataset.page || "1", 10);
+
     if (initialPage <= 1) btnBack.style.display = "none";
 
     btnNext.addEventListener("click", async (e) => {
       e.preventDefault();
 
       const current = parseInt(wrap.dataset.page || "1", 10);
+
       const next = parseInt(
         btnNext.dataset.nextPage || String(current + 1),
         10,
       );
+
       if (!next || next < 1) return;
 
       const data = await fetchPage(next);
-      grid.insertAdjacentHTML("beforeend", data.html);
 
-      if (window.initRoomSliders) {
-        window.initRoomSliders(grid);
-      }
+      grid.insertAdjacentHTML("beforeend", data.html);
 
       updateUI(data);
 
       const cards = grid.querySelectorAll(".room-card");
+
       const target = cards[cards.length - 1];
-      if (target) target.scrollIntoView({ behavior: "smooth", block: "end" });
+
+      if (target)
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+        });
     });
 
     btnBack.addEventListener("click", async (e) => {
       e.preventDefault();
 
       const current = parseInt(wrap.dataset.page || "1", 10);
+
       const prev = parseInt(
         btnBack.dataset.prevPage || String(current - 1),
         10,
       );
+
       if (!prev || prev < 1) return;
 
       const data = await fetchPage(prev);
+
       grid.innerHTML = data.html;
+
       updateUI(data);
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     });
   })();
 </script>
