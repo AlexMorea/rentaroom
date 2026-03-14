@@ -274,7 +274,21 @@ def room_list(request):
     paginator = Paginator(rooms, 6)
     page_obj = paginator.get_page(page_number)
 
-    is_ajax = request.GET.get("ajax") == "1" or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    # MAP DATA
+    map_rooms = list(
+        page_obj.object_list.values(
+            "id",
+            "title",
+            "price",
+            "latitude",
+            "longitude",
+        )
+    )
+
+    is_ajax = request.GET.get("ajax") == "1" or request.headers.get(
+        "X-Requested-With"
+    ) == "XMLHttpRequest"
+
     if is_ajax:
         html = render_to_string(
             "listings/_room_cards.html",
@@ -288,8 +302,12 @@ def room_list(request):
                 "num_pages": paginator.num_pages,
                 "has_next": page_obj.has_next(),
                 "has_prev": page_obj.has_previous(),
-                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
-                "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+                "next_page": page_obj.next_page_number()
+                if page_obj.has_next()
+                else None,
+                "prev_page": page_obj.previous_page_number()
+                if page_obj.has_previous()
+                else None,
                 "suggested_location": suggested_location,
                 "searched_location": searched_location,
             }
@@ -306,13 +324,15 @@ def room_list(request):
     show_location_suggestion = (
         bool(suggested_location)
         and bool(searched_location)
-        and suggested_location.strip().lower() != searched_location.strip().lower()
+        and suggested_location.strip().lower()
+        != searched_location.strip().lower()
     )
 
     return render(
         request,
         "listings/room_list.html",
         {
+            "map_rooms": map_rooms,
             "rooms": page_obj.object_list,
             "page_obj": page_obj,
             "paginator": paginator,
@@ -329,6 +349,7 @@ def room_list(request):
             "show_location_suggestion": show_location_suggestion,
         },
     )
+
 
 def room_detail(request, pk):
     room = get_object_or_404(Room, pk=pk, is_available=True)

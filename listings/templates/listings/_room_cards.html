@@ -1,5 +1,5 @@
 {% load static %} {% load humanize %} {% for room in rooms %}
-<div class="room-card">
+<div class="room-card" data-room-id="{{ room.id }}">
   <div class="room-media">
     <div
       class="slider-shell"

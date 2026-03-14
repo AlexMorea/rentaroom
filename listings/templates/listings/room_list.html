@@ -114,7 +114,88 @@
     Browse More Rooms →
   </a>
 </div>
+
+<div class="map-shell">
+  <div id="roomsMap"></div>
+</div>
+
 {% endif %}
+
+<script>
+  const roomsData = {{ map_rooms|safe }};
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const map = L.map("roomsMap");
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    const markers = [];
+    const markerMap = {};
+
+    function renderMarkers(data) {
+      markers.forEach((m) => map.removeLayer(m));
+      markers.length = 0;
+
+      if (!data || !data.length) return;
+
+      const bounds = [];
+
+      data.forEach((room) => {
+        if (!room.latitude || !room.longitude) return;
+
+        const priceIcon = L.divIcon({
+          className: "price-marker",
+          html: `R${room.price}`,
+          iconSize: [40, 20],
+        });
+
+        const marker = L.marker([room.latitude, room.longitude], {
+          icon: priceIcon,
+        }).addTo(map);
+
+        marker.bindPopup(`
+        <b>${room.title}</b><br>
+        R${room.price}/month<br>
+        <a href="/rooms/${room.id}/">View listing</a>
+      `);
+
+        markers.push(marker);
+        markerMap[room.id] = marker;
+
+        bounds.push([room.latitude, room.longitude]);
+      });
+
+      if (bounds.length) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }
+
+    renderMarkers(roomsData);
+
+    window.renderMarkers = renderMarkers;
+    window.roomMarkers = markerMap;
+  });
+</script>
+
+<script>
+  document.addEventListener("mouseover", function (e) {
+    const card = e.target.closest(".room-card");
+
+    if (!card) return;
+
+    const roomId = card.dataset.roomId;
+
+    const marker = window.roomMarkers?.[roomId];
+
+    if (!marker) return;
+
+    marker.openPopup();
+  });
+</script>
 
 <script>
   (function () {
@@ -228,6 +309,10 @@
       const data = await fetchPage(next);
 
       grid.insertAdjacentHTML("beforeend", data.html);
+
+      if (data.map_rooms && window.renderMarkers) {
+        window.renderMarkers(data.map_rooms);
+      }
 
       updateUI(data);
 

@@ -227,4 +227,22 @@
     });
   })();
 </script>
+
+<div class="mobile-contact-bar">
+  <a href="tel:{{ room.owner.profile.phone }}" class="contact-btn call">
+    📞 Call
+  </a>
+
+  <a
+    href="https://wa.me/{{ room.owner.profile.phone|cut:'+' }}"
+    target="_blank"
+    class="contact-btn whatsapp"
+  >
+    💬 WhatsApp
+  </a>
+
+  <a href="mailto:{{ room.owner.email }}" class="contact-btn email">
+    ✉ Email
+  </a>
+</div>
 {% endblock %} {% endblock %}

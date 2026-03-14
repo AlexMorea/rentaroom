@@ -44,6 +44,8 @@ class Room(models.Model):
 
     full_address = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=10)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     room_type = models.CharField(max_length=20, choices=ROOM_TYPES)
 

@@ -3403,3 +3403,112 @@ body.scroll-down .trust-strip {
   pointer-events: auto;
   z-index: 100;
 }
+
+.map-shell {
+  max-width: 1100px;
+  margin: 0 auto 24px;
+}
+
+#roomsMap {
+  height: 420px;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.price-marker {
+  background: white;
+  color: #111;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+.price-marker:hover {
+  background: #111;
+  color: white;
+}
+
+.mobile-contact-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  display: none;
+  justify-content: space-between;
+
+  padding: 10px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  z-index: 999;
+}
+
+.contact-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  margin: 0 5px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  color: white;
+}
+
+.contact-btn.call {
+  background: #2563eb;
+}
+
+.contact-btn.whatsapp {
+  background: #25d366;
+}
+
+.contact-btn.email {
+  background: #111;
+}
+
+.mobile-contact-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  display: none;
+  justify-content: space-between;
+
+  padding: 10px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  z-index: 999;
+}
+
+.contact-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  margin: 0 5px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  color: white;
+}
+
+.contact-btn.call {
+  background: #2563eb;
+}
+
+.contact-btn.whatsapp {
+  background: #25d366;
+}
+
+.contact-btn.email {
+  background: #111;
+}
