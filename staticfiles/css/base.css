@@ -3416,3 +3416,144 @@ body.scroll-down .trust-strip {
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
+
+.price-marker {
+  background: white;
+  color: #111;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+.price-marker:hover {
+  background: #111;
+  color: white;
+}
+
+.mobile-contact-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  display: none;
+  justify-content: space-between;
+
+  padding: 10px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  z-index: 999;
+}
+
+.contact-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  margin: 0 5px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  color: white;
+}
+
+.contact-btn.call {
+  background: #2563eb;
+}
+
+.contact-btn.whatsapp {
+  background: #25d366;
+}
+
+.contact-btn.email {
+  background: #111;
+}
+
+.mobile-contact-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  display: none;
+  justify-content: space-between;
+
+  padding: 10px;
+  background: white;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  z-index: 999;
+}
+
+.contact-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  margin: 0 5px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  color: white;
+}
+
+.contact-btn.call {
+  background: #2563eb;
+}
+
+.contact-btn.whatsapp {
+  background: #25d366;
+}
+
+.contact-btn.email {
+  background: #111;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  align-items: center;
+  height: 70px;
+}
+
+/* Logo wrapper */
+.navbar-logo {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Logo image */
+.navbar-logo img {
+  height: 80%; /* automatically scales with navbar */
+  width: auto;
+  display: block;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+/* Hover effect */
+.navbar-logo:hover img {
+  transform: scale(1.05);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .navbar {
+    height: 60px;
+  }
+
+  .navbar-logo img {
+    height: 75%;
+  }
+}
+
+.navbar-logo img {
+  height: 60px;
+  width: auto;
+  display: block;
+}
