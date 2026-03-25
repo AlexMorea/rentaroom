@@ -1,5 +1,10 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 
 try:
@@ -7,8 +12,6 @@ try:
 except ImportError:
     dj_database_url = None
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
 DEBUG = os.environ.get("DEBUG", "0") == "1"
@@ -74,7 +77,7 @@ if DATABASE_URL and dj_database_url:
         "default": dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,  # Render Postgres expects SSL
+            ssl_require=True,  
         )
     }
 else:
@@ -149,3 +152,4 @@ LOGGING = {
         "rooms4you_email": {"handlers": ["console"], "level": "INFO"},
     },
 }
+
