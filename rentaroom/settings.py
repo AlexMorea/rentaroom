@@ -17,7 +17,15 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
 DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-ALLOWED_HOSTS += ["rentaroom-djou.onrender.com"]
+ALLOWED_HOSTS += [
+    "rooms4you.co.za",
+    "www.rooms4you.co.za",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://rooms4you.co.za",
+    "https://www.rooms4you.co.za",
+]
 
 extra_hosts = os.environ.get("ALLOWED_HOSTS", "")
 if extra_hosts:
