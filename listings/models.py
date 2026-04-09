@@ -6,6 +6,9 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
 from django.db.models.functions import Lower
+import uuid
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Room(models.Model):
@@ -131,10 +134,17 @@ class Profile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tenant")
+
+    # 🔐 NEW VERIFICATION SYSTEM
+    is_phone_verified = models.BooleanField(default=False)
+    is_email_verified = models.BooleanField(default=False)
+
+    # (keep old for compatibility)
     is_verified = models.BooleanField(default=False)
 
-    # NOTE TO SELF: tenant-only vibe badge (safe default)
+    # 👤 tenant persona
     persona = models.CharField(
         max_length=20,
         choices=PERSONA_CHOICES,
@@ -142,14 +152,26 @@ class Profile(models.Model):
         default="worker",
     )
 
-    # NOTE TO SELF: landlord identity/contact fields (kept optional in DB to protect existing users)
-    cell_no = models.CharField(max_length=20, blank=True, default="")
+    # 📱 NEW AIRBNB-STYLE PHONE
+    country_code = models.CharField(max_length=5, default="+27")
+    phone_number = models.CharField(max_length=15, blank=True, default="")
+
+    # 🔁 BACKWARD COMPATIBILITY
+    phone_number = models.CharField(max_length=20, blank=True, default="")
+    cell_no = models.CharField(max_length=15, null=True, blank=True)
+
+    # 📞 optional
     alt_no = models.CharField(max_length=20, blank=True, default="")
+
+    # 📍 address
     home_address = models.CharField(max_length=255, blank=True, default="")
     postal_code = models.CharField(max_length=10, blank=True, default="")
 
-    # NOTE TO SELF: landlord must tick this on signup (validation in form)
+    # 📜 legal
     terms_accepted = models.BooleanField(default=False)
+
+    def full_phone(self):
+        return f"{self.country_code}{self.phone_number}"
 
     def __str__(self):
         display_name = (self.user.first_name or "").strip() or (self.user.email or "").strip()
@@ -202,3 +224,26 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} ♥ {self.room.title}"
+
+class PhoneOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=20)
+
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)
+
+    def __str__(self):
+        return f"{self.phone_number} ({self.otp})"
+
+class EmailVerification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(hours=24)

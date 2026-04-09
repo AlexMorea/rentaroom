@@ -22,18 +22,24 @@ class UserRegisterForm(forms.Form):
         widget=forms.Select(attrs={"class": "input"}),
     )
 
-    # tenant persona
     persona = forms.ChoiceField(
         choices=Profile.PERSONA_CHOICES,
         required=False,
         widget=forms.Select(attrs={"class": "input"}),
     )
 
-    # landlord fields
-    cell_no = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Cell number"}),
+    # 🔥 NEW PHONE INPUT (ALL USERS)
+    country_code = forms.ChoiceField(
+        choices=[("+27", "+27 🇿🇦"), ("+1", "+1 🇺🇸"), ("+44", "+44 🇬🇧")],
+        initial="+27",
+        widget=forms.Select(attrs={"class": "input"}),
     )
+
+    phone_number = forms.CharField(
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Phone number"})
+    )
+
+    # landlord extras
     alt_no = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={"class": "input", "placeholder": "Alternative number (optional)"}),
@@ -49,26 +55,24 @@ class UserRegisterForm(forms.Form):
 
     terms_accepted = forms.BooleanField(
         required=False,
-        label="I agree to the Terms & Conditions and allow address/listing verification to maintain integrity.",
+        label="I agree to the Terms & Conditions",
     )
 
     password1 = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Create a password"}),
-        help_text="",
+        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Create a password"})
     )
     password2 = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Repeat password"}),
-        help_text="",
+        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Repeat password"})
     )
+
+    # ---------------- VALIDATION ---------------- #
 
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
-        if not email:
-            raise ValidationError("Email is required.")
+
         if User.objects.filter(email__iexact=email).exists():
             raise ValidationError("This email is already registered.")
-        if User.objects.filter(username__iexact=email).exists():
-            raise ValidationError("This email is already registered.")
+
         return email
 
     def clean(self):
@@ -84,22 +88,23 @@ class UserRegisterForm(forms.Form):
         if p1:
             validate_password(p1)
 
+        # 🔥 ALL USERS MUST HAVE PHONE
+        if not cleaned.get("phone_number"):
+            self.add_error("phone_number", "Phone number is required.")
+
         if role == "tenant":
             if not cleaned.get("persona"):
-                self.add_error("persona", "Please select your persona (student/worker/family).")
+                self.add_error("persona", "Select your persona.")
 
         if role == "landlord":
-            if not (cleaned.get("cell_no") or "").strip():
-                self.add_error("cell_no", "Cell number is required for landlords.")
-            if not (cleaned.get("home_address") or "").strip():
-                self.add_error("home_address", "Home address is required for verification.")
-            if not (cleaned.get("postal_code") or "").strip():
-                self.add_error("postal_code", "Postal code is required.")
-            if cleaned.get("terms_accepted") is not True:
-                self.add_error("terms_accepted", "You must agree to the terms to register as a landlord.")
+            if not cleaned.get("home_address"):
+                self.add_error("home_address", "Address required.")
+            if not cleaned.get("postal_code"):
+                self.add_error("postal_code", "Postal code required.")
+            if not cleaned.get("terms_accepted"):
+                self.add_error("terms_accepted", "You must accept terms.")
 
         return cleaned
-
     
     def save(self):
         email = (self.cleaned_data["email"] or "").strip().lower()
@@ -113,24 +118,39 @@ class UserRegisterForm(forms.Form):
             last_name=last_name,
         )
         user.set_password(self.cleaned_data["password1"])
+        user.is_active = False  # 🔐 lock until verification
         user.save()
 
         profile, _ = Profile.objects.get_or_create(user=user)
+
         profile.role = self.cleaned_data["role"]
 
+        # ✅ PERSONA
         if profile.role == "tenant":
             profile.persona = self.cleaned_data["persona"]
 
+        # ✅ PHONE (FOR ALL USERS)
+        country_code = self.cleaned_data.get("country_code")
+        phone_number = self.cleaned_data.get("phone_number")
+
+        profile.country_code = country_code
+        profile.phone_number = phone_number
+
+        # 🔁 BACKWARD COMPATIBILITY
+        profile.phone_number = f"{country_code}{phone_number}"
+
+        # ✅ LANDLORD EXTRA
         if profile.role == "landlord":
-            profile.cell_no = (self.cleaned_data.get("cell_no") or "").strip()
             profile.alt_no = (self.cleaned_data.get("alt_no") or "").strip()
             profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
             profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
             profile.terms_accepted = True
 
         profile.save()
+
         return user
 
+    
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
@@ -145,15 +165,24 @@ class UserUpdateForm(forms.ModelForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ["persona", "cell_no", "alt_no", "home_address", "postal_code"]
+        fields = [
+            "persona",
+            "country_code",
+            "phone_number",
+            "alt_no",
+            "home_address",
+            "postal_code",
+        ]
         widgets = {
             "persona": forms.Select(attrs={"class": "input"}),
-            "cell_no": forms.TextInput(attrs={"class": "input"}),
+
+            "country_code": forms.Select(attrs={"class": "input"}),
+            "phone_number": forms.TextInput(attrs={"class": "input"}),
+
             "alt_no": forms.TextInput(attrs={"class": "input"}),
             "home_address": forms.TextInput(attrs={"class": "input"}),
             "postal_code": forms.TextInput(attrs={"class": "input"}),
         }
-
 
 class RoomForm(forms.ModelForm):
     class Meta:

@@ -1,0 +1,9 @@
+<h2>Verify Your Phone</h2>
+
+<p>An OTP was sent to your number</p>
+
+<form method="POST">
+  {% csrf_token %}
+  <input type="text" name="otp" placeholder="Enter 6-digit code" required />
+  <button type="submit">Verify</button>
+</form>

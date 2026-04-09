@@ -17,11 +17,19 @@ from django.views.decorators.http import require_POST
 from difflib import get_close_matches
 from django.contrib.auth.models import User
 import re
+import random
+from .models import PhoneOTP
+from .services.sms import send_otp_sms
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import EmailVerification
+
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 
-
+def generate_otp():
+    return str(random.randint(100000, 999999))
 
 def get_display_name(user):
     return (user.first_name or "").strip() or (user.email or "").strip() or "there"
@@ -45,7 +53,7 @@ def profile_needs_update(user):
         return not (has_first_name and has_last_name and has_email and has_persona)
 
     if p.role == "landlord":
-        has_cell = bool((getattr(p, "cell_no", "") or "").strip())
+        has_cell = bool((getattr(p, "phone_number", "") or "").strip())
         has_address = bool((getattr(p, "home_address", "") or "").strip())
         has_postal = bool((getattr(p, "postal_code", "") or "").strip())
 
@@ -377,19 +385,102 @@ def room_detail(request, pk):
 def register(request):
     form = UserRegisterForm(request.POST or None)
 
-    if request.method == "POST" and form.is_valid():
-        user = form.save()
-        login(request, user)
+    if request.method == "POST":
+        if form.is_valid():
+            user = form.save()
 
-        messages.success(request, f"Welcome, {get_display_name(user)} 👋")
-        user.refresh_from_db()
+            # 🔑 EMAIL VERIFICATION
+            verification = EmailVerification.objects.create(user=user)
 
-        if hasattr(user, "profile") and user.profile.role == "landlord":
-            return redirect("dashboard")
+            verify_link = request.build_absolute_uri(
+                f"/verify-email/{verification.token}/"
+            )
 
-        return redirect("room_list")
+            send_mail(
+                subject="Verify your Rooms4You account",
+                message=f"""
+Hi {user.first_name},
+
+Welcome to Rooms4You 🎉
+
+Click below to verify your account:
+
+{verify_link}
+
+Expires in 24 hours.
+""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+            )
+
+            messages.success(request, "Check your email to verify your account ✅")
+            return redirect("login")
 
     return render(request, "listings/register.html", {"form": form})
+
+def verify_email(request, token):
+    try:
+        verification = EmailVerification.objects.get(
+            token=token,
+            is_verified=False
+        )
+    except EmailVerification.DoesNotExist:
+        messages.error(request, "Invalid or expired verification link.")
+        return redirect("login")
+
+    if verification.is_expired():
+        messages.error(request, "Verification link expired.")
+        return redirect("register")
+
+    verification.is_verified = True
+    verification.save()
+
+    user = verification.user
+    user.is_active = True
+    user.save()
+
+    # ✅ Store user for phone verification step
+    request.session["pending_user_id"] = user.id
+
+    messages.success(request, "Email verified ✅ Now verify your phone")
+
+    return redirect("verify_phone")
+def verify_phone(request):
+    user_id = request.session.get("pending_user_id")
+
+    if not user_id:
+        return redirect("register")
+
+    user = User.objects.get(id=user_id)
+
+    if request.method == "POST":
+        code = request.POST.get("otp")
+
+        otp_obj = PhoneOTP.objects.filter(
+            user=user,
+            otp=code,
+            is_verified=False
+        ).last()
+
+        if otp_obj and not otp_obj.is_expired():
+            otp_obj.is_verified = True
+            otp_obj.save()
+
+            # ✅ Mark BOTH verifications complete
+            user.profile.is_verified = True
+            user.profile.save()
+
+            # 🔥 FINAL LOGIN (ONLY happens here)
+            login(request, user)
+
+            del request.session["pending_user_id"]
+
+            messages.success(request, "Account fully verified 🎉")
+            return redirect("dashboard")
+
+        messages.error(request, "Invalid or expired OTP")
+
+    return render(request, "listings/verify_phone.html")
 
 def user_login(request):
     if request.method == "POST":
@@ -535,7 +626,7 @@ def profile(request):
     else:
         detail_rows.extend(
             [
-                {"label": "Cell", "value": dash(getattr(p, "cell_no", ""))},
+                {"label": "Cell", "value": dash(getattr(p, "phone_number", ""))},
                 {"label": "Alt", "value": dash(getattr(p, "alt_no", ""))},
                 {"label": "Address", "value": dash(getattr(p, "home_address", ""))},
                 {"label": "Postal", "value": dash(getattr(p, "postal_code", ""))},
@@ -578,20 +669,27 @@ def edit_profile(request):
     user = request.user
     p = user.profile
 
+    # 🔐 store original values BEFORE form binding
+    original_email = user.email
+    original_phone = p.phone_number
+    original_address = p.home_address
+
     u_form = UserUpdateForm(request.POST or None, instance=user)
     p_form = ProfileUpdateForm(request.POST or None, instance=p)
 
     if request.method == "POST":
         ok = u_form.is_valid() and p_form.is_valid()
 
-        # NOTE TO SELF: landlords must keep these filled
+        # -----------------------------
+        # EXISTING VALIDATIONS (KEEP)
+        # -----------------------------
         if p.role == "landlord":
-            cell = (p_form.cleaned_data.get("cell_no") or "").strip()
+            cell = (p_form.cleaned_data.get("phone_number") or "").strip()
             addr = (p_form.cleaned_data.get("home_address") or "").strip()
             pc = (p_form.cleaned_data.get("postal_code") or "").strip()
 
             if not cell:
-                p_form.add_error("cell_no", "Cell number is required.")
+                p_form.add_error("phone_number", "Cell number is required.")
                 ok = False
             if not addr:
                 p_form.add_error("home_address", "Home address is required.")
@@ -600,26 +698,107 @@ def edit_profile(request):
                 p_form.add_error("postal_code", "Postal code is required.")
                 ok = False
 
-        # NOTE TO SELF: tenants must choose persona
         if p.role == "tenant":
             persona = (p_form.cleaned_data.get("persona") or "").strip()
             if not persona:
                 p_form.add_error("persona", "Please choose your persona.")
                 ok = False
 
+        # -----------------------------
+        # 🔥 PHASE 5: DETECT CHANGES
+        # -----------------------------
+        email_changed = False
+        phone_changed = False
+        address_changed = False
+
         if ok:
-            u_form.save()
-            p_form.save()
+            new_email = u_form.cleaned_data.get("email")
+            new_phone = p_form.cleaned_data.get("phone_number")
+            new_address = p_form.cleaned_data.get("home_address")
+
+            if new_email and new_email != original_email:
+                email_changed = True
+
+            if new_phone and new_phone != original_phone:
+                phone_changed = True
+
+            if new_address and new_address != original_address:
+                address_changed = True
+
+        # -----------------------------
+        # SAVE FORMS
+        # -----------------------------
+        if ok:
+            user = u_form.save(commit=False)
+            profile = p_form.save(commit=False)
+
+            # -----------------------------
+            # 🔐 APPLY SECURITY RULES
+            # -----------------------------
+
+            # 📧 EMAIL CHANGE → HARD LOCK
+            if email_changed:
+                profile.is_email_verified = False
+                user.is_active = False
+
+                messages.warning(
+                    request,
+                    "Email changed. Please verify your new email to reactivate your account."
+                )
+
+                # 👉 (NEXT PHASE: send email verification)
+
+            # 📱 PHONE CHANGE → OTP AGAIN
+            if phone_changed:
+                profile.is_phone_verified = False
+
+                otp = generate_otp()
+                PhoneOTP.objects.create(
+                    user=user,
+                    phone_number=f"{profile.country_code}{new_phone}",
+                    otp=otp
+                )
+
+                send_otp_sms(f"{profile.country_code}{new_phone}", otp)
+
+                request.session["pending_user_id"] = user.id
+
+                messages.warning(
+                    request,
+                    "Phone number changed. Please verify your new number."
+                )
+
+            # 📍 ADDRESS CHANGE → TRUST RESET (optional but strong)
+            if address_changed:
+                profile.is_verified = False  # landlord trust reset
+
+            # -----------------------------
+            # FINAL SAVE
+            # -----------------------------
+            user.save()
+            profile.save()
+
+            # -----------------------------
+            # REDIRECT LOGIC
+            # -----------------------------
+            if phone_changed:
+                return redirect("verify_phone")
+
+            if email_changed:
+                logout(request)
+                return redirect("login")
+
             messages.success(request, "Profile updated ✅")
             return redirect("profile")
 
     return render(
         request,
         "listings/edit_profile.html",
-        {"u_form": u_form, "p_form": p_form, "p": p},
+        {
+            "u_form": u_form,
+            "p_form": p_form,
+        },
     )
-
-
 @login_required
 def toggle_favorite(request, room_id):
     room = get_object_or_404(Room, id=room_id, is_available=True)
@@ -1021,3 +1200,31 @@ def report_room(request, pk):
     # This is enough for MVP: WE can wire to email/admin later
     messages.success(request, "Thanks! Your report was received ✅ We’ll review this listing.")
     return redirect("room_detail", pk=room.id)
+
+def resend_verification(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+
+    user = request.user
+
+    verification = EmailVerification.objects.filter(
+        user=user,
+        is_verified=False
+    ).last()
+
+    if not verification:
+        verification = EmailVerification.objects.create(user=user)
+
+    verify_link = request.build_absolute_uri(
+        f"/verify-email/{verification.token}/"
+    )
+
+    send_mail(
+        "Verify your account",
+        f"Click to verify:\n{verify_link}",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+    )
+
+    messages.success(request, "Verification email sent again ✅")
+    return redirect("dashboard")

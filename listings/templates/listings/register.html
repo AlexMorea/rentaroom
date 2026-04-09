@@ -2,11 +2,13 @@
 {% block content %}
 <div class="auth-shell">
   <div class="auth-card">
+    <h1 class="page-title">Welcome to Rooms4You</h1>
     <h2 class="auth-title">Create account</h2>
 
     <form method="post" class="auth-form">
       {% csrf_token %} {{ form.non_field_errors }}
 
+      <!-- BASIC INFO -->
       <div class="field">
         <label class="auth-label">First name</label>
         {{ form.first_name }} {{ form.first_name.errors }}
@@ -27,17 +29,29 @@
         {{ form.role }} {{ form.role.errors }}
       </div>
 
-      <div class="field" id="tenantFields">
-        <label class="auth-label">Persona</label>
-        {{ form.persona }} {{ form.persona.errors }}
+      <!-- PHONE FOR ALL USERS -->
+      <div class="field">
+        <label class="auth-label">Phone Number</label>
+        <div style="display: flex; gap: 10px">
+          <div style="width: 120px">{{ form.country_code }}</div>
+          <div style="flex: 1">{{ form.phone_number }}</div>
+        </div>
+        <small style="color: gray">
+          An OTP will be sent to this number for verification
+        </small>
+        {{ form.phone_number.errors }}
       </div>
 
-      <div id="landlordFields" style="display: none">
+      <!-- TENANT FIELDS -->
+      <div id="tenantFields">
         <div class="field">
-          <label class="auth-label">Cell number</label>
-          {{ form.cell_no }} {{ form.cell_no.errors }}
+          <label class="auth-label">Persona</label>
+          {{ form.persona }} {{ form.persona.errors }}
         </div>
+      </div>
 
+      <!-- LANDLORD FIELDS -->
+      <div id="landlordFields" style="display: none">
         <div class="field">
           <label class="auth-label">Alternative number</label>
           {{ form.alt_no }} {{ form.alt_no.errors }}
@@ -46,9 +60,9 @@
         <div class="field">
           <label class="auth-label">Home address</label>
           {{ form.home_address }} {{ form.home_address.errors }}
-          <small class="auth-small"
-            >For verification & integrity. Not public.</small
-          >
+          <small class="auth-small">
+            For verification & integrity. Not public.
+          </small>
         </div>
 
         <div class="field">
@@ -63,7 +77,6 @@
               gap: 10px;
               align-items: flex-start;
               font-weight: 800;
-              opacity: 0.9;
             "
           >
             {{ form.terms_accepted }}
@@ -73,16 +86,12 @@
         </div>
       </div>
 
+      <!-- PASSWORDS -->
       <div class="field">
         <label class="auth-label">Password</label>
         <div class="pw-wrap">
           {{ form.password1 }}
-          <button
-            class="pw-toggle"
-            type="button"
-            aria-label="Show password"
-            data-toggle="#id_password1"
-          >
+          <button class="pw-toggle" type="button" data-toggle="#id_password1">
             👁
           </button>
         </div>
@@ -93,12 +102,7 @@
         <label class="auth-label">Repeat password</label>
         <div class="pw-wrap">
           {{ form.password2 }}
-          <button
-            class="pw-toggle"
-            type="button"
-            aria-label="Show password"
-            data-toggle="#id_password2"
-          >
+          <button class="pw-toggle" type="button" data-toggle="#id_password2">
             👁
           </button>
         </div>
@@ -117,6 +121,11 @@
     <p class="auth-hint">
       Already registered?
       <a class="auth-link" href="{% url 'login' %}">Login</a>
+    </p>
+
+    <p class="auth-hint" style="font-size: 12px; color: gray; margin-top: 15px">
+      By submitting this form, you agree to our
+      <a href="#">Terms and Conditions</a>
     </p>
   </div>
 </div>
@@ -142,19 +151,15 @@
     syncRoleUI();
   }
 
+  // Password toggle
   document.querySelectorAll("[data-toggle]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const sel = btn.getAttribute("data-toggle");
-      const input = document.querySelector(sel);
+      const input = document.querySelector(btn.dataset.toggle);
       if (!input) return;
 
-      const isHidden = input.type === "password";
-      input.type = isHidden ? "text" : "password";
-      btn.textContent = isHidden ? "🙈" : "👁";
-      btn.setAttribute(
-        "aria-label",
-        isHidden ? "Hide password" : "Show password",
-      );
+      const hidden = input.type === "password";
+      input.type = hidden ? "text" : "password";
+      btn.textContent = hidden ? "🙈" : "👁";
     });
   });
 </script>
