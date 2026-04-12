@@ -24,26 +24,11 @@ from .utils import generate_otp, send_otp_email
 from utils.email import send_template_email
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.sites.shortcuts import get_current_site
+from uuid import uuid4
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
-
-
-def resend_otp(request):
-    user = request.user
-
-    if user.is_authenticated:
-        otp = generate_otp()  # your existing function
-
-        user.profile.phone_otp = otp
-        user.profile.save()
-
-        send_otp_email(user.email, otp)  # your email function
-
-        messages.success(request, "OTP resent successfully")
-
-    return redirect("verify_phone")
-
 
 
 def get_display_name(user):
@@ -408,8 +393,12 @@ def register(request):
             EmailVerification.objects.filter(user=user, is_verified=False).delete()
             verification = EmailVerification.objects.create(user=user)
 
-            domain = "https://rooms4you.co.za" if not settings.DEBUG else "http://127.0.0.1:8000"
-
+            def build_domain(request):
+                current_site = get_current_site(request)
+                scheme = "https" if not settings.DEBUG else "http"
+                return f"{scheme}://{current_site.domain}"
+            
+            domain = build_domain(request)
             verify_link = f"{domain}/verify-email/{verification.token}/"
 
             send_template_email(
@@ -513,72 +502,70 @@ def verify_phone(request):
     return render(request, "listings/verify_phone.html")
 
 def user_login(request):
-    if request.method == "POST":
-        login_value = (request.POST.get("email") or "").strip()
-        password = request.POST.get("password") or ""
+    if request.method != "POST":
+        return render(request, "listings/login.html")
 
-        matched_user = User.objects.filter(
-            email__iexact=login_value
-        ).first()
+    login_value = (request.POST.get("email") or "").strip()
+    password = request.POST.get("password") or ""
 
-        if not matched_user:
-            matched_user = User.objects.filter(
-                username__iexact=login_value
-            ).first()
+    user_obj = User.objects.filter(email__iexact=login_value).first() \
+        or User.objects.filter(username__iexact=login_value).first()
 
-        if not matched_user:
-            messages.error(request, "Invalid email or password.")
-            return redirect("login")
+    if not user_obj:
+        messages.error(request, "Invalid credentials.")
+        return redirect("login")
 
-        user = authenticate(
-            request,
-            username=matched_user.username,
-            password=password,
-        )
+    user = authenticate(request, username=user_obj.username, password=password)
 
-        if not user:
-            messages.error(request, "Invalid email or password.")
-            return redirect("login")
+    if not user:
+        messages.error(request, "Invalid credentials.")
+        return redirect("login")
 
-        if not user.profile.is_email_verified:
-            messages.error(request, "Please verify your email first.")
-            return redirect("login")
+    # 🔐 EMAIL CHECK
+    if not user.profile.is_email_verified:
+        messages.error(request, "Please verify your email first.")
+        return redirect("login")
 
-        if not user.profile.is_phone_verified:
-            # 🔢 Generate OTP
-            otp = generate_otp()
+    # 📱 PHONE CHECK
+    if not user.profile.is_phone_verified:
 
-            # 💾 Save OTP
-            PhoneOTP.objects.create(
-                user=user,
-                otp=otp
-            )
-
-            # 📧 Send OTP email
-            send_otp_email(user, otp)
-
-            # 🧠 Store session
-            request.session["pending_user_id"] = user.id
-
-            messages.warning(request, "We’ve sent you an OTP code.")
+        # cooldown protection
+        if not can_resend_otp(user.id):
+            messages.error(request, "Please wait before requesting another OTP.")
             return redirect("verify_phone")
 
-        if profile_needs_update(user):
-            messages.warning(
-                request,
-                "Please update your profile details."
-            )
-            return redirect("edit_profile")
+        # CLEAN OLD OTPs
+        PhoneOTP.objects.filter(
+            user=user,
+            created_at__lt=timezone.now() - timedelta(minutes=10)
+        ).delete()
 
-        messages.success(request, f"Hello, {get_display_name(user)} 👋")
+        otp = generate_otp()
 
-        if user.profile.role == "landlord":
-            return redirect("dashboard")
+        PhoneOTP.objects.create(
+            user=user,
+            phone_number=user.profile.phone_number,
+            otp=otp
+        )
 
-        return redirect("room_list")
+        send_otp_email(user, otp)
+        set_otp_cooldown(user.id)
 
-    return render(request, "listings/login.html")
+        request.session["pending_user_id"] = user.id
 
+        messages.warning(request, "We sent you an OTP code.")
+        return redirect("verify_phone")
+
+    # 🧠 PROFILE COMPLETION GATE
+    if profile_needs_update(user):
+        messages.warning(request, "Please complete your profile.")
+        return redirect("edit_profile")
+
+    login(request, user)
+
+    messages.success(request, f"Welcome back {get_display_name(user)} 👋")
+
+    return redirect("dashboard" if user.profile.role == "landlord" else "room_list")
 
 def user_logout(request):
     logout(request)
@@ -716,166 +703,45 @@ def profile(request):
 
     return render(request, "listings/profile.html", context)
 
+def can_resend_otp(user_id):
+    key = f"otp_resend:{user_id}"
+    return cache.get(key) is None
+
+def set_otp_cooldown(user_id, seconds=90):
+    cache.set(f"otp_resend:{user_id}", True, timeout=seconds)
+
 
 @login_required
 def edit_profile(request):
     user = request.user
-    p = user.profile
-
-    # 🔐 store original values BEFORE form binding
-    original_email = user.email
-    original_phone = p.phone_number
-    original_address = p.home_address
+    profile = user.profile
 
     u_form = UserUpdateForm(request.POST or None, instance=user)
-    p_form = ProfileUpdateForm(request.POST or None, instance=p)
+    p_form = ProfileUpdateForm(request.POST or None, instance=profile)
 
-    if request.method == "POST":
-        ok = u_form.is_valid() and p_form.is_valid()
+    if request.method == "POST" and u_form.is_valid() and p_form.is_valid():
 
-        # -----------------------------
-        # EXISTING VALIDATIONS (KEEP)
-        # -----------------------------
-        if p.role == "landlord":
-            cell = (p_form.cleaned_data.get("phone_number") or "").strip()
-            addr = (p_form.cleaned_data.get("home_address") or "").strip()
-            pc = (p_form.cleaned_data.get("postal_code") or "").strip()
+        changes = detect_profile_changes(user, profile, u_form, p_form)
 
-            if not cell:
-                p_form.add_error("phone_number", "Cell number is required.")
-                ok = False
-            if not addr:
-                p_form.add_error("home_address", "Home address is required.")
-                ok = False
-            if not pc:
-                p_form.add_error("postal_code", "Postal code is required.")
-                ok = False
+        user_obj = u_form.save(commit=False)
+        profile_obj = p_form.save(commit=False)
 
-        if p.role == "tenant":
-            persona = (p_form.cleaned_data.get("persona") or "").strip()
-            if not persona:
-                p_form.add_error("persona", "Please choose your persona.")
-                ok = False
+        if changes["email"]:
+            handle_email_change(user_obj, profile_obj, changes["email"], request)
 
-        # -----------------------------
-        # 🔥 PHASE 5: DETECT CHANGES
-        # -----------------------------
-        email_changed = False
-        phone_changed = False
-        address_changed = False
+        if changes["phone"]:
+            handle_phone_change(user_obj, profile_obj, changes["phone"])
 
-        if ok:
-            new_email = u_form.cleaned_data.get("email")
-            new_phone = p_form.cleaned_data.get("phone_number")
-            new_address = p_form.cleaned_data.get("home_address")
+        user_obj.save()
+        profile_obj.save()
 
-            if new_email and new_email != original_email:
-                email_changed = True
+        return redirect("profile")
 
-            if new_phone and new_phone != original_phone:
-                phone_changed = True
-
-            if new_address and new_address != original_address:
-                address_changed = True
-
-        # -----------------------------
-        # SAVE FORMS
-        # -----------------------------
-        if ok:
-            user = u_form.save(commit=False)
-            profile = p_form.save(commit=False)
-
-            # -----------------------------
-            # 🔐 APPLY SECURITY RULES
-            # -----------------------------
-
-            # 📧 EMAIL CHANGE → HARD LOCK
-            if email_changed:
-                profile.is_email_verified = False
-                user.is_active = False
-
-                messages.warning(
-                    request,
-                    "Email changed. Please verify your new email to reactivate your account."
-                )
-
-                # 👉 (NEXT PHASE: send email verification)
-                EmailVerification.objects.filter(user=user, is_verified=False).delete()
-
-                verification = EmailVerification.objects.create(user=user)
-
-                domain = "https://rooms4you.co.za" if not settings.DEBUG else "http://127.0.0.1:8000"
-
-                verify_link = f"{domain}/verify-email/{verification.token}/"
-
-                profile.pending_email = new_email
-                profile.is_email_verified = False
-                user.is_active = False
-
-                send_template_email(
-                    subject="Verify your new email",
-                    to_email=new_email,
-                    template="emails/verify_email.html",
-                    context={
-                        "user": user,
-                        "verify_link": verify_link,
-                        "year": 2026
-                    }
-                )
-                
-
-            # 📱 PHONE CHANGE → OTP AGAIN
-            if phone_changed:
-                profile.is_phone_verified = False
-
-                otp = generate_otp()
-                PhoneOTP.objects.create(
-                    user=user,
-                    phone_number=f"{profile.country_code}{new_phone}",
-                    otp=otp
-                )
-
-                send_otp_email(user, otp)
-
-                request.session["pending_user_id"] = user.id 
-
-                messages.warning(
-                    request,
-                    "Phone number changed. Please verify your new number."
-                )
-
-            # 📍 ADDRESS CHANGE → TRUST RESET (optional but strong)
-            if address_changed:
-                profile.is_verified = False  # landlord trust reset
-
-            # -----------------------------
-            # FINAL SAVE
-            # -----------------------------
-            user.save()
-            profile.save()
-
-            # -----------------------------
-            # REDIRECT LOGIC
-            # -----------------------------
-            if phone_changed:
-                return redirect("verify_phone")
-
-            if email_changed:
-                logout(request)
-                return redirect("login")
-
-            messages.success(request, "Profile updated ✅")
-            return redirect("profile")
-    
-
-    return render(
-        request,
-        "listings/edit_profile.html",
-        {
-            "u_form": u_form,
-            "p_form": p_form,
-        },
-    )
+    return render(request, "listings/edit_profile.html", {
+        "u_form": u_form,
+        "p_form": p_form,
+        "p": profile
+    })
 @login_required
 def toggle_favorite(request, room_id):
     room = get_object_or_404(Room, id=room_id, is_available=True)
@@ -1317,8 +1183,12 @@ def resend_verification(request):
     if not verification:
         verification = EmailVerification.objects.create(user=user)
 
-    domain = "https://rooms4you.co.za" if not settings.DEBUG else "http://127.0.0.1:8000"
-
+    def build_domain(request):
+        current_site = get_current_site(request)
+        scheme = "https" if not settings.DEBUG else "http"
+        return f"{scheme}://{current_site.domain}"
+    
+    domain = build_domain(request)
     verify_link = f"{domain}/verify-email/{verification.token}/"
 
     send_template_email(
@@ -1335,35 +1205,73 @@ def resend_verification(request):
     messages.success(request, "Verification email sent again ✅")
     return redirect("dashboard")
 
+def handle_email_change(user_obj, profile_obj, new_email, request):
+    if not new_email or new_email == user_obj.email:
+        return
 
-def resend_otp(request):
-    user_id = request.session.get("pending_user_id")
+    profile_obj.pending_email = new_email
+    profile_obj.email_change_token = uuid4()
+    profile_obj.save()
 
-    if not user_id:
-        return redirect("login")
+    domain = get_current_site(request).domain
+    scheme = "https" if not settings.DEBUG else "http"
+    base = f"{scheme}://{domain}"
 
-    user = User.objects.get(id=user_id)
+    confirm_link = f"{base}/confirm-email-change/{profile_obj.email_change_token}/"
 
-    cache_key = f"otp_send:{user.id}"
-
-    if cache.get(cache_key):
-        messages.error(request, "Wait 60 seconds before requesting another OTP")
-        return redirect("verify_phone")
-
-    cache.set(cache_key, 1, timeout=60)
-
-    PhoneOTP.objects.filter(user=user, is_verified=False).delete()
-
-    otp = generate_otp()
-
-    PhoneOTP.objects.create(
-        user=user,
-        phone_number=user.profile.full_phone(),  # ✅ FIXED
-        otp=otp
+    send_template_email(
+        subject="Confirm your new email",
+        to_email=new_email,
+        template="emails/confirm_email_change.html",
+        context={
+            "user": user_obj,
+            "confirm_link": confirm_link,
+        }
     )
 
-    send_otp_email(user, otp)
+@login_required
+def confirm_email_change(request, token):
+    profile = Profile.objects.filter(email_change_token=token).first()
 
-    messages.success(request, "New OTP sent ✅")
-    return redirect("verify_phone")
+    if not profile:
+        messages.error(request, "Invalid or expired link.")
+        return redirect("login")
 
+    if str(profile.email_change_token) != str(token):
+        messages.error(request, "Invalid or expired email change link.")
+        return redirect("profile")
+
+    request.user.email = profile.pending_email
+    request.user.save()
+
+    profile.pending_email = None
+    profile.email_change_token = None
+    profile.is_email_verified = True
+    profile.save()
+
+    return render(request, "listings/email_change_success.html")
+    
+
+def detect_profile_changes(user, profile, u_form, p_form):
+    u = u_form.cleaned_data
+    p = p_form.cleaned_data
+
+    changes = {
+        "email": None,
+        "phone": None,
+    }
+
+    if u.get("email") and u["email"] != user.email:
+        changes["email"] = u["email"]
+
+    if p.get("phone_number") and p["phone_number"] != profile.phone_number:
+        changes["phone"] = p["phone_number"]
+
+    return changes
+
+def handle_phone_change(user_obj, profile_obj, new_phone):
+    if not new_phone or new_phone == profile_obj.phone_number:
+        return
+
+    profile_obj.phone_number = new_phone
+    profile_obj.is_phone_verified = False

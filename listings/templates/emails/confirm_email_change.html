@@ -1,0 +1,21 @@
+{% extends "emails/base_email.html" %} {% block content %}
+
+<h2>Confirm your new email</h2>
+
+<p>Hi {{ user.first_name|default:"there" }},</p>
+
+<p>You requested to change your email on Rooms4You.</p>
+
+<p>Click below to confirm:</p>
+
+<p>
+  <a
+    href="{{ confirm_link }}"
+    style="padding: 10px 20px; background: #000; color: #fff"
+  >
+    Confirm Email
+  </a>
+</p>
+
+<p>If this wasn’t you, ignore this email.</p>
+{% endblock %}

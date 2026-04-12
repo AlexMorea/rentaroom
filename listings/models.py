@@ -144,11 +144,14 @@ class Profile(models.Model):
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tenant")
 
-    pending_email = models.EmailField(blank=True, null=True)  
+    pending_email = models.EmailField(blank=True, null=True) 
+    email_change_token = models.UUIDField(null=True, blank=True) 
 
     # 🔐 NEW VERIFICATION SYSTEM
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
+    
+    
 
     # (keep old for compatibility)
     is_verified = models.BooleanField(default=False)
