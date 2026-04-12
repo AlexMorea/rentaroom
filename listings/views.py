@@ -493,7 +493,7 @@ def verify_phone(request):
         cache.set(attempts_key, attempts + 1, timeout=300)
         messages.error(request, "Invalid or expired OTP")
 
-    return render(request, "listings/verify_phone.html")
+    return render(request, "emails/verify_phone.html")
 
 def user_login(request):
     if request.method == "POST":
