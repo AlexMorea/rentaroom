@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Your Listing is Live</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: #f6f7fb;
+        color: #333;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+      }
+
+      .header {
+        text-align: center;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+        color: #111;
+      }
+
+      .content {
+        padding: 20px 0;
+        line-height: 1.6;
+      }
+
+      .room-card {
+        background: #f9fafc;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+      }
+
+      .cta {
+        text-align: center;
+        margin: 30px 0;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 20px;
+        background-color: #111;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+      }
+
+      .btn:hover {
+        background-color: #333;
+      }
+
+      .footer {
+        font-size: 12px;
+        color: #777;
+        text-align: center;
+        margin-top: 30px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- HEADER -->
+      <div class="header">
+        <h1>🎉 Your Listing is Now Live</h1>
+      </div>
+
+      <!-- BODY -->
+      <div class="content">
+        <p>Hi {{ room.owner.first_name|default:"there" }},</p>
+
+        <p>
+          Good news — your room listing has been successfully published on
+          <strong>Rooms4You</strong> and is now visible to potential tenants.
+        </p>
+
+        <!-- ROOM SUMMARY -->
+        <div class="room-card">
+          <p><strong>Title:</strong> {{ room.title }}</p>
+          <p><strong>Location:</strong> {{ room.location }}</p>
+          <p><strong>Price:</strong> R{{ room.price }}</p>
+          <p><strong>Type:</strong> {{ room.room_type }}</p>
+          <p><strong>Status:</strong> {{ room.availability_badge_text }}</p>
+        </div>
+
+        <p>
+          You can now receive views, contacts, and inquiries from interested
+          tenants. Make sure your listing stays competitive by keeping your
+          details up to date.
+        </p>
+
+        <!-- CTA -->
+        <div class="cta">
+          <a class="btn" href="https://rooms4you.co.za/dashboard">
+            View Your Dashboard
+          </a>
+        </div>
+
+        <p>
+          Tip: Listings with clear descriptions and multiple images get
+          significantly more engagement.
+        </p>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <p>Rooms4You © {{ year }} • All rights reserved</p>
+        <p>
+          This email was automatically generated when your listing went live.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

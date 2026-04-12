@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ subject }}</title>
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0f0f0f;
+        font-family: Arial, sans-serif;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: auto;
+        background: #1a1a1a;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .header {
+        text-align: center;
+        padding: 20px;
+        background: #000;
+      }
+
+      .logo {
+        width: 140px;
+      }
+
+      .content {
+        padding: 25px;
+        color: #ffffff;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 22px;
+        margin-bottom: 10px;
+      }
+
+      p {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #ccc;
+      }
+
+      .btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 14px 24px;
+        background: linear-gradient(135deg, #ff7a18, #ff3c3c);
+        color: #fff !important;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s ease;
+      }
+
+      .btn:hover {
+        opacity: 0.85;
+      }
+
+      .footer {
+        padding: 15px;
+        text-align: center;
+        font-size: 12px;
+        color: #888;
+      }
+
+      @media only screen and (max-width: 600px) {
+        .content {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="https://rooms4you.co.za/static/logo.png" class="logo" />
+      </div>
+
+      <div class="content">{% block content %}{% endblock %}</div>
+
+      <div class="footer">© {{ year }} Rooms4You. All rights reserved.</div>
+    </div>
+  </body>
+</html>

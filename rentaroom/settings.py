@@ -15,6 +15,10 @@ except ImportError:
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
 DEBUG = os.environ.get("DEBUG", "0") == "1"
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 ALLOWED_HOSTS += [
@@ -161,3 +165,5 @@ LOGGING = {
     },
 }
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True

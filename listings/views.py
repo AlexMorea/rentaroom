@@ -17,19 +17,17 @@ from django.views.decorators.http import require_POST
 from difflib import get_close_matches
 from django.contrib.auth.models import User
 import re
-import random
 from .models import PhoneOTP
-from .services.sms import send_otp_sms
-from django.core.mail import send_mail
 from django.conf import settings
 from .models import EmailVerification
-
+from .utils import generate_otp, send_otp_email
+from utils.email import send_template_email
+from django.utils import timezone
+from datetime import timedelta
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 
-def generate_otp():
-    return str(random.randint(100000, 999999))
 
 def get_display_name(user):
     return (user.first_name or "").strip() or (user.email or "").strip() or "there"
@@ -390,33 +388,29 @@ def register(request):
             user = form.save()
 
             # 🔑 EMAIL VERIFICATION
+            EmailVerification.objects.filter(user=user, is_verified=False).delete()
             verification = EmailVerification.objects.create(user=user)
 
-            verify_link = request.build_absolute_uri(
-                f"/verify-email/{verification.token}/"
-            )
+            domain = "https://rooms4you.co.za" if not settings.DEBUG else "http://127.0.0.1:8000"
 
-            send_mail(
+            verify_link = f"{domain}/verify-email/{verification.token}/"
+
+            send_template_email(
                 subject="Verify your Rooms4You account",
-                message=f"""
-Hi {user.first_name},
-
-Welcome to Rooms4You 🎉
-
-Click below to verify your account:
-
-{verify_link}
-
-Expires in 24 hours.
-""",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+                to_email=user.email,
+                template="emails/verify_email.html",
+                context={
+                    "user": user,
+                    "verify_link": verify_link,
+                    "year": 2026
+                }
             )
 
             messages.success(request, "Check your email to verify your account ✅")
             return redirect("login")
 
     return render(request, "listings/register.html", {"form": form})
+
 
 def verify_email(request, token):
     try:
@@ -432,52 +426,71 @@ def verify_email(request, token):
         messages.error(request, "Verification link expired.")
         return redirect("register")
 
+    user = verification.user
+    profile = user.profile
+
+    # ✅ activate everything properly
     verification.is_verified = True
     verification.save()
 
-    user = verification.user
+    profile.is_email_verified = True
+    profile.save()
+
     user.is_active = True
     user.save()
 
-    # ✅ Store user for phone verification step
-    request.session["pending_user_id"] = user.id
+    messages.success(request, "Email verified successfully 🎉")
+    return redirect("login")
 
-    messages.success(request, "Email verified ✅ Now verify your phone")
 
-    return redirect("verify_phone")
 def verify_phone(request):
     user_id = request.session.get("pending_user_id")
 
     if not user_id:
-        return redirect("register")
+        return redirect("login")
 
     user = User.objects.get(id=user_id)
+    profile = user.profile
 
     if request.method == "POST":
-        code = request.POST.get("otp")
+        otp_input = request.POST.get("otp")
 
-        otp_obj = PhoneOTP.objects.filter(
+        if not otp_input or len(otp_input) != 6:
+            messages.error(request, "Enter a valid 6-digit OTP")
+            return redirect("verify_phone")
+
+        attempts_key = f"otp_attempts:{user.id}"
+        attempts = cache.get(attempts_key, 0)
+
+        # 🚨 BLOCK if too many attempts
+        if attempts >= 5:
+            messages.error(request, "Too many attempts. Try again later.")
+            return redirect("login")
+
+        # ⏳ Get valid OTP (not expired)
+        otp_record = PhoneOTP.objects.filter(
             user=user,
-            otp=code,
-            is_verified=False
-        ).last()
+            is_verified=False,
+            created_at__gte=timezone.now() - timedelta(minutes=5)
+        ).order_by("-created_at").first()
 
-        if otp_obj and not otp_obj.is_expired():
-            otp_obj.is_verified = True
-            otp_obj.save()
+        # ✅ SUCCESS
+        if otp_record and otp_record.otp == otp_input:
+            otp_record.is_verified = True
+            otp_record.save()
 
-            # ✅ Mark BOTH verifications complete
-            user.profile.is_verified = True
-            user.profile.save()
+            profile.is_phone_verified = True
+            profile.save()
 
-            # 🔥 FINAL LOGIN (ONLY happens here)
+            PhoneOTP.objects.filter(user=user).delete()
+            cache.delete(attempts_key)
+
+            messages.success(request, "Phone verified successfully 🎉")
             login(request, user)
+            return redirect("room_list")
 
-            del request.session["pending_user_id"]
-
-            messages.success(request, "Account fully verified 🎉")
-            return redirect("dashboard")
-
+        # ❌ FAILURE
+        cache.set(attempts_key, attempts + 1, timeout=300)
         messages.error(request, "Invalid or expired OTP")
 
     return render(request, "listings/verify_phone.html")
@@ -487,42 +500,54 @@ def user_login(request):
         login_value = (request.POST.get("email") or "").strip()
         password = request.POST.get("password") or ""
 
-        user = None
         matched_user = User.objects.filter(
-            Q(email__iexact=login_value) | Q(username__iexact=login_value)
+            email__iexact=login_value
         ).first()
 
-        if matched_user:
-            user = authenticate(
+        if not matched_user:
+            matched_user = User.objects.filter(
+                username__iexact=login_value
+            ).first()
+
+        if not matched_user:
+            messages.error(request, "Invalid email or password.")
+            return redirect("login")
+
+        user = authenticate(
+            request,
+            username=matched_user.username,
+            password=password,
+        )
+
+        if not user:
+            messages.error(request, "Invalid email or password.")
+            return redirect("login")
+
+        if not user.profile.is_email_verified:
+            messages.error(request, "Please verify your email first.")
+            return redirect("login")
+
+        if not user.profile.is_phone_verified:
+            request.session["pending_user_id"] = user.id
+            messages.warning(request, "Please complete OTP verification.")
+            return redirect("verify_phone")
+
+        login(request, user)
+        user.refresh_from_db()
+
+        if profile_needs_update(user):
+            messages.warning(
                 request,
-                username=matched_user.username,
-                password=password,
+                "Please update your profile details."
             )
+            return redirect("edit_profile")
 
-        if user:
-            login(request, user)
-            user.refresh_from_db()
+        messages.success(request, f"Hello, {get_display_name(user)} 👋")
 
-            if profile_needs_update(user):
-                messages.warning(
-                    request,
-                    "Quick one: please update your profile details so your account stays trustworthy ✅"
-                )
-                return redirect("edit_profile")
+        if user.profile.role == "landlord":
+            return redirect("dashboard")
 
-            messages.success(request, f"Hello, {get_display_name(user)} 👋")
-
-            next_url = request.POST.get("next") or request.GET.get("next")
-
-            if hasattr(user, "profile") and user.profile.role == "landlord":
-                return redirect("dashboard")
-
-            if next_url:
-                return redirect(next_url)
-
-            return redirect("room_list")
-
-        messages.error(request, "Invalid email or password.")
+        return redirect("room_list")
 
     return render(request, "listings/login.html")
 
@@ -747,6 +772,29 @@ def edit_profile(request):
                 )
 
                 # 👉 (NEXT PHASE: send email verification)
+                EmailVerification.objects.filter(user=user, is_verified=False).delete()
+
+                verification = EmailVerification.objects.create(user=user)
+
+                domain = "https://rooms4you.co.za" if not settings.DEBUG else "http://127.0.0.1:8000"
+
+                verify_link = f"{domain}/verify-email/{verification.token}/"
+
+                profile.pending_email = new_email
+                profile.is_email_verified = False
+                user.is_active = False
+
+                send_template_email(
+                    subject="Verify your new email",
+                    to_email=new_email,
+                    template="emails/verify_email.html",
+                    context={
+                        "user": user,
+                        "verify_link": verify_link,
+                        "year": 2026
+                    }
+                )
+                
 
             # 📱 PHONE CHANGE → OTP AGAIN
             if phone_changed:
@@ -759,9 +807,9 @@ def edit_profile(request):
                     otp=otp
                 )
 
-                send_otp_sms(f"{profile.country_code}{new_phone}", otp)
+                send_otp_email(user, otp)
 
-                request.session["pending_user_id"] = user.id
+                request.session["pending_user_id"] = user.id 
 
                 messages.warning(
                     request,
@@ -790,6 +838,7 @@ def edit_profile(request):
 
             messages.success(request, "Profile updated ✅")
             return redirect("profile")
+    
 
     return render(
         request,
@@ -803,16 +852,18 @@ def edit_profile(request):
 def toggle_favorite(request, room_id):
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
-    # NOTE TO SELF: only tenants save rooms
     if not hasattr(request.user, "profile") or request.user.profile.role != "tenant":
         return HttpResponseForbidden("Only tenants can save rooms.")
 
-    fav = Favorite.objects.filter(user=request.user, room=room).first()
-    if fav:
+    fav, created = Favorite.objects.get_or_create(
+        user=request.user,
+        room=room
+    )
+
+    if not created:
         fav.delete()
         messages.info(request, "Removed from saved rooms.")
     else:
-        Favorite.objects.create(user=request.user, room=room)
         messages.success(request, "Saved ✔")
 
     return redirect("room_detail", pk=room.id)
@@ -898,6 +949,16 @@ def create_room(request):
                 request,
                 "Room saved ✅ You can add images now or later from Images → Manage images."
             )
+
+        transaction.on_commit(lambda: send_template_email(
+            subject="Your listing is now live 🎉",
+            to_email=request.user.email,
+            template="emails/room_live.html",
+            context={
+                "room": room,
+                "year": 2026
+            }
+        ))
 
         return redirect("upload_room_images", room.id)
 
@@ -1083,6 +1144,17 @@ def track_contact(request, room_id, method):
         body = quote(f"Hi, I’m interested in your room listing ({room.title}) in {room.location}.")
         mailto = f"mailto:{landlord_email}?subject={subject}&body={body}"
 
+        send_template_email(
+            subject="New inquiry on your listing",
+            to_email=room.owner.email,
+            template="emails/new_inquiry.html",
+            context={
+                "room": room,
+                "user": request.user,
+                "year": 2026
+            }
+        )
+
         return render(
             request,
             "listings/external_link.html",
@@ -1207,24 +1279,62 @@ def resend_verification(request):
 
     user = request.user
 
+    EmailVerification.objects.filter(user=user, is_verified=False).delete()
+
     verification = EmailVerification.objects.filter(
         user=user,
         is_verified=False
-    ).last()
+    ).order_by("-created_at").first()
 
     if not verification:
         verification = EmailVerification.objects.create(user=user)
 
-    verify_link = request.build_absolute_uri(
-        f"/verify-email/{verification.token}/"
-    )
+    domain = "https://rooms4you.co.za" if not settings.DEBUG else "http://127.0.0.1:8000"
 
-    send_mail(
-        "Verify your account",
-        f"Click to verify:\n{verify_link}",
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
+    verify_link = f"{domain}/verify-email/{verification.token}/"
+
+    send_template_email(
+        subject="Verify your Rooms4You account",
+        to_email=user.email,
+        template="emails/verify_email.html",
+        context={
+            "user": user,
+            "verify_link": verify_link,
+            "year": 2026
+        }
     )
 
     messages.success(request, "Verification email sent again ✅")
     return redirect("dashboard")
+
+
+def resend_otp(request):
+    user_id = request.session.get("pending_user_id")
+
+    if not user_id:
+        return redirect("login")
+
+    user = User.objects.get(id=user_id)
+
+    cache_key = f"otp_send:{user.id}"
+
+    if cache.get(cache_key):
+        messages.error(request, "Wait 60 seconds before requesting another OTP")
+        return redirect("verify_phone")
+
+    cache.set(cache_key, 1, timeout=60)
+
+    PhoneOTP.objects.filter(user=user, is_verified=False).delete()
+
+    otp = generate_otp()
+
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number=user.profile.full_phone(),  # ✅ FIXED
+        otp=otp
+    )
+
+    send_otp_email(user, otp)
+
+    messages.success(request, "New OTP sent ✅")
+    return redirect("verify_phone")
