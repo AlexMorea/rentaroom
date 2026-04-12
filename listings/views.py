@@ -29,6 +29,23 @@ from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorit
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 
 
+def resend_otp(request):
+    user = request.user
+
+    if user.is_authenticated:
+        otp = generate_otp()  # your existing function
+
+        user.profile.phone_otp = otp
+        user.profile.save()
+
+        send_otp_email(user.email, otp)  # your email function
+
+        messages.success(request, "OTP resent successfully")
+
+    return redirect("verify_phone")
+
+
+
 def get_display_name(user):
     return (user.first_name or "").strip() or (user.email or "").strip() or "there"
 
@@ -493,7 +510,7 @@ def verify_phone(request):
         cache.set(attempts_key, attempts + 1, timeout=300)
         messages.error(request, "Invalid or expired OTP")
 
-    return render(request, "emails/verify_phone.html")
+    return render(request, "listings/verify_phone.html")
 
 def user_login(request):
     if request.method == "POST":
@@ -528,12 +545,23 @@ def user_login(request):
             return redirect("login")
 
         if not user.profile.is_phone_verified:
-            request.session["pending_user_id"] = user.id
-            messages.warning(request, "Please complete OTP verification.")
-            return redirect("verify_phone")
+            # 🔢 Generate OTP
+            otp = generate_otp()
 
-        login(request, user)
-        user.refresh_from_db()
+            # 💾 Save OTP
+            PhoneOTP.objects.create(
+                user=user,
+                otp=otp
+            )
+
+            # 📧 Send OTP email
+            send_otp_email(user, otp)
+
+            # 🧠 Store session
+            request.session["pending_user_id"] = user.id
+
+            messages.warning(request, "We’ve sent you an OTP code.")
+            return redirect("verify_phone")
 
         if profile_needs_update(user):
             messages.warning(
@@ -1338,3 +1366,4 @@ def resend_otp(request):
 
     messages.success(request, "New OTP sent ✅")
     return redirect("verify_phone")
+

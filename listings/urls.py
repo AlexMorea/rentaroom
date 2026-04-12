@@ -14,6 +14,7 @@ urlpatterns = [
     path("login/", views.user_login, name="login"),
     path("logout/", views.user_logout, name="logout"),
     path("verify-phone/", views.verify_phone, name="verify_phone"),
+    path("resend-otp/", views.resend_otp, name="resend_otp"),
     path("verify-email/<uuid:token>/", views.verify_email, name="verify_email"),
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
