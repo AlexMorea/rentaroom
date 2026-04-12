@@ -1,9 +1,20 @@
 {% extends "emails/base_email.html" %} {% block content %}
-<h1>Verify Your Phone</h1>
 
-<p>Your OTP code is:</p>
+<div class="auth-container">
+  <h2 style="color: #ff7a00">Welcome to Rooms4You</h2>
 
-<h2>{{ otp }}</h2>
+  <p>Enter the verification code sent to your email</p>
 
-<p>This code expires in 5 minutes.</p>
+  <form method="POST">
+    {% csrf_token %}
+    <input type="text" name="otp" placeholder="Enter OTP" required />
+    <button type="submit">Verify</button>
+  </form>
+
+  <form method="POST" action="{% url 'resend_otp' %}">
+    {% csrf_token %}
+    <button type="submit" class="resend-btn">Resend OTP</button>
+  </form>
+</div>
+
 {% endblock %}

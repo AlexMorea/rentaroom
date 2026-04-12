@@ -1275,3 +1275,36 @@ def handle_phone_change(user_obj, profile_obj, new_phone):
 
     profile_obj.phone_number = new_phone
     profile_obj.is_phone_verified = False
+
+def resend_otp(request):
+    user_id = request.session.get("pending_user_id")
+
+    if not user_id:
+        messages.error(request, "Session expired. Please log in again.")
+        return redirect("login")
+
+    user = User.objects.get(id=user_id)
+
+    # Cooldown check
+    if not can_resend_otp(user):
+        messages.warning(request, "Please wait before requesting a new OTP.")
+        return redirect("verify_phone")
+
+    otp = generate_otp()
+
+    # Delete old OTPs
+    PhoneOTP.objects.filter(
+        user=user,
+        created_at__lt=timezone.now() - timedelta(minutes=10)
+    ).delete()
+
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number=user.profile.phone_number,
+        otp=otp
+    )
+
+    send_otp_email(user.email, otp)
+
+    messages.success(request, "A new OTP has been sent.")
+    return redirect("verify_phone")
