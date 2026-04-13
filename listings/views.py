@@ -451,6 +451,7 @@ def verify_email(request, token):
     return redirect("login")
 
 
+@login_required
 def verify_phone(request):
     user_id = request.session.get("pending_user_id")
 
@@ -465,7 +466,10 @@ def verify_phone(request):
 
         if not otp_input or len(otp_input) != 6:
             messages.error(request, "Enter a valid 6-digit OTP")
-            return render(request, "listings/verify_phone.html")
+            return render(request, "listings/verify_phone.html", {
+                "error_state": True,
+                "cooldown_active": not can_resend_otp(user.id)
+            })
 
         attempts_key = f"otp_attempts:{user.id}"
         attempts = cache.get(attempts_key, 0)
@@ -493,16 +497,26 @@ def verify_phone(request):
             login(request, user)
             request.session.pop("pending_user_id", None)
 
+            # 🧹 prevent old OTP/login messages leaking into next session
+            storage = messages.get_messages(request)
+            list(storage)
+
             messages.success(request, "Phone verified successfully 🎉")
             return redirect("room_list")
 
-        # ❌ FAIL (IMPORTANT FIX HERE)
+        # ❌ FAIL CASE
         cache.set(attempts_key, attempts + 1, timeout=300)
 
         messages.error(request, "Invalid or expired OTP")
-        return render(request, "listings/verify_phone.html")
 
-    return render(request, "listings/verify_phone.html")
+        return render(request, "listings/verify_phone.html", {
+            "error_state": True,
+            "cooldown_active": not can_resend_otp(user.id)
+        })
+
+    return render(request, "listings/verify_phone.html", {
+        "cooldown_active": not can_resend_otp(user.id)
+    })
 
 
 def user_login(request):
@@ -566,6 +580,9 @@ def user_login(request):
         return redirect("edit_profile")
 
     login(request, user)
+
+    storage = messages.get_messages(request)
+    list(storage)
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
@@ -1156,7 +1173,8 @@ def resend_otp(request):
     if cache.get(cache_key):
         return JsonResponse({
             "success": False,
-            "error": "Wait 60 seconds before requesting another OTP"
+            "error": "Wait 60 seconds before requesting another OTP",
+            "cooldown": 60
         }, status=429)
 
     otp = generate_otp()
@@ -1173,7 +1191,8 @@ def resend_otp(request):
 
     return JsonResponse({
         "success": True,
-        "message": "OTP sent"
+        "message": "OTP sent",
+        "cooldown": 60
     })
 
 @login_required

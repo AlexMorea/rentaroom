@@ -1,4 +1,4 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "listings/base.html" %} {% block content %}
 
 <div
   class="container d-flex justify-content-center align-items-center"
@@ -9,8 +9,9 @@
     style="max-width: 400px; width: 100%; border-radius: 16px"
   >
     <h4 class="text-center mb-3">Verify Your Phone</h4>
-    <p class="text-muted text-center mb-4">
-      Enter the 6-digit code sent to your email
+
+    <p class="text-muted text-center mb-3">
+      Enter the 6-digit code sent to your phone/email
     </p>
 
     <form method="POST">
@@ -28,7 +29,16 @@
       <button type="submit" class="btn btn-dark w-100 mb-2">Verify</button>
     </form>
 
-    <button id="resend-btn" class="btn btn-outline-secondary w-100">
+    <button
+      id="resend-btn"
+      class="btn btn-outline-secondary w-100"
+      {%
+      if
+      cooldown_active
+      %}disabled{%
+      endif
+      %}
+    >
       Resend OTP
     </button>
 
@@ -37,17 +47,39 @@
 </div>
 
 <script>
-  document.getElementById("resend-btn").addEventListener("click", function () {
+  const btn = document.getElementById("resend-btn");
+  const msg = document.getElementById("resend-msg");
+
+  btn?.addEventListener("click", function () {
+    btn.disabled = true;
+
     fetch("{% url 'resend_otp' %}")
       .then((res) => res.json())
       .then((data) => {
-        const msg = document.getElementById("resend-msg");
         if (data.success) {
           msg.innerHTML =
             "<span class='text-success'>" + data.message + "</span>";
+
+          setTimeout(
+            () => {
+              btn.disabled = false;
+            },
+            (data.cooldown || 60) * 1000,
+          );
         } else {
           msg.innerHTML = "<span class='text-danger'>" + data.error + "</span>";
+
+          setTimeout(() => {
+            btn.disabled = false;
+          }, 3000);
         }
+      })
+      .catch(() => {
+        msg.innerHTML = "<span class='text-danger'>Network error</span>";
+
+        setTimeout(() => {
+          btn.disabled = false;
+        }, 3000);
       });
   });
 </script>
