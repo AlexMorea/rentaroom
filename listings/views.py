@@ -465,24 +465,21 @@ def verify_phone(request):
 
         if not otp_input or len(otp_input) != 6:
             messages.error(request, "Enter a valid 6-digit OTP")
-            return redirect("verify_phone")
+            return render(request, "listings/verify_phone.html")
 
         attempts_key = f"otp_attempts:{user.id}"
         attempts = cache.get(attempts_key, 0)
 
-        # 🚨 BLOCK if too many attempts
         if attempts >= 5:
             messages.error(request, "Too many attempts. Try again later.")
             return redirect("login")
 
-        # ⏳ Get valid OTP (not expired)
         otp_record = PhoneOTP.objects.filter(
             user=user,
             is_verified=False,
             created_at__gte=timezone.now() - timedelta(minutes=5)
         ).order_by("-created_at").first()
 
-        # ✅ SUCCESS
         if otp_record and otp_record.otp == otp_input:
             otp_record.is_verified = True
             otp_record.save()
@@ -493,15 +490,20 @@ def verify_phone(request):
             PhoneOTP.objects.filter(user=user).delete()
             cache.delete(attempts_key)
 
-            messages.success(request, "Phone verified successfully 🎉")
             login(request, user)
+            request.session.pop("pending_user_id", None)
+
+            messages.success(request, "Phone verified successfully 🎉")
             return redirect("room_list")
 
-        # ❌ FAILURE
+        # ❌ FAIL (IMPORTANT FIX HERE)
         cache.set(attempts_key, attempts + 1, timeout=300)
+
         messages.error(request, "Invalid or expired OTP")
+        return render(request, "listings/verify_phone.html")
 
     return render(request, "listings/verify_phone.html")
+
 
 def user_login(request):
     if request.method != "POST":
@@ -533,9 +535,9 @@ def user_login(request):
 
         # cooldown protection
         if not can_resend_otp(user.id):
-            messages.error(request, "Please wait before requesting another OTP.")
+            request.session["pending_user_id"] = user.id
             return redirect("verify_phone")
-
+        
         # CLEAN OLD OTPs
         PhoneOTP.objects.filter(
             user=user,
@@ -1138,21 +1140,26 @@ def contacts_analytics(request):
 
     return render(request, "listings/contacts_analytics.html", {"rooms": rooms, "totals": totals})
 
-@login_required
 def resend_otp(request):
-    user = request.user
+    user_id = request.session.get("pending_user_id")
 
-    cache_key = f"otp_resend_{user.id}"  # ✅ FIXED KEY
+    if not user_id:
+        return JsonResponse({
+            "success": False,
+            "error": "Session expired. Please login again."
+        }, status=401)
 
-    # ⛔ Cooldown check
+    user = User.objects.get(id=user_id)
+
+    cache_key = f"otp_resend_{user.id}"
+
     if cache.get(cache_key):
         return JsonResponse({
             "success": False,
-            "error": "Wait before requesting again"
+            "error": "Wait 60 seconds before requesting another OTP"
         }, status=429)
 
-    # 🔢 Generate OTP
-    otp = str(random.randint(100000, 999999))
+    otp = generate_otp()
 
     PhoneOTP.objects.create(
         user=user,
@@ -1160,19 +1167,14 @@ def resend_otp(request):
         otp=otp
     )
 
-    try:
-        send_otp_email(user, otp)
-    except Exception:
-        return JsonResponse({
-            "success": False,
-            "error": "Failed to send OTP"
-        }, status=500)
+    send_otp_email(user, otp)
 
-    # ⏱ Cooldown
     cache.set(cache_key, True, timeout=60)
 
-    return JsonResponse({"success": True})
-
+    return JsonResponse({
+        "success": True,
+        "message": "OTP sent"
+    })
 
 @login_required
 def heatmap(request):
