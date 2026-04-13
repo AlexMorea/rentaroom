@@ -1,20 +1,55 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "base.html" %} {% block content %}
 
-<div class="auth-container">
-  <h2 style="color: #ff7a00">Welcome to Rooms4You</h2>
+<div
+  class="container d-flex justify-content-center align-items-center"
+  style="min-height: 80vh"
+>
+  <div
+    class="card shadow p-4"
+    style="max-width: 400px; width: 100%; border-radius: 16px"
+  >
+    <h4 class="text-center mb-3">Verify Your Phone</h4>
+    <p class="text-muted text-center mb-4">
+      Enter the 6-digit code sent to your email
+    </p>
 
-  <p>Enter the verification code sent to your email</p>
+    <form method="POST">
+      {% csrf_token %}
 
-  <form method="POST">
-    {% csrf_token %}
-    <input type="text" name="otp" placeholder="Enter OTP" required />
-    <button type="submit">Verify</button>
-  </form>
+      <input
+        type="text"
+        name="otp"
+        maxlength="6"
+        class="form-control text-center mb-3"
+        placeholder="Enter OTP"
+        required
+      />
 
-  <form method="POST" action="{% url 'resend_otp' %}">
-    {% csrf_token %}
-    <button type="submit" class="resend-btn">Resend OTP</button>
-  </form>
+      <button type="submit" class="btn btn-dark w-100 mb-2">Verify</button>
+    </form>
+
+    <button id="resend-btn" class="btn btn-outline-secondary w-100">
+      Resend OTP
+    </button>
+
+    <p id="resend-msg" class="text-center mt-2 small"></p>
+  </div>
 </div>
+
+<script>
+  document.getElementById("resend-btn").addEventListener("click", function () {
+    fetch("{% url 'resend_otp' %}")
+      .then((res) => res.json())
+      .then((data) => {
+        const msg = document.getElementById("resend-msg");
+        if (data.success) {
+          msg.innerHTML =
+            "<span class='text-success'>" + data.message + "</span>";
+        } else {
+          msg.innerHTML = "<span class='text-danger'>" + data.error + "</span>";
+        }
+      });
+  });
+</script>
 
 {% endblock %}
