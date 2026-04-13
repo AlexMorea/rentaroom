@@ -26,6 +26,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.sites.shortcuts import get_current_site
 from uuid import uuid4
+import random
+from django.core.mail import send_mail
 
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
@@ -704,11 +706,11 @@ def profile(request):
     return render(request, "listings/profile.html", context)
 
 def can_resend_otp(user_id):
-    key = f"otp_resend:{user_id}"
+    key = f"otp_resend_{user_id}"
     return cache.get(key) is None
 
 def set_otp_cooldown(user_id, seconds=90):
-    cache.set(f"otp_resend:{user_id}", True, timeout=seconds)
+    cache.set(f"otp_resend_{user_id}", True, timeout=seconds)
 
 
 @login_required
@@ -1136,6 +1138,41 @@ def contacts_analytics(request):
 
     return render(request, "listings/contacts_analytics.html", {"rooms": rooms, "totals": totals})
 
+@login_required
+def resend_otp(request):
+    user = request.user
+
+    cache_key = f"otp_resend_{user.id}"  # ✅ FIXED KEY
+
+    # ⛔ Cooldown check
+    if cache.get(cache_key):
+        return JsonResponse({
+            "success": False,
+            "error": "Wait before requesting again"
+        }, status=429)
+
+    # 🔢 Generate OTP
+    otp = str(random.randint(100000, 999999))
+
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number=user.profile.phone_number,
+        otp=otp
+    )
+
+    try:
+        send_otp_email(user, otp)
+    except Exception:
+        return JsonResponse({
+            "success": False,
+            "error": "Failed to send OTP"
+        }, status=500)
+
+    # ⏱ Cooldown
+    cache.set(cache_key, True, timeout=60)
+
+    return JsonResponse({"success": True})
+
 
 @login_required
 def heatmap(request):
@@ -1276,40 +1313,3 @@ def handle_phone_change(user_obj, profile_obj, new_phone):
     profile_obj.phone_number = new_phone
     profile_obj.is_phone_verified = False
 
-def resend_otp(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
-
-    profile = request.user.profile
-
-    # ⛔ Cooldown check (60 seconds)
-    if profile.otp_created_at:
-        if timezone.now() < profile.otp_created_at + timedelta(seconds=60):
-            return JsonResponse({
-                "success": False,
-                "error": "Please wait before requesting another OTP."
-            }, status=429)
-
-    # 🔢 Generate OTP
-    otp = str(random.randint(100000, 999999))
-
-    profile.otp_code = otp
-    profile.otp_created_at = timezone.now()
-    profile.save()
-
-    # 📧 Send Email
-    try:
-        send_mail(
-            subject="Your Rooms4You OTP Code",
-            message=f"Your OTP code is: {otp}",
-            from_email="Rooms4You <no-reply@rooms4you.co.za>",
-            recipient_list=[request.user.email],
-            fail_silently=False,
-        )
-    except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": "Failed to send OTP email."
-        }, status=500)
-
-    return JsonResponse({"success": True})
