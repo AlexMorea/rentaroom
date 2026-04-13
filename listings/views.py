@@ -1277,34 +1277,39 @@ def handle_phone_change(user_obj, profile_obj, new_phone):
     profile_obj.is_phone_verified = False
 
 def resend_otp(request):
-    user_id = request.session.get("pending_user_id")
+    if not request.user.is_authenticated:
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=401)
 
-    if not user_id:
-        messages.error(request, "Session expired. Please log in again.")
-        return redirect("login")
+    profile = request.user.profile
 
-    user = User.objects.get(id=user_id)
+    # ⛔ Cooldown check (60 seconds)
+    if profile.otp_created_at:
+        if timezone.now() < profile.otp_created_at + timedelta(seconds=60):
+            return JsonResponse({
+                "success": False,
+                "error": "Please wait before requesting another OTP."
+            }, status=429)
 
-    # Cooldown check
-    if not can_resend_otp(user):
-        messages.warning(request, "Please wait before requesting a new OTP.")
-        return redirect("verify_phone")
+    # 🔢 Generate OTP
+    otp = str(random.randint(100000, 999999))
 
-    otp = generate_otp()
+    profile.otp_code = otp
+    profile.otp_created_at = timezone.now()
+    profile.save()
 
-    # Delete old OTPs
-    PhoneOTP.objects.filter(
-        user=user,
-        created_at__lt=timezone.now() - timedelta(minutes=10)
-    ).delete()
+    # 📧 Send Email
+    try:
+        send_mail(
+            subject="Your Rooms4You OTP Code",
+            message=f"Your OTP code is: {otp}",
+            from_email="Rooms4You <no-reply@rooms4you.co.za>",
+            recipient_list=[request.user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": "Failed to send OTP email."
+        }, status=500)
 
-    PhoneOTP.objects.create(
-        user=user,
-        phone_number=user.profile.phone_number,
-        otp=otp
-    )
-
-    send_otp_email(user.email, otp)
-
-    messages.success(request, "A new OTP has been sent.")
-    return redirect("verify_phone")
+    return JsonResponse({"success": True})
