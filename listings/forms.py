@@ -161,6 +161,15 @@ class UserUpdateForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"class": "input"}),
         }
 
+    # ✅ PREVENT DUPLICATE EMAILS
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+
+        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("This email is already in use.")
+
+        return email
+
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:

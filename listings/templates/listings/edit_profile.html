@@ -19,6 +19,13 @@
     <form method="post">
       {% csrf_token %}
 
+      <!-- ✅ GLOBAL ERROR DISPLAY -->
+      {% if u_form.non_field_errors or p_form.non_field_errors %}
+      <div class="form-errors">
+        {{ u_form.non_field_errors }} {{ p_form.non_field_errors }}
+      </div>
+      {% endif %}
+
       <h3 style="margin: 0 0 10px; font-weight: 900">Basic</h3>
 
       <div class="field">
@@ -40,14 +47,22 @@
 
       {% if p.role == "tenant" %}
       <h3 style="margin: 0 0 10px; font-weight: 900">Persona</h3>
+
       <div class="field">
         <label class="auth-label">Persona</label>
         {{ p_form.persona }} {{ p_form.persona.errors }}
       </div>
+
       {% else %}
       <h3 style="margin: 0 0 10px; font-weight: 900">
         Landlord verification details
       </h3>
+
+      <!-- ✅ FIX: COUNTRY CODE ADDED -->
+      <div class="field">
+        <label class="auth-label">Country code</label>
+        {{ p_form.country_code }} {{ p_form.country_code.errors }}
+      </div>
 
       <div class="field">
         <label class="auth-label">Cell number</label>

@@ -739,29 +739,40 @@ def edit_profile(request):
     u_form = UserUpdateForm(request.POST or None, instance=user)
     p_form = ProfileUpdateForm(request.POST or None, instance=profile)
 
-    if request.method == "POST" and u_form.is_valid() and p_form.is_valid():
+    if request.method == "POST":
 
-        changes = detect_profile_changes(user, profile, u_form, p_form)
+        if u_form.is_valid() and p_form.is_valid():
 
-        user_obj = u_form.save(commit=False)
-        profile_obj = p_form.save(commit=False)
+            changes = detect_profile_changes(user, profile, u_form, p_form)
 
-        if changes["email"]:
-            handle_email_change(user_obj, profile_obj, changes["email"], request)
+            user_obj = u_form.save(commit=False)
+            profile_obj = p_form.save(commit=False)
 
-        if changes["phone"]:
-            handle_phone_change(user_obj, profile_obj, changes["phone"])
+            if changes["email"]:
+                handle_email_change(user_obj, profile_obj, changes["email"], request)
 
-        user_obj.save()
-        profile_obj.save()
+            if changes["phone"]:
+                handle_phone_change(user_obj, profile_obj, changes["phone"])
 
-        return redirect("profile")
+            user_obj.save()
+            profile_obj.save()
+
+            # ✅ SUCCESS MESSAGE
+            messages.success(request, "Profile updated successfully.")
+
+            return redirect("profile")
+
+        else:
+            # ✅ SHOW ERROR MESSAGE (IMPORTANT UX)
+            messages.error(request, "Please fix the errors below.")
 
     return render(request, "listings/edit_profile.html", {
         "u_form": u_form,
         "p_form": p_form,
         "p": profile
     })
+
+
 @login_required
 def toggle_favorite(request, room_id):
     room = get_object_or_404(Room, id=room_id, is_available=True)
