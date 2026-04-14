@@ -451,7 +451,6 @@ def verify_email(request, token):
     return redirect("login")
 
 
-@login_required
 def verify_phone(request):
     user_id = request.session.get("pending_user_id")
 
