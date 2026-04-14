@@ -26,15 +26,21 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.sites.shortcuts import get_current_site
 from uuid import uuid4
-import random
-from django.core.mail import send_mail
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from accounts.models import Membership
+from .forms import ListingForm
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 
 
 def get_display_name(user):
     return (user.first_name or "").strip() or (user.email or "").strip() or "there"
+
+@receiver(post_save, sender=User)
+def create_membership(sender, instance, created, **kwargs):
+    if created:
+        Membership.objects.create(user=instance)
 
 # -----------------------------
 # Profile completeness gate
@@ -838,56 +844,59 @@ def add_room(request):
 @login_required
 @user_passes_test(is_landlord)
 def create_room(request):
-    form = RoomForm(request.POST or None, user=request.user)  # ✅ PASS USER
+    membership, _ = Membership.objects.get_or_create(user=request.user)
+    user_listings_count = request.user.rooms.count()
+
+    # 🚫 BLOCK FIRST (CRITICAL FIX)
+    if not membership.can_create_listing(user_listings_count):
+        messages.error(request, "You have reached your listing limit. Please upgrade your membership.")
+        return redirect("membership")
+
+    form = RoomForm(request.POST or None, request.FILES or None, user=request.user)
 
     if request.method == "POST" and form.is_valid():
         try:
             with transaction.atomic():
                 room = form.save(commit=False)
                 room.owner = request.user
-                room.full_clean()  # ✅ ensures model.clean + DB constraints are respected
+                room.full_clean()
                 room.save()
+
         except ValidationError as e:
             form.add_error(None, e)
             return render(request, "listings/create_room.html", {"form": form})
+
         except IntegrityError:
-            # ✅ if DB uniqueness constraint triggers (after we add it)
-            form.add_error(None, "This listing already exists (same title, location, type and price).")
+            form.add_error(
+                None,
+                "This listing already exists (same title, location, type and price)."
+            )
             return render(request, "listings/create_room.html", {"form": form})
 
-        # ✅ MULTI-IMAGE UPLOAD (up to 10)
-        uploaded_images = request.FILES.getlist("images")  # name="images"
+        # 📸 IMAGES
+        uploaded_images = request.FILES.getlist("images")
         if uploaded_images:
-            uploaded_images = uploaded_images[:10]  # hard cap
+            uploaded_images = uploaded_images[:10]
+
             for f in uploaded_images:
                 RoomImage.objects.create(room=room, image=f)
 
-            if len(request.FILES.getlist("images")) > 10:
-                messages.warning(request, "Only the first 10 images were uploaded.")
-
-            messages.success(
-                request,
-                "Room saved ✅ Images uploaded. You can upload more anytime in Images → Manage images."
-            )
+            messages.success(request, "Room created successfully with images.")
         else:
-            messages.success(
-                request,
-                "Room saved ✅ You can add images now or later from Images → Manage images."
-            )
+            messages.success(request, "Room created successfully.")
 
+        # 📧 EMAIL AFTER COMMIT
         transaction.on_commit(lambda: send_template_email(
             subject="Your listing is now live 🎉",
             to_email=request.user.email,
             template="emails/room_live.html",
-            context={
-                "room": room,
-                "year": 2026
-            }
+            context={"room": room, "year": 2026}
         ))
 
         return redirect("upload_room_images", room.id)
 
     return render(request, "listings/create_room.html", {"form": form})
+
 
 @login_required
 @user_passes_test(is_landlord)
@@ -909,7 +918,37 @@ def delete_room(request, pk):
         return redirect("dashboard")
     return render(request, "listings/delete_room.html", {"room": room})
 
+@login_required
+def create_listing(request):
 
+    membership = getattr(request.user, "membership", None)
+
+    if not membership:
+        messages.error(request, "Membership not found. Contact support.")
+        return redirect("dashboard")
+    
+    user_listings_count = request.user.rooms.count()  # ✅ FIXED
+
+    # 🚫 BLOCK if limit reached
+    if not membership.can_create_listing(user_listings_count):
+        messages.error(request, "You have reached your listing limit. Please upgrade your membership.")
+        return redirect('membership')
+
+    if request.method == "POST":
+        form = ListingForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            listing = form.save(commit=False)
+            listing.owner = request.user  # ✅ ALSO IMPORTANT (NOT user)
+            listing.save()
+
+            messages.success(request, "Listing created successfully!")
+            return redirect("dashboard")
+
+    else:
+        form = ListingForm()
+
+    return render(request, "listings/create_listing.html", {"form": form})
 # -----------------------------
 # IMAGES (upload/delete/manage)
 # -----------------------------

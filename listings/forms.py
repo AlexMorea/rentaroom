@@ -303,3 +303,10 @@ class RoomImageForm(forms.ModelForm):
     class Meta:
         model = RoomImage
         fields = ["image"]
+
+
+class ListingForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        exclude = ["owner", "created_at"]
+
