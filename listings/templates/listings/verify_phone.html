@@ -1,37 +1,41 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %} {% block body_class %}auth-page{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <h2 class="auth-title">Verify Your Phone</h2>
 
-<div
-  class="container d-flex justify-content-center align-items-center"
-  style="min-height: 80vh"
->
-  <div
-    class="card shadow p-4"
-    style="max-width: 400px; width: 100%; border-radius: 16px"
-  >
-    <h4 class="text-center mb-3">Verify Your Phone</h4>
-
-    <p class="text-muted text-center mb-3">
+    <p class="auth-hint" style="margin-bottom: 16px">
       Enter the 6-digit code sent to your phone/email
     </p>
 
-    <form method="POST">
+    <!-- ✅ GLOBAL MESSAGES (ERRORS / SUCCESS) -->
+    {% if messages %} {% for message in messages %}
+    <div class="form-errors" style="margin-bottom: 12px">{{ message }}</div>
+    {% endfor %} {% endif %}
+
+    <form method="POST" class="auth-form">
       {% csrf_token %}
 
-      <input
-        type="text"
-        name="otp"
-        maxlength="6"
-        class="form-control text-center mb-3"
-        placeholder="Enter OTP"
-        required
-      />
+      <div class="field">
+        <label class="auth-label">OTP Code</label>
+        <input
+          type="text"
+          name="otp"
+          maxlength="6"
+          class="input"
+          placeholder="Enter 6-digit code"
+          required
+        />
+      </div>
 
-      <button type="submit" class="btn btn-dark w-100 mb-2">Verify</button>
+      <button type="submit" class="btn-primary auth-btn">Verify</button>
     </form>
 
+    <!-- ✅ RESEND BUTTON -->
     <button
       id="resend-btn"
-      class="btn btn-outline-secondary w-100"
+      class="btn-secondary"
+      style="width: 100%; margin-top: 10px"
       {%
       if
       cooldown_active
@@ -42,10 +46,11 @@
       Resend OTP
     </button>
 
-    <p id="resend-msg" class="text-center mt-2 small"></p>
+    <!-- ✅ RESEND MESSAGE -->
+    <p id="resend-msg" class="auth-hint" style="margin-top: 10px"></p>
   </div>
 </div>
-
+{% endblock %} {% block extra_js %}
 <script>
   const btn = document.getElementById("resend-btn");
   const msg = document.getElementById("resend-msg");
@@ -58,7 +63,7 @@
       .then((data) => {
         if (data.success) {
           msg.innerHTML =
-            "<span class='text-success'>" + data.message + "</span>";
+            "<span style='color: #16a34a;'>" + data.message + "</span>";
 
           setTimeout(
             () => {
@@ -67,7 +72,8 @@
             (data.cooldown || 60) * 1000,
           );
         } else {
-          msg.innerHTML = "<span class='text-danger'>" + data.error + "</span>";
+          msg.innerHTML =
+            "<span style='color: #dc2626;'>" + data.error + "</span>";
 
           setTimeout(() => {
             btn.disabled = false;
@@ -75,7 +81,7 @@
         }
       })
       .catch(() => {
-        msg.innerHTML = "<span class='text-danger'>Network error</span>";
+        msg.innerHTML = "<span style='color: #dc2626;'>Network error</span>";
 
         setTimeout(() => {
           btn.disabled = false;
@@ -83,5 +89,4 @@
       });
   });
 </script>
-
 {% endblock %}
