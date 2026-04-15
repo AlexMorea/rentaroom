@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from .views import RateLimitedPasswordResetView
+from accounts.views import membership_view
 
 urlpatterns = [
     path("", views.room_list, name="home"),
@@ -19,6 +20,7 @@ urlpatterns = [
     path("confirm-email-change/<uuid:token>/", views.confirm_email_change, name="confirm_email_change"),
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
+    path("membership/", membership_view, name="membership"),
 
     # tenant save/unsave
     path("favorite/<int:room_id>/toggle/", views.toggle_favorite, name="toggle_favorite"),
@@ -73,3 +75,4 @@ urlpatterns = [
         template_name="registration/password_reset_complete.html"
     ), name="password_reset_complete"),
 ]
+

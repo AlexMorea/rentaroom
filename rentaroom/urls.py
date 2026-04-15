@@ -6,6 +6,7 @@ from django.views.static import serve as static_serve
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("listings.urls")),
+    path("accounts/", include("accounts.urls"))
 ]
 
 # Serve uploaded media (portfolio-friendly)
@@ -13,4 +14,5 @@ urlpatterns += [
     re_path(
         r"^media/(?P<path>.*)$", static_serve, {"document_root": settings.MEDIA_ROOT}
     ),
+
 ]

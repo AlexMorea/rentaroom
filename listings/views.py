@@ -26,8 +26,6 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.sites.shortcuts import get_current_site
 from uuid import uuid4
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from accounts.models import Membership
 from .forms import ListingForm
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
@@ -37,10 +35,6 @@ from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 def get_display_name(user):
     return (user.first_name or "").strip() or (user.email or "").strip() or "there"
 
-@receiver(post_save, sender=User)
-def create_membership(sender, instance, created, **kwargs):
-    if created:
-        Membership.objects.create(user=instance)
 
 # -----------------------------
 # Profile completeness gate
@@ -1379,7 +1373,6 @@ def detect_profile_changes(user, profile, u_form, p_form):
 def handle_phone_change(user_obj, profile_obj, new_phone):
     if not new_phone or new_phone == profile_obj.phone_number:
         return
-
+    
     profile_obj.phone_number = new_phone
     profile_obj.is_phone_verified = False
-

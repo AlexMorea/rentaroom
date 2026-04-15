@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 import uuid
+from django.contrib.auth.models import User
+
 
 
 class Membership(models.Model):
@@ -40,7 +42,7 @@ class Membership(models.Model):
 
     approved_at = models.DateTimeField(null=True, blank=True)
 
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='starter')
 
     is_active = models.BooleanField(default=True)
