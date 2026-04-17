@@ -3,8 +3,8 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib import messages
 from .models import Membership
+
 
 @login_required
 def membership_view(request):
@@ -62,6 +62,22 @@ def payment_request_view(request):
         "membership": membership
     })
 
+@login_required
+def confirm_payment(request):
+    membership, _ = Membership.objects.get_or_create(user=request.user)
+
+    membership.payment_requested = True
+    membership.payment_requested_at = timezone.now()
+    membership.status = "pending"
+    membership.save()
+
+    messages.success(
+        request,
+        "Payment submitted. We will verify and activate your account shortly."
+    )
+
+    return redirect("dashboard")
+
 @staff_member_required
 def admin_membership_dashboard(request):
     pending = Membership.objects.filter(status="pending").order_by("-payment_requested_at")
@@ -83,6 +99,12 @@ def approve_membership(request, pk):
     messages.success(request, "Membership approved and activated.")
     return redirect("admin_membership_dashboard")
 
+def check_trial(self):
+    if self.is_trial and self.is_trial_expired():
+        self.is_active = False
+        self.status = "suspended"
+        self.save()
+
 @staff_member_required
 def reject_membership(request, pk):
     membership = Membership.objects.get(id=pk)
@@ -91,3 +113,10 @@ def reject_membership(request, pk):
 
     messages.warning(request, "Membership rejected.")
     return redirect("admin_membership_dashboard")
+
+@login_required
+def request_payment(request):
+    membership = request.user.membership
+    membership.mark_as_paid()
+    return redirect('dashboard')
+

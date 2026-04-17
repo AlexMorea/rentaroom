@@ -44,6 +44,7 @@ class Membership(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='starter')
+    membership_id = models.CharField(max_length=20, unique=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_trial = models.BooleanField(default=True)
@@ -58,17 +59,20 @@ class Membership(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        if not self.payment_reference:
-            self.payment_reference = "R4Y-" + str(uuid.uuid4()).split("-")[0].upper()
+        if not self.membership_id:
+            self.membership_id = f"R4Y-{uuid.uuid4().hex[:6].upper()}"
 
         if not self.trial_end:
             self.trial_end = self.trial_start + timezone.timedelta(days=30)
 
+        if not self.payment_reference:
+            self.payment_reference = self.membership_id     
+
         super().save(*args, **kwargs)
 
     def is_trial_expired(self):
-        return timezone.now() > self.trial_end
-    
+        return self.trial_end and timezone.now() > self.trial_end
+      
     def listing_limit(self):
         limits = {
             'starter': 2,
@@ -97,9 +101,7 @@ class Membership(models.Model):
     
     def mark_as_paid(self):
         self.status = "pending"
-        self.payment_requested = True
-        self.payment_requested_at = timezone.now()
-        self.save()
+        membership.mark_as_paid()
 
     def activate_membership(self, tier, admin_user=None):
         self.tier = tier
@@ -113,3 +115,10 @@ class Membership(models.Model):
         self.status = "suspended"
         self.payment_requested = False
         self.save()
+
+    @property
+    def days_left(self):
+        if self.trial_end:
+            delta = self.trial_end - timezone.now()
+            return max(delta.days, 0)
+        return 0     

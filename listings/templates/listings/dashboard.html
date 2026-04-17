@@ -49,6 +49,26 @@
   </a>
 </div>
 
+<!-- ================= MEMBERSHIP CTA ================= -->
+{% if membership.is_trial %}
+<div class="form-card" style="margin-bottom: 16px">
+  <h3 style="margin: 0 0 8px; font-weight: 900">Upgrade Your Account</h3>
+
+  <p style="margin: 0 0 10px">
+    Your free Starter4You plan is active. Upgrade to unlock more listings and
+    visibility.
+  </p>
+
+  <p style="font-weight: 800">Membership ID: {{ membership.membership_id }}</p>
+
+  <p style="opacity: 0.8">
+    Use this as your payment reference when making a deposit.
+  </p>
+
+  <a href="{% url 'membership' %}" class="btn-primary"> Upgrade Now </a>
+</div>
+{% endif %}
+
 <div class="dashboard-rooms" id="your-rooms">
   {% for room in rooms %}
   <div class="room-row">

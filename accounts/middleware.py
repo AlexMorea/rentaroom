@@ -1,5 +1,3 @@
-from django.shortcuts import redirect
-from django.utils import timezone
 from .models import Membership
 
 
@@ -17,8 +15,6 @@ class MembershipMiddleware:
                 # Trial expired → downgrade
                 if membership.is_trial and membership.is_trial_expired():
                     membership.is_active = False
-                    membership.tier = 'starter'
-                    membership.is_trial = False
                     membership.save()
 
             except Membership.DoesNotExist:

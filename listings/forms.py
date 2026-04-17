@@ -2,7 +2,9 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-
+from django.utils import timezone
+from datetime import timedelta
+from accounts.models import Membership
 from .models import Profile, Room, RoomImage
 
 
@@ -118,25 +120,20 @@ class UserRegisterForm(forms.Form):
             last_name=last_name,
         )
         user.set_password(self.cleaned_data["password1"])
-        user.is_active = False  # 🔐 lock until verification
+        user.is_active = False
         user.save()
 
         profile, _ = Profile.objects.get_or_create(user=user)
-
         profile.role = self.cleaned_data["role"]
 
-        # ✅ PERSONA
+        # ✅ PERSONA (TENANT ONLY)
         if profile.role == "tenant":
             profile.persona = self.cleaned_data["persona"]
 
-        # ✅ PHONE (FOR ALL USERS)
+        # ✅ PHONE
         country_code = self.cleaned_data.get("country_code")
         phone_number = self.cleaned_data.get("phone_number")
-
         profile.country_code = country_code
-        profile.phone_number = phone_number
-
-        # 🔁 BACKWARD COMPATIBILITY
         profile.phone_number = f"{country_code}{phone_number}"
 
         # ✅ LANDLORD EXTRA
@@ -148,8 +145,21 @@ class UserRegisterForm(forms.Form):
 
         profile.save()
 
-        return user
+        # 🔥🔥🔥 CREATE MEMBERSHIP ONLY FOR LANDLORDS
+        if profile.role == "landlord":
+            Membership.objects.get_or_create(
+                user=user,
+                defaults={
+                    "tier": "starter",
+                    "is_active": True,
+                    "is_trial": True,
+                    "trial_start": timezone.now(),
+                    "trial_end": timezone.now() + timedelta(days=30),
+                    "status": "active"
+                }
+            )
 
+        return user
     
 class UserUpdateForm(forms.ModelForm):
     class Meta:

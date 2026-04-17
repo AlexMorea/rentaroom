@@ -17,11 +17,13 @@ from django.views.decorators.http import require_POST
 from difflib import get_close_matches
 from django.contrib.auth.models import User
 import re
+import uuid
 from .models import PhoneOTP
 from django.conf import settings
 from .models import EmailVerification
 from .utils import generate_otp, send_otp_email
 from utils.email import send_template_email
+from accounts.utils import require_active_membership
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.sites.shortcuts import get_current_site
@@ -39,6 +41,27 @@ def get_display_name(user):
 # -----------------------------
 # Profile completeness gate
 # -----------------------------
+def get_or_create_membership(user):
+    membership, created = Membership.objects.get_or_create(
+        user=user,
+        defaults={
+            "tier": "starter",
+            "is_active": True,
+            "is_trial": True,
+            "trial_end": timezone.now() + timedelta(days=30)
+        }
+    )
+
+    # Ensure membership ID always exists
+    if not membership.membership_id:
+        membership.membership_id = f"R4Y-{uuid.uuid4().hex[:6].upper()}"
+        membership.save()
+
+    return membership
+
+
+    # Ensure membership ID always exists
+  
 def profile_needs_update(user):
     if not hasattr(user, "profile"):
         return True
@@ -585,7 +608,9 @@ def user_login(request):
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
-    return redirect("dashboard" if user.profile.role == "landlord" else "room_list")
+    if user.profile.role == "landlord":
+        return redirect("dashboard")
+    return redirect("room_list")
 
 def user_logout(request):
     logout(request)
@@ -817,6 +842,8 @@ def dashboard(request):
 
     show_profile_warning = (rooms_qs.count() == 0) or (not (request.user.email or "").strip())
 
+    membership = get_or_create_membership(request.user)
+
     return render(
         request,
         "listings/dashboard.html",
@@ -825,6 +852,7 @@ def dashboard(request):
             "image_count": image_count,
             "contact_count": contact_count,
             "show_profile_warning": show_profile_warning,
+            "membership": membership,  
         },
     )
 
@@ -838,10 +866,17 @@ def add_room(request):
 @login_required
 @user_passes_test(is_landlord)
 def create_room(request):
-    membership, _ = Membership.objects.get_or_create(user=request.user)
+    if not require_active_membership(request.user):
+        return redirect("membership")
+
+    membership = get_or_create_membership(request.user)
     user_listings_count = request.user.rooms.count()
 
     # 🚫 BLOCK FIRST (CRITICAL FIX)
+    if membership.is_trial_expired():
+        messages.error(request, "Your trial has expired. Please upgrade.")
+        return redirect("membership")
+
     if not membership.can_create_listing(user_listings_count):
         messages.error(request, "You have reached your listing limit. Please upgrade your membership.")
         return redirect("membership")
@@ -895,6 +930,10 @@ def create_room(request):
 @login_required
 @user_passes_test(is_landlord)
 def edit_room(request, pk):
+
+    if not require_active_membership(request.user):
+        return redirect("membership")
+
     room = get_object_or_404(Room, pk=pk, owner=request.user)
     form = RoomForm(request.POST or None, instance=room, user=request.user)
     if form.is_valid():
@@ -907,15 +946,22 @@ def edit_room(request, pk):
 @user_passes_test(is_landlord)
 def delete_room(request, pk):
     room = get_object_or_404(Room, pk=pk, owner=request.user)
+
     if request.method == "POST":
         room.delete()
         return redirect("dashboard")
+    
     return render(request, "listings/delete_room.html", {"room": room})
 
 @login_required
 def create_listing(request):
 
-    membership = getattr(request.user, "membership", None)
+    membership = get_or_create_membership(request.user)
+
+    if membership.is_trial_expired():
+        messages.error(request, "Your trial has expired. Please upgrade.")
+        return redirect("membership")
+
 
     if not membership:
         messages.error(request, "Membership not found. Contact support.")
@@ -949,6 +995,9 @@ def create_listing(request):
 
 @login_required
 def upload_room_images(request, room_id):
+    if not require_active_membership(request.user):
+        return redirect("membership")
+
     room = get_object_or_404(Room, id=room_id, owner=request.user)
 
     if request.method == "POST":
@@ -1376,3 +1425,12 @@ def handle_phone_change(user_obj, profile_obj, new_phone):
     
     profile_obj.phone_number = new_phone
     profile_obj.is_phone_verified = False
+
+@login_required
+def request_upgrade(request):
+    membership = get_or_create_membership(request.user)
+
+    membership.mark_as_paid()
+
+    messages.success(request, "Payment request submitted. We will verify shortly.")
+    return redirect("dashboard")

@@ -1,11 +1,9 @@
 import random
-from django.core.mail import send_mail
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from utils.email import send_template_email
-
 
 def send_html_email(subject, to_email, template_name, context):
     html_content = render_to_string(template_name, context)
@@ -36,3 +34,5 @@ def send_otp_email(user, otp):
             "year": 2026
         }
     )
+
+
