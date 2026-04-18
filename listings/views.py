@@ -608,8 +608,9 @@ def user_login(request):
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
-    if user.profile.role == "landlord":
+    if getattr(user.profile, "role", None) == "landlord":
         return redirect("dashboard")
+
     return redirect("room_list")
 
 def user_logout(request):
