@@ -867,19 +867,26 @@ def add_room(request):
 @login_required
 @user_passes_test(is_landlord)
 def create_room(request):
-    if not require_active_membership(request.user):
-        return redirect("membership")
 
-    membership = get_or_create_membership(request.user)
+    # ✅ ALWAYS ensure membership exists (SAFE)
+    membership, _ = Membership.objects.get_or_create(
+        user=request.user,
+        defaults={"tier": "starter"}
+    )
+
     user_listings_count = request.user.rooms.count()
 
-    # 🚫 BLOCK FIRST (CRITICAL FIX)
-    if membership.is_trial_expired():
+    # 🚫 BLOCK: expired trial
+    if membership.is_trial and membership.is_trial_expired():
         messages.error(request, "Your trial has expired. Please upgrade.")
         return redirect("membership")
 
+    # 🚫 BLOCK: listing limit reached
     if not membership.can_create_listing(user_listings_count):
-        messages.error(request, "You have reached your listing limit. Please upgrade your membership.")
+        messages.warning(
+            request,
+            "🚫 You’ve reached your listing limit. Upgrade to add more rooms."
+        )
         return redirect("membership")
 
     form = RoomForm(request.POST or None, request.FILES or None, user=request.user)
@@ -957,30 +964,35 @@ def delete_room(request, pk):
 @login_required
 def create_listing(request):
 
-    membership = get_or_create_membership(request.user)
+    # ✅ Always ensure membership exists
+    membership, _ = Membership.objects.get_or_create(
+        user=request.user,
+        defaults={"tier": "starter"}
+    )
 
-    if membership.is_trial_expired():
+    # 🚫 BLOCK: trial expired
+    if membership.is_trial and membership.is_trial_expired():
         messages.error(request, "Your trial has expired. Please upgrade.")
         return redirect("membership")
 
+    # 📊 Count listings (single source of truth)
+    user_listings_count = request.user.rooms.count()
 
-    if not membership:
-        messages.error(request, "Membership not found. Contact support.")
-        return redirect("dashboard")
-    
-    user_listings_count = request.user.rooms.count()  # ✅ FIXED
-
-    # 🚫 BLOCK if limit reached
+    # 🚫 BLOCK: limit reached (uses your model logic)
     if not membership.can_create_listing(user_listings_count):
-        messages.error(request, "You have reached your listing limit. Please upgrade your membership.")
-        return redirect('membership')
+        messages.warning(
+            request,
+            "🚫 You’ve reached your listing limit. Upgrade your membership to add more."
+        )
+        return redirect("membership")
 
+    # 🧾 FORM HANDLING
     if request.method == "POST":
         form = ListingForm(request.POST, request.FILES)
 
         if form.is_valid():
             listing = form.save(commit=False)
-            listing.owner = request.user  # ✅ ALSO IMPORTANT (NOT user)
+            listing.owner = request.user
             listing.save()
 
             messages.success(request, "Listing created successfully!")
@@ -990,6 +1002,8 @@ def create_listing(request):
         form = ListingForm()
 
     return render(request, "listings/create_listing.html", {"form": form})
+
+
 # -----------------------------
 # IMAGES (upload/delete/manage)
 # -----------------------------

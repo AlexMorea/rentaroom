@@ -1,0 +1,54 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="container py-5" style="background: #fff7ed; border-radius: 12px">
+  <h2 class="text-center mb-3">Upgrade to {{ tier|title }} Plan</h2>
+
+  <p class="text-center text-muted mb-4">
+    Complete your payment to unlock more features and listings.
+  </p>
+
+  <div class="card shadow p-4 text-center">
+    <h3 style="font-weight: 900">{{ price }}</h3>
+
+    <p class="mt-3">Send your payment using the details below:</p>
+
+    <hr />
+
+    <!-- 🏦 BANK DETAILS -->
+    <div style="text-align: left; max-width: 400px; margin: 0 auto">
+      <p><strong>Bank:</strong> Standard Bank</p>
+      <p><strong>Account Name:</strong> Rooms4You</p>
+      <p><strong>Account Number:</strong> 0000000000</p>
+      <p>
+        <strong>Reference:</strong>
+        <span class="text-primary">{{ membership.payment_reference }}</span>
+      </p>
+    </div>
+
+    <hr />
+
+    <p class="text-muted">
+      ⚠️ Use your exact reference so we can match your payment faster.
+    </p>
+
+    <!-- 📲 WHAT HAPPENS NEXT -->
+    <div class="mt-4 text-start" style="max-width: 500px; margin: auto">
+      <h5>What happens next?</h5>
+      <ul>
+        <li>You make the payment</li>
+        <li>Click "I Have Made Payment"</li>
+        <li>We verify your payment</li>
+        <li>Your account is upgraded</li>
+      </ul>
+    </div>
+
+    <form method="POST" class="mt-4">
+      {% csrf_token %}
+      <button class="btn-primary w-100" style="background: green">
+        I Have Made Payment
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

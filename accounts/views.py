@@ -120,3 +120,42 @@ def request_payment(request):
     membership.mark_as_paid()
     return redirect('dashboard')
 
+@login_required
+def membership_payment_view(request, tier):
+
+    tier = tier.lower()
+
+    VALID_TIERS = ["bronze", "silver", "gold"]
+
+    if tier not in VALID_TIERS:
+        messages.error(request, "Invalid membership tier.")
+        return redirect("membership")
+
+    membership, _ = Membership.objects.get_or_create(
+        user=request.user,
+        defaults={"tier": "starter"}
+    )
+
+    # 💰 Pricing
+    prices = {
+        "bronze": "R55",
+        "silver": "R75",
+        "gold": "R129"
+    }
+
+    if request.method == "POST":
+        # 🧾 mark as pending upgrade (simple version)
+        membership.requested_tier = tier
+        membership.save()
+
+        messages.success(
+            request,
+            f"✅ Payment submitted for {tier.title()} plan. We’ll verify and activate shortly."
+        )
+        return redirect("dashboard")
+
+    return render(request, "accounts/payment_page.html", {
+        "tier": tier,
+        "price": prices[tier],
+        "membership": membership
+    })

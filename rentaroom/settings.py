@@ -22,6 +22,7 @@ if not DEBUG:
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 ALLOWED_HOSTS += [
+    ".onrender.com",
     "rooms4you.co.za",
     "www.rooms4you.co.za",
 ]

@@ -52,9 +52,10 @@ class Membership(models.Model):
     trial_start = models.DateTimeField(default=timezone.now)
     trial_end = models.DateTimeField(null=True, blank=True)
 
-    payment_reference = models.CharField(max_length=50, unique=True, blank=True)
+    payment_reference = models.CharField(max_length=50, unique=True, null=True, blank=True)
     payment_requested = models.BooleanField(default=False)
     payment_requested_at = models.DateTimeField(null=True, blank=True)
+    requested_tier = models.CharField(max_length=20, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -101,7 +102,9 @@ class Membership(models.Model):
     
     def mark_as_paid(self):
         self.status = "pending"
-        membership.mark_as_paid()
+        self.payment_requested = True
+        self.payment_requested_at = timezone.now()
+        self.save()
 
     def activate_membership(self, tier, admin_user=None):
         self.tier = tier

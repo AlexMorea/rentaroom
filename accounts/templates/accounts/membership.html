@@ -1,8 +1,8 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<div class="container py-5">
-  <h2 class="text-center mb-3">Choose Your Membership</h2>
-  <p class="text-center text-muted mb-5">
+<div class="container py-5" style="background: #fff7ed; border-radius: 12px">
+  <h2 class="page-title" style="margin: 0">Choose Your Membership</h2>
+  <p style="text-align: center; margin-bottom: 16px">
     Unlock more power, reach more tenants, and grow your rental business with
     Rooms4You.
   </p>
@@ -45,25 +45,29 @@
     <!-- BRONZE -->
     <div class="form-card" style="border: 1px solid rgba(255, 165, 0, 0.3)">
       <h3 style="margin-bottom: 6px">Bronze4You</h3>
-      <div style="font-weight: 700">R49.99</div>
+      <div style="font-weight: 700">R55.00/mo</div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
         <li><strong>Up to 5 Listings</strong></li>
         <li>Verified Landlord Badge</li>
         <li>Email Support</li>
         <li>No Availability Feature</li>
+        <li>Basic Visibility</li>
         <li>No Analytics</li>
       </ul>
 
-      <div style="text-align: center; margin-top: 12px; opacity: 0.6">
-        🔒 Available after launch
-      </div>
+      <a
+        href="{% url 'membership_payment' 'bronze' %}"
+        class="btn-primary w-100 mt-3 tier-bronze-btn"
+      >
+        Upgrade to Bronze4You
+      </a>
     </div>
 
     <!-- SILVER -->
     <div class="form-card" style="border: 1px solid rgba(59, 130, 246, 0.3)">
       <h3 style="margin-bottom: 6px">Silver4You ⭐</h3>
-      <div style="font-weight: 700">R69.99</div>
+      <div style="font-weight: 700">R75.00/mo</div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
         <li><strong>Up to 10 Listings</strong></li>
@@ -71,19 +75,27 @@
         <li>Analytics Dashboard</li>
         <li>24/7 Support</li>
         <li>Better Visibility</li>
+        <li>Double the listings for only +R20</li>
       </ul>
-
-      <div style="text-align: center; margin-top: 12px; opacity: 0.6">
-        🔒 Available after launch
-      </div>
+      <a
+        href="{% url 'membership_payment' 'silver' %}"
+        class="btn-primary w-100 mt-3 tier-silver-btn"
+      >
+        Upgrade to Silver4You
+      </a>
     </div>
 
     <!-- GOLD -->
     <div
       class="form-card"
-      style="border: 2px solid gold; transform: scale(1.03)"
+      style="
+        border: 2px solid gold;
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      "
     >
       <h3 style="margin-bottom: 6px">Gold4You 👑</h3>
+      <div style="font-weight: 700">From R149/mo</div>
       <div style="font-weight: 800; font-size: 1.2rem">Premium</div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
@@ -93,15 +105,15 @@
         <li>Advanced Analytics</li>
         <li>Full Support Access</li>
         <li>Admin Assistance</li>
+        <li>Room4You Welcome HAMPER</li>
       </ul>
 
       <div style="margin-top: 16px">
         <a
-          href="#payment"
-          class="btn-primary"
-          style="width: 100%; display: block; text-align: center"
+          href="{% url 'membership_payment' 'gold' %}"
+          class="btn-primary w-100 mt-3 tier-gold-btn"
         >
-          Coming Soon!
+          Go 4 GOLD!
         </a>
       </div>
     </div>
@@ -129,13 +141,13 @@
     <hr />
 
     <p>
-      After payment, click below and our team will verify and activate your
-      membership.
+      After payment, click the button below and our team will verify, approve
+      and activate your membership.
     </p>
 
     <form method="POST">
       {% csrf_token %}
-      <button class="btn-primary" style="width: 100%">
+      <button class="btn-primary" style="background: #16a34a; border: none">
         I Have Made Payment
       </button>
     </form>

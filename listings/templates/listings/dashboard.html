@@ -27,7 +27,7 @@
     box-shadow: var(--shadow);
   "
 >
-  <strong>Complete your profile</strong> — add at least one room listing and
+  <strong>Complete your profile</strong> : add at least one room listing and
   ensure your contact details are set so tenants can reach you smoothly.
 </div>
 {% endif %}
@@ -51,8 +51,11 @@
 
 <!-- ================= MEMBERSHIP CTA ================= -->
 {% if membership.is_trial %}
-<div class="form-card" style="margin-bottom: 16px">
-  <h3 style="margin: 0 0 8px; font-weight: 900">Upgrade Your Account</h3>
+<div
+  class="form-card"
+  style="margin-bottom: 16px; border-left: 4px solid orange"
+>
+  <h3 style="margin: 0 0 8px; font-weight: 900">Upgrade Your Account 🚀</h3>
 
   <p style="margin: 0 0 10px">
     Your free Starter4You plan is active. Upgrade to unlock more listings and
@@ -65,7 +68,13 @@
     Use this as your payment reference when making a deposit.
   </p>
 
-  <a href="{% url 'membership' %}" class="btn-primary"> Upgrade Now </a>
+  <a
+    href="{% url 'membership' %}"
+    class="btn-primary"
+    style="background: orange"
+  >
+    Upgrade Now!</a
+  >
 </div>
 {% endif %}
 

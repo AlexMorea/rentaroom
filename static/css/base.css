@@ -3557,3 +3557,44 @@ body.scroll-down .trust-strip {
   width: auto;
   display: block;
 }
+
+/* =========================
+   MEMBERSHIP TIER BUTTONS
+========================= */
+
+/* Bronze */
+.tier-bronze-btn {
+  background: linear-gradient(135deg, #8b5e3c, #6b4226);
+  color: #fff;
+  border: none;
+}
+
+.tier-bronze-btn:hover {
+  background: linear-gradient(135deg, #6b4226, #5a371f);
+  transform: translateY(-2px);
+}
+
+/* Silver */
+.tier-silver-btn {
+  background: linear-gradient(135deg, #d1d5db, #9ca3af);
+  color: #111;
+  border: none;
+}
+
+.tier-silver-btn:hover {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  transform: translateY(-2px);
+}
+
+/* Gold */
+.tier-gold-btn {
+  background: linear-gradient(135deg, #facc15, #eab308);
+  color: #111;
+  border: none;
+  font-weight: 700;
+}
+
+.tier-gold-btn:hover {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  transform: translateY(-2px);
+}
