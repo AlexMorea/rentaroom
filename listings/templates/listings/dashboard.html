@@ -49,9 +49,10 @@
   </a>
 </div>
 
-<!-- ================= MEMBERSHIP STATUS (SAFE BLOCK) ================= -->
+<!-- ================= MEMBERSHIP STATUS ================= -->
 
 {% if membership %} {% if membership.status == "pending" %}
+
 <div
   class="form-card"
   style="margin-bottom: 16px; border-left: 4px solid #f59e0b"
@@ -62,21 +63,10 @@
     verified.
   </p>
 </div>
-{% endif %} {% if membership.status == "active" and membership.tier != "starter"
-%}
-<div
-  class="form-card"
-  style="margin-bottom: 16px; border-left: 4px solid #16a34a"
->
-  <h3 style="margin: 0 0 6px; font-weight: 900">
-    {{ membership.get_tier_display }} Plan Active ✅
-  </h3>
-  <p style="margin: 0; opacity: 0.8">
-    You now have access to enhanced listings and visibility.
-  </p>
-</div>
-{% endif %} {% if membership.status == "active" and membership.tier == "starter"
-%}
+
+{% else %} {% if membership.status == "active" %} {% if membership.tier ==
+"starter" %}
+
 <div
   class="form-card"
   style="margin-bottom: 16px; border-left: 4px solid orange"
@@ -102,7 +92,22 @@
     Upgrade Now!
   </a>
 </div>
-{% endif %} {% endif %}
+
+{% else %}
+
+<div
+  class="form-card"
+  style="margin-bottom: 16px; border-left: 4px solid #16a34a"
+>
+  <h3 style="margin: 0 0 6px; font-weight: 900">
+    {{ membership.get_tier_display }} Plan Active ✅
+  </h3>
+  <p style="margin: 0; opacity: 0.8">
+    You now have access to enhanced listings and visibility.
+  </p>
+</div>
+
+{% endif %} {% endif %} {% endif %} {% endif %}
 
 <div class="dashboard-rooms" id="your-rooms">
   {% for room in rooms %}
