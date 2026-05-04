@@ -124,7 +124,6 @@ def request_payment(request):
 def membership_payment_view(request, tier):
 
     tier = tier.lower()
-
     VALID_TIERS = ["bronze", "silver", "gold"]
 
     if tier not in VALID_TIERS:
@@ -136,7 +135,6 @@ def membership_payment_view(request, tier):
         defaults={"tier": "starter"}
     )
 
-    # 💰 Pricing
     prices = {
         "bronze": "R55",
         "silver": "R75",
@@ -144,13 +142,17 @@ def membership_payment_view(request, tier):
     }
 
     if request.method == "POST":
-        # 🧾 mark as pending upgrade (simple version)
-        membership.requested_tier = tier
-        membership.save()
+        proof = request.FILES.get("payment_proof")
+
+        if not proof:
+            messages.error(request, "Please upload proof of payment.")
+            return redirect("membership_payment", tier=tier)
+
+        membership.mark_payment_submitted(tier, proof)
 
         messages.success(
             request,
-            f"✅ Payment submitted for {tier.title()} plan. We’ll verify and activate shortly."
+            "✅ Payment submitted! We will verify and activate your account shortly."
         )
         return redirect("dashboard")
 

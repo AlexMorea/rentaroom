@@ -3598,3 +3598,9 @@ body.scroll-down .trust-strip {
   background: linear-gradient(135deg, #eab308, #ca8a04);
   transform: translateY(-2px);
 }
+
+@media (max-width: 768px) {
+  .form-card > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+}

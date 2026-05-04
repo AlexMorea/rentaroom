@@ -1,9 +1,9 @@
-from django.conf import settings
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
-import uuid
 from django.contrib.auth.models import User
-
+import uuid
+from cloudinary.models import CloudinaryField
 
 
 class Membership(models.Model):
@@ -20,30 +20,11 @@ class Membership(models.Model):
         ("suspended", "Suspended"),
     ]
 
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default="active"
-    )
-
-    upgraded_to = models.CharField(
-        max_length=20,
-        blank=True,
-        null=True
-    )
-
-    approved_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="approved_memberships"
-    )
-
-    approved_at = models.DateTimeField(null=True, blank=True)
-
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
     tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='starter')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+
     membership_id = models.CharField(max_length=20, unique=True, blank=True)
 
     is_active = models.BooleanField(default=True)
@@ -53,9 +34,24 @@ class Membership(models.Model):
     trial_end = models.DateTimeField(null=True, blank=True)
 
     payment_reference = models.CharField(max_length=50, unique=True, null=True, blank=True)
+
+    # 🔥 NEW: PAYMENT FLOW
     payment_requested = models.BooleanField(default=False)
     payment_requested_at = models.DateTimeField(null=True, blank=True)
     requested_tier = models.CharField(max_length=20, blank=True, null=True)
+
+    # 📸 PROOF OF PAYMENT
+    payment_proof = CloudinaryField('payment_proof', blank=True, null=True)
+
+    # 👨‍💼 ADMIN APPROVAL
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_memberships"
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -67,56 +63,66 @@ class Membership(models.Model):
             self.trial_end = self.trial_start + timezone.timedelta(days=30)
 
         if not self.payment_reference:
-            self.payment_reference = self.membership_id     
+            self.payment_reference = self.membership_id
 
         super().save(*args, **kwargs)
 
     def is_trial_expired(self):
         return self.trial_end and timezone.now() > self.trial_end
-      
+
     def listing_limit(self):
-        limits = {
+        return {
             'starter': 2,
             'bronze': 5,
             'silver': 10,
-            'gold': None  # unlimited
-        }
-        return limits.get(self.tier)
-
+            'gold': None
+        }.get(self.tier)
 
     def can_create_listing(self, current_count):
-        # 🚫 Block if inactive
         if not self.is_active:
             return False
 
-        # 🚫 Block if trial expired and no payment
         if self.is_trial and self.is_trial_expired():
             return False
 
         limit = self.listing_limit()
-
         if limit is None:
             return True
 
         return current_count < limit
-    
-    def mark_as_paid(self):
+
+    # 🔥 PAYMENT FLOW METHODS
+
+    def mark_payment_submitted(self, tier, proof_file):
         self.status = "pending"
         self.payment_requested = True
         self.payment_requested_at = timezone.now()
+        self.requested_tier = tier
+        self.payment_proof = proof_file
         self.save()
 
-    def activate_membership(self, tier, admin_user=None):
-        self.tier = tier
+    def activate_membership(self, admin_user=None):
+        if not self.requested_tier:
+            return  # safety
+
+        self.tier = self.requested_tier
+
         self.status = "active"
         self.is_active = True
+        self.is_trial = False
+
+        self.payment_requested = False
+        self.requested_tier = None  # 🔥 CLEAR AFTER USE
+
         self.approved_by = admin_user
         self.approved_at = timezone.now()
+
         self.save()
 
     def reject_payment(self):
         self.status = "suspended"
         self.payment_requested = False
+        self.payment_proof = None
         self.save()
 
     @property
@@ -124,4 +130,4 @@ class Membership(models.Model):
         if self.trial_end:
             delta = self.trial_end - timezone.now()
             return max(delta.days, 0)
-        return 0     
+        return 0

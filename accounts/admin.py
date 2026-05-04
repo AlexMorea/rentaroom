@@ -7,60 +7,30 @@ class MembershipAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "tier",
-        "is_active",
-        "is_trial",
+        "status",
+        "requested_tier",
         "payment_requested",
-        "payment_reference",
-        "trial_end",
+        "approved_at",
     )
 
-    list_filter = ("tier", "is_active", "payment_requested")
+    list_filter = ("tier", "status", "payment_requested")
     search_fields = ("user__username", "user__email", "payment_reference")
 
-    actions = ["activate_bronze", "activate_silver", "activate_gold", "downgrade_to_starter"]
+    actions = ["approve_payments", "reject_payments"]
 
-    def activate_bronze(self, request, queryset):
+    def approve_payments(self, request, queryset):
         for membership in queryset:
-            membership.tier = "bronze"
-            membership.is_active = True
-            membership.is_trial = False
-            membership.payment_requested = False
-            membership.save()
+            if membership.requested_tier:
+                membership.activate_membership(admin_user=request.user)
 
-        self.message_user(request, "Selected users upgraded to Bronze.")
+        self.message_user(request, "✅ Payments approved and memberships upgraded.")
 
-    activate_bronze.short_description = "Activate Bronze4You"
+    approve_payments.short_description = "Approve payment & activate membership"
 
-    def activate_silver(self, request, queryset):
+    def reject_payments(self, request, queryset):
         for membership in queryset:
-            membership.tier = "silver"
-            membership.is_active = True
-            membership.is_trial = False
-            membership.payment_requested = False
-            membership.save()
+            membership.reject_payment()
 
-        self.message_user(request, "Selected users upgraded to Silver.")
+        self.message_user(request, "❌ Payments rejected.")
 
-    activate_silver.short_description = "Activate Silver4You"
-
-    def activate_gold(self, request, queryset):
-        for membership in queryset:
-            membership.tier = "gold"
-            membership.is_active = True
-            membership.is_trial = False
-            membership.payment_requested = False
-            membership.save()
-
-        self.message_user(request, "Selected users upgraded to Gold.")
-
-    activate_gold.short_description = "Activate Gold4You"
-
-    def downgrade_to_starter(self, request, queryset):
-        for membership in queryset:
-            membership.tier = "starter"
-            membership.is_active = True
-            membership.save()
-
-        self.message_user(request, "Selected users downgraded to Starter.")
-
-    downgrade_to_starter.short_description = "Downgrade to Starter4You"
+    reject_payments.short_description = "Reject payments"
