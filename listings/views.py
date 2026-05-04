@@ -577,12 +577,10 @@ def user_login(request):
     # 📱 PHONE CHECK
     if not user.profile.is_phone_verified:
 
-        # cooldown protection
         if not can_resend_otp(user.id):
             request.session["pending_user_id"] = user.id
             return redirect("verify_phone")
-        
-        # CLEAN OLD OTPs
+
         PhoneOTP.objects.filter(
             user=user,
             created_at__lt=timezone.now() - timedelta(minutes=10)
@@ -604,15 +602,13 @@ def user_login(request):
         messages.warning(request, "We sent you an OTP code.")
         return redirect("verify_phone")
 
-    # 🧠 PROFILE COMPLETION GATE
+    # ✅ LOGIN FIRST (THIS FIXES YOUR LOOP)
+    login(request, user)
+
+    # 🧠 PROFILE COMPLETION AFTER LOGIN
     if profile_needs_update(user):
         messages.warning(request, "Please complete your profile.")
         return redirect("edit_profile")
-
-    login(request, user)
-
-    storage = messages.get_messages(request)
-    list(storage)
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
@@ -620,6 +616,7 @@ def user_login(request):
         return redirect("dashboard")
 
     return redirect("room_list")
+
 
 def user_logout(request):
     logout(request)
@@ -787,7 +784,14 @@ def edit_profile(request):
 
             if changes["phone"]:
                 handle_phone_change(user_obj, profile_obj, changes["phone"])
+            else:
+                # 🔥 NORMAL SAVE (when no special phone change flow)
+                country_code = p_form.cleaned_data.get("country_code")
+                phone_number = p_form.cleaned_data.get("phone_number")
 
+                if country_code and phone_number:
+                    profile_obj.phone_number = f"{country_code}{phone_number}"
+                    
             user_obj.save()
             profile_obj.save()
 

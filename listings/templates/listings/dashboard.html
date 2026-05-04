@@ -49,26 +49,9 @@
   </a>
 </div>
 
-<!-- ================= MEMBERSHIP STATUS ================= -->
+<!-- ================= MEMBERSHIP CTA ================= -->
 
-<!-- prettier-ignore -->
-
-{% if membership %}
-
-<div
-  class="form-card"
-  style="margin-bottom: 16px; border-left: 4px solid #f59e0b"
->
-  <h3 style="margin: 0 0 6px; font-weight: 900">Payment Under Review ⏳</h3>
-  <p style="margin: 0; opacity: 0.8">
-    Your {{ membership.requested_tier|default:"upgrade" }} upgrade is being
-    verified.
-  </p>
-</div>
-
-{% endif %} {% if membership and membership.status == "active" and
-membership.tier == "starter" %}
-
+{% if membership.tier == "starter" and membership.status == "active" %}
 <div
   class="form-card"
   style="margin-bottom: 16px; border-left: 4px solid orange"
@@ -76,8 +59,8 @@ membership.tier == "starter" %}
   <h3 style="margin: 0 0 8px; font-weight: 900">Upgrade Your Account 🚀</h3>
 
   <p style="margin: 0 0 10px">
-    Your free Starter4You plan is active. Upgrade to unlock more listings and
-    visibility.
+    Your {{ membership.get_tier_display }} plan is active. Upgrade to unlock
+    more listings and visibility.
   </p>
 
   <p style="font-weight: 800">Membership ID: {{ membership.membership_id }}</p>
@@ -94,22 +77,6 @@ membership.tier == "starter" %}
     Upgrade Now!
   </a>
 </div>
-
-{% endif %} {% if membership and membership.status == "active" and
-membership.tier != "starter" %}
-
-<div
-  class="form-card"
-  style="margin-bottom: 16px; border-left: 4px solid #16a34a"
->
-  <h3 style="margin: 0 0 6px; font-weight: 900">
-    {{ membership.get_tier_display }} Plan Active ✅
-  </h3>
-  <p style="margin: 0; opacity: 0.8">
-    You now have access to enhanced listings and visibility.
-  </p>
-</div>
-
 {% endif %}
 
 <div class="dashboard-rooms" id="your-rooms">
