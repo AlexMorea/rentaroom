@@ -49,7 +49,7 @@
   </a>
 </div>
 
-<!-- ================= MEMBERSHIP STATUS ================= -->
+<!-- ================= MEMBERSHIP STATUS (SAFE BLOCK) ================= -->
 
 {% if membership %} {% if membership.status == "pending" %}
 <div
@@ -138,9 +138,9 @@
     "
   >
     <p style="margin: 0 0 12px">You haven't added any rooms yet.</p>
-    <a href="{% url 'create_room' %}" class="btn-primary"
-      >+ Add your first room</a
-    >
+    <a href="{% url 'create_room' %}" class="btn-primary">
+      + Add your first room
+    </a>
   </div>
   {% endfor %}
 </div>
