@@ -114,7 +114,7 @@
 
   <p style="margin: 0 0 10px">
     You are using <strong>{{ rooms.count }}</strong> /
-    <strong>{{ membership.listing_limit }}</strong> listings.
+    <strong>{{ membership.listing_limit|default:"∞" }}</strong> listings.
   </p>
 
   {% if membership.listing_limit %}
@@ -135,7 +135,8 @@
       "
     ></div>
   </div>
-  {% endif %} {% if rooms.count >= membership.listing_limit %}
+  {% endif %} {% if membership.listing_limit and rooms.count >=
+  membership.listing_limit %}
   <div style="margin-top: 10px">
     <p style="color: #b91c1c; font-weight: 700; margin-bottom: 8px">
       ⚠️ You have reached your limit.
