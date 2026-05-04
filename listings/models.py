@@ -193,10 +193,8 @@ class Profile(models.Model):
     
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
-    # NOTE TO SELF: always create a profile on signup, safe defaults
     if created:
-        Profile.objects.create(user=instance, role="tenant", persona="worker")
-
+        Profile.objects.create(user=instance)
 
 class Contact(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="contacts")

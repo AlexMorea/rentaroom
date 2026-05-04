@@ -41,8 +41,12 @@ class Membership(models.Model):
     requested_tier = models.CharField(max_length=20, blank=True, null=True)
 
     # 📸 PROOF OF PAYMENT
-    payment_proof = CloudinaryField('payment_proof', blank=True, null=True)
-
+    proof_of_payment = CloudinaryField(
+    resource_type="auto",
+    folder="payments",
+    null=True,
+    blank=True
+)
     # 👨‍💼 ADMIN APPROVAL
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -79,13 +83,21 @@ class Membership(models.Model):
         }.get(self.tier)
 
     def can_create_listing(self, current_count):
+        # 🚫 inactive users blocked
         if not self.is_active:
             return False
 
+        # 🚫 trial expired → must pay
         if self.is_trial and self.is_trial_expired():
             return False
 
+        # 🚫 payment pending → block abuse
+        if self.status == "pending":
+            return False
+
         limit = self.listing_limit()
+
+        # ♾ unlimited
         if limit is None:
             return True
 
@@ -98,21 +110,22 @@ class Membership(models.Model):
         self.payment_requested = True
         self.payment_requested_at = timezone.now()
         self.requested_tier = tier
-        self.payment_proof = proof_file
+        self.proof_of_payment = proof_file
         self.save()
 
     def activate_membership(self, admin_user=None):
         if not self.requested_tier:
-            return  # safety
+            return
 
         self.tier = self.requested_tier
-
         self.status = "active"
         self.is_active = True
+
+        # 🔥 CRITICAL FIX
         self.is_trial = False
 
         self.payment_requested = False
-        self.requested_tier = None  # 🔥 CLEAR AFTER USE
+        self.requested_tier = None
 
         self.approved_by = admin_user
         self.approved_at = timezone.now()
@@ -122,7 +135,7 @@ class Membership(models.Model):
     def reject_payment(self):
         self.status = "suspended"
         self.payment_requested = False
-        self.payment_proof = None
+        self.proof_of_payment = None
         self.save()
 
     @property
