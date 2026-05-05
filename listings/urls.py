@@ -8,9 +8,7 @@ urlpatterns = [
     path("", views.room_list, name="home"),
     path("rooms/", views.room_list, name="room_list"),
     path("room/<int:pk>/", views.room_detail, name="room_detail"),
-
     path("rooms/new/", views.create_room, name="create_room"),
-
     path("register/", views.register, name="register"),
     path("login/", views.user_login, name="login"),
     path("logout/", views.user_logout, name="logout"),
@@ -18,6 +16,9 @@ urlpatterns = [
     path("resend-otp/", views.resend_otp, name="resend_otp"),
     path("verify-email/<uuid:token>/", views.verify_email, name="verify_email"),
     path("confirm-email-change/<uuid:token>/", views.confirm_email_change, name="confirm_email_change"),
+    path("change-email/", views.change_email, name="change_email"),
+    path("change-phone/", views.change_phone, name="change_phone"),
+    path("confirm-phone/", views.confirm_phone_change, name="confirm_phone_change"),
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("membership/", membership_view, name="membership"),

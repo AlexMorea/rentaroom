@@ -78,17 +78,15 @@ def profile_needs_update(user):
         return not (has_first_name and has_last_name and has_email and has_persona)
 
     if p.role == "landlord":
-        has_cell = bool((getattr(p, "phone_number", "") or "").strip())
+        has_cell = bool(p.phone_number and p.country_code)
         has_address = bool((getattr(p, "home_address", "") or "").strip())
-        has_postal = bool((getattr(p, "postal_code", "") or "").strip())
-
+        
         return not (
             has_first_name
             and has_last_name
             and has_email
             and has_cell
             and has_address
-            and has_postal
         )
 
     return False
@@ -451,6 +449,7 @@ def register(request):
 
     return render(request, "listings/register.html", {"form": form})
 
+
 def verify_email(request, token):
     try:
         verification = EmailVerification.objects.get(
@@ -556,6 +555,8 @@ def user_login(request):
     login_value = (request.POST.get("email") or "").strip()
     password = request.POST.get("password") or ""
 
+    next_url = request.GET.get("next")  # 🔥 capture early
+
     user_obj = User.objects.filter(email__iexact=login_value).first() \
         or User.objects.filter(username__iexact=login_value).first()
 
@@ -602,16 +603,20 @@ def user_login(request):
         messages.warning(request, "We sent you an OTP code.")
         return redirect("verify_phone")
 
-    # ✅ LOGIN FIRST (THIS FIXES YOUR LOOP)
+    # ✅ LOGIN FIRST (CRITICAL)
     login(request, user)
 
-    # 🧠 PROFILE COMPLETION AFTER LOGIN
+    # 🧠 PROFILE COMPLETION
     if profile_needs_update(user):
-        messages.warning(request, "Please complete your profile.")
-        return redirect("edit_profile")
+        messages.info(request, "You can complete your profile anytime in settings.")
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
+    # 🔥 RESPECT NEXT URL (THIS FIXES LOOP)
+    if next_url:
+        return redirect(next_url)
+
+    # 🎯 ROLE-BASED REDIRECT
     if hasattr(user, "profile") and user.profile.role == "landlord":
         return redirect("dashboard")
 
@@ -768,8 +773,24 @@ def edit_profile(request):
     profile = user.profile
 
     u_form = UserUpdateForm(request.POST or None, instance=user)
-    p_form = ProfileUpdateForm(request.POST or None, instance=profile)
+    initial_data = {}
 
+    if profile.phone_number and profile.phone_number.startswith("+"):
+        if profile.phone_number.startswith("+27"):
+            initial_data["country_code"] = "+27"
+            initial_data["phone_number"] = profile.phone_number.replace("+27", "")
+        elif profile.phone_number.startswith("+1"):
+            initial_data["country_code"] = "+1"
+            initial_data["phone_number"] = profile.phone_number.replace("+1", "")
+        elif profile.phone_number.startswith("+44"):
+            initial_data["country_code"] = "+44"
+            initial_data["phone_number"] = profile.phone_number.replace("+44", "")
+
+    p_form = ProfileUpdateForm(
+        request.POST or None,
+        instance=profile,
+        initial=initial_data
+    )
     if request.method == "POST":
 
         if u_form.is_valid() and p_form.is_valid():
@@ -779,31 +800,29 @@ def edit_profile(request):
             user_obj = u_form.save(commit=False)
             profile_obj = p_form.save(commit=False)
 
+            # 🔥 FIX PHONE STRUCTURE
+            country_code = p_form.cleaned_data.get("country_code")
+            phone_number = p_form.cleaned_data.get("phone_number")
+
+            if country_code and phone_number:
+                profile_obj.country_code = country_code
+                profile_obj.phone_number = phone_number
+
             if changes["email"]:
                 handle_email_change(user_obj, profile_obj, changes["email"], request)
 
             if changes["phone"]:
                 handle_phone_change(user_obj, profile_obj, changes["phone"])
-            else:
-                # 🔥 NORMAL SAVE (when no special phone change flow)
-                country_code = p_form.cleaned_data.get("country_code")
-                phone_number = p_form.cleaned_data.get("phone_number")
 
-                if country_code and phone_number:
-                    profile_obj.phone_number = f"{country_code}{phone_number}"
-                    
             user_obj.save()
             profile_obj.save()
 
-            # ✅ SUCCESS MESSAGE
             messages.success(request, "Profile updated successfully.")
-
             return redirect("profile")
 
         else:
-            # ✅ SHOW ERROR MESSAGE (IMPORTANT UX)
             messages.error(request, "Please fix the errors below.")
-
+            
     return render(request, "listings/edit_profile.html", {
         "u_form": u_form,
         "p_form": p_form,
@@ -1455,3 +1474,70 @@ def request_upgrade(request):
 
     messages.success(request, "Payment request submitted. We will verify shortly.")
     return redirect("dashboard")
+
+@login_required
+def change_email(request):
+    if request.method == "POST":
+        new_email = request.POST.get("email")
+
+        token = EmailVerification.objects.create(
+            user=request.user,
+            new_email=new_email
+        )
+
+        verify_link = f"https://rooms4you.co.za/confirm-email-change/{token.token}/"
+
+        send_template_email(
+            subject="Confirm your new email",
+            to_email=new_email,
+            template="emails/change_email.html",
+            context={"verify_link": verify_link}
+        )
+
+        messages.success(request, "Check your new email to confirm change.")
+        return redirect("profile")
+
+    return render(request, "listings/change_email.html")
+
+@login_required
+def change_phone(request):
+    if request.method == "POST":
+        phone = request.POST.get("phone")
+
+        otp = generate_otp()
+
+        PhoneOTP.objects.create(
+            user=request.user,
+            phone_number=phone,
+            otp=otp
+        )
+
+        send_otp_email(phone, otp)
+
+        request.session["pending_phone"] = phone
+
+        return redirect("confirm_phone_change")
+
+    return render(request, "listings/change_phone.html")
+
+@login_required
+def confirm_phone_change(request):
+    if request.method == "POST":
+        otp = request.POST.get("otp")
+        pending_phone = request.session.get("pending_phone")
+
+        record = PhoneOTP.objects.filter(
+            user=request.user,
+            phone_number=pending_phone,
+            otp=otp
+        ).last()
+
+        if record:
+            profile = request.user.profile
+            profile.phone_number = pending_phone
+            profile.save()
+
+            messages.success(request, "Phone updated successfully.")
+            return redirect("profile")
+
+    return render(request, "listings/confirm_phone.html")

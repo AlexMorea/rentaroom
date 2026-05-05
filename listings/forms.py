@@ -134,7 +134,8 @@ class UserRegisterForm(forms.Form):
         country_code = self.cleaned_data.get("country_code")
         phone_number = self.cleaned_data.get("phone_number")
         profile.country_code = country_code
-        profile.phone_number = f"{country_code}{phone_number}"
+        profile.country_code = country_code
+        profile.phone_number = phone_number 
 
         # ✅ LANDLORD EXTRA
         if profile.role == "landlord":
@@ -164,7 +165,7 @@ class UserRegisterForm(forms.Form):
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email"]
+        fields = ["first_name", "last_name"]
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "input"}),
             "last_name": forms.TextInput(attrs={"class": "input"}),
@@ -182,22 +183,28 @@ class UserUpdateForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(forms.ModelForm):
+    COUNTRY_CHOICES = [
+        ("+27", "+27 🇿🇦"),
+        ("+1", "+1 🇺🇸"),
+        ("+44", "+44 🇬🇧"),
+    ]
+
+    country_code = forms.ChoiceField(
+        choices=COUNTRY_CHOICES,
+        widget=forms.Select(attrs={"class": "input"})
+    )
+
     class Meta:
         model = Profile
         fields = [
             "persona",
-            "country_code",
-            "phone_number",
             "alt_no",
             "home_address",
             "postal_code",
         ]
         widgets = {
             "persona": forms.Select(attrs={"class": "input"}),
-
-            "country_code": forms.Select(attrs={"class": "input"}),
             "phone_number": forms.TextInput(attrs={"class": "input"}),
-
             "alt_no": forms.TextInput(attrs={"class": "input"}),
             "home_address": forms.TextInput(attrs={"class": "input"}),
             "postal_code": forms.TextInput(attrs={"class": "input"}),

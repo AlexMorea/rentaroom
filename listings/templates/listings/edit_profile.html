@@ -38,9 +38,10 @@
         {{ u_form.last_name }} {{ u_form.last_name.errors }}
       </div>
 
-      <div class="field">
-        <label class="auth-label">Email</label>
-        {{ u_form.email }} {{ u_form.email.errors }}
+      <div class="input-group">
+        <label>Email</label>
+        <input type="text" value="{{ user.email }}" disabled class="input" />
+        <a href="{% url 'change_email' %}">Change</a>
       </div>
 
       <hr style="margin: 16px 0; opacity: 0.25" />
@@ -64,9 +65,15 @@
         {{ p_form.country_code }} {{ p_form.country_code.errors }}
       </div>
 
-      <div class="field">
-        <label class="auth-label">Cell number</label>
-        {{ p_form.phone_number }} {{ p_form.phone_number.errors }}
+      <div class="input-group">
+        <label>Cell Number</label>
+        <input
+          type="text"
+          value="{{ p.country_code }}{{ p.phone_number }}"
+          disabled
+          class="input"
+        />
+        <a href="{% url 'change_phone' %}">Change</a>
       </div>
 
       <div class="field">

@@ -1,0 +1,26 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="form-card" style="max-width: 500px; margin: 40px auto">
+  <h2 style="margin-bottom: 10px">Verify Phone Number</h2>
+  <p style="opacity: 0.8; margin-bottom: 20px">
+    Enter the OTP code we sent to your email.
+  </p>
+
+  <form method="POST">
+    {% csrf_token %}
+    <label>OTP Code</label>
+    <input
+      type="text"
+      name="otp"
+      class="input"
+      placeholder="6-digit code"
+      required
+    />
+
+    <button type="submit" class="btn-primary" style="margin-top: 14px">
+      Verify Phone
+    </button>
+  </form>
+</div>
+
+{% endblock %}
