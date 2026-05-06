@@ -1,4 +1,5 @@
 from django import forms
+import re
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
@@ -217,21 +218,30 @@ class ProfileUpdateForm(forms.ModelForm):
             "postal_code": forms.TextInput(attrs={"class": "input"}),
         }
 
-    def clean_phone_number(self):
-        phone = (self.cleaned_data.get("phone_number") or "").strip()
 
-        # If empty → allow (we are not editing phone here)
-        if not phone:
-            return self.instance.phone_number
+def clean_phone_number(self):
+    phone = (self.cleaned_data.get("phone_number") or "").strip()
 
-        # Remove anything that's not a digit
-        import re
-        phone = re.sub(r"[^\d]", "", phone)
+    # ✅ If empty → keep existing (edit profile case)
+    if not phone:
+        return self.instance.phone_number
 
-        if not phone:
-            raise forms.ValidationError("Enter a valid phone number.")
+    # 🔥 Remove all non-digits
+    phone = re.sub(r"[^\d]", "", phone)
 
-        return phone
+    # 🔥 Remove country code if user typed it
+    if phone.startswith("27") and len(phone) > 9:
+        phone = phone[2:]
+
+    # 🔥 Remove leading 0 (common SA format)
+    if phone.startswith("0"):
+        phone = phone[1:]
+
+    # ✅ FINAL VALIDATION (SA numbers should be 9 digits now)
+    if len(phone) != 9:
+        raise forms.ValidationError("Enter a valid phone number.")
+
+    return phone
 
 class RoomForm(forms.ModelForm):
     class Meta:
