@@ -1506,32 +1506,40 @@ def change_email(request):
 @login_required
 def change_phone(request):
     if request.method == "POST":
-        phone = (request.POST.get("phone") or "").strip()
+        import re
+
+        phone = (request.POST.get("phone_number") or "").strip()
+        country_code = (request.POST.get("country_code") or "+27").strip()
+
+        # 🔥 CLEAN INPUT
         phone = re.sub(r"[^\d]", "", phone)
+
+        if phone.startswith("0"):
+            phone = phone[1:]
 
         if not phone or len(phone) < 9:
             messages.error(request, "Enter a valid phone number.")
             return redirect("change_phone")
-        
-        user = request.user  # ✅ FIX: define user
+
+        user = request.user
 
         otp = generate_otp()
 
-        # 🔥 DELETE OLD OTPs (correct)
+        # 🔥 DELETE OLD OTPs
         PhoneOTP.objects.filter(user=user).delete()
 
-        # ✅ CREATE NEW OTP
+        # ✅ STORE CLEAN NUMBER ONLY
         PhoneOTP.objects.create(
             user=user,
             phone_number=phone,
             otp=otp
         )
 
-        # ⚠️ FIX: send to USER (not phone)
         send_otp_email(user, otp)
 
-        # Store pending phone
+        # Store BOTH for confirmation step
         request.session["pending_phone"] = phone
+        request.session["pending_country_code"] = country_code
 
         messages.success(request, "OTP sent to your email.")
         return redirect("confirm_phone_change")
