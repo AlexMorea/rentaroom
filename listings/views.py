@@ -1414,32 +1414,36 @@ def resend_verification(request):
     return redirect("dashboard")
 
 
-@login_required
 def confirm_email_change(request, token):
-    profile = Profile.objects.filter(email_change_token=token).first()
+    try:
+        verification = EmailVerification.objects.get(token=token, is_verified=False)
 
-    if not profile or not profile.pending_email:
-        messages.error(request, "Invalid or expired link.")
-        return redirect("login")
+        if verification.is_expired():
+            messages.error(request, "Link expired.")
+            return redirect("login")
 
-    if str(profile.email_change_token) != str(token):
-        messages.error(request, "Invalid or expired email change link.")
+        user = verification.user
+        profile = user.profile
+
+        # 🔥 APPLY CHANGE
+        user.email = profile.pending_email
+        user.save()
+
+        profile.pending_email = None
+        profile.email_change_token = None
+        profile.is_email_verified = True
+        profile.save()
+
+        verification.is_verified = True
+        verification.save()
+
+        messages.success(request, "Email updated successfully.")
         return redirect("profile")
 
-    user = profile.user
-
-    # update email everywhere
-    user.email = profile.pending_email
-    user.username = profile.pending_email  # keep only if email == username in your system
-    user.save()
-
-    profile.pending_email = None
-    profile.email_change_token = None
-    profile.is_email_verified = True
-    profile.save()
-
-    messages.success(request, "Email updated successfully 🎉")
-    return render(request, "listings/email_change_success.html")
+    except EmailVerification.DoesNotExist:
+        messages.error(request, "Invalid link.")
+        return redirect("login")
+    
 
 def detect_profile_changes(user, profile, u_form, p_form):
     p = p_form.cleaned_data
@@ -1476,29 +1480,41 @@ def change_email(request):
         new_email = (request.POST.get("email") or "").strip().lower()
 
         if not new_email:
-            messages.error(request, "Please enter a valid email.")
+            messages.error(request, "Enter a valid email.")
             return redirect("change_email")
 
-        if User.objects.filter(email=new_email).exclude(pk=request.user.pk).exists():
-            messages.error(request, "This email is already in use.")
+        if User.objects.filter(email=new_email).exists():
+            messages.error(request, "Email already in use.")
             return redirect("change_email")
 
         profile = request.user.profile
 
+        # Save pending email
         profile.pending_email = new_email
-        profile.email_change_token = uuid.uuid4()
+
+        # Create token
+        verification = EmailVerification.objects.create(user=request.user)
+
+        profile.email_change_token = verification.token
         profile.save()
 
-        verify_link = f"https://rooms4you.co.za/confirm-email-change/{profile.email_change_token}/"
+        # 🔥 BUILD LINK
+        confirm_link = request.build_absolute_uri(
+            reverse("confirm_email_change", args=[verification.token])
+        )
 
+        # 🔥 SEND EMAIL
         send_template_email(
             subject="Confirm your new email",
             to_email=new_email,
             template="emails/change_email.html",
-            context={"verify_link": verify_link}
+            context={
+                "user": request.user,
+                "confirm_link": confirm_link
+            }
         )
 
-        messages.success(request, "Check your new email to confirm change.")
+        messages.success(request, "Check your new email to confirm.")
         return redirect("profile")
 
     return render(request, "listings/change_email.html")
@@ -1566,3 +1582,19 @@ def confirm_phone_change(request):
             return redirect("profile")
 
     return render(request, "listings/confirm_phone.html")
+
+@login_required
+def delete_account(request):
+    if request.method == "POST":
+        user = request.user
+
+        # 🔐 Logout first (important)
+        logout(request)
+
+        # 🧨 Delete user (this cascades Profile, Membership, etc.)
+        user.delete()
+
+        messages.success(request, "Your account has been deleted.")
+        return redirect("room_list")
+
+    return render(request, "listings/delete_account.html")
