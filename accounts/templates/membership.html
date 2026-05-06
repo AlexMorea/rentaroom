@@ -1,0 +1,161 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="container py-5" style="background: #fff7ed; border-radius: 12px">
+  <h2 class="page-title" style="margin: 0">Choose Your Membership</h2>
+  <p style="text-align: center; margin-bottom: 16px">
+    Unlock more power, reach more tenants, and grow your rental business with
+    Rooms4You.
+  </p>
+
+  <!-- CURRENT PLAN -->
+  <div class="form-card" style="text-align: center; margin-bottom: 16px">
+    <strong>Current Plan:</strong> {{ membership.get_tier_display }}
+  </div>
+
+  {% if membership.is_trial %}
+  <div
+    class="form-card"
+    style="
+      text-align: center;
+      margin-bottom: 24px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+    "
+  >
+    Trial ends on <strong>{{ membership.trial_end }}</strong>
+  </div>
+  {% endif %}
+
+  <!-- MEMBERSHIP CARDS -->
+  <div class="dashboard-grid" style="margin-top: 20px">
+    <!-- STARTER -->
+    <div class="form-card">
+      <h3 style="margin-bottom: 6px">Starter4You</h3>
+      <div style="opacity: 0.7; font-weight: 600">Free</div>
+
+      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
+        <li><strong>2 Listings Only</strong></li>
+        <li>No Availability System</li>
+        <li>No Analytics</li>
+        <li>Basic Exposure</li>
+        <li>No Support Priority</li>
+      </ul>
+    </div>
+
+    <!-- BRONZE -->
+    <div class="form-card" style="border: 1px solid rgba(255, 165, 0, 0.3)">
+      <h3 style="margin-bottom: 6px">Bronze4You</h3>
+      <div style="font-weight: 700">R55.00/mo</div>
+
+      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
+        <li><strong>Up to 5 Listings</strong></li>
+        <li>Verified Landlord Badge</li>
+        <li>Email Support</li>
+        <li>No Availability Feature</li>
+        <li>Basic Visibility</li>
+        <li>No Analytics</li>
+      </ul>
+
+      <a
+        href="{% url 'membership_payment' 'bronze' %}"
+        class="btn-primary w-100 mt-3 tier-bronze-btn"
+      >
+        Upgrade to Bronze4You
+      </a>
+    </div>
+
+    <!-- SILVER -->
+    <div class="form-card" style="border: 1px solid rgba(59, 130, 246, 0.3)">
+      <h3 style="margin-bottom: 6px">Silver4You ⭐</h3>
+      <div style="font-weight: 700">R75.00/mo</div>
+
+      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
+        <li><strong>Up to 10 Listings</strong></li>
+        <li>Availability System</li>
+        <li>Analytics Dashboard</li>
+        <li>24/7 Support</li>
+        <li>Better Visibility</li>
+        <li>Double the listings for only +R20</li>
+      </ul>
+      <a
+        href="{% url 'membership_payment' 'silver' %}"
+        class="btn-primary w-100 mt-3 tier-silver-btn"
+      >
+        Upgrade to Silver4You
+      </a>
+    </div>
+
+    <!-- GOLD -->
+    <div
+      class="form-card"
+      style="
+        border: 2px solid gold;
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <h3 style="margin-bottom: 6px">Gold4You 👑</h3>
+      <div style="font-weight: 700">From R129/mo</div>
+      <div style="font-weight: 800; font-size: 1.2rem">Premium</div>
+
+      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
+        <li><strong>Unlimited Listings</strong></li>
+        <li>Featured Listings</li>
+        <li>Marketing Boost</li>
+        <li>Advanced Analytics</li>
+        <li>Full Support Access</li>
+        <li>Admin Assistance</li>
+        <li>Room4You Welcome HAMPER</li>
+      </ul>
+
+      <div style="margin-top: 16px">
+        <a
+          href="{% url 'membership_payment' 'gold' %}"
+          class="btn-primary w-100 mt-3 tier-gold-btn"
+        >
+          Go 4 GOLD!
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT SECTION -->
+  <div
+    id="payment"
+    class="form-card"
+    style="margin-top: 28px; text-align: center"
+  >
+    <h4>Upgrade Your Account</h4>
+
+    <p class="mt-3">
+      To upgrade, deposit your membership fee into the Rooms4You account using
+      your unique reference:
+    </p>
+
+    <h5 class="text-primary">{{ membership.payment_reference }}</h5>
+
+    <p class="text-muted mt-2">
+      This reference links your payment to your account.
+    </p>
+
+    <hr />
+
+    <p>
+      After payment, click the button below and our team will verify, approve
+      and activate your membership.
+    </p>
+
+    <form method="POST">
+      {% csrf_token %}
+      <button class="btn-primary" style="background: #16a34a; border: none">
+        I Have Made Payment
+      </button>
+    </form>
+
+    <p class="mt-3 text-muted">
+      ✔ Cancel anytime — your account will simply return to Starter4You.
+    </p>
+  </div>
+</div>
+
+{% endblock %}

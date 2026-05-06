@@ -1,0 +1,27 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="form-card" style="max-width: 500px; margin: 40px auto">
+  <h2 style="margin-bottom: 10px">Change Email</h2>
+  <p style="opacity: 0.8; margin-bottom: 20px">
+    Enter your new email address. We’ll send you a verification link to confirm
+    the change.
+  </p>
+
+  <form method="POST">
+    {% csrf_token %}
+    <label>New Email Address</label>
+    <input
+      type="email"
+      name="email"
+      class="input"
+      placeholder="you@example.com"
+      required
+    />
+
+    <button type="submit" class="btn-primary" style="margin-top: 14px">
+      Send Verification Link
+    </button>
+  </form>
+</div>
+
+{% endblock %}
