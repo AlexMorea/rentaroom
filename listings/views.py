@@ -416,15 +416,6 @@ def register(request):
         if form.is_valid():
             user = form.save()
 
-            # 🧠 SET ROLE FROM FORM (NEW)
-            role = request.POST.get("role")
-
-            profile = user.profile
-
-            if role in ["tenant", "landlord"]:
-                profile.role = role
-                profile.save()
-
             # 🔑 EMAIL VERIFICATION
             EmailVerification.objects.filter(user=user, is_verified=False).delete()
             verification = EmailVerification.objects.create(user=user)
@@ -787,24 +778,19 @@ def edit_profile(request):
     profile = user.profile
 
     u_form = UserUpdateForm(request.POST or None, instance=user)
-    initial_data = {}
 
-    if profile.phone_number and profile.phone_number.startswith("+"):
-        if profile.phone_number.startswith("+27"):
-            initial_data["country_code"] = "+27"
-            initial_data["phone_number"] = profile.phone_number.replace("+27", "")
-        elif profile.phone_number.startswith("+1"):
-            initial_data["country_code"] = "+1"
-            initial_data["phone_number"] = profile.phone_number.replace("+1", "")
-        elif profile.phone_number.startswith("+44"):
-            initial_data["country_code"] = "+44"
-            initial_data["phone_number"] = profile.phone_number.replace("+44", "")
+    # ✅ FIXED: Proper initial data (no + parsing nonsense)
+    initial_data = {
+        "country_code": profile.country_code,
+        "phone_number": profile.phone_number,
+    }
 
     p_form = ProfileUpdateForm(
         request.POST or None,
         instance=profile,
         initial=initial_data
     )
+
     if request.method == "POST":
 
         if u_form.is_valid() and p_form.is_valid():
@@ -814,14 +800,14 @@ def edit_profile(request):
             user_obj = u_form.save(commit=False)
             profile_obj = p_form.save(commit=False)
 
-            # 🔥 FIX PHONE STRUCTURE
+            # ✅ CLEAN PHONE STRUCTURE (consistent everywhere)
             country_code = p_form.cleaned_data.get("country_code")
             phone_number = p_form.cleaned_data.get("phone_number")
 
-            if country_code and phone_number:
-                profile_obj.country_code = country_code
-                profile_obj.phone_number = phone_number
+            profile_obj.country_code = country_code
+            profile_obj.phone_number = phone_number
 
+            # 🔐 HANDLE CHANGES
             if changes["email"]:
                 handle_email_change(user_obj, profile_obj, changes["email"], request)
 
@@ -835,8 +821,12 @@ def edit_profile(request):
             return redirect("profile")
 
         else:
+            # 🔥 DEBUG VISIBILITY (leave this during testing)
+            print("USER FORM ERRORS:", u_form.errors)
+            print("PROFILE FORM ERRORS:", p_form.errors)
+
             messages.error(request, "Please fix the errors below.")
-            
+
     return render(request, "listings/edit_profile.html", {
         "u_form": u_form,
         "p_form": p_form,

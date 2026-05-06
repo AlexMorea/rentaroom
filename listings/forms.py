@@ -137,11 +137,12 @@ class UserRegisterForm(forms.Form):
         profile.phone_number = phone_number 
 
         # ✅ LANDLORD EXTRA
-        profile.alt_no = (self.cleaned_data.get("alt_no") or "").strip()
-        profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
-        profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
 
         if profile.role == "landlord":
+
+            profile.alt_no = (self.cleaned_data.get("alt_no") or "").strip()
+            profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
+            profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
             profile.terms_accepted = True
 
         profile.save()
@@ -165,7 +166,7 @@ class UserRegisterForm(forms.Form):
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["first_name", "last_name"]
+        fields = ["first_name", "last_name", "email"]
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "input"}),
             "last_name": forms.TextInput(attrs={"class": "input"}),
@@ -194,21 +195,34 @@ class ProfileUpdateForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "input"})
     )
 
+    phone_number = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={"class": "input"})
+    )
+
     class Meta:
         model = Profile
         fields = [
             "persona",
+            "phone_number",
             "alt_no",
             "home_address",
             "postal_code",
         ]
         widgets = {
             "persona": forms.Select(attrs={"class": "input"}),
-            "phone_number": forms.TextInput(attrs={"class": "input"}),
             "alt_no": forms.TextInput(attrs={"class": "input"}),
             "home_address": forms.TextInput(attrs={"class": "input"}),
             "postal_code": forms.TextInput(attrs={"class": "input"}),
         }
+
+    def clean_phone_number(self):
+        phone = (self.cleaned_data.get("phone_number") or "").strip()
+
+        if not phone.isdigit():
+            raise forms.ValidationError("Enter a valid phone number (digits only).")
+
+        return phone
 
 class RoomForm(forms.ModelForm):
     class Meta:
