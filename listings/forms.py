@@ -166,7 +166,7 @@ class UserRegisterForm(forms.Form):
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email"]
+        fields = ["first_name", "last_name"]
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "input"}),
             "last_name": forms.TextInput(attrs={"class": "input"}),
@@ -220,7 +220,11 @@ class ProfileUpdateForm(forms.ModelForm):
         phone = (self.cleaned_data.get("phone_number") or "").strip()
 
         if not phone.isdigit():
-            raise forms.ValidationError("Enter a valid phone number (digits only).")
+            raise forms.ValidationError("Digits only.")
+
+        # Convert 082 → 82 (for +27)
+        if phone.startswith("0"):
+            phone = phone[1:]
 
         return phone
 

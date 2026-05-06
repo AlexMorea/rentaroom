@@ -447,10 +447,16 @@ def register(request):
 
 def verify_email(request, token):
     try:
-        verification = EmailVerification.objects.get(
+        verification = EmailVerification.objects.filter(
             token=token,
-            is_verified=False
-        )
+            is_verified=False,
+            created_at__gte=timezone.now() - timedelta(hours=24)
+        ).first()
+
+        if not verification:
+            messages.error(request, "Invalid or expired verification link.")
+            return redirect("login")
+        
     except EmailVerification.DoesNotExist:
         messages.error(request, "Invalid or expired verification link.")
         return redirect("login")
@@ -580,12 +586,16 @@ def user_login(request):
             request.session["pending_user_id"] = user.id
             return redirect("verify_phone")
 
-        PhoneOTP.objects.filter(
-            user=user,
-            created_at__lt=timezone.now() - timedelta(minutes=10)
-        ).delete()
+        # 🔥 ALWAYS ENSURE SINGLE OTP
+        PhoneOTP.objects.filter(user=user).delete()
 
         otp = generate_otp()
+
+        PhoneOTP.objects.create(
+            user=user,
+            phone_number=user.profile.phone_number,
+            otp=otp
+        )
 
         PhoneOTP.objects.create(
             user=user,
@@ -602,7 +612,8 @@ def user_login(request):
         return redirect("verify_phone")
 
     # ✅ LOGIN FIRST (CRITICAL)
-    login(request, user)
+    with transaction.atomic():
+        login(request, user)
 
     # 🧠 PROFILE COMPLETION
     if profile_needs_update(user):
@@ -808,15 +819,14 @@ def edit_profile(request):
             profile_obj.phone_number = phone_number
 
             # 🔐 HANDLE CHANGES
-            if changes["email"]:
-                handle_email_change(user_obj, profile_obj, changes["email"], request)
 
             if changes["phone"]:
                 handle_phone_change(user_obj, profile_obj, changes["phone"])
 
-            user_obj.save()
-            profile_obj.save()
-
+            with transaction.atomic():
+                user_obj.save()
+                profile_obj.save()
+                
             messages.success(request, "Profile updated successfully.")
             return redirect("profile")
 
@@ -1315,6 +1325,9 @@ def resend_otp(request):
 
     otp = generate_otp()
 
+    # Delete old OTPs first
+    PhoneOTP.objects.filter(user=user).delete()
+
     PhoneOTP.objects.create(
         user=user,
         phone_number=user.profile.phone_number,
@@ -1374,9 +1387,6 @@ def resend_verification(request):
         is_verified=False
     ).order_by("-created_at").first()
 
-    if not verification:
-        verification = EmailVerification.objects.create(user=user)
-
     def build_domain(request):
         current_site = get_current_site(request)
         scheme = "https" if not settings.DEBUG else "http"
@@ -1399,35 +1409,12 @@ def resend_verification(request):
     messages.success(request, "Verification email sent again ✅")
     return redirect("dashboard")
 
-def handle_email_change(user_obj, profile_obj, new_email, request):
-    if not new_email or new_email == user_obj.email:
-        return
-
-    profile_obj.pending_email = new_email
-    profile_obj.email_change_token = uuid4()
-    profile_obj.save()
-
-    domain = get_current_site(request).domain
-    scheme = "https" if not settings.DEBUG else "http"
-    base = f"{scheme}://{domain}"
-
-    confirm_link = f"{base}/confirm-email-change/{profile_obj.email_change_token}/"
-
-    send_template_email(
-        subject="Confirm your new email",
-        to_email=new_email,
-        template="emails/confirm_email_change.html",
-        context={
-            "user": user_obj,
-            "confirm_link": confirm_link,
-        }
-    )
 
 @login_required
 def confirm_email_change(request, token):
     profile = Profile.objects.filter(email_change_token=token).first()
 
-    if not profile:
+    if not profile or not profile.pending_email:
         messages.error(request, "Invalid or expired link.")
         return redirect("login")
 
@@ -1435,28 +1422,28 @@ def confirm_email_change(request, token):
         messages.error(request, "Invalid or expired email change link.")
         return redirect("profile")
 
-    request.user.email = profile.pending_email
-    request.user.save()
+    user = profile.user
+
+    # update email everywhere
+    user.email = profile.pending_email
+    user.username = profile.pending_email  # keep only if email == username in your system
+    user.save()
 
     profile.pending_email = None
     profile.email_change_token = None
     profile.is_email_verified = True
     profile.save()
 
+    messages.success(request, "Email updated successfully 🎉")
     return render(request, "listings/email_change_success.html")
-    
 
 def detect_profile_changes(user, profile, u_form, p_form):
-    u = u_form.cleaned_data
     p = p_form.cleaned_data
 
     changes = {
         "email": None,
         "phone": None,
     }
-
-    if u.get("email") and u["email"] != user.email:
-        changes["email"] = u["email"]
 
     if p.get("phone_number") and p["phone_number"] != profile.phone_number:
         changes["phone"] = p["phone_number"]
@@ -1482,14 +1469,23 @@ def request_upgrade(request):
 @login_required
 def change_email(request):
     if request.method == "POST":
-        new_email = request.POST.get("email")
+        new_email = (request.POST.get("email") or "").strip().lower()
 
-        token = EmailVerification.objects.create(
-            user=request.user,
-            new_email=new_email
-        )
+        if not new_email:
+            messages.error(request, "Please enter a valid email.")
+            return redirect("change_email")
 
-        verify_link = f"https://rooms4you.co.za/confirm-email-change/{token.token}/"
+        if User.objects.filter(email=new_email).exclude(pk=request.user.pk).exists():
+            messages.error(request, "This email is already in use.")
+            return redirect("change_email")
+
+        profile = request.user.profile
+
+        profile.pending_email = new_email
+        profile.email_change_token = uuid.uuid4()
+        profile.save()
+
+        verify_link = f"https://rooms4you.co.za/confirm-email-change/{profile.email_change_token}/"
 
         send_template_email(
             subject="Confirm your new email",
@@ -1506,20 +1502,32 @@ def change_email(request):
 @login_required
 def change_phone(request):
     if request.method == "POST":
-        phone = request.POST.get("phone")
+        phone = (request.POST.get("phone") or "").strip()
+        user = request.user  # ✅ FIX: define user
+
+        if not phone:
+            messages.error(request, "Enter a valid phone number.")
+            return redirect("change_phone")
 
         otp = generate_otp()
 
+        # 🔥 DELETE OLD OTPs (correct)
+        PhoneOTP.objects.filter(user=user).delete()
+
+        # ✅ CREATE NEW OTP
         PhoneOTP.objects.create(
-            user=request.user,
+            user=user,
             phone_number=phone,
             otp=otp
         )
 
-        send_otp_email(phone, otp)
+        # ⚠️ FIX: send to USER (not phone)
+        send_otp_email(user, otp)
 
+        # Store pending phone
         request.session["pending_phone"] = phone
 
+        messages.success(request, "OTP sent to your email.")
         return redirect("confirm_phone_change")
 
     return render(request, "listings/change_phone.html")

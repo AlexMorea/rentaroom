@@ -247,6 +247,11 @@ class PhoneOTP(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.created_at + timedelta(minutes=5)
+    
+    def save(self, *args, **kwargs):
+    # Ensure ONLY one active OTP per user
+        PhoneOTP.objects.filter(user=self.user).exclude(pk=self.pk).delete()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.phone_number} ({self.otp})"
@@ -262,7 +267,6 @@ class EmailVerification(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.token}"
-    
     
 class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
