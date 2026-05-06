@@ -1,27 +1,21 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "emails/base_email.html" %} {% block content %}
 
-<div class="form-card" style="max-width: 500px; margin: 40px auto">
-  <h2 style="margin-bottom: 10px">Change Email</h2>
-  <p style="opacity: 0.8; margin-bottom: 20px">
-    Enter your new email address. We’ll send you a verification link to confirm
-    the change.
-  </p>
+<h2>Confirm your new email</h2>
 
-  <form method="POST">
-    {% csrf_token %}
-    <label>New Email Address</label>
-    <input
-      type="email"
-      name="email"
-      class="input"
-      placeholder="you@example.com"
-      required
-    />
+<p>Hi {{ user.first_name|default:"there" }},</p>
 
-    <button type="submit" class="btn-primary" style="margin-top: 14px">
-      Send Verification Link
-    </button>
-  </form>
-</div>
+<p>You requested to change your email on Rooms4You.</p>
 
+<p>Click below to confirm:</p>
+
+<p>
+  <a
+    href="{{ confirm_link }}"
+    style="padding: 10px 20px; background: #000; color: #fff"
+  >
+    Confirm Email
+  </a>
+</p>
+
+<p>If this wasn’t you, ignore this email.</p>
 {% endblock %}

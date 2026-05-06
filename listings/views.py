@@ -1506,7 +1506,6 @@ def change_email(request):
 @login_required
 def change_phone(request):
     if request.method == "POST":
-        import re
 
         phone = (request.POST.get("phone_number") or "").strip()
         country_code = (request.POST.get("country_code") or "+27").strip()
