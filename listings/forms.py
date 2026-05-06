@@ -204,6 +204,7 @@ class ProfileUpdateForm(forms.ModelForm):
         model = Profile
         fields = [
             "persona",
+            "country_code",
             "phone_number",
             "alt_no",
             "home_address",

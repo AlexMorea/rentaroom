@@ -192,7 +192,6 @@ def contact(request):
     return render(request, "listings/contact.html")
 
 
-# -----------------------------
 # ROOMS: list + detail
 # -----------------------------
 def room_list(request):
@@ -831,16 +830,16 @@ def edit_profile(request):
             return redirect("profile")
 
         else:
-            # 🔥 DEBUG VISIBILITY (leave this during testing)
-            print("USER FORM ERRORS:", u_form.errors)
-            print("PROFILE FORM ERRORS:", p_form.errors)
-
-            messages.error(request, "Please fix the errors below.")
+            print(u_form.errors, p_form.errors)
+          
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=profile)
 
     return render(request, "listings/edit_profile.html", {
         "u_form": u_form,
         "p_form": p_form,
-        "p": profile
+        "p": profile, 
     })
 
 
@@ -1503,11 +1502,13 @@ def change_email(request):
 def change_phone(request):
     if request.method == "POST":
         phone = (request.POST.get("phone") or "").strip()
-        user = request.user  # ✅ FIX: define user
+        phone = re.sub(r"[^\d]", "", phone)
 
-        if not phone:
+        if not phone or len(phone) < 9:
             messages.error(request, "Enter a valid phone number.")
             return redirect("change_phone")
+        
+        user = request.user  # ✅ FIX: define user
 
         otp = generate_otp()
 
