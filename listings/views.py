@@ -812,7 +812,7 @@ def edit_profile(request):
 
             # ✅ CLEAN PHONE STRUCTURE (consistent everywhere)
             country_code = p_form.cleaned_data.get("country_code")
-            phone_number = p_form.cleaned_data.get("phone_number")
+            phone_number = p_form.cleaned_data.get("phone_number") or profile.phone_number
 
             profile_obj.country_code = country_code
 

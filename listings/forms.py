@@ -220,12 +220,16 @@ class ProfileUpdateForm(forms.ModelForm):
     def clean_phone_number(self):
         phone = (self.cleaned_data.get("phone_number") or "").strip()
 
-        if not phone.isdigit():
-            raise forms.ValidationError("Digits only.")
+        # If empty → allow (we are not editing phone here)
+        if not phone:
+            return self.instance.phone_number
 
-        # Convert 082 → 82 (for +27)
-        if phone.startswith("0"):
-            phone = phone[1:]
+        # Remove anything that's not a digit
+        import re
+        phone = re.sub(r"[^\d]", "", phone)
+
+        if not phone:
+            raise forms.ValidationError("Enter a valid phone number.")
 
         return phone
 
