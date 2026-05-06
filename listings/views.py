@@ -78,7 +78,11 @@ def profile_needs_update(user):
         return not (has_first_name and has_last_name and has_email and has_persona)
 
     if p.role == "landlord":
-        has_cell = bool(p.phone_number and p.country_code)
+        has_cell = bool(
+            p.phone_number and 
+            p.country_code and 
+            str(p.phone_number).strip()
+        )
         has_address = bool((getattr(p, "home_address", "") or "").strip())
         
         return not (
@@ -531,6 +535,9 @@ def verify_phone(request):
             list(storage)
 
             messages.success(request, "Phone verified successfully 🎉")
+            if user.profile.role == "landlord":
+                return redirect("dashboard")
+
             return redirect("room_list")
 
         # ❌ FAIL CASE
@@ -720,9 +727,16 @@ def profile(request):
     if p.role == "tenant":
         detail_rows.append({"label": "Persona", "value": persona_text})
     else:
+        # ✅ Build full phone properly
+        full_phone = ""
+        if getattr(p, "country_code", "") and getattr(p, "phone_number", ""):
+            full_phone = f"{p.country_code}{p.phone_number}"
+        else:
+            full_phone = getattr(p, "phone_number", "")
+
         detail_rows.extend(
             [
-                {"label": "Cell", "value": dash(getattr(p, "phone_number", ""))},
+                {"label": "Cell", "value": dash(full_phone)},
                 {"label": "Alt", "value": dash(getattr(p, "alt_no", ""))},
                 {"label": "Address", "value": dash(getattr(p, "home_address", ""))},
                 {"label": "Postal", "value": dash(getattr(p, "postal_code", ""))},
