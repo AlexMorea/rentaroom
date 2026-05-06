@@ -196,7 +196,7 @@ class ProfileUpdateForm(forms.ModelForm):
     )
 
     phone_number = forms.CharField(
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={"class": "input"})
     )
 

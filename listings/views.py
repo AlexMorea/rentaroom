@@ -815,10 +815,12 @@ def edit_profile(request):
             phone_number = p_form.cleaned_data.get("phone_number")
 
             profile_obj.country_code = country_code
-            profile_obj.phone_number = phone_number
+
+            # ✅ ONLY update phone if user actually submitted one
+            if phone_number:
+                profile_obj.phone_number = phone_number
 
             # 🔐 HANDLE CHANGES
-
             if changes["phone"]:
                 handle_phone_change(user_obj, profile_obj, changes["phone"])
 
@@ -830,7 +832,10 @@ def edit_profile(request):
             return redirect("profile")
 
         else:
-            print(u_form.errors, p_form.errors)
+            print("USER FORM ERRORS:", u_form.errors)
+            print("PROFILE FORM ERRORS:", p_form.errors)
+
+            messages.error(request, "Please fix the errors below.")
           
     else:
         u_form = UserUpdateForm(instance=request.user)
