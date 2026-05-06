@@ -134,14 +134,14 @@ class UserRegisterForm(forms.Form):
         country_code = self.cleaned_data.get("country_code")
         phone_number = self.cleaned_data.get("phone_number")
         profile.country_code = country_code
-        profile.country_code = country_code
         profile.phone_number = phone_number 
 
         # ✅ LANDLORD EXTRA
+        profile.alt_no = (self.cleaned_data.get("alt_no") or "").strip()
+        profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
+        profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
+
         if profile.role == "landlord":
-            profile.alt_no = (self.cleaned_data.get("alt_no") or "").strip()
-            profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
-            profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
             profile.terms_accepted = True
 
         profile.save()
