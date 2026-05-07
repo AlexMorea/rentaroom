@@ -94,7 +94,7 @@ class Room(models.Model):
             self.available_from = None
 
     def save(self, *args, **kwargs):
-        # ✅ FIX: no mutation in clean, only in save
+        # FIX: no mutation in clean, only in save
         if self.availability_status == "from":
             self.available_units = 0
 
@@ -146,17 +146,13 @@ class Profile(models.Model):
 
     pending_email = models.EmailField(blank=True, null=True) 
     email_change_token = models.UUIDField(null=True, blank=True) 
-
-    # 🔐 NEW VERIFICATION SYSTEM
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
-    
-    
 
-    # (keep old for compatibility)
+    # keep old for compatibility
     is_verified = models.BooleanField(default=False)
 
-    # 👤 tenant persona
+    # tenant persona
     persona = models.CharField(
         max_length=20,
         choices=PERSONA_CHOICES,
@@ -164,23 +160,19 @@ class Profile(models.Model):
         default="worker",
     )
 
-    # 📱 NEW AIRBNB-STYLE PHONE
     country_code = models.CharField(max_length=5, default="+27")
     verification_otp = models.CharField(max_length=6, blank=True, null=True)
     otp_created_at = models.DateTimeField(null=True, blank=True)
 
-    # 🔁 BACKWARD COMPATIBILITY
     phone_number = models.CharField(max_length=20, blank=True, default="")
     cell_no = models.CharField(max_length=15, null=True, blank=True)
-
-    # 📞 optional
     alt_no = models.CharField(max_length=20, blank=True, default="")
 
-    # 📍 address
+    # address
     home_address = models.CharField(max_length=255, blank=True, default="")
     postal_code = models.CharField(max_length=10, blank=True, default="")
 
-    # 📜 legal
+  
     terms_accepted = models.BooleanField(default=False)
 
     def full_phone(self):
@@ -217,16 +209,35 @@ class RoomStat(models.Model):
 
 
 class RoomImage(models.Model):
-    room = models.ForeignKey("Room", related_name="images", on_delete=models.CASCADE)
+    room = models.ForeignKey(
+        "Room",
+        related_name="images",
+        on_delete=models.CASCADE
+    )
+
     image = CloudinaryField("image")
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def clean(self):
+
+        # HARD LIMIT
+        if self.room.images.exclude(pk=self.pk).count() >= 10:
+            raise ValidationError("Maximum 10 images allowed per room.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Room {self.room_id} image"
 
 
 class Favorite(models.Model):
-    # NOTE TO SELF: tenant saves (favoured) rooms
+    # tenant saves (favoured) rooms
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorites")
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="favorited_by")
     created_at = models.DateTimeField(auto_now_add=True)

@@ -699,9 +699,8 @@ def profile(request):
     badge_text = f"{persona_text}" if p.role == "tenant" else "Landlord"
     verified_badge = "Verified" if (p.role == "landlord" and getattr(p, "is_verified", False)) else ""
 
-    # =========================
     # Stats (split into link stats + plain stats to avoid template if)
-    # =========================
+
     stat_cards = []
     stat_links = []
 
@@ -717,9 +716,7 @@ def profile(request):
             {"href": reverse("contacts_analytics"), "number": contact_count, "label": "Contacts"},
         ]
 
-    # =========================
-    # Details rows (both roles)
-    # =========================
+   
     detail_rows = [
         {"label": "Name", "value": f"{dash(user.first_name)} {dash(user.last_name)}"},
         {"label": "Email", "value": dash(user.email)},
@@ -728,7 +725,7 @@ def profile(request):
     if p.role == "tenant":
         detail_rows.append({"label": "Persona", "value": persona_text})
     else:
-        # ✅ Build full phone properly
+        # Build full phone properly
         full_phone = ""
         if getattr(p, "country_code", "") and getattr(p, "phone_number", ""):
             full_phone = f"{p.country_code}{p.phone_number}"
@@ -744,9 +741,9 @@ def profile(request):
             ]
         )
 
-    # =========================
+   
     # Tenant sections (empty list for landlord, so template just renders nothing)
-    # =========================
+    
     tenant_sections = []
     if p.role == "tenant":
         tenant_sections = [
@@ -789,7 +786,7 @@ def edit_profile(request):
 
     u_form = UserUpdateForm(request.POST or None, instance=user)
 
-    # ✅ FIXED: Proper initial data (no + parsing nonsense)
+    # FIXED: Proper initial data 
     initial_data = {
         "country_code": profile.country_code,
         "phone_number": profile.phone_number,
@@ -810,17 +807,17 @@ def edit_profile(request):
             user_obj = u_form.save(commit=False)
             profile_obj = p_form.save(commit=False)
 
-            # ✅ CLEAN PHONE STRUCTURE (consistent everywhere)
+           
             country_code = p_form.cleaned_data.get("country_code")
             phone_number = p_form.cleaned_data.get("phone_number") or profile.phone_number
 
             profile_obj.country_code = country_code
 
-            # ✅ ONLY update phone if user actually submitted one
+            # update phone if user actually submitted one
             if phone_number:
                 profile_obj.phone_number = phone_number
 
-            # 🔐 HANDLE CHANGES
+            # HANDLE CHANGES
             if changes["phone"]:
                 handle_phone_change(user_obj, profile_obj, changes["phone"])
 
@@ -991,12 +988,52 @@ def edit_room(request, pk):
     if not require_active_membership(request.user):
         return redirect("membership")
 
-    room = get_object_or_404(Room, pk=pk, owner=request.user)
-    form = RoomForm(request.POST or None, instance=room, user=request.user)
-    if form.is_valid():
-        form.save()
-        return redirect("dashboard")
-    return render(request, "listings/edit_room.html", {"form": form})
+    room = get_object_or_404(
+        Room,
+        pk=pk,
+        owner=request.user
+    )
+
+    form = RoomForm(
+        request.POST or None,
+        instance=room,
+        user=request.user
+    )
+
+    if request.method == "POST":
+
+        if form.is_valid():
+
+            try:
+
+                with transaction.atomic():
+
+                    updated_room = form.save(commit=False)
+                    updated_room.owner = request.user
+                    updated_room.full_clean()
+                    updated_room.save()
+
+                messages.success(
+                    request,
+                    "Listing updated successfully."
+                )
+
+                return redirect("dashboard")
+
+            except ValidationError as e:
+                form.add_error(None, e)
+
+            except IntegrityError:
+                form.add_error(
+                    None,
+                    "A similar listing already exists."
+                )
+
+    return render(
+        request,
+        "listings/edit_room.html",
+        {"form": form, "room": room}
+    )
 
 
 @login_required
@@ -1020,7 +1057,7 @@ def create_listing(request):
 
     user_listings_count = Room.objects.filter(owner=request.user).count()
 
-    # 🚫 HARD BLOCK
+    # HARD BLOCK
     if not membership.can_create_listing(user_listings_count):
 
         if membership.status == "pending":
@@ -1034,7 +1071,6 @@ def create_listing(request):
 
         return redirect("membership")
 
-    # ✅ CONTINUE NORMAL FLOW
     form = ListingForm(request.POST or None, request.FILES or None)
 
     if request.method == "POST" and form.is_valid():
@@ -1047,50 +1083,110 @@ def create_listing(request):
 
     return render(request, "listings/create_listing.html", {"form": form})
 
-# -----------------------------
+
 # IMAGES (upload/delete/manage)
-# -----------------------------
 
 @login_required
 def upload_room_images(request, room_id):
+
     if not require_active_membership(request.user):
         return redirect("membership")
 
-    room = get_object_or_404(Room, id=room_id, owner=request.user)
+    room = get_object_or_404(
+        Room,
+        id=room_id,
+        owner=request.user
+    )
 
     if request.method == "POST":
-        existing_count = RoomImage.objects.filter(room=room).count()
+
+        uploads = request.FILES.getlist("images")
+
+        if not uploads:
+            messages.error(request, "Please select images.")
+            return redirect("upload_room_images", room.id)
+
+        existing_count = room.images.count()
+
         remaining = max(0, 10 - existing_count)
 
-        new_files = request.FILES.getlist("images")
-
-        # If room already has 10 images
-        if remaining == 0:
-            messages.warning(request, "This room already has 10 images (max). Delete one to add more.")
+        if remaining <= 0:
+            messages.error(
+                request,
+                "Maximum 10 images reached."
+            )
             return redirect("edit_room_images", pk=room.id)
 
-        # Save only up to remaining slots
-        for img in new_files[:remaining]:
-            RoomImage.objects.create(room=room, image=img)
+        uploads = uploads[:remaining]
 
-        # If they tried to upload too many
-        if len(new_files) > remaining:
-            messages.warning(request, f"Only {remaining} more images were allowed (max 10 per room).")
+        allowed_extensions = [".jpg", ".jpeg", ".png", ".webp"]
+
+        uploaded_count = 0
+
+        with transaction.atomic():
+
+            for img in uploads:
+
+                filename = img.name.lower()
+
+                # Invalid file type
+                if not any(filename.endswith(ext) for ext in allowed_extensions):
+                    continue
+
+                # Large file protection (10MB)
+                if img.size > 10 * 1024 * 1024:
+                    continue
+
+                RoomImage.objects.create(
+                    room=room,
+                    image=img
+                )
+
+                uploaded_count += 1
+
+        if uploaded_count:
+            messages.success(
+                request,
+                f"{uploaded_count} image(s) uploaded successfully."
+            )
+
         else:
-            messages.success(request, "Images uploaded ✅")
+            messages.error(
+                request,
+                "No valid images were uploaded."
+            )
+
+        if len(request.FILES.getlist("images")) > remaining:
+            messages.warning(
+                request,
+                f"Only {remaining} image(s) allowed."
+            )
 
         return redirect("edit_room_images", pk=room.id)
 
-    return render(request, "listings/upload_images.html", {"room": room})
-
+    return render(
+        request,
+        "listings/upload_images.html",
+        {"room": room}
+    )
 
 @login_required
 def delete_room_image(request, image_id):
-    image = get_object_or_404(RoomImage, id=image_id, room__owner=request.user)
-    room_id = image.room.id
-    image.delete()
-    return redirect("edit_room_images", pk=room_id)
 
+    image = get_object_or_404(
+        RoomImage,
+        id=image_id,
+        room__owner=request.user
+    )
+
+    room_id = image.room.id
+
+    with transaction.atomic():
+        image.delete()
+
+    messages.success(request, "Image deleted successfully.")
+
+    return redirect("edit_room_images", pk=room_id)
 
 MAX_IMAGES_PER_ROOM = 10
 
