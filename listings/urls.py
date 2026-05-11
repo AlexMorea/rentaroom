@@ -26,12 +26,12 @@ urlpatterns = [
     # tenant save/unsave
     path("favorite/<int:room_id>/toggle/", views.toggle_favorite, name="toggle_favorite"),
 
-    # ✅ Public legal/safety pages
+    # Public legal/safety pages
     path("terms/", views.terms, name="terms"),
     path("privacy/", views.privacy, name="privacy"),
     path("safety/", views.safety, name="safety"),
 
-    # ✅ Report listing (public)
+    # Report listing (public)
     path("room/<int:pk>/report/", views.report_room, name="report_room"),
 
     path("dashboard/", views.dashboard, name="dashboard"),

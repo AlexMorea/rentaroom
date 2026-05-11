@@ -1,0 +1,42 @@
+<!-- services/templates/services/bakkie_home.html -->
+
+{% extends "base.html" %} {% load static %} {% block content %}
+
+<div class="container">
+  <h2 class="page-title">🚚 Bakkie4You</h2>
+
+  <div class="form-card">
+    <a href="{% url 'services:register_bakkie_driver' %}" class="btn-primary">
+      Register as Driver
+    </a>
+  </div>
+
+  <h3 style="margin-top: 20px">Verified Drivers</h3>
+
+  {% for driver in drivers %}
+
+  <div class="room-row">
+    <div>
+      <strong>{{ driver.full_name }}</strong>
+      <div class="room-row-meta">
+        {{ driver.vehicle_type }} • {{ driver.city }}
+      </div>
+    </div>
+
+    <div class="room-actions">
+      <a href="https://wa.me/{{ driver.phone_number }}" target="_blank">
+        WhatsApp
+      </a>
+    </div>
+  </div>
+
+  {% empty %}
+
+  <div class="empty-card">
+    <p>No verified drivers yet.</p>
+  </div>
+
+  {% endfor %}
+</div>
+
+{% endblock %}

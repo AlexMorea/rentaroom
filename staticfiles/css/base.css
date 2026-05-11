@@ -3604,3 +3604,279 @@ body.scroll-down .trust-strip {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* =========================
+   SIDEBAR (TOGGLE DRAWER)
+   ========================= */
+
+.sidebar {
+  position: fixed;
+  top: 70px;
+  left: -200px; /* thinner hidden offset */
+
+  width: 200px; /* 🔥 thinner sidebar */
+  height: calc(100vh - 70px);
+
+  /* 🌊 glassmorphism effect */
+  background: rgba(219, 234, 254, 0.55); /* light blue transparent */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border-right: 1px solid rgba(37, 99, 235, 0.25);
+
+  padding: 16px;
+  overflow-y: auto;
+
+  transition: left 0.3s ease;
+
+  z-index: 2500;
+}
+
+/* Open state */
+.sidebar.open {
+  left: 0;
+}
+
+/* =========================
+   FLOATING ARROW TAB
+   ========================= */
+
+.sidebar-tab {
+  position: fixed;
+  top: 50%;
+  left: 0;
+
+  transform: translateY(-50%);
+
+  width: 20px;
+  height: 70px;
+
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+
+  border: none;
+  border-radius: 0 12px 12px 0;
+
+  cursor: pointer;
+
+  z-index: 3000; /* above sidebar */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+  transition: all 0.25s ease;
+}
+
+/* Hover effect */
+.sidebar-tab:hover {
+  width: 48px;
+}
+
+/* When sidebar is open, push arrow slightly */
+.sidebar.open ~ .sidebar-tab {
+  left: 260px;
+}
+
+/* =========================
+   OVERLAY (optional subtle dim)
+   ========================= */
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.25);
+
+  opacity: 0;
+  pointer-events: none;
+
+  z-index: 2400;
+
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* =========================
+   MOBILE BEHAVIOR
+   ========================= */
+
+@media (max-width: 768px) {
+  .sidebar {
+    top: 70px;
+    height: calc(100vh - 70px);
+  }
+}
+
+.sidebar a {
+  display: block;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+
+  border-radius: 10px;
+
+  color: #1e3a8a;
+  font-weight: 700;
+  text-decoration: none;
+
+  background: rgba(255, 255, 255, 0.35); /* transparent card feel */
+
+  backdrop-filter: blur(6px);
+
+  transition: all 0.2s ease;
+}
+
+.sidebar a:hover {
+  background: rgba(255, 255, 255, 0.65);
+  transform: translateX(3px);
+  color: #2563eb;
+}
+
+.sidebar.open ~ .sidebar-tab {
+  left: 200px;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.auth-box {
+  width: 320px;
+  background: white;
+  border-radius: 24px;
+  padding: 32px 24px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+  animation: pop 0.25s ease;
+  text-align: center;
+}
+
+.auth-box h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.auth-option {
+  width: 100%;
+  border: none;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #f8fafc;
+  transition: 0.2s;
+}
+
+.auth-option:hover {
+  background: #eef2ff;
+  transform: translateY(-2px);
+}
+
+.auth-option.driver {
+  background: #f97316;
+  color: white;
+}
+
+.auth-option.driver:hover {
+  background: #ea580c;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.auth-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 8px 12px;
+
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  transition: 0.25s;
+}
+
+.auth-avatar-btn:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.auth-avatar-btn .avatar {
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+
+  background: #f97316;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+}
+
+/* hidden always wins */
+.hidden {
+  display: none !important;
+}
+
+/* modal */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 9999;
+
+  animation: fadeIn 0.2s ease;
+}
+
+.auth-box {
+  width: 320px;
+  background: white;
+  border-radius: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,49 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+
+<div class="container">
+  <h2 class="page-title">🚚 Register Driver</h2>
+
+  <div class="form-card">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="form-field">
+        <label>Full Name</label>
+        {{ form.full_name }}
+      </div>
+
+      <div class="form-field">
+        <label>Phone Number</label>
+        {{ form.phone_number }}
+      </div>
+
+      <div class="form-field">
+        <label>Vehicle Type</label>
+        {{ form.vehicle_type }}
+      </div>
+
+      <div class="form-field">
+        <label>Vehicle Registration</label>
+        {{ form.vehicle_registration }}
+      </div>
+
+      <div class="form-field">
+        <label>City</label>
+        {{ form.city }}
+      </div>
+
+      <!-- 🔥 DRIVER LICENSE UPLOAD -->
+      <div class="form-field">
+        <label>Driver’s License</label>
+        {{ form.licence_image }}
+        <small
+          >Upload clear image of your license (required for approval)</small
+        >
+      </div>
+
+      <button class="btn-primary" type="submit">Submit for Verification</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

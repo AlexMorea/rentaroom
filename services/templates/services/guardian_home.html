@@ -1,0 +1,54 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+
+<div class="container">
+  <h2 class="page-title">🛡 Guardian4You</h2>
+
+  {% if active_session %}
+
+  <div class="form-card">
+    <h3>Active Session</h3>
+
+    <p><strong>Destination:</strong> {{ active_session.destination }}</p>
+
+    <p><strong>Status:</strong> {{ active_session.status }}</p>
+
+    <button
+      class="btn-primary"
+      onclick="startTracking({{ active_session.id }})"
+    >
+      Start Live Tracking
+    </button>
+
+    <button
+      class="btn-secondary"
+      onclick="triggerPanic({{ active_session.id }})"
+    >
+      🚨 PANIC
+    </button>
+
+    <a
+      href="{% url 'services:end_guardian_session' active_session.id %}"
+      class="btn-secondary"
+    >
+      End Session
+    </a>
+  </div>
+
+  {% else %}
+
+  <div class="form-card">
+    <h3>Start Guardian Session</h3>
+
+    <form method="POST" action="{% url 'services:start_guardian_session' %}">
+      {% csrf_token %} {{ form.as_p }}
+
+      <button class="btn-primary" type="submit">Start Session</button>
+    </form>
+  </div>
+
+  {% endif %}
+</div>
+
+<script src="{% static 'services/js/guardian.js' %}"></script>
+
+{% endblock %}

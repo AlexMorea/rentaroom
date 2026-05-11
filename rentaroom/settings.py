@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "cloudinary_storage",
     "listings",
+    "services",
 ]
 
 MIDDLEWARE = [
@@ -125,9 +126,9 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# =======================
-# ✅ Cloudinary (Media)
-# =======================
+
+# Cloudinary (Media)
+
 CLOUDINARY_STORAGE = {
     "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME", "").strip(),
     "API_KEY": os.environ.get("CLOUDINARY_API_KEY", "").strip(),

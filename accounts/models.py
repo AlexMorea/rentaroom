@@ -35,19 +35,19 @@ class Membership(models.Model):
 
     payment_reference = models.CharField(max_length=50, unique=True, null=True, blank=True)
 
-    # 🔥 NEW: PAYMENT FLOW
+    # NEW: PAYMENT FLOW
     payment_requested = models.BooleanField(default=False)
     payment_requested_at = models.DateTimeField(null=True, blank=True)
     requested_tier = models.CharField(max_length=20, blank=True, null=True)
 
-    # 📸 PROOF OF PAYMENT
+    # PROOF OF PAYMENT
     proof_of_payment = CloudinaryField(
     resource_type="auto",
     folder="payments",
     null=True,
     blank=True
 )
-    # 👨‍💼 ADMIN APPROVAL
+    # ADMIN APPROVAL
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -83,27 +83,27 @@ class Membership(models.Model):
         }.get(self.tier)
 
     def can_create_listing(self, current_count):
-        # 🚫 inactive users blocked
+        # inactive users blocked
         if not self.is_active:
             return False
 
-        # 🚫 trial expired → must pay
+        # trial expired → must pay
         if self.is_trial and self.is_trial_expired():
             return False
 
-        # 🚫 payment pending → block abuse
+        # payment pending → block abuse
         if self.status == "pending":
             return False
 
         limit = self.listing_limit()
 
-        # ♾ unlimited
+        # unlimited
         if limit is None:
             return True
 
         return current_count < limit
 
-    # 🔥 PAYMENT FLOW METHODS
+    # PAYMENT FLOW METHODS
 
     def mark_payment_submitted(self, tier, proof_file):
         self.status = "pending"
@@ -121,7 +121,7 @@ class Membership(models.Model):
         self.status = "active"
         self.is_active = True
 
-        # 🔥 CRITICAL FIX
+        # CRITICAL FIX
         self.is_trial = False
 
         self.payment_requested = False

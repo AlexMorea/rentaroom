@@ -1,0 +1,30 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+
+<div class="container">
+  <h2 class="page-title">🛡 Start Guardian Session</h2>
+
+  <div class="form-card">
+    <form method="POST" action="{% url 'services:start_guardian_session' %}">
+      {% csrf_token %}
+
+      <div class="form-field">
+        <label>Destination</label>
+        {{ form.destination }}
+      </div>
+
+      <div class="form-field">
+        <label>Emergency Contact Name</label>
+        {{ form.emergency_contact_name }}
+      </div>
+
+      <div class="form-field">
+        <label>Emergency Contact Phone</label>
+        {{ form.emergency_contact_phone }}
+      </div>
+
+      <button class="btn-primary" type="submit">Start Tracking</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

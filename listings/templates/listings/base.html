@@ -15,11 +15,6 @@
 
     <link rel="stylesheet" href="{% static 'css/base.css' %}?v=10" />
 
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       defer
@@ -29,10 +24,48 @@
   <body
     class="{% block body_class %}{% endblock %}"
     data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
-    data-role="{% if user.is_authenticated %}{{ user.profile.role }}{% endif %}"
+    data-role="{% if user.is_authenticated %}{{ user.profile.role|default:'guest' }}{% else %}guest{% endif %}"
     data-persona="{% if user.is_authenticated and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
     data-logout-url="{% url 'logout' %}"
   >
+    <!-- ================= SIDEBAR ================= -->
+    {% if user.is_authenticated %}
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h3>Neighbor</h3>
+      </div>
+
+      <a href="/">🏠 Browse</a>
+      <a href="/profile/">👤 Profile</a>
+
+      {% if user.profile.role == "landlord" %}
+      <a href="/dashboard/">📊 Dashboard</a>
+      {% endif %} {% if user.profile.role == "tenant" %}
+      <hr />
+      <a href="{% url 'services:bakkie_home' %}">🚚 Bakkie4You</a>
+      <a href="{% url 'services:guardian_home' %}">🛡 Guardian4You</a>
+      {% endif %} {% if user.profile.role == "driver" %}
+      <hr />
+      <a href="{% url 'services:register_driver' %}">🚚 Driver Panel</a>
+      {% endif %}
+
+      <hr />
+      <a href="/settings/">⚙ Settings</a>
+    </div>
+
+    <button
+      id="sidebarToggle"
+      class="sidebar-tab"
+      aria-label="Open sidebar"
+      type="button"
+    >
+      <span id="sidebarArrow">❯</span>
+    </button>
+    {% endif %}
+
+    <!-- ================= HEADER ================= -->
     <header class="site-header">
       <div class="nav-container">
         <div class="brand">
@@ -52,14 +85,14 @@
           <a href="{% url 'about' %}">About</a>
           <a href="{% url 'contact' %}">Contact</a>
 
-          <!-- Auth only -->
           <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>
           <a href="{% url 'profile' %}" data-show="auth">Profile</a>
           <a href="{% url 'logout' %}" data-show="auth">Logout</a>
 
-          <!-- Guest only -->
-          <a href="{% url 'login' %}" data-show="guest">Login</a>
-          <a href="{% url 'register' %}" data-show="guest">Sign up</a>
+          <button id="authToggle" class="auth-avatar-btn" data-show="guest">
+            <span>☰</span>
+            <span class="avatar">👤</span>
+          </button>
         </nav>
 
         <button class="burger" id="burgerBtn">☰</button>
@@ -69,6 +102,7 @@
     <!-- MOBILE NAV BACKDROP -->
     <div class="nav-backdrop" id="navBackdrop"></div>
 
+    <!-- ================= MAIN ================= -->
     <main class="container">
       {% if messages %}
       <div class="toast-wrap" id="toastWrap">
@@ -81,6 +115,7 @@
       {% endif %} {% block content %}{% endblock %}
     </main>
 
+    <!-- ================= IDLE MODAL ================= -->
     {% if user.is_authenticated %}
     <div class="idle-modal" id="idleModal">
       <div class="idle-card">
@@ -89,7 +124,6 @@
         <p class="idle-text">
           For your security, you'll be logged out in
           <strong><span id="idleCountdown">60</span>s</strong>
-          due to inactivity.
         </p>
 
         <div class="idle-actions">
@@ -97,14 +131,13 @@
             Stay logged in
           </button>
 
-          <a class="btn-primary" id="logoutNowBtn" href="{% url 'logout' %}">
-            Logout now
-          </a>
+          <a class="btn-primary" href="{% url 'logout' %}"> Logout now </a>
         </div>
       </div>
     </div>
     {% endif %}
 
+    <!-- ================= FOOTER ================= -->
     <footer class="site-footer">
       <div class="footer-links">
         <a href="{% url 'terms' %}">Terms</a>
@@ -116,181 +149,7 @@
         <a href="{% url 'contact' %}">Support</a>
       </div>
 
-      <div
-        style="
-          margin: 14px 0 8px;
-          display: flex;
-          justify-content: center;
-          gap: 12px;
-          flex-wrap: wrap;
-        "
-      >
-        <a
-          href="#"
-          aria-label="Instagram"
-          title="Instagram"
-          style="
-            width: 42px;
-            height: 42px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            transition:
-              transform 0.2s ease,
-              background 0.2s ease;
-          "
-          onmouseover="
-            this.style.transform = 'translateY(-2px)';
-            this.style.background = 'rgba(255,255,255,0.18)';
-          "
-          onmouseout="
-            this.style.transform = 'translateY(0)';
-            this.style.background = 'rgba(255,255,255,0.12)';
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-          </svg>
-        </a>
-
-        <a
-          href="#"
-          aria-label="Facebook"
-          title="Facebook"
-          style="
-            width: 42px;
-            height: 42px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            transition:
-              transform 0.2s ease,
-              background 0.2s ease;
-          "
-          onmouseover="
-            this.style.transform = 'translateY(-2px)';
-            this.style.background = 'rgba(255,255,255,0.18)';
-          "
-          onmouseout="
-            this.style.transform = 'translateY(0)';
-            this.style.background = 'rgba(255,255,255,0.12)';
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
-            viewBox="0 0 24 24"
-            fill="white"
-            aria-hidden="true"
-          >
-            <path
-              d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.3-1.6 1.6-1.6H17V4.8c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.4V11H7.5v3h2.8v8h3.2z"
-            />
-          </svg>
-        </a>
-
-        <a
-          href="#"
-          aria-label="X"
-          title="X"
-          style="
-            width: 42px;
-            height: 42px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            transition:
-              transform 0.2s ease,
-              background 0.2s ease;
-          "
-          onmouseover="
-            this.style.transform = 'translateY(-2px)';
-            this.style.background = 'rgba(255,255,255,0.18)';
-          "
-          onmouseout="
-            this.style.transform = 'translateY(0)';
-            this.style.background = 'rgba(255,255,255,0.12)';
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
-            viewBox="0 0 24 24"
-            fill="white"
-            aria-hidden="true"
-          >
-            <path
-              d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.9-6.4L6.3 22H3.2l7.3-8.4L1 2h6.3l4.4 5.8L18.9 2zm-1.1 18h1.7L6.2 3.9H4.4L17.8 20z"
-            />
-          </svg>
-        </a>
-
-        <a
-          href="#"
-          aria-label="TikTok"
-          title="TikTok"
-          style="
-            width: 42px;
-            height: 42px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            transition:
-              transform 0.2s ease,
-              background 0.2s ease;
-          "
-          onmouseover="
-            this.style.transform = 'translateY(-2px)';
-            this.style.background = 'rgba(255,255,255,0.18)';
-          "
-          onmouseout="
-            this.style.transform = 'translateY(0)';
-            this.style.background = 'rgba(255,255,255,0.12)';
-          "
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
-            viewBox="0 0 24 24"
-            fill="white"
-            aria-hidden="true"
-          >
-            <path
-              d="M14 3c.5 2.1 1.8 3.8 4 4.5v3.1c-1.5-.1-2.8-.6-4-1.4v6.1a5.2 5.2 0 1 1-5.2-5.2c.3 0 .7 0 1 .1v3.2a2.1 2.1 0 1 0 1.1 1.9V3H14z"
-            />
-          </svg>
-        </a>
-      </div>
-
-      <p class="site-footer">
+      <p>
         Listings are posted by landlords. We actively review reports and take
         action to protect users.
       </p>
@@ -298,11 +157,11 @@
       <p>© 2026 Rooms4You • Your data is protected.</p>
     </footer>
 
+    <!-- ================= SAFE AUTH CONTROL ================= -->
     <script>
-      /* auth based nav visibility */
       const root = document.body;
       const isAuth = root.dataset.auth === "1";
-      const role = (root.dataset.role || "").toLowerCase();
+      const role = (root.dataset.role || "guest").toLowerCase();
 
       document.querySelectorAll("[data-show]").forEach((el) => {
         const rule = el.getAttribute("data-show");
@@ -314,86 +173,78 @@
       });
     </script>
 
+    <!-- ================= AUTH MODAL SAFE ================= -->
     <script>
-      /* trust strip hide on scroll (throttled + threshold to prevent flicker) */
-      let lastY = window.scrollY;
-      let ticking = false;
-      let isHidden = false;
+      document.addEventListener("DOMContentLoaded", () => {
+        const authBtn = document.getElementById("authToggle");
+        const modal = document.getElementById("authModal");
 
-      function applyTrustStripState(y) {
-        const delta = y - lastY;
+        authBtn?.addEventListener("click", () => {
+          modal?.classList.remove("hidden");
+        });
 
-        // only react to meaningful movement (prevents twitch)
-        if (Math.abs(delta) < 6) return;
-
-        // hide only when scrolling down AND past a safe offset
-        if (delta > 0 && y > 140) {
-          if (!isHidden) {
-            document.body.classList.add("scroll-down");
-            isHidden = true;
+        modal?.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.add("hidden");
           }
-        } else {
-          if (isHidden) {
-            document.body.classList.remove("scroll-down");
-            isHidden = false;
-          }
-        }
+        });
 
-        lastY = y;
-      }
-
-      window.addEventListener(
-        "scroll",
-        () => {
-          if (ticking) return;
-          ticking = true;
-
-          requestAnimationFrame(() => {
-            applyTrustStripState(window.scrollY);
-            ticking = false;
+        document.querySelectorAll(".auth-option").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const url = btn.dataset.url;
+            if (url) window.location.href = url;
           });
-        },
-        { passive: true },
-      );
+        });
+      });
     </script>
 
+    <!-- ================= BURGER SAFE ================= -->
     <script>
-      /* burger menu */
       const burger = document.getElementById("burgerBtn");
       const nav = document.getElementById("navLinks");
       const backdrop = document.getElementById("navBackdrop");
 
       function openMenu() {
-        nav.classList.add("show");
-        backdrop.classList.add("show");
+        nav?.classList.add("show");
+        backdrop?.classList.add("show");
         document.body.classList.add("nav-open");
       }
 
       function closeMenu() {
-        nav.classList.remove("show");
-        backdrop.classList.remove("show");
+        nav?.classList.remove("show");
+        backdrop?.classList.remove("show");
         document.body.classList.remove("nav-open");
       }
 
-      burger.addEventListener("click", (e) => {
+      burger?.addEventListener("click", (e) => {
         e.preventDefault();
-        e.stopPropagation();
-        nav.classList.contains("show") ? closeMenu() : openMenu();
+        nav?.classList.contains("show") ? closeMenu() : openMenu();
       });
 
-      backdrop.addEventListener("click", closeMenu);
+      backdrop?.addEventListener("click", closeMenu);
 
-      nav.querySelectorAll("a").forEach((link) => {
+      nav?.querySelectorAll("a").forEach((link) => {
         link.addEventListener("click", closeMenu);
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeMenu();
       });
     </script>
 
+    <!-- ================= SIDEBAR SAFE ================= -->
     <script>
-      /* toast auto dismiss */
+      const sidebar = document.querySelector(".sidebar");
+      const tab = document.querySelector(".sidebar-tab");
+      const overlay = document.querySelector(".sidebar-overlay");
+
+      function toggleSidebar() {
+        sidebar?.classList.toggle("open");
+        overlay?.classList.toggle("show");
+      }
+
+      tab?.addEventListener("click", toggleSidebar);
+      overlay?.addEventListener("click", toggleSidebar);
+    </script>
+
+    <!-- ================= TOASTS ================= -->
+    <script>
       const wrap = document.getElementById("toastWrap");
 
       if (wrap) {
@@ -408,7 +259,6 @@
             () => {
               toast.classList.remove("show");
               toast.classList.add("hide");
-
               setTimeout(() => toast.remove(), 400);
             },
             3500 + i * 200,
@@ -417,8 +267,8 @@
       }
     </script>
 
+    <!-- ================= IDLE LOGOUT ================= -->
     <script>
-      /* idle logout */
       if (document.body.dataset.auth === "1") {
         const IDLE = 15 * 60 * 1000;
         const WARN = 60;
@@ -431,11 +281,11 @@
         let remaining = WARN;
 
         function openModal() {
-          modal.classList.add("show");
+          modal?.classList.add("show");
 
           countTimer = setInterval(() => {
             remaining--;
-            countdown.textContent = remaining;
+            if (countdown) countdown.textContent = remaining;
 
             if (remaining <= 0) {
               window.location.href = document.body.dataset.logoutUrl;
@@ -448,8 +298,7 @@
           clearInterval(countTimer);
 
           remaining = WARN;
-
-          if (modal) modal.classList.remove("show");
+          modal?.classList.remove("show");
 
           idleTimer = setTimeout(openModal, IDLE);
         }
@@ -462,118 +311,26 @@
       }
     </script>
 
-    <script>
-      /* Rooms4You slider system */
-
-      function initRoomSliders() {
-        document
-          .querySelectorAll("[data-slider]:not(.slider-ready)")
-          .forEach((slider) => {
-            slider.classList.add("slider-ready");
-
-            const track = slider.querySelector("[data-slider-track]");
-            const prev = slider.querySelector("[data-slider-prev]");
-            const next = slider.querySelector("[data-slider-next]");
-            const dotsWrap = slider.querySelector("[data-slider-dots]");
-            const roomUrl = slider.dataset.roomUrl;
-
-            const slides = track.children;
-            const total = slides.length;
-
-            let index = 0;
-
-            /* create dots */
-
-            if (dotsWrap && total > 1) {
-              dotsWrap.innerHTML = "";
-
-              for (let i = 0; i < total; i++) {
-                const dot = document.createElement("div");
-                dot.className = "slider-dot";
-
-                if (i === 0) dot.classList.add("active");
-
-                dotsWrap.appendChild(dot);
-              }
-            }
-
-            const dots = dotsWrap ? dotsWrap.children : [];
-
-            function update() {
-              track.scrollTo({
-                left: track.clientWidth * index,
-                behavior: "smooth",
-              });
-
-              if (dots.length) {
-                [...dots].forEach((d) => d.classList.remove("active"));
-                dots[index].classList.add("active");
-              }
-            }
-
-            /* next */
-
-            next?.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-
-              index = (index + 1) % total;
-              update();
-            });
-
-            /* prev */
-
-            prev?.addEventListener("click", (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-
-              index = (index - 1 + total) % total;
-              update();
-            });
-
-            /* swipe */
-
-            let startX = 0;
-
-            track.addEventListener("touchstart", (e) => {
-              startX = e.touches[0].clientX;
-            });
-
-            track.addEventListener("touchend", (e) => {
-              const diff = e.changedTouches[0].clientX - startX;
-
-              if (Math.abs(diff) < 40) return;
-
-              if (diff < 0) {
-                index = (index + 1) % total;
-              } else {
-                index = (index - 1 + total) % total;
-              }
-
-              update();
-            });
-
-            /* click image to open room */
-
-            slider.addEventListener("click", (e) => {
-              if (e.target.closest(".slider-btn")) return;
-
-              window.location.href = roomUrl;
-            });
-          });
-      }
-
-      /* run on page load */
-
-      document.addEventListener("DOMContentLoaded", initRoomSliders);
-
-      /* run again when new rooms load */
-
-      document.addEventListener("click", () => {
-        setTimeout(initRoomSliders, 100);
-      });
-    </script>
-
     {% block extra_js %}{% endblock %}
+
+    <!-- ================= AUTH MODAL ================= -->
+    <div id="authModal" class="auth-modal hidden">
+      <div class="auth-box">
+        <h2>Get Started</h2>
+
+        <button data-url="{% url 'login' %}" class="auth-option">Login</button>
+
+        <button data-url="{% url 'register' %}" class="auth-option">
+          Sign up
+        </button>
+
+        <button
+          data-url="{% url 'services:register_bakkie_driver' %}"
+          class="auth-option driver"
+        >
+          🚚 Register as Driver
+        </button>
+      </div>
+    </div>
   </body>
 </html>
