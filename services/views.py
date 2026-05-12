@@ -101,9 +101,8 @@ def save_location_ping(request, session_id):
     return JsonResponse({"success": True})
 
 
-# =========================
 # PANIC BUTTON
-# =========================
+
 @login_required
 @require_POST
 def trigger_panic_alert(request, session_id):
@@ -174,28 +173,36 @@ def bakkie_home(request):
 
 # REGISTER DRIVER
 
-@login_required
 def register_bakkie_driver(request):
 
-    existing = BakkieDriver.objects.filter(user=request.user).first()
+    existing = None
+    if request.user.is_authenticated:
+        existing = BakkieDriver.objects.filter(
+            user=request.user
+        ).first()
 
     if existing:
         messages.info(request, "You are already registered.")
         return redirect("services:bakkie_home")
 
     if request.method == "POST":
-
         form = BakkieDriverForm(request.POST, request.FILES)
-        if form.is_valid():
 
+        if form.is_valid():
             driver = form.save(commit=False)
-            driver.user = request.user
-            driver.is_verified = False  # admin approval later
+
+            if request.user.is_authenticated:
+                driver.user = request.user
+
+            driver.is_verified = False
             driver.save()
 
-            messages.success(request, "Driver submitted for verification.")
+            messages.success(
+                request,
+                "Driver submitted for verification. Please login after approval."
+            )
 
-            return redirect("services:bakkie_home")
+            return redirect("login")
 
     else:
         form = BakkieDriverForm()
@@ -203,3 +210,26 @@ def register_bakkie_driver(request):
     return render(request, "services/register_driver.html", {
         "form": form
     })
+
+@login_required
+def driver_dashboard(request):
+
+    driver = BakkieDriver.objects.filter(
+        user=request.user,
+        is_verified=True
+    ).first()
+
+    if not driver:
+        messages.error(
+            request,
+            "Your driver account is pending verification."
+        )
+        return redirect("services:bakkie_home")
+
+    return render(
+        request,
+        "services/driver_dashboard.html",
+        {
+            "driver": driver
+        }
+    )

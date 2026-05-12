@@ -1,4 +1,4 @@
-import random
+import secrets
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -20,7 +20,7 @@ def send_html_email(subject, to_email, template_name, context):
     email.send()
 
 def generate_otp():
-    return str(random.randint(100000, 999999))
+    return str(secrets.randbelow(900000) + 100000)
 
 
 def send_otp_email(user, otp):

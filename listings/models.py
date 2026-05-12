@@ -132,6 +132,7 @@ class Profile(models.Model):
     ROLE_CHOICES = [
         ("tenant", "Tenant"),
         ("landlord", "Landlord"),
+        ("driver", "Driver"),
     ]
 
     PERSONA_CHOICES = [
@@ -151,6 +152,10 @@ class Profile(models.Model):
 
     # keep old for compatibility
     is_verified = models.BooleanField(default=False)
+    is_verified_landlord = models.BooleanField(
+    default=False,
+    help_text="Admin verified landlord badge"
+)
 
     # tenant persona
     persona = models.CharField(

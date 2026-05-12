@@ -17,5 +17,6 @@ urlpatterns = [
     # Bakkie
     path("bakkie/", views.bakkie_home, name="bakkie_home"),
     path("bakkie/register/", views.register_bakkie_driver, name="register_bakkie_driver"),
-    path("register-driver/", views.register_bakkie_driver, name="register_driver"),
+    path("driver/dashboard/", views.driver_dashboard, name="driver_dashboard"),
 ]
+        

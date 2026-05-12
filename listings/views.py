@@ -27,7 +27,6 @@ from accounts.utils import require_active_membership
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.sites.shortcuts import get_current_site
-from uuid import uuid4
 from accounts.models import Membership
 from .forms import ListingForm
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
@@ -37,10 +36,8 @@ from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 def get_display_name(user):
     return (user.first_name or "").strip() or (user.email or "").strip() or "there"
 
-
-# -----------------------------
 # Profile completeness gate
-# -----------------------------
+
 def get_or_create_membership(user):
     membership, created = Membership.objects.get_or_create(
         user=user,
@@ -59,8 +56,6 @@ def get_or_create_membership(user):
 
     return membership
 
-
-    # Ensure membership ID always exists
   
 def profile_needs_update(user):
     if not hasattr(user, "profile"):
@@ -98,10 +93,8 @@ def profile_needs_update(user):
 def is_landlord(user):
     return hasattr(user, "profile") and user.profile.role == "landlord"
 
-
-# -----------------------------
 # LANDLORD: Rooms + Images hubs
-# -----------------------------
+
 @login_required
 def landlord_rooms(request):
     rooms = Room.objects.filter(owner=request.user).order_by("-created_at")
@@ -596,12 +589,6 @@ def user_login(request):
             otp=otp
         )
 
-        PhoneOTP.objects.create(
-            user=user,
-            phone_number=user.profile.phone_number,
-            otp=otp
-        )
-
         send_otp_email(user, otp)
         set_otp_cooldown(user.id)
 
@@ -610,23 +597,43 @@ def user_login(request):
         messages.warning(request, "We sent you an OTP code.")
         return redirect("verify_phone")
 
-    # ✅ LOGIN FIRST (CRITICAL)
+    # LOGIN FIRST (CRITICAL)
     with transaction.atomic():
         login(request, user)
 
-    # 🧠 PROFILE COMPLETION
+    # PROFILE COMPLETION
     if profile_needs_update(user):
         messages.info(request, "You can complete your profile anytime in settings.")
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
-    # 🔥 RESPECT NEXT URL (THIS FIXES LOOP)
+    # RESPECT NEXT URL (THIS FIXES LOOP)
     if next_url:
         return redirect(next_url)
 
-    # 🎯 ROLE-BASED REDIRECT
-    if hasattr(user, "profile") and user.profile.role == "landlord":
-        return redirect("dashboard")
+    # ROLE-BASED REDIRECT
+    # ROLE-BASED REDIRECT
+    if hasattr(user, "profile"):
+
+        if user.profile.role == "landlord":
+            return redirect("dashboard")
+
+        if user.profile.role == "driver":
+            from services.models import BakkieDriver
+
+            driver = BakkieDriver.objects.filter(
+                user=user,
+                is_verified=True
+            ).first()
+
+            if driver:
+                return redirect("services:driver_dashboard")
+
+            messages.warning(
+                request,
+                "Your driver account is pending verification."
+            )
+            return redirect("services:bakkie_home")
 
     return redirect("room_list")
 

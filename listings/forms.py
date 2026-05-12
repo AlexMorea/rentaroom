@@ -31,7 +31,7 @@ class UserRegisterForm(forms.Form):
         widget=forms.Select(attrs={"class": "input"}),
     )
 
-    # 🔥 NEW PHONE INPUT (ALL USERS)
+    # NEW PHONE INPUT (ALL USERS)
     country_code = forms.ChoiceField(
         choices=[("+27", "+27 🇿🇦"), ("+1", "+1 🇺🇸"), ("+44", "+44 🇬🇧")],
         initial="+27",
@@ -91,7 +91,7 @@ class UserRegisterForm(forms.Form):
         if p1:
             validate_password(p1)
 
-        # 🔥 ALL USERS MUST HAVE PHONE
+        # ALL USERS MUST HAVE PHONE
         if not cleaned.get("phone_number"):
             self.add_error("phone_number", "Phone number is required.")
 
@@ -127,17 +127,17 @@ class UserRegisterForm(forms.Form):
         profile, _ = Profile.objects.get_or_create(user=user)
         profile.role = self.cleaned_data["role"]
 
-        # ✅ PERSONA (TENANT ONLY)
+        # PERSONA (TENANT ONLY)
         if profile.role == "tenant":
             profile.persona = self.cleaned_data["persona"]
 
-        # ✅ PHONE
+        # PHONE
         country_code = self.cleaned_data.get("country_code")
         phone_number = self.cleaned_data.get("phone_number")
         profile.country_code = country_code
         profile.phone_number = phone_number 
 
-        # ✅ LANDLORD EXTRA
+        # LANDLORD EXTRA
 
         if profile.role == "landlord":
 
@@ -148,7 +148,7 @@ class UserRegisterForm(forms.Form):
 
         profile.save()
 
-        # 🔥🔥🔥 CREATE MEMBERSHIP ONLY FOR LANDLORDS
+        # CREATE MEMBERSHIP ONLY FOR LANDLORDS
         if profile.role == "landlord":
             Membership.objects.get_or_create(
                 user=user,
@@ -174,7 +174,7 @@ class UserUpdateForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"class": "input"}),
         }
 
-    # ✅ PREVENT DUPLICATE EMAILS
+    #  PREVENT DUPLICATE EMAILS
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
 

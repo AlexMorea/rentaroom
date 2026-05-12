@@ -28,8 +28,8 @@
 
     {% if room.contact_count|default:0 >= 3 %}
     <span class="badge badge-popular">Popular</span>
-    {% endif %} {% if room.owner.profile.is_verified %}
-    <span class="badge badge-verified">Verified</span>
+    {% endif %} {% if room.owner.profile.is_verified_landlord %}
+    <span class="badge badge-verified"> 🟢 Verified Landlord </span>
     {% endif %}
   </div>
 

@@ -51,6 +51,7 @@ class PanicAlertAdmin(admin.ModelAdmin):
 
 @admin.register(BakkieDriver)
 class BakkieDriverAdmin(admin.ModelAdmin):
+
     list_display = (
         "id",
         "full_name",
@@ -63,3 +64,22 @@ class BakkieDriverAdmin(admin.ModelAdmin):
         "vehicle_type",
         "is_verified",
     )
+
+    list_editable = (
+        "is_verified",
+    )
+
+    def save_model(self, request, obj, form, change):
+
+        super().save_model(
+            request,
+            obj,
+            form,
+            change
+        )
+
+        if obj.is_verified and obj.user:
+            profile = obj.user.profile
+            profile.role = "driver"
+            profile.is_verified = True
+            profile.save()

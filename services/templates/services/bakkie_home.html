@@ -1,8 +1,43 @@
-<!-- services/templates/services/bakkie_home.html -->
-
-{% extends "base.html" %} {% load static %} {% block content %}
+{% extends "listings/base.html" %} {% load static %} {% block content %}
 
 <div class="container">
+  <!-- NEW COMING SOON SECTION -->
+  <section class="coming-soon-page" style="min-height: auto; padding-top: 0">
+    <div class="coming-card">
+      <div class="coming-badge">🚚 COMING SOON</div>
+
+      <h1>Bakkie4You</h1>
+
+      <p class="subtitle">
+        Fast, affordable transport for moving rooms, furniture and essentials.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature">
+          <h3>🏠 Move With Ease</h3>
+          <p>Book trusted local drivers to help move into your new room.</p>
+        </div>
+
+        <div class="feature">
+          <h3>📦 Furniture Delivery</h3>
+          <p>Need a bed, desk or fridge moved? We’ve got you covered.</p>
+        </div>
+
+        <div class="feature">
+          <h3>🚗 Driver Opportunities</h3>
+          <p>Drivers can earn extra income by accepting transport jobs.</p>
+        </div>
+
+        <div class="feature">
+          <h3>⚡ Same-Day Service</h3>
+          <p>Quick bookings and fast local transport support.</p>
+        </div>
+      </div>
+
+      <p class="launch-note">Launching soon in Rooms4You Beta 🚀</p>
+    </div>
+  </section>
+
   <h2 class="page-title">🚚 Bakkie4You</h2>
 
   <div class="form-card">
@@ -14,7 +49,6 @@
   <h3 style="margin-top: 20px">Verified Drivers</h3>
 
   {% for driver in drivers %}
-
   <div class="room-row">
     <div>
       <strong>{{ driver.full_name }}</strong>
@@ -29,13 +63,10 @@
       </a>
     </div>
   </div>
-
   {% empty %}
-
   <div class="empty-card">
     <p>No verified drivers yet.</p>
   </div>
-
   {% endfor %}
 </div>
 

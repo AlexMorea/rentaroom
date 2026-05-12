@@ -3880,3 +3880,107 @@ body.scroll-down .trust-strip {
     opacity: 1;
   }
 }
+
+/* ================= COMING SOON PAGES ================= */
+
+.coming-soon-page {
+  min-height: 75vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.coming-card {
+  max-width: 900px;
+  width: 100%;
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+}
+
+.coming-badge {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+.coming-card h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  color: #2563eb;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  opacity: 0.75;
+  margin-bottom: 40px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  text-align: left;
+}
+
+.feature {
+  padding: 22px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.feature h3 {
+  margin-top: 0;
+  color: #1e40af;
+}
+
+.launch-note {
+  margin-top: 35px;
+  font-weight: 800;
+  color: #f97316;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .coming-card {
+    padding: 24px;
+  }
+
+  .coming-card h1 {
+    font-size: 2rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.beta-badge {
+  background: #f97316;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.scam-warning {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin: 0 auto 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  max-width: 420px;
+}
