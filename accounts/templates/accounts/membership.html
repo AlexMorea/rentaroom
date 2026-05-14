@@ -1,7 +1,28 @@
 {% extends "listings/base.html" %} {% block content %}
 
 <div class="container py-5" style="background: #fff7ed; border-radius: 12px">
+  <!-- BETA / COMING SOON BANNER -->
+  <div
+    class="form-card"
+    style="
+      background: #f97316;
+      color: white;
+      text-align: center;
+      margin-bottom: 24px;
+      border: none;
+      padding: 24px;
+    "
+  >
+    <h1 style="margin: 0; font-size: 2rem">🚧 COMING SOON</h1>
+
+    <p style="margin-top: 10px; font-size: 1.05rem">
+      Rooms4You Memberships are<strong>launching soon</strong>. Pricing, premium
+      tools and landlord upgrades shown below are preview features.
+    </p>
+  </div>
+
   <h2 class="page-title" style="margin: 0">Choose Your Membership</h2>
+
   <p style="text-align: center; margin-bottom: 16px">
     Unlock more power, reach more tenants, and grow your rental business with
     Rooms4You.
@@ -53,7 +74,7 @@
         <li>Email Support</li>
         <li>No Availability Feature</li>
         <li>Basic Visibility</li>
-        <li>No Analytics</li>
+        <li>Basic Analytics</li>
       </ul>
 
       <a
@@ -77,6 +98,7 @@
         <li>Better Visibility</li>
         <li>Double the listings for only +R20</li>
       </ul>
+
       <a
         href="{% url 'membership_payment' 'silver' %}"
         class="btn-primary w-100 mt-3 tier-silver-btn"
@@ -105,7 +127,7 @@
         <li>Advanced Analytics</li>
         <li>Full Support Access</li>
         <li>Admin Assistance</li>
-        <li>Room4You Welcome HAMPER</li>
+        <li>Rooms4You Welcome Hamper</li>
       </ul>
 
       <div style="margin-top: 16px">
@@ -117,6 +139,31 @@
         </a>
       </div>
     </div>
+  </div>
+
+  <!-- FUTURE FEATURES -->
+  <div
+    class="form-card"
+    style="
+      margin-top: 30px;
+      text-align: center;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    "
+  >
+    <h4>🚀 Future Premium Features</h4>
+
+    <ul style="list-style: none; padding: 0; line-height: 2">
+      <li>📢 Listing Boosts</li>
+      <li>🛡 Rental Insurance</li>
+      <li>📊 Smart Analytics</li>
+      <li>🤖 Auto Tenant Matching</li>
+      <li>🏅 Featured Listings</li>
+    </ul>
+
+    <p class="text-muted">
+      These features will unlock progressively after launch.
+    </p>
   </div>
 
   <!-- PAYMENT SECTION -->

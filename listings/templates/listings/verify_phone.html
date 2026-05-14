@@ -5,10 +5,10 @@
     <h2 class="auth-title">Verify Your Phone</h2>
 
     <p class="auth-hint" style="margin-bottom: 16px">
-      Enter the 6-digit code sent to your phone/email
+      Enter the 6-digit code sent to your email
     </p>
 
-    <!-- ✅ GLOBAL MESSAGES (ERRORS / SUCCESS) -->
+    <!-- GLOBAL MESSAGES (ERRORS / SUCCESS) -->
     {% if messages %} {% for message in messages %}
     <div class="form-errors" style="margin-bottom: 12px">{{ message }}</div>
     {% endfor %} {% endif %}
@@ -31,7 +31,7 @@
       <button type="submit" class="btn-primary auth-btn">Verify</button>
     </form>
 
-    <!-- ✅ RESEND BUTTON -->
+    <!-- RESEND BUTTON -->
     <button
       id="resend-btn"
       class="btn-secondary"
@@ -46,7 +46,7 @@
       Resend OTP
     </button>
 
-    <!-- ✅ RESEND MESSAGE -->
+    <!-- RESEND MESSAGE -->
     <p id="resend-msg" class="auth-hint" style="margin-top: 10px"></p>
   </div>
 </div>

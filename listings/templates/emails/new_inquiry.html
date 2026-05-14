@@ -1,0 +1,20 @@
+{% extends "emails/base_email.html" %} {% block content %}
+
+<h2>New inquiry on your listing</h2>
+
+<p>Hello {{ room.owner.first_name }},</p>
+
+<p>{{ user.first_name }} is interested in your room:</p>
+
+<p>
+  <strong>{{ room.title }}</strong><br />
+  {{ room.location }}
+</p>
+
+<p>Log in to Rooms4You to manage your listing.</p>
+
+<br />
+<p>— Rooms4You Team</p>
+<p>{{ year }}</p>
+
+{% endblock %}

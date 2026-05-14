@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.models import User
 
 from .models import (
     GuardianSession,
@@ -55,6 +56,7 @@ class BakkieDriverAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "full_name",
+        "user",
         "vehicle_type",
         "city",
         "is_verified",
@@ -78,8 +80,29 @@ class BakkieDriverAdmin(admin.ModelAdmin):
             change
         )
 
-        if obj.is_verified and obj.user:
+        # only create account once approved
+        if obj.is_verified and not obj.user:
+
+            username = obj.phone_number.replace("+", "")
+
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={
+                    "email": f"{username}@driver.rooms4you.co.za"
+                }
+            )
+
+            if created:
+                user.set_password("ChangeMe123!")
+                user.save()
+
+            obj.user = user
+            obj.save()
+
+        if obj.user:
             profile = obj.user.profile
             profile.role = "driver"
             profile.is_verified = True
+            profile.is_phone_verified = True
+            profile.is_email_verified = True
             profile.save()

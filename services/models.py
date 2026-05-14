@@ -89,7 +89,9 @@ class BakkieDriver(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="bakkie_profiles"
+        related_name="bakkie_profiles",
+        null=True,
+        blank=True
     )
 
     full_name = models.CharField(max_length=120)

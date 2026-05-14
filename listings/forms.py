@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from accounts.models import Membership
 from .models import Profile, Room, RoomImage
+from .utils import normalize_sa_phone
 
 
 class UserRegisterForm(forms.Form):
@@ -135,13 +136,13 @@ class UserRegisterForm(forms.Form):
         country_code = self.cleaned_data.get("country_code")
         phone_number = self.cleaned_data.get("phone_number")
         profile.country_code = country_code
-        profile.phone_number = phone_number 
+        profile.phone_number = normalize_sa_phone(phone_number)
 
         # LANDLORD EXTRA
-
         if profile.role == "landlord":
 
-            profile.alt_no = (self.cleaned_data.get("alt_no") or "").strip()
+            alt = (self.cleaned_data.get("alt_no") or "").strip()
+            profile.alt_no = normalize_sa_phone(alt) if alt else ""
             profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
             profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
             profile.terms_accepted = True
@@ -218,55 +219,148 @@ class ProfileUpdateForm(forms.ModelForm):
             "postal_code": forms.TextInput(attrs={"class": "input"}),
         }
 
+    def clean_phone_number(self):
+        phone = (self.cleaned_data.get("phone_number") or "").strip()
 
-def clean_phone_number(self):
-    phone = (self.cleaned_data.get("phone_number") or "").strip()
+        if not phone:
+            return self.instance.phone_number
 
-    # ✅ If empty → keep existing (edit profile case)
-    if not phone:
-        return self.instance.phone_number
+        # remove non-digits
+        phone = re.sub(r"[^\d]", "", phone)
 
-    # 🔥 Remove all non-digits
-    phone = re.sub(r"[^\d]", "", phone)
+        # remove country code
+        if phone.startswith("27"):
+            phone = phone[2:]
 
-    # 🔥 Remove country code if user typed it
-    if phone.startswith("27") and len(phone) > 9:
-        phone = phone[2:]
+        # remove leading zero
+        if phone.startswith("0"):
+            phone = phone[1:]
 
-    # 🔥 Remove leading 0 (common SA format)
-    if phone.startswith("0"):
-        phone = phone[1:]
+        if len(phone) != 9:
+            raise forms.ValidationError(
+                "Enter valid SA number. Example: 841234567"
+            )
 
-    # ✅ FINAL VALIDATION (SA numbers should be 9 digits now)
-    if len(phone) != 9:
-        raise forms.ValidationError("Enter a valid phone number.")
-
-    return phone
-
+        return phone
+    
+    
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room
         fields = [
-            "title", "description", "price", "location", "full_address", "postal_code",
-            "room_type", "contact_phone", "contact_whatsapp", "contact_email",
-            "total_units", "available_units", "availability_status", "available_from",
+            "title",
+            "description",
+            "price",
+
+            "suburb",
+            "town",
+            "city",
+            "province",
+
+            "location",
+            "full_address",
+            "postal_code",
+
+            "room_type",
+
+            "contact_phone",
+            "contact_whatsapp",
+            "contact_email",
+
+            "total_units",
+            "available_units",
+            "availability_status",
+            "available_from",
+
             "is_available",
         ]
+
         widgets = {
-            "title": forms.TextInput(attrs={"class": "input", "placeholder": "e.g. Spacious single room near TUT"}),
-            "price": forms.NumberInput(attrs={"class": "input", "placeholder": "e.g. 2500"}),
-            "location": forms.TextInput(attrs={"class": "input", "placeholder": "e.g. Mamelodi East, Pretoria (public area)"}),
-            "full_address": forms.TextInput(attrs={"class": "input", "placeholder": "e.g. 123 Tsutsuma St, Mamelodi East, Pretoria"}),
-            "postal_code": forms.TextInput(attrs={"class": "input", "placeholder": "e.g. 0122"}),
-            "room_type": forms.Select(attrs={"class": "input"}),
-            "contact_phone": forms.TextInput(attrs={"class": "input", "placeholder": "Call number e.g. +27 71 234 5678"}),
-            "contact_whatsapp": forms.TextInput(attrs={"class": "input", "placeholder": "WhatsApp number (optional) e.g. +27 71 234 5678"}),
-            "contact_email": forms.EmailInput(attrs={"class": "input", "placeholder": "Email (optional) e.g. landlord@gmail.com"}),
-            "total_units": forms.NumberInput(attrs={"class": "input", "min": 1}),
-            "available_units": forms.NumberInput(attrs={"class": "input", "min": 0}),
-            "availability_status": forms.Select(attrs={"class": "input"}),
-            "available_from": forms.DateInput(attrs={"class": "input", "type": "date"}),
-            "description": forms.Textarea(attrs={"class": "input textarea", "rows": 5, "placeholder": "Describe the room, amenities, rules, and nearby transport..."}),
+            "title": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. Spacious single room near TUT"
+            }),
+
+            "price": forms.NumberInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. 2500"
+            }),
+
+            "suburb": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. Mamelodi East"
+            }),
+
+            "town": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. Mamelodi"
+            }),
+
+            "city": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. Pretoria"
+            }),
+
+            "province": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. Gauteng"
+            }),
+
+            "location": forms.HiddenInput(),
+
+            "full_address": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. 123 Tsutsuma St"
+            }),
+
+            "postal_code": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. 0122"
+            }),
+
+            "room_type": forms.Select(attrs={
+                "class": "input"
+            }),
+
+            "contact_phone": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. 0845643877"
+            }),
+
+            "contact_whatsapp": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "optional"
+            }),
+
+            "contact_email": forms.EmailInput(attrs={
+                "class": "input",
+                "placeholder": "optional"
+            }),
+
+            "total_units": forms.NumberInput(attrs={
+                "class": "input",
+                "min": 1
+            }),
+
+            "available_units": forms.NumberInput(attrs={
+                "class": "input",
+                "min": 0
+            }),
+
+            "availability_status": forms.Select(attrs={
+                "class": "input"
+            }),
+
+            "available_from": forms.DateInput(attrs={
+                "class": "input",
+                "type": "date"
+            }),
+
+            "description": forms.Textarea(attrs={
+                "class": "input textarea",
+                "rows": 5,
+                "placeholder": "Describe the room..."
+            }),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -276,31 +370,29 @@ class RoomForm(forms.ModelForm):
         self.fields["full_address"].required = True
         self.fields["postal_code"].required = True
 
-        self.fields["total_units"].label = "Total units (identical rooms)"
-        self.fields["available_units"].label = "Units available now"
-        self.fields["availability_status"].label = "Availability status"
-        self.fields["available_from"].label = "Available from (if occupied / next opening)"
+        self.fields["suburb"].help_text = "Example: Mamelodi East"
+        self.fields["town"].help_text = "Example: Mamelodi"
+        self.fields["city"].help_text = "Example: Pretoria"
+        self.fields["province"].help_text = "Example: Gauteng"
 
-        self.fields["location"].help_text = (
-            "Public area only (tenants see this). Example: “Mamelodi East, Pretoria”. "
-            "Do NOT put street number here."
-        )
         self.fields["full_address"].help_text = (
-            "Full street address for safety verification. Example: “123 Tsutsuma St, Mamelodi East, Pretoria”."
+            "Exact street address for Google Maps."
         )
-        self.fields["postal_code"].help_text = "Area / postal code. Example: “0122”."
-        self.fields["total_units"].help_text = "If you have multiple identical rooms, enter the total number (e.g. 12). Otherwise leave as 1."
-        self.fields["available_units"].help_text = "How many units are available right now (e.g. 6). If occupied, this will auto-set to 0."
-        self.fields["available_from"].help_text = "Only needed if you choose “Occupied (available from)”."
+
+        self.fields["total_units"].label = "Total units"
+        self.fields["available_units"].label = "Units available now"
 
     def clean(self):
         cleaned = super().clean()
 
-        if not self.user or not getattr(self.user, "is_authenticated", False):
+        if not self.user or not self.user.is_authenticated:
             return cleaned
 
         title = (cleaned.get("title") or "").strip()
-        location = (cleaned.get("location") or "").strip()
+
+        suburb = (cleaned.get("suburb") or "").strip()
+        city = (cleaned.get("city") or "").strip()
+
         room_type = cleaned.get("room_type")
         price = cleaned.get("price")
 
@@ -309,42 +401,70 @@ class RoomForm(forms.ModelForm):
         available_units = cleaned.get("available_units") or 0
         available_from = cleaned.get("available_from")
 
+        # AUTO BUILD LOCATION
+        if suburb and city:
+            cleaned["location"] = f"{suburb}, {city}"
+
+        location = cleaned.get("location")
+
+        # PHONE NORMALIZER
+        cleaned["contact_phone"] = normalize_sa_phone(
+            cleaned.get("contact_phone")
+        )
+
+        if cleaned.get("contact_whatsapp"):
+            cleaned["contact_whatsapp"] = normalize_sa_phone(
+                cleaned.get("contact_whatsapp")
+            )
+
+        # availability
         if status == "from":
             cleaned["available_units"] = 0
             available_units = 0
 
         if total_units < 1:
-            self.add_error("total_units", "Total units must be at least 1.")
+            self.add_error(
+                "total_units",
+                "Total units must be at least 1."
+            )
 
-        if total_units and available_units > total_units:
-            self.add_error("available_units", "Available units cannot exceed total units.")
+        if available_units > total_units:
+            self.add_error(
+                "available_units",
+                "Available units cannot exceed total units."
+            )
 
         if status == "from":
             if not available_from:
-                self.add_error("available_from", "Please set the date it becomes available.")
-            if available_units != 0:
-                self.add_error("available_units", "Units available now must be 0 for occupied listings.")
+                self.add_error(
+                    "available_from",
+                    "Choose available date."
+                )
 
         if status == "mixed":
-            if total_units and (available_units == 0 or available_units == total_units):
-                self.add_error("available_units", "For 'Some available now', set units between 1 and total_units-1.")
+            if available_units == 0 or available_units == total_units:
+                self.add_error(
+                    "available_units",
+                    "Must be between 1 and total_units-1."
+                )
 
-        if not (title and location and room_type and price is not None):
-            return cleaned
+        # duplicate protection
+        if title and location and room_type and price:
+            qs = Room.objects.filter(
+                owner=self.user,
+                title__iexact=title,
+                location__iexact=location,
+                room_type=room_type,
+                price=price,
+            )
 
-        qs = Room.objects.filter(
-            owner=self.user,
-            title__iexact=title,
-            location__iexact=location,
-            room_type=room_type,
-            price=price,
-        )
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
 
-        if self.instance and self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-
-        if qs.exists():
-            raise ValidationError("You already posted a listing with the same title, location, type and price.")
+            if qs.exists():
+                raise ValidationError(
+                    "You already posted this listing."
+                )
 
         return cleaned
 

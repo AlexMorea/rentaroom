@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
 from django.db.models.functions import Lower
 import uuid
+import re
 from django.utils import timezone
 from datetime import timedelta
 
@@ -25,9 +26,14 @@ class Room(models.Model):
         ]
         
     ROOM_TYPES = [
-        ("single", "Single Room"),
-        ("shared", "Shared Room"),
-        ("flat", "Flat / Apartment"),
+        ("Single Room", "Single Room"),
+        ("Shared Room", "Shared Room"),
+        ("Bachelor", "Bachelor"),
+        ("Ensuite", "Ensuite"),
+        ("Student Accommodation", "Student Accommodation"),
+        ("Backroom", "Backroom"),
+        ("Cottage", "Cottage"),
+        ("Apartment", "Apartment")
     ]
 
     AVAILABILITY_CHOICES = [
@@ -42,13 +48,20 @@ class Room(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
     location = models.CharField(max_length=200)
+    suburb = models.CharField(max_length=120)
+    town = models.CharField(max_length=120)
+    city = models.CharField(max_length=120)
+    province = models.CharField(
+        max_length=120,
+        default="Gauteng"
+    )
 
     full_address = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=10)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
-    room_type = models.CharField(max_length=20, choices=ROOM_TYPES)
+    room_type = models.CharField(max_length=30, choices=ROOM_TYPES)
 
     contact_phone = models.CharField(max_length=20)
     contact_whatsapp = models.CharField(max_length=20, blank=True, default="")
@@ -132,7 +145,6 @@ class Profile(models.Model):
     ROLE_CHOICES = [
         ("tenant", "Tenant"),
         ("landlord", "Landlord"),
-        ("driver", "Driver"),
     ]
 
     PERSONA_CHOICES = [
@@ -181,7 +193,24 @@ class Profile(models.Model):
     terms_accepted = models.BooleanField(default=False)
 
     def full_phone(self):
-        return f"{self.country_code}{self.phone_number}"
+        phone = (self.phone_number or "").strip()
+
+        if not phone:
+            return ""
+
+        # remove all junk
+        phone = re.sub(r"[^\d]", "", phone)
+
+        # remove country if duplicated
+        if phone.startswith("27"):
+            phone = phone[2:]
+
+        # remove leading zero
+        if phone.startswith("0"):
+            phone = phone[1:]
+
+        return f"{self.country_code}{phone}"
+        
 
     def __str__(self):
         display_name = (self.user.first_name or "").strip() or (self.user.email or "").strip()

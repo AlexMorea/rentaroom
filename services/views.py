@@ -18,7 +18,6 @@ from .forms import GuardianSessionForm, BakkieDriverForm
 
 
 # GUARDIAN HOME
-
 @login_required
 def guardian_home(request):
 
@@ -36,7 +35,6 @@ def guardian_home(request):
 
 
 # START SESSION
-
 @login_required
 def start_guardian_session(request):
 
@@ -68,7 +66,6 @@ def start_guardian_session(request):
 
 
 # SAVE GPS LOCATION (AJAX)
-
 @login_required
 @require_POST
 def save_location_ping(request, session_id):
@@ -101,8 +98,7 @@ def save_location_ping(request, session_id):
     return JsonResponse({"success": True})
 
 
-# PANIC BUTTON
-
+# PANIC BUTTO
 @login_required
 @require_POST
 def trigger_panic_alert(request, session_id):
@@ -136,7 +132,6 @@ def trigger_panic_alert(request, session_id):
 
 
 # END SESSION
-
 @login_required
 def end_guardian_session(request, session_id):
 
@@ -159,7 +154,6 @@ def end_guardian_session(request, session_id):
 
 
 # BAKKIE HOME
-
 @login_required
 def bakkie_home(request):
 
@@ -172,34 +166,48 @@ def bakkie_home(request):
     })
 
 # REGISTER DRIVER
-
 def register_bakkie_driver(request):
 
-    existing = None
-    if request.user.is_authenticated:
-        existing = BakkieDriver.objects.filter(
-            user=request.user
-        ).first()
-
-    if existing:
-        messages.info(request, "You are already registered.")
-        return redirect("services:bakkie_home")
-
     if request.method == "POST":
-        form = BakkieDriverForm(request.POST, request.FILES)
+        form = BakkieDriverForm(
+            request.POST,
+            request.FILES
+        )
 
         if form.is_valid():
+
+            phone = form.cleaned_data["phone_number"]
+
+            # normalize SA number
+            phone = phone.replace(" ", "")
+
+            if phone.startswith("0"):
+                phone = phone[1:]
+
+            phone = f"+27{phone}"
+
+            # prevent duplicate applications
+            if BakkieDriver.objects.filter(
+                phone_number=phone
+            ).exists():
+                messages.error(
+                    request,
+                    "A driver application already exists for this number."
+                )
+                return redirect("services:register_bakkie_driver")
+
             driver = form.save(commit=False)
 
-            if request.user.is_authenticated:
-                driver.user = request.user
-
+            driver.phone_number = phone
             driver.is_verified = False
+            driver.user = None   # created later by admin
+
             driver.save()
 
             messages.success(
                 request,
-                "Driver submitted for verification. Please login after approval."
+                "Application submitted successfully. "
+                "We will verify your documents and contact you."
             )
 
             return redirect("login")
@@ -207,9 +215,14 @@ def register_bakkie_driver(request):
     else:
         form = BakkieDriverForm()
 
-    return render(request, "services/register_driver.html", {
-        "form": form
-    })
+    return render(
+        request,
+        "services/register_driver.html",
+        {
+            "form": form
+        }
+    )
+
 
 @login_required
 def driver_dashboard(request):

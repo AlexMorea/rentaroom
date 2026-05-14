@@ -6,6 +6,11 @@
     <title>{% block title %}Rooms4You{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
     <link rel="icon" href="{% static 'images/favicon.jpeg' %}" />
 
     <link
@@ -333,5 +338,72 @@
         </button>
       </div>
     </div>
+
+    <script>
+      /**
+       * UNIVERSAL ROOM IMAGE SLIDER (LIST + DETAIL)
+       * Works for:
+       * - .slider-shell
+       * - data-slider
+       */
+
+      function initSliders(root = document) {
+        const sliders = root.querySelectorAll("[data-slider]");
+
+        sliders.forEach((slider) => {
+          const track = slider.querySelector("[data-slider-track]");
+          const prev = slider.querySelector("[data-slider-prev]");
+          const next = slider.querySelector("[data-slider-next]");
+          const images = track ? track.querySelectorAll("img") : [];
+
+          if (!track || images.length <= 1) {
+            if (prev) prev.style.display = "none";
+            if (next) next.style.display = "none";
+            return;
+          }
+
+          let index = 0;
+
+          function update() {
+            const width = slider.clientWidth;
+            track.style.transform = `translateX(-${index * width}px)`;
+          }
+
+          next?.addEventListener("click", (e) => {
+            e.preventDefault();
+            index = (index + 1) % images.length;
+            update();
+          });
+
+          prev?.addEventListener("click", (e) => {
+            e.preventDefault();
+            index = (index - 1 + images.length) % images.length;
+            update();
+          });
+
+          // swipe support (mobile)
+          let startX = 0;
+
+          track.addEventListener("touchstart", (e) => {
+            startX = e.touches[0].clientX;
+          });
+
+          track.addEventListener("touchend", (e) => {
+            const diff = startX - e.changedTouches[0].clientX;
+
+            if (diff > 40) next?.click();
+            if (diff < -40) prev?.click();
+          });
+
+          window.addEventListener("resize", update);
+
+          update();
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initSliders();
+      });
+    </script>
   </body>
 </html>

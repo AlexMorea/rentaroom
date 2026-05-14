@@ -1,6 +1,34 @@
 {% extends "listings/base.html" %} {% block content %}
 
 <div class="container py-5">
+  <!-- PAYMENT COMING SOON -->
+  <div
+    class="form-card"
+    style="
+      background: #f97316;
+      color: white;
+      text-align: center;
+      margin-bottom: 24px;
+      border: none;
+      padding: 24px;
+    "
+  >
+    <h1 style="margin: 0; font-size: 2rem">🚧 PAYMENT SYSTEM COMING SOON</h1>
+
+    <p style="margin-top: 10px">
+      Membership payments are still being finalized. Bank transfer is shown as
+      preview only.
+    </p>
+
+    <p>
+      Soon we’ll support:
+      <strong>
+        EFT, Bank Cards, PayFast, Mukuru, Ozow, SnapScan, Apple Pay, Google Pay
+      </strong>
+      and more.
+    </p>
+  </div>
+
   <!-- PAGE HEADER -->
   <div class="text-center mb-5">
     <h2 class="page-title">Upgrade to {{ tier|title }}</h2>
@@ -11,7 +39,7 @@
 
   <!-- MAIN CARD -->
   <div class="form-card" style="max-width: 900px; margin: 0 auto">
-    <!-- PRICE + PLAN -->
+    <!-- PRICE -->
     <div style="text-align: center; margin-bottom: 20px">
       <div style="font-size: 2.2rem; font-weight: 900">{{ price }}.00/mo</div>
       <div style="opacity: 0.7">{{ tier|title }}4You Membership Plan</div>
@@ -19,9 +47,8 @@
 
     <div class="divider" style="margin: 20px 0"></div>
 
-    <!-- CONTENT GRID -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px">
-      <!-- LEFT: BANK DETAILS -->
+      <!-- BANK DETAILS -->
       <div>
         <h4 style="margin-bottom: 12px">Payment Details</h4>
 
@@ -33,7 +60,7 @@
             border: 1px solid #fed7aa;
           "
         >
-          <p><strong>Bank:</strong> Standard Bank</p>
+          <p><strong>Bank:</strong> Palindrome Bank</p>
           <p><strong>Account Name:</strong> Rooms4You</p>
           <p><strong>Account Number:</strong> 0000000000</p>
           <p><strong>Branch Code:</strong> 0000</p>
@@ -61,7 +88,7 @@
         </p>
       </div>
 
-      <!-- RIGHT: PROCESS -->
+      <!-- PROCESS -->
       <div>
         <h4 style="margin-bottom: 12px">What Happens Next</h4>
 
@@ -84,7 +111,7 @@
       </div>
     </div>
 
-    <!-- CTA -->
+    <!-- FORM -->
     <div style="margin-top: 30px; text-align: center">
       <form
         method="POST"
@@ -94,7 +121,8 @@
         {% csrf_token %}
 
         <div style="margin-bottom: 12px; text-align: left">
-          <label style="font-weight: 600">Upload Proof of Payment</label>
+          <label style="font-weight: 600"> Upload Proof of Payment </label>
+
           <input
             type="file"
             name="payment_proof"

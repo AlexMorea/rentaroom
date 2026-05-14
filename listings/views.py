@@ -397,10 +397,7 @@ def room_detail(request, pk):
 
     return render(request, "listings/room_detail.html", {"room": room, "is_saved": is_saved})
 
-
-# -----------------------------
 # AUTH: register/login/logout
-# -----------------------------
 def register(request):
     form = UserRegisterForm(request.POST or None)
 
@@ -460,7 +457,7 @@ def verify_email(request, token):
     user = verification.user
     profile = user.profile
 
-    # ✅ activate everything properly
+    # activate everything properly
     verification.is_verified = True
     verification.save()
 
@@ -566,19 +563,19 @@ def user_login(request):
         messages.error(request, "Invalid credentials.")
         return redirect("login")
 
-    # 🔐 EMAIL CHECK
+    # EMAIL CHECK
     if not user.profile.is_email_verified:
         messages.error(request, "Please verify your email first.")
         return redirect("login")
 
-    # 📱 PHONE CHECK
+    # PHONE CHECK
     if not user.profile.is_phone_verified:
 
         if not can_resend_otp(user.id):
             request.session["pending_user_id"] = user.id
             return redirect("verify_phone")
 
-        # 🔥 ALWAYS ENSURE SINGLE OTP
+        # ALWAYS ENSURE SINGLE OTP
         PhoneOTP.objects.filter(user=user).delete()
 
         otp = generate_otp()
@@ -611,14 +608,11 @@ def user_login(request):
     if next_url:
         return redirect(next_url)
 
-    # ROLE-BASED REDIRECT
-    # ROLE-BASED REDIRECT
+    # ROLE REDIRECT
     if hasattr(user, "profile"):
 
-        if user.profile.role == "landlord":
-            return redirect("dashboard")
-
         if user.profile.role == "driver":
+
             from services.models import BakkieDriver
 
             driver = BakkieDriver.objects.filter(
@@ -635,6 +629,9 @@ def user_login(request):
             )
             return redirect("services:bakkie_home")
 
+        if user.profile.role == "landlord":
+            return redirect("dashboard")
+
     return redirect("room_list")
 
 
@@ -644,9 +641,8 @@ def user_logout(request):
     return redirect("room_list")
 
 
-# -----------------------------
+
 # PROFILES (tenant + landlord)
-# -----------------------------
 @login_required
 def profile(request):
     user = request.user
@@ -656,10 +652,8 @@ def profile(request):
         """Return a clean display value instead of blanks/None (prevents 'code leak' looking output)."""
         value = (value or "").strip() if isinstance(value, str) else value
         return value if value else "—"
-
-    # =========================
+    
     # Tenant panels (saved + viewed)
-    # =========================
     favorites_qs = (
         Favorite.objects.filter(user=user)
         .select_related("room")
@@ -684,9 +678,8 @@ def profile(request):
         seen.add(s.room_id)
         viewed_rooms.append(s.room)
 
-    # =========================
+    
     # Landlord analytics
-    # =========================
     rooms_count = 0
     image_count = 0
     contact_count = 0
@@ -699,15 +692,13 @@ def profile(request):
             room__owner=user, stat_type__startswith="contact"
         ).count()
 
-    # =========================
+   
     # Header badge (template doesn't need if/else)
-    # =========================
     persona_text = p.get_persona_display() if getattr(p, "persona", None) else "Not set"
     badge_text = f"{persona_text}" if p.role == "tenant" else "Landlord"
     verified_badge = "Verified" if (p.role == "landlord" and getattr(p, "is_verified", False)) else ""
 
     # Stats (split into link stats + plain stats to avoid template if)
-
     stat_cards = []
     stat_links = []
 
@@ -733,11 +724,7 @@ def profile(request):
         detail_rows.append({"label": "Persona", "value": persona_text})
     else:
         # Build full phone properly
-        full_phone = ""
-        if getattr(p, "country_code", "") and getattr(p, "phone_number", ""):
-            full_phone = f"{p.country_code}{p.phone_number}"
-        else:
-            full_phone = getattr(p, "phone_number", "")
+        full_phone = p.full_phone()
 
         detail_rows.extend(
             [
@@ -750,7 +737,6 @@ def profile(request):
 
    
     # Tenant sections (empty list for landlord, so template just renders nothing)
-    
     tenant_sections = []
     if p.role == "tenant":
         tenant_sections = [
@@ -822,7 +808,7 @@ def edit_profile(request):
 
             # update phone if user actually submitted one
             if phone_number:
-                profile_obj.phone_number = phone_number
+                profile_obj.phone_number = p_form.cleaned_data["phone_number"]
 
             # HANDLE CHANGES
             if changes["phone"]:
@@ -873,9 +859,7 @@ def toggle_favorite(request, room_id):
     return redirect("room_detail", pk=room.id)
 
 
-# -----------------------------
 # LANDLORD: dashboard + CRUD
-# -----------------------------
 @login_required
 @user_passes_test(is_landlord)
 def dashboard(request):
@@ -921,7 +905,7 @@ def add_room(request):
 @user_passes_test(is_landlord)
 def create_room(request):
 
-    # ✅ ALWAYS ensure membership exists (SAFE)
+    # ALWAYS ensure membership exists (SAFE)
     membership, _ = Membership.objects.get_or_create(
         user=request.user,
         defaults={"tier": "starter"}
@@ -929,12 +913,12 @@ def create_room(request):
 
     user_listings_count = request.user.rooms.count()
 
-    # 🚫 BLOCK: expired trial
+    # BLOCK: expired trial
     if membership.is_trial and membership.is_trial_expired():
         messages.error(request, "Your trial has expired. Please upgrade.")
         return redirect("membership")
 
-    # 🚫 BLOCK: listing limit reached
+    # BLOCK: listing limit reached
     if not membership.can_create_listing(user_listings_count):
         messages.warning(
             request,
@@ -963,7 +947,7 @@ def create_room(request):
             )
             return render(request, "listings/create_room.html", {"form": form})
 
-        # 📸 IMAGES
+        # IMAGES
         uploaded_images = request.FILES.getlist("images")
         if uploaded_images:
             uploaded_images = uploaded_images[:10]
@@ -975,7 +959,7 @@ def create_room(request):
         else:
             messages.success(request, "Room created successfully.")
 
-        # 📧 EMAIL AFTER COMMIT
+        # EMAIL AFTER COMMIT
         transaction.on_commit(lambda: send_template_email(
             subject="Your listing is now live 🎉",
             to_email=request.user.email,
@@ -1249,9 +1233,7 @@ def edit_room_images(request, pk):
     )
 
 
-# -----------------------------
 # REVIEWS + CONTACT TRACKING
-# -----------------------------
 @login_required
 def add_review(request, room_id):
     room = get_object_or_404(Room, id=room_id)
@@ -1691,7 +1673,7 @@ def delete_account(request):
     if request.method == "POST":
         user = request.user
 
-        # 🔐 Logout first (important)
+        # Logout first (important)
         logout(request)
 
         # 🧨 Delete user (this cascades Profile, Membership, etc.)
