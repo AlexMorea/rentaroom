@@ -24,8 +24,8 @@
   <h2 class="page-title" style="margin: 0">Choose Your Membership</h2>
 
   <p style="text-align: center; margin-bottom: 16px">
-    Unlock more power, reach more tenants, and grow your rental business with
-    Rooms4You.
+    Unlock more visibility, faster tenant placement, and grow your rental
+    business with Rooms4You.
   </p>
 
   <!-- CURRENT PLAN -->
@@ -56,25 +56,25 @@
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
         <li><strong>2 Property Listings Only</strong></li>
-        <li>No Availability System</li>
-        <li>No Analytics</li>
-        <li>Basic Exposure</li>
-        <li>No Support Priority</li>
+        <li>Basic visibility only</li>
+        <li>No analytics</li>
+        <li>No priority placement</li>
+        <li>No support priority</li>
       </ul>
     </div>
 
     <!-- BRONZE -->
     <div class="form-card" style="border: 1px solid rgba(255, 165, 0, 0.3)">
       <h3 style="margin-bottom: 6px">Bronze4You</h3>
-      <div style="font-weight: 700">R55.00/mo</div>
+      <div style="font-weight: 700">R79.00/mo</div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
         <li><strong>Up to 5 Property Listings</strong></li>
-        <li>Verified Landlord Badge</li>
-        <li>Email Support</li>
-        <li>No Availability Feature</li>
-        <li>Basic Visibility</li>
-        <li>Basic Analytics</li>
+        <li>Basic priority in search</li>
+        <li>Verified landlord badge</li>
+        <li>No analytics</li>
+        <li>Email support</li>
+        <li>Better exposure than Starter</li>
       </ul>
 
       <a
@@ -88,15 +88,15 @@
     <!-- SILVER -->
     <div class="form-card" style="border: 1px solid rgba(59, 130, 246, 0.3)">
       <h3 style="margin-bottom: 6px">Silver4You ⭐</h3>
-      <div style="font-weight: 700">R75.00/mo</div>
+      <div style="font-weight: 700">R149.00/mo</div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Up to 10 Property Listings</strong></li>
-        <li>Availability System</li>
-        <li>Analytics Dashboard</li>
-        <li>24/7 Support</li>
-        <li>Better Visibility</li>
-        <li>Double the listings for only +R20</li>
+        <li><strong>Up to 15 Property Listings</strong></li>
+        <li>Higher ranking in search</li>
+        <li>Analytics dashboard</li>
+        <li>Availability system</li>
+        <li>Priority support</li>
+        <li>Recommended for active landlords</li>
       </ul>
 
       <a
@@ -117,17 +117,16 @@
       "
     >
       <h3 style="margin-bottom: 6px">Gold4You 👑</h3>
-      <div style="font-weight: 700">From R129/mo</div>
+      <div style="font-weight: 700">R299.00/mo</div>
       <div style="font-weight: 800; font-size: 1.2rem">Premium</div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
         <li><strong>Unlimited Property Listings</strong></li>
-        <li>Featured Listings</li>
-        <li>Marketing Boost</li>
-        <li>Advanced Analytics</li>
-        <li>Full Support Access</li>
-        <li>Admin Assistance</li>
-        <li>Rooms4You Welcome Hamper</li>
+        <li>Featured listings</li>
+        <li>Top search placement</li>
+        <li>Marketing boost</li>
+        <li>Advanced analytics</li>
+        <li>Full support access</li>
       </ul>
 
       <div style="margin-top: 16px">
@@ -135,7 +134,7 @@
           href="{% url 'membership_payment' 'gold' %}"
           class="btn-primary w-100 mt-3 tier-gold-btn"
         >
-          Go 4 GOLD!
+          Go 4 Gold
         </a>
       </div>
     </div>
@@ -174,22 +173,14 @@
   >
     <h4>Upgrade Your Account</h4>
 
-    <p class="mt-3">
-      To upgrade, deposit your membership fee into the Rooms4You account using
-      your unique reference:
-    </p>
+    <p class="mt-3">Use your unique reference when making payment:</p>
 
     <h5 class="text-primary">{{ membership.payment_reference }}</h5>
-
-    <p class="text-muted mt-2">
-      This reference links your payment to your account.
-    </p>
 
     <hr />
 
     <p>
-      After payment, click the button below and our team will verify, approve
-      and activate your membership.
+      After payment, click below and we will verify and activate your account.
     </p>
 
     <form method="POST">
@@ -200,7 +191,7 @@
     </form>
 
     <p class="mt-3 text-muted">
-      ✔ Cancel anytime — your account will simply return to Starter4You.
+      ✔ You can cancel anytime — your account will revert to Starter4You.
     </p>
   </div>
 </div>
