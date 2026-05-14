@@ -95,7 +95,6 @@ class BakkieDriver(models.Model):
     )
 
     full_name = models.CharField(max_length=120)
-
     phone_number = models.CharField(max_length=30)
 
     vehicle_type = models.CharField(
@@ -105,15 +104,22 @@ class BakkieDriver(models.Model):
 
     vehicle_registration = models.CharField(max_length=30)
 
-    licence_image = CloudinaryField("driver_license", null=True, blank=True)
-    
-    city = models.CharField(max_length=120)
+    licence_image = CloudinaryField(
+        "driver_license",
+        null=True,
+        blank=True
+    )
 
-    is_verified = models.BooleanField(default=False)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=120)
+    province = models.CharField(max_length=120)
 
     latitude = models.FloatField(null=True, blank=True)
-
     longitude = models.FloatField(null=True, blank=True)
+
+    is_verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    must_change_password = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

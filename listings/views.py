@@ -125,10 +125,7 @@ def landlord_images_hub(request):
         }
     )
 
-
-# -----------------------------
 # PUBLIC PAGES
-# -----------------------------
 def home(request):
     """
     Home page:
@@ -159,9 +156,14 @@ def home(request):
         "values": {"q": q, "location": location, "type": room_type},
         "selected": {
             "any": room_type == "",
-            "single": room_type == "single",
-            "shared": room_type == "shared",
-            "flat": room_type == "flat",
+            "Single Room": room_type == "Single Room",
+            "Shared Room": room_type == "Shared Room",
+            "Bachelor": room_type == "Bachelor",
+            "Ensuite": room_type == "Ensuite",
+            "Student Accommodation": room_type == "Student Accommodation",
+            "Backroom": room_type == "Backroom",
+            "Cottage": room_type == "Cottage",
+            "Apartment": room_type == "Apartment",
         },
     }
     return render(request, "listings/home.html", context)
@@ -186,7 +188,6 @@ def contact(request):
 
 
 # ROOMS: list + detail
-# -----------------------------
 def room_list(request):
     q = (request.GET.get("q") or "").strip()
     location = (request.GET.get("location") or "").strip()
@@ -364,12 +365,6 @@ def room_list(request):
             "page_obj": page_obj,
             "paginator": paginator,
             "values": {"q": q, "location": location, "type": room_type, "sort": sort},
-            "selected": {
-                "any": room_type == "",
-                "single": room_type == "single",
-                "shared": room_type == "shared",
-                "flat": room_type == "flat",
-            },
             "sort_selected": sort_selected,
             "suggested_location": suggested_location,
             "searched_location": searched_location,
@@ -548,10 +543,12 @@ def user_login(request):
     login_value = (request.POST.get("email") or "").strip()
     password = request.POST.get("password") or ""
 
-    next_url = request.GET.get("next")  # 🔥 capture early
+    next_url = request.GET.get("next")
 
-    user_obj = User.objects.filter(email__iexact=login_value).first() \
+    user_obj = (
+        User.objects.filter(email__iexact=login_value).first()
         or User.objects.filter(username__iexact=login_value).first()
+    )
 
     if not user_obj:
         messages.error(request, "Invalid credentials.")
@@ -575,7 +572,6 @@ def user_login(request):
             request.session["pending_user_id"] = user.id
             return redirect("verify_phone")
 
-        # ALWAYS ENSURE SINGLE OTP
         PhoneOTP.objects.filter(user=user).delete()
 
         otp = generate_otp()
@@ -594,21 +590,25 @@ def user_login(request):
         messages.warning(request, "We sent you an OTP code.")
         return redirect("verify_phone")
 
-    # LOGIN FIRST (CRITICAL)
+    # LOGIN
     with transaction.atomic():
         login(request, user)
 
-    # PROFILE COMPLETION
+    # 🔐 FORCE PASSWORD CHANGE CHECK (ADD HERE)
+    if getattr(user.profile, "must_change_password", False):
+        return redirect("change_password")
+
+    # PROFILE COMPLETION WARNING (non-blocking)
     if profile_needs_update(user):
         messages.info(request, "You can complete your profile anytime in settings.")
 
     messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
-    # RESPECT NEXT URL (THIS FIXES LOOP)
+    # NEXT URL SUPPORT
     if next_url:
         return redirect(next_url)
 
-    # ROLE REDIRECT
+    # ROLE REDIRECTS
     if hasattr(user, "profile"):
 
         if user.profile.role == "driver":

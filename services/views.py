@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 
 from .models import (
     GuardianSession,
@@ -177,8 +178,6 @@ def register_bakkie_driver(request):
         if form.is_valid():
 
             phone = form.cleaned_data["phone_number"]
-
-            # normalize SA number
             phone = phone.replace(" ", "")
 
             if phone.startswith("0"):
@@ -186,28 +185,36 @@ def register_bakkie_driver(request):
 
             phone = f"+27{phone}"
 
-            # prevent duplicate applications
-            if BakkieDriver.objects.filter(
-                phone_number=phone
-            ).exists():
-                messages.error(
-                    request,
-                    "A driver application already exists for this number."
-                )
-                return redirect("services:register_bakkie_driver")
+            from django.contrib.auth.models import User
+
+            username = phone.replace("+", "")
+
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={
+                    "email": f"{username}@driver.rooms4you.co.za"
+                }
+            )
+
+            if created:
+                temp_password = get_random_string(10)
+
+                user.set_password(temp_password)
+                user.save()
 
             driver = form.save(commit=False)
-
             driver.phone_number = phone
+            driver.user = user
             driver.is_verified = False
-            driver.user = None   # created later by admin
-
             driver.save()
+
+            profile = user.profile
+            profile.role = "driver"
+            profile.save()
 
             messages.success(
                 request,
-                "Application submitted successfully. "
-                "We will verify your documents and contact you."
+                f"Account created. Username: {username} | Temporary password: {temp_password}"
             )
 
             return redirect("login")
@@ -218,9 +225,7 @@ def register_bakkie_driver(request):
     return render(
         request,
         "services/register_driver.html",
-        {
-            "form": form
-        }
+        {"form": form}
     )
 
 

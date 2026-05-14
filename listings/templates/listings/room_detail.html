@@ -170,30 +170,36 @@
 </div>
 
 <!-- ================= SHARE + SLIDER JS ================= -->
+<!-- ================= SHARE ================= -->
 {% block extra_js %}
 <script>
-    /* SHARE */
-    (function () {
-      const btn = document.getElementById("shareBtn");
-      if (!btn) return;
+  (function () {
+    const btn = document.getElementById("shareBtn");
+    if (!btn) return;
 
-      btn.addEventListener("click", async () => {
-        const url = window.location.href;
+    btn.addEventListener("click", async () => {
+      const url = window.location.href;
 
-        try {
-          if (navigator.share) {
-            await navigator.share({ title: document.title, url });
-            return;
-          }
-        } catch (e) {}
-
-        try {
-          await navigator.clipboard.writeText(url);
-          btn.textContent = "✅ Copied";
-          setTimeout(() => (btn.textContent = "🔗 Share"), 1500);
-        } catch (e) {
-          prompt("Copy link:", url);
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: document.title,
+            url: url,
+          });
+          return;
         }
-      });
-    })();
+      } catch (e) {}
+
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = "✅ Copied";
+        setTimeout(() => {
+          btn.textContent = "🔗 Share";
+        }, 1500);
+      } catch (e) {
+        prompt("Copy link:", url);
+      }
+    });
+  })();
+</script>
 {% endblock %} {% endblock %}

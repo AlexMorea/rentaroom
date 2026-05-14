@@ -3,11 +3,6 @@
 <div class="container">
   <h2 class="page-title">🚚 Register Driver</h2>
 
-  <p class="text-muted" style="margin-bottom: 20px">
-    Submit your application for verification. Once approved, we will create your
-    driver account and send your login details.
-  </p>
-
   <div class="form-card">
     <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
@@ -18,7 +13,7 @@
       </div>
 
       <div class="form-field">
-        <label>Phone Number</label>
+        <label>Phone</label>
         {{ form.phone_number }}
       </div>
 
@@ -33,22 +28,65 @@
       </div>
 
       <div class="form-field">
+        <label>Address</label>
+        {{ form.address }}
+      </div>
+
+      <div class="form-field">
         <label>City</label>
         {{ form.city }}
       </div>
 
-      <!-- 🔥 DRIVER LICENSE UPLOAD -->
       <div class="form-field">
-        <label>Driver’s License</label>
-        {{ form.licence_image }}
-        <small
-          >Upload clear image of your license (required for approval)</small
-        >
+        <label>Province</label>
+        {{ form.province }}
       </div>
 
-      <button class="btn-primary" type="submit">Submit for Verification</button>
+      {{ form.latitude }} {{ form.longitude }}
+
+      <button type="button" id="useLocationBtn" class="btn-secondary">
+        📍 Use My Current Location
+      </button>
+
+      <br /><br />
+
+      <div class="form-field">
+        <label>Driver License</label>
+        {{ form.licence_image }}
+      </div>
+
+      <button class="btn-primary">Submit for Verification</button>
     </form>
   </div>
 </div>
+
+<script>
+  document.getElementById("useLocationBtn").onclick = function () {
+    if (!navigator.geolocation) {
+      alert("GPS not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async function (pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      document.getElementById("id_latitude").value = lat;
+      document.getElementById("id_longitude").value = lng;
+
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      document.getElementById("id_address").value = data.display_name || "";
+
+      document.getElementById("id_city").value =
+        data.address.city || data.address.town || "";
+
+      document.getElementById("id_province").value = data.address.state || "";
+    });
+  };
+</script>
 
 {% endblock %}

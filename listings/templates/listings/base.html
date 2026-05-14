@@ -403,5 +403,15 @@
         });
       })();
     </script>
+    <script>
+      window.GOOGLE_MAPS_API_KEY = "{{ GOOGLE_MAPS_API_KEY }}";
+    </script>
+
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places"
+      defer
+    ></script>
+
+    <script src="{% static 'js/google_address_autofill.js' %}" defer></script>
   </body>
 </html>

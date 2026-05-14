@@ -73,36 +73,15 @@ class BakkieDriverAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
 
-        super().save_model(
-            request,
-            obj,
-            form,
-            change
-        )
+        if obj.is_verified and not obj.verified_at:
+            obj.verified_at = timezone.now()
 
-        # only create account once approved
-        if obj.is_verified and not obj.user:
-
-            username = obj.phone_number.replace("+", "")
-
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={
-                    "email": f"{username}@driver.rooms4you.co.za"
-                }
-            )
-
-            if created:
-                user.set_password("ChangeMe123!")
-                user.save()
-
-            obj.user = user
-            obj.save()
+        super().save_model(request, obj, form, change)
 
         if obj.user:
             profile = obj.user.profile
             profile.role = "driver"
-            profile.is_verified = True
+            profile.is_verified = obj.is_verified
             profile.is_phone_verified = True
             profile.is_email_verified = True
             profile.save()

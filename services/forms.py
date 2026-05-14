@@ -43,7 +43,11 @@ class BakkieDriverForm(forms.ModelForm):
             "phone_number",
             "vehicle_type",
             "vehicle_registration",
+            "address",
             "city",
+            "province",
+            "latitude",
+            "longitude",
             "licence_image",
         ]
 
@@ -53,4 +57,6 @@ class BakkieDriverForm(forms.ModelForm):
             "vehicle_type": forms.Select(attrs={"class": "input"}),
             "vehicle_registration": forms.TextInput(attrs={"class": "input"}),
             "city": forms.TextInput(attrs={"class": "input"}),
+            "latitude": forms.HiddenInput(),
+            "longitude": forms.HiddenInput(),
         }

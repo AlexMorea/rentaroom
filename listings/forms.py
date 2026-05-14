@@ -92,13 +92,27 @@ class UserRegisterForm(forms.Form):
         if p1:
             validate_password(p1)
 
-        # ALL USERS MUST HAVE PHONE
         if not cleaned.get("phone_number"):
             self.add_error("phone_number", "Phone number is required.")
 
-        if role == "tenant":
-            if not cleaned.get("persona"):
-                self.add_error("persona", "Select your persona.")
+        # ================= GOOGLE ADDRESS VALIDATION =================
+        full_address = cleaned.get("full_address")
+
+        if not full_address:
+            self.add_error(
+                "full_address",
+                "Please select a valid address from Google suggestions."
+            )
+
+        elif len(full_address.strip()) < 10:
+            self.add_error(
+                "full_address",
+                "Address looks too short. Please select a valid Google address."
+            )
+
+        # ================= ROLE RULES =================
+        if role == "tenant" and not cleaned.get("persona"):
+            self.add_error("persona", "Select your persona.")
 
         if role == "landlord":
             if not cleaned.get("home_address"):
@@ -109,7 +123,7 @@ class UserRegisterForm(forms.Form):
                 self.add_error("terms_accepted", "You must accept terms.")
 
         return cleaned
-    
+        
     def save(self):
         email = (self.cleaned_data["email"] or "").strip().lower()
         first_name = (self.cleaned_data["first_name"] or "").strip()

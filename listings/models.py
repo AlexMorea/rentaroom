@@ -192,6 +192,20 @@ class Profile(models.Model):
   
     terms_accepted = models.BooleanField(default=False)
 
+    gps_latitude = models.FloatField(null=True, blank=True)
+    gps_longitude = models.FloatField(null=True, blank=True)
+    gps_accuracy = models.FloatField(null=True, blank=True)  # meters
+    gps_captured_at = models.DateTimeField(null=True, blank=True)
+    gps_source = models.CharField(
+        max_length=20,
+        choices=[
+            ("self", "Self reported"),
+            ("browser", "Browser GPS"),
+            ("admin", "Admin verified"),
+        ],
+        default="self"
+    )
+
     def full_phone(self):
         phone = (self.phone_number or "").strip()
 
@@ -237,6 +251,10 @@ class RoomStat(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     stat_type = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
+    gps_latitude = models.FloatField(null=True, blank=True)
+    gps_longitude = models.FloatField(null=True, blank=True)
+    address_confidence_score = models.FloatField(default=0.0)
+    is_suspicious = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.stat_type} — {self.room.title}"

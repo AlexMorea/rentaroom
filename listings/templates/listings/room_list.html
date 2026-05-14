@@ -16,13 +16,63 @@
 
   <select name="type">
     <option value="" {% if selected.any %}selected{% endif %}>Any Type</option>
-    <option value="single" {% if selected.single %}selected{% endif %}>
-      Single
+
+    <option
+      value="Single Room"
+      {%
+      if
+      selected.Single
+      Room
+      %}selected{%
+      endif
+      %}
+    >
+      Single Room
     </option>
-    <option value="shared" {% if selected.shared %}selected{% endif %}>
-      Shared
+
+    <option
+      value="Shared Room"
+      {%
+      if
+      selected.Shared
+      Room
+      %}selected{%
+      endif
+      %}
+    >
+      Shared Room
     </option>
-    <option value="flat" {% if selected.flat %}selected{% endif %}>
+
+    <option value="Bachelor" {% if selected.Bachelor %}selected{% endif %}>
+      Bachelor
+    </option>
+
+    <option value="Ensuite" {% if selected.Ensuite %}selected{% endif %}>
+      Ensuite
+    </option>
+
+    <option
+      value="Student Accommodation"
+      {%
+      if
+      selected.Student
+      Accommodation
+      %}selected{%
+      endif
+      %}
+    >
+      Student Accommodation
+    </option>
+
+    <option value="Backroom" {% if selected.Backroom %}selected{% endif %}>
+      Backroom
+    </option>
+
+    <option value="Cottage" {% if selected.Cottage %}selected{% endif %}>
+      Cottage
+    </option>
+
+    <option value="Apartment" {% if selected.Apartment %}selected{% endif %}>
       Flat / Apartment
     </option>
   </select>
