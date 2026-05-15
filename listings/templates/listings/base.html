@@ -47,13 +47,14 @@
 
       {% if user.profile.role == "landlord" %}
       <a href="/dashboard/">📊 Dashboard</a>
+      <a href="{% url 'services:bakkie_home' %}">🚚 Bakkie4You</a>
       {% endif %} {% if user.profile.role == "tenant" %}
       <hr />
       <a href="{% url 'services:bakkie_home' %}">🚚 Bakkie4You</a>
       <a href="{% url 'services:guardian_home' %}">🛡 Guardian4You</a>
       {% endif %} {% if user.profile.role == "driver" %}
       <hr />
-      <a href="{% url 'services:register_driver' %}">🚚 Driver Panel</a>
+      <a href="{% url 'services:driver_dashboard' %}">🚚 Driver Panel</a>
       {% endif %}
 
       <hr />
