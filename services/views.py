@@ -6,6 +6,9 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.crypto import get_random_string
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+
 
 from .models import (
     GuardianSession,
@@ -177,45 +180,73 @@ def register_bakkie_driver(request):
 
         if form.is_valid():
 
-            phone = form.cleaned_data["phone_number"]
-            phone = phone.replace(" ", "")
+            phone = form.cleaned_data["phone_number"].replace(" ", "")
+            email = form.cleaned_data["email"].lower().strip()
 
             if phone.startswith("0"):
                 phone = phone[1:]
 
             phone = f"+27{phone}"
 
-            from django.contrib.auth.models import User
+            # login uses email
+            username = email
 
-            username = phone.replace("+", "")
+            # prevent duplicate users
+            if User.objects.filter(username=username).exists():
+                messages.warning(
+                    request,
+                    "A driver with this email already exists. Please login."
+                )
+                return redirect("login")
 
-            user, created = User.objects.get_or_create(
+            # create temp password
+            temp_password = get_random_string(10)
+
+            # create django user
+            user = User.objects.create_user(
                 username=username,
-                defaults={
-                    "email": f"{username}@driver.rooms4you.co.za"
-                }
+                email=email,
+                password=temp_password
             )
 
-            if created:
-                temp_password = get_random_string(10)
-
-                user.set_password(temp_password)
-                user.save()
-
+            # create driver profile
             driver = form.save(commit=False)
             driver.phone_number = phone
+            driver.email = email
             driver.user = user
-            driver.is_verified = False
+            driver.is_verified = True   # beta instant access
             driver.save()
 
+            # assign role
             profile = user.profile
             profile.role = "driver"
             profile.save()
 
-            messages.success(
-                request,
-                f"Account created. Username: {username} | Temporary password: {temp_password}"
-            )
+            # email credentials
+            try:
+                send_mail(
+                    "Your Rooms4You Driver Account",
+                    (
+                        f"Welcome to Rooms4You Bakkie4You.\n\n"
+                        f"Login Email: {email}\n"
+                        f"Temporary Password: {temp_password}\n\n"
+                        f"Please login and change your password immediately."
+                    ),
+                    None,
+                    [email],
+                    fail_silently=False,
+                )
+
+                messages.success(
+                    request,
+                    "Driver registered successfully. Login details sent to your email."
+                )
+
+            except Exception:
+                messages.warning(
+                    request,
+                    f"Driver created successfully. Temporary password: {temp_password}"
+                )
 
             return redirect("login")
 
@@ -233,21 +264,18 @@ def register_bakkie_driver(request):
 def driver_dashboard(request):
 
     driver = BakkieDriver.objects.filter(
-        user=request.user,
-        is_verified=True
+        user=request.user
     ).first()
 
     if not driver:
         messages.error(
             request,
-            "Your driver account is pending verification."
+            "No driver profile found."
         )
         return redirect("services:bakkie_home")
 
     return render(
         request,
         "services/driver_dashboard.html",
-        {
-            "driver": driver
-        }
+        {"driver": driver}
     )

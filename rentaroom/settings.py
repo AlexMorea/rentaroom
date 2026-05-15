@@ -189,3 +189,5 @@ LOGGING = {
         "rooms4you_email": {"handlers": ["console"], "level": "INFO"},
     },
 }
+
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"

@@ -40,6 +40,7 @@ class BakkieDriverForm(forms.ModelForm):
 
         fields = [
             "full_name",
+            "email",
             "phone_number",
             "vehicle_type",
             "vehicle_registration",
@@ -53,6 +54,7 @@ class BakkieDriverForm(forms.ModelForm):
 
         widgets = {
             "full_name": forms.TextInput(attrs={"class": "input"}),
+            "email": forms.EmailInput(attrs={"class": "input"}),
             "phone_number": forms.TextInput(attrs={"class": "input"}),
             "vehicle_type": forms.Select(attrs={"class": "input"}),
             "vehicle_registration": forms.TextInput(attrs={"class": "input"}),

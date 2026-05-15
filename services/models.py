@@ -95,6 +95,11 @@ class BakkieDriver(models.Model):
     )
 
     full_name = models.CharField(max_length=120)
+    email = models.EmailField(
+        unique=True,
+        blank=True,
+        null=True
+    )
     phone_number = models.CharField(max_length=30)
 
     vehicle_type = models.CharField(
