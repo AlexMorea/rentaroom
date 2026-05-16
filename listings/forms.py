@@ -95,21 +95,25 @@ class UserRegisterForm(forms.Form):
         if not cleaned.get("phone_number"):
             self.add_error("phone_number", "Phone number is required.")
 
+
         # ================= GOOGLE ADDRESS VALIDATION =================
-        full_address = cleaned.get("full_address")
+        # only validate for landlords
+        if role == "landlord":
+            home_address = cleaned.get("home_address")
 
-        if not full_address:
-            self.add_error(
-                "full_address",
-                "Please select a valid address from Google suggestions."
-            )
+            if not home_address:
+                self.add_error(
+                    "home_address",
+                    "Please select a valid address from Google suggestions."
+                )
 
-        elif len(full_address.strip()) < 10:
-            self.add_error(
-                "full_address",
-                "Address looks too short. Please select a valid Google address."
-            )
+            elif len(home_address.strip()) < 10:
+                self.add_error(
+                    "home_address",
+                    "Address looks too short. Please select a valid Google address."
+                )
 
+                
         # ================= ROLE RULES =================
         if role == "tenant" and not cleaned.get("persona"):
             self.add_error("persona", "Select your persona.")
