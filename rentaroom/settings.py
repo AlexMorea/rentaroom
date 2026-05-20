@@ -82,7 +82,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
 
-                # ✅ GOOGLE MAPS KEY
+                # GOOGLE MAPS KEY
                 "listings.context_processors.google_maps_key",
             ],
         },

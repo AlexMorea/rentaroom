@@ -1,7 +1,8 @@
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
-from django.db.models import Avg, Count, Q
+from django.db.models import Count, Q
 from django.http import HttpResponseForbidden
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse
@@ -16,7 +17,6 @@ from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
 from difflib import get_close_matches
 from django.contrib.auth.models import User
-import re
 from accounts.helpers import generate_membership_id
 from .models import PhoneOTP
 from django.conf import settings
