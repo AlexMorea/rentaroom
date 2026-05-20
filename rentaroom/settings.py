@@ -99,10 +99,14 @@ if DATABASE_URL and dj_database_url:
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
-            conn_max_age=600,
+            conn_max_age=60,   # was 600
             ssl_require=True,
         )
     }
+
+    # prevents stale SSL connection failures
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+
 else:
     DATABASES = {
         "default": {
@@ -111,6 +115,25 @@ else:
         }
     }
 
+REDIS_URL = os.getenv("REDIS_URL", "")
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND":
+            "django.core.cache.backends.locmem.LocMemCache"
+        }
+    }
 
 # ================= SECURITY =================
 if not DEBUG:
@@ -178,7 +201,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "thabisomorea@gmail.co
 DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 
 
-# ================= LOGGING =================
+# ================= LOGGING =================a
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

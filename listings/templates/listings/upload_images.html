@@ -9,8 +9,11 @@
 </form>
 
 <div class="image-preview">
-  {% for img in room.images.all %}
-  <img src="{{ img.image.url }}" height="100" />
+  {% for img in room.images.all|slice:":10" %}
+  <img
+    src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
+    height="100"
+  />
   {% empty %}
   <p>No images uploaded yet.</p>
   {% endfor %}

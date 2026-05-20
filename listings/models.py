@@ -24,6 +24,13 @@ class Room(models.Model):
                 name="uniq_room_owner_title_location_type_price",
             )
         ]
+
+        indexes = [
+            models.Index(fields=["is_available"]),
+            models.Index(fields=["location"]),
+            models.Index(fields=["price"]),
+            models.Index(fields=["created_at"]),
+        ]
         
     ROOM_TYPES = [
         ("Single Room", "Single Room"),
@@ -247,6 +254,13 @@ class Contact(models.Model):
         return f"{self.user} → {self.room.title}"
 
 class RoomStat(models.Model):
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["room"]),
+            models.Index(fields=["stat_type"]),
+        ]
+
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     stat_type = models.CharField(max_length=20)
@@ -296,6 +310,10 @@ class Favorite(models.Model):
 
     class Meta:
         unique_together = ("user", "room")
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["room"]),
+        ]
 
     def __str__(self):
         return f"{self.user.username} ♥ {self.room.title}"

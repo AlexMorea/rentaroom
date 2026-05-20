@@ -39,7 +39,7 @@
 
     <div id="sidebar" class="sidebar">
       <div class="sidebar-header">
-        <h3>Neighbor</h3>
+        <h3>Neighbour</h3>
       </div>
 
       <a href="/">🏠 Browse</a>
@@ -357,49 +357,31 @@
             return slider.clientWidth;
           }
 
-          next?.addEventListener("click", (e) => {
+          next?.addEventListener("click", function (e) {
             e.preventDefault();
+            e.stopPropagation();
+
             track.scrollBy({
               left: getSlideWidth(),
               behavior: "smooth",
             });
           });
 
-          prev?.addEventListener("click", (e) => {
+          prev?.addEventListener("click", function (e) {
             e.preventDefault();
+            e.stopPropagation();
+
             track.scrollBy({
               left: -getSlideWidth(),
               behavior: "smooth",
             });
           });
 
-          // swipe support
-          let startX = 0;
-
-          track.addEventListener("touchstart", (e) => {
-            startX = e.touches[0].clientX;
-          });
-
-          track.addEventListener("touchend", (e) => {
-            const diff = startX - e.changedTouches[0].clientX;
-
-            if (diff > 40) {
-              track.scrollBy({
-                left: getSlideWidth(),
-                behavior: "smooth",
-              });
-            }
-
-            if (diff < -40) {
-              track.scrollBy({
-                left: -getSlideWidth(),
-                behavior: "smooth",
-              });
-            }
-          });
+          // disable finger swipe on mobile
+          track.style.touchAction = "none";
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", function () {
           document.querySelectorAll("[data-slider]").forEach(initSlider);
         });
       })();

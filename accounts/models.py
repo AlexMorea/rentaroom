@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth.models import User
-import uuid
+from accounts.helpers import generate_membership_id
 from cloudinary.models import CloudinaryField
 
 
@@ -61,7 +61,7 @@ class Membership(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.membership_id:
-            self.membership_id = f"R4Y-{uuid.uuid4().hex[:6].upper()}"
+            self.membership_id = generate_membership_id()
 
         if not self.trial_end:
             self.trial_end = self.trial_start + timezone.timedelta(days=30)

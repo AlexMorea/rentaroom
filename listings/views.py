@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from difflib import get_close_matches
 from django.contrib.auth.models import User
 import re
-import uuid
+from accounts.helpers import generate_membership_id
 from .models import PhoneOTP
 from django.conf import settings
 from .models import EmailVerification
@@ -29,6 +29,9 @@ from datetime import timedelta
 from django.contrib.sites.shortcuts import get_current_site
 from accounts.models import Membership
 from .forms import ListingForm
+from django.db.models import Prefetch
+import logging
+from django.db import DatabaseError
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 
@@ -51,8 +54,8 @@ def get_or_create_membership(user):
 
     # Ensure membership ID always exists
     if not membership.membership_id:
-        membership.membership_id = f"R4Y-{uuid.uuid4().hex[:6].upper()}"
-        membership.save()
+        membership.membership_id = generate_membership_id()
+        membership.save(update_fields=["membership_id"])
 
     return membership
 
@@ -189,16 +192,41 @@ def contact(request):
 
 # ROOMS: list + detail
 def room_list(request):
+
+    # ================= CACHE CHECK =================
+    cache_key = f"room_list:{request.get_full_path()}"
+
+    cached_response = cache.get(cache_key)
+
+    if cached_response:
+        return cached_response
+
+    # ================= REQUEST PARAMS =================
     q = (request.GET.get("q") or "").strip()
     location = (request.GET.get("location") or "").strip()
     room_type = (request.GET.get("type") or "").strip()
     sort = (request.GET.get("sort") or "").strip()
 
-    rooms_qs = Room.objects.filter(is_available=True)
+    # ================= BASE QUERY =================
+    rooms_qs = (
+        Room.objects.filter(is_available=True)
+        .select_related("owner__profile")
+        .prefetch_related(
+            Prefetch(
+                "images",
+                queryset=RoomImage.objects.only(
+                    "id",
+                    "image",
+                    "room_id"
+                )
+            )
+        )
+    )
 
     suggested_location = ""
     searched_location = location
 
+    # ================= SEARCH =================
     if q:
         rooms_qs = rooms_qs.filter(
             Q(title__icontains=q)
@@ -207,23 +235,31 @@ def room_list(request):
             | Q(room_type__icontains=q)
         )
 
+    # ================= LOCATION =================
     if location:
         exact_location_qs = rooms_qs.filter(location__icontains=location)
 
         if exact_location_qs.exists():
             rooms_qs = exact_location_qs
         else:
-            all_locations = list(
-                Room.objects.filter(is_available=True)
-                .exclude(location__isnull=True)
-                .exclude(location__exact="")
-                .values_list("location", flat=True)
-                .distinct()
-            )
+            all_locations = cache.get("all_locations")
+
+            if not all_locations:
+                all_locations = list(
+                    Room.objects.filter(is_available=True)
+                    .exclude(location__isnull=True)
+                    .exclude(location__exact="")
+                    .values_list("location", flat=True)
+                    .distinct()
+                )
+
+                cache.set("all_locations", all_locations, 3600)
 
             lowered_map = {}
+
             for loc in all_locations:
                 key = loc.strip().lower()
+
                 if key and key not in lowered_map:
                     lowered_map[key] = loc.strip()
 
@@ -241,68 +277,52 @@ def room_list(request):
                 n=5,
                 cutoff=0.6,
             )
+
             close_matches = [lowered_map[key] for key in close_keys]
 
             candidate_locations = []
+
             for loc_name in partial_matches + close_matches:
                 if loc_name not in candidate_locations:
                     candidate_locations.append(loc_name)
 
             if candidate_locations:
                 location_filter = Q()
+
                 for loc_name in candidate_locations:
                     location_filter |= Q(location__icontains=loc_name)
 
                 rooms_qs = rooms_qs.filter(location_filter)
                 suggested_location = candidate_locations[0]
+
             else:
                 rooms_qs = rooms_qs.none()
 
+    # ================= ROOM TYPE =================
     if room_type:
         rooms_qs = rooms_qs.filter(room_type=room_type)
 
-    rooms = (
-        rooms_qs.annotate(
-            avg_rating=Avg("reviews__rating"),
-            review_count=Count("reviews", distinct=True),
-            contact_count=Count(
-                "roomstat",
-                filter=Q(roomstat__stat_type__startswith="contact"),
-                distinct=True,
-            ),
-            landlord_review_total=Count("owner__rooms__reviews", distinct=True),
-            landlord_contact_total=Count(
-                "owner__rooms__roomstat",
-                filter=Q(owner__rooms__roomstat__stat_type__startswith="contact"),
-                distinct=True,
-            ),
-        )
-        .select_related("owner__profile")
-        .prefetch_related("images")
-    )
-
+    # ================= SORTING =================
     if sort == "new":
-        rooms = rooms.order_by("-created_at")
-    elif sort == "price_low":
-        rooms = rooms.order_by("price", "-created_at")
-    elif sort == "price_high":
-        rooms = rooms.order_by("-price", "-created_at")
-    elif sort == "rating":
-        rooms = rooms.order_by("-avg_rating", "-review_count", "-created_at")
-    else:
-        rooms = rooms.order_by(
-            "-landlord_contact_total",
-            "-landlord_review_total",
-            "-contact_count",
-            "-review_count",
-            "-created_at",
-        )
+        rooms = rooms_qs.order_by("-created_at")
 
+    elif sort == "price_low":
+        rooms = rooms_qs.order_by("price", "-created_at")
+
+    elif sort == "price_high":
+        rooms = rooms_qs.order_by("-price", "-created_at")
+
+    else:
+        rooms = rooms_qs.order_by("-created_at")
+
+    # ================= PAGINATION =================
     page_number = request.GET.get("page") or 1
-    paginator = Paginator(rooms, 6)
+
+    paginator = Paginator(rooms, 8)
+
     page_obj = paginator.get_page(page_number)
 
-    # MAP DATA
+    # ================= MAP DATA =================
     map_rooms = list(
         page_obj.object_list.values(
             "id",
@@ -313,17 +333,21 @@ def room_list(request):
         )
     )
 
-    is_ajax = request.GET.get("ajax") == "1" or request.headers.get(
-        "X-Requested-With"
-    ) == "XMLHttpRequest"
+    # ================= AJAX =================
+    is_ajax = (
+        request.GET.get("ajax") == "1"
+        or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    )
 
     if is_ajax:
+
         html = render_to_string(
             "listings/_room_cards.html",
             {"rooms": page_obj.object_list},
             request=request,
         )
-        return JsonResponse(
+
+        response = JsonResponse(
             {
                 "html": html,
                 "page": page_obj.number,
@@ -341,12 +365,17 @@ def room_list(request):
             }
         )
 
+        # CACHE AJAX RESPONSE
+        cache.set(cache_key, response, 60)
+
+        return response
+
+    # ================= SORT UI =================
     sort_selected = {
         "best": sort == "",
         "new": sort == "new",
         "price_low": sort == "price_low",
         "price_high": sort == "price_high",
-        "rating": sort == "rating",
     }
 
     show_location_suggestion = (
@@ -356,7 +385,8 @@ def room_list(request):
         != searched_location.strip().lower()
     )
 
-    return render(
+    # ================= FINAL RESPONSE =================
+    response = render(
         request,
         "listings/room_list.html",
         {
@@ -364,7 +394,12 @@ def room_list(request):
             "rooms": page_obj.object_list,
             "page_obj": page_obj,
             "paginator": paginator,
-            "values": {"q": q, "location": location, "type": room_type, "sort": sort},
+            "values": {
+                "q": q,
+                "location": location,
+                "type": room_type,
+                "sort": sort,
+            },
             "sort_selected": sort_selected,
             "suggested_location": suggested_location,
             "searched_location": searched_location,
@@ -372,25 +407,69 @@ def room_list(request):
         },
     )
 
+    # ================= CACHE FINAL HTML =================
+    cache.set(cache_key, response, 60)
+
+    return response
+
+logger = logging.getLogger(__name__)
+
 
 def room_detail(request, pk):
-    room = get_object_or_404(Room, pk=pk, is_available=True)
 
-    RoomStat.objects.create(
-        room=room,
-        user=request.user if request.user.is_authenticated else None,
-        stat_type="view",
+    room = get_object_or_404(
+        Room.objects
+        .select_related("owner__profile")
+        .prefetch_related(
+            Prefetch(
+                "images",
+                queryset=RoomImage.objects.only(
+                    "id",
+                    "image",
+                    "room_id"
+                )
+            )
+        ),
+        pk=pk,
+        is_available=True
     )
 
+    # lightweight analytics write
+    try:
+        RoomStat.objects.create(
+            room_id=room.id,
+            user=request.user if request.user.is_authenticated else None,
+            stat_type="view",
+        )
+
+    except DatabaseError as e:
+        logger.warning(
+            "Failed to create room view stat for room %s: %s",
+            room.id,
+            str(e)
+        )
+
     is_saved = False
+
     if (
         request.user.is_authenticated
         and hasattr(request.user, "profile")
         and request.user.profile.role == "tenant"
     ):
-        is_saved = Favorite.objects.filter(user=request.user, room=room).exists()
+        is_saved = Favorite.objects.filter(
+            user=request.user,
+            room_id=room.id
+        ).exists()
 
-    return render(request, "listings/room_detail.html", {"room": room, "is_saved": is_saved})
+    return render(
+        request,
+        "listings/room_detail.html",
+        {
+            "room": room,
+            "is_saved": is_saved,
+        },
+    )
+
 
 # AUTH: register/login/logout
 def register(request):
@@ -475,6 +554,14 @@ def verify_phone(request):
     user = User.objects.get(id=user_id)
     profile = user.profile
 
+    # ---- calculate resend countdown ----
+    cache_key = f"otp_resend_{user.id}"
+    ttl = cache.ttl(cache_key) if hasattr(cache, "ttl") else None
+
+    # fallback if backend doesn't support ttl
+    if ttl is None:
+        ttl = 60 if cache.get(cache_key) else 0
+
     if request.method == "POST":
         otp_input = request.POST.get("otp")
 
@@ -482,7 +569,7 @@ def verify_phone(request):
             messages.error(request, "Enter a valid 6-digit OTP")
             return render(request, "listings/verify_phone.html", {
                 "error_state": True,
-                "cooldown_active": not can_resend_otp(user.id)
+                "cooldown_seconds": ttl
             })
 
         attempts_key = f"otp_attempts:{user.id}"
@@ -511,28 +598,27 @@ def verify_phone(request):
             login(request, user)
             request.session.pop("pending_user_id", None)
 
-            # 🧹 prevent old OTP/login messages leaking into next session
             storage = messages.get_messages(request)
             list(storage)
 
             messages.success(request, "Phone verified successfully 🎉")
+
             if user.profile.role == "landlord":
                 return redirect("dashboard")
 
             return redirect("room_list")
 
-        # ❌ FAIL CASE
         cache.set(attempts_key, attempts + 1, timeout=300)
 
         messages.error(request, "Invalid or expired OTP")
 
         return render(request, "listings/verify_phone.html", {
             "error_state": True,
-            "cooldown_active": not can_resend_otp(user.id)
+            "cooldown_seconds": ttl
         })
 
     return render(request, "listings/verify_phone.html", {
-        "cooldown_active": not can_resend_otp(user.id)
+        "cooldown_seconds": ttl
     })
 
 
@@ -1625,10 +1711,10 @@ def change_phone(request):
 
         otp = generate_otp()
 
-        # 🔥 DELETE OLD OTPs
+        # DELETE OLD OTPs
         PhoneOTP.objects.filter(user=user).delete()
 
-        # ✅ STORE CLEAN NUMBER ONLY
+        # STORE CLEAN NUMBER ONLY
         PhoneOTP.objects.create(
             user=user,
             phone_number=phone,

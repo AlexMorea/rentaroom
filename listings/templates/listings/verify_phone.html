@@ -55,6 +55,23 @@
   const btn = document.getElementById("resend-btn");
   const msg = document.getElementById("resend-msg");
 
+  let seconds = {{ cooldown_seconds|default:0 }};
+
+  function updateTimer() {
+    if (seconds > 0) {
+      btn.disabled = true;
+      btn.innerText = `Resend OTP (${String(seconds).padStart(2, "0")}s)`;
+      seconds--;
+
+      setTimeout(updateTimer, 1000);
+    } else {
+      btn.disabled = false;
+      btn.innerText = "Resend OTP";
+    }
+  }
+
+  updateTimer();
+
   btn?.addEventListener("click", function () {
     btn.disabled = true;
 
@@ -63,29 +80,22 @@
       .then((data) => {
         if (data.success) {
           msg.innerHTML =
-            "<span style='color: #16a34a;'>" + data.message + "</span>";
+            "<span style='color:#16a34a'>" + data.message + "</span>";
 
-          setTimeout(
-            () => {
-              btn.disabled = false;
-            },
-            (data.cooldown || 60) * 1000,
-          );
+          seconds = data.cooldown;
+          updateTimer();
         } else {
           msg.innerHTML =
-            "<span style='color: #dc2626;'>" + data.error + "</span>";
+            "<span style='color:#dc2626'>" + data.error + "</span>";
 
-          setTimeout(() => {
-            btn.disabled = false;
-          }, 3000);
+          btn.disabled = false;
         }
       })
       .catch(() => {
-        msg.innerHTML = "<span style='color: #dc2626;'>Network error</span>";
+        msg.innerHTML =
+          "<span style='color:#dc2626'>Network error</span>";
 
-        setTimeout(() => {
-          btn.disabled = false;
-        }, 3000);
+        btn.disabled = false;
       });
   });
 </script>

@@ -4144,3 +4144,9 @@ body.scroll-down .trust-strip {
   color: #f97316;
   font-weight: 700;
 }
+
+.image-slider {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

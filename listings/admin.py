@@ -2,9 +2,6 @@ from django.contrib import admin
 from .models import Room, Review, RoomImage, Profile
 
 
-admin.site.register(Review)
-
-
 class RoomImageInline(admin.TabularInline):
     model = RoomImage
     extra = 1
@@ -16,22 +13,24 @@ class RoomAdmin(admin.ModelAdmin):
 
     list_display = (
         "title",
+        "owner",
         "location",
         "price",
         "room_type",
         "is_available",
-        "contact_phone",
     )
 
     list_filter = (
-        "location",
         "room_type",
         "is_available",
+        "city",
+        "province",
     )
 
     search_fields = (
         "title",
         "location",
+        "owner__username",
     )
 
 
@@ -41,13 +40,32 @@ class ProfileAdmin(admin.ModelAdmin):
         "user",
         "role",
         "is_verified_landlord",
+        "is_phone_verified",
+        "is_email_verified",
     )
 
     list_filter = (
         "role",
         "is_verified_landlord",
+        "is_phone_verified",
+        "is_email_verified",
     )
 
     list_editable = (
         "is_verified_landlord",
+    )
+
+    search_fields = (
+        "user__username",
+        "phone_number",
+    )
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        "room",
+        "user",
+        "rating",
+        "created_at",
     )

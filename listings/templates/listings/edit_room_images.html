@@ -42,9 +42,13 @@
     <div class="imgmgr-label" style="margin-bottom: 10px">Current photos</div>
 
     <div class="imgmgr-grid">
-      {% for img in room.images.all %}
+      {% for img in room.images.all|slice:":10" %}
       <div class="imgmgr-item">
-        <img class="imgmgr-img" src="{{ img.image.url }}" alt="Room photo" />
+        <img
+          class="imgmgr-img"
+          src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
+          alt="Room photo"
+        />
 
         <label class="imgmgr-del">
           <input type="checkbox" name="delete" value="{{ img.id }}" />

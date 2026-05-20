@@ -48,7 +48,7 @@
     >
       <a href="{% url 'edit_room_images' img.room.id %}" style="display: block">
         <img
-          src="{{ img.image.url }}"
+          src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
           alt="Room image"
           style="width: 100%; height: 140px; object-fit: cover; display: block"
           loading="lazy"
