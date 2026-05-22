@@ -76,7 +76,7 @@
       <div class="nav-container">
         <div class="brand">
           <nav class="navbar">
-            <a href="/" class="navbar-logo">
+            <a href="{% url 'home' %}" class="navbar-logo">
               <img
                 src="{% static 'images/rooms4you-logo.jpeg' %}"
                 alt="Rooms4You Logo"
@@ -163,6 +163,31 @@
       <p>© 2026 Rooms4You • Your data is protected.</p>
       <span class="beta-badge">BETA v1.0</span>
     </footer>
+
+    <!-- WhatsApp Support -->
+    <a
+      href="https://wa.me/27YOURNUMBER"
+      target="_blank"
+      style="
+        position: fixed;
+        right: 22px;
+        bottom: 22px;
+        width: 58px;
+        height: 58px;
+        background: #25d366;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 35px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        z-index: 9999;
+        text-decoration: none;
+      "
+    >
+      <i class="fab fa-whatsapp"></i>
+    </a>
 
     <!-- ================= SAFE AUTH CONTROL ================= -->
     <script>
@@ -335,7 +360,7 @@
           data-url="{% url 'services:register_bakkie_driver' %}"
           class="auth-option driver"
         >
-          🚚 Register as Driver
+          🚚 Become a Driver
         </button>
       </div>
     </div>

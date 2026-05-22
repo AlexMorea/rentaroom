@@ -1,172 +1,334 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<section class="home-hero">
-  <div class="home-hero-inner">
-    <div class="home-hero-copy">
-      <h1 class="home-title">Find Your Next Home</h1>
-      <p class="home-subtitle">
-        Browse rooms faster — built for <strong>students</strong>,
-        <strong>workers</strong>, and <strong>families</strong>. Verified
-        landlords stand out so you can make confident decisions.
-      </p>
+<style>
+  /* =========================
+     PREMIUM HERO GLOW
+  ========================= */
+  @keyframes r4uGlow {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    50% {
+      transform: scale(1.18);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+  }
 
-      <div class="home-actions">
-        <a class="btn-primary" href="{% url 'room_list' %}">Browse rooms</a>
-        <a class="btn-secondary" href="{% url 'safety' %}">Safety tips</a>
-      </div>
+  .r4u-glow {
+    animation: r4uGlow 6s ease-in-out infinite;
+  }
+
+  .premium-card {
+    transition: all 0.28s ease;
+  }
+
+  .premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
+  }
+</style>
+
+<div class="container py-5">
+  <!-- =========================
+       PREMIUM HERO BANNER
+  ========================== -->
+  <div
+    class="form-card"
+    style="
+      text-align: center;
+      margin-bottom: 22px;
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(99, 102, 241, 0.18),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at top right,
+          rgba(249, 115, 22, 0.12),
+          transparent 28%
+        ),
+        linear-gradient(135deg, #eef2ff 0%, #ffffff 70%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.07);
+      backdrop-filter: blur(10px);
+      padding: 42px 24px;
+      position: relative;
+      overflow: hidden;
+    "
+  >
+    <!-- glow 1 -->
+    <div
+      class="r4u-glow"
+      style="
+        position: absolute;
+        top: -90px;
+        left: -90px;
+        width: 240px;
+        height: 240px;
+        background: radial-gradient(
+          circle,
+          rgba(99, 102, 241, 0.35),
+          transparent 70%
+        );
+        border-radius: 50%;
+      "
+    ></div>
+
+    <!-- glow 2 -->
+    <div
+      class="r4u-glow"
+      style="
+        position: absolute;
+        bottom: -80px;
+        right: -80px;
+        width: 180px;
+        height: 180px;
+        background: radial-gradient(
+          circle,
+          rgba(249, 115, 22, 0.22),
+          transparent 70%
+        );
+        border-radius: 50%;
+        animation-delay: 2s;
+      "
+    ></div>
+
+    <span
+      style="
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 14px;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+      "
+    >
+      🚀 Rooms4You Beta v1.0 • Live in South Africa
+    </span>
+
+    <h1
+      class="page-title"
+      style="
+        margin-bottom: 12px;
+        font-size: 2.7rem;
+        line-height: 1.1;
+        font-weight: 800;
+      "
+    >
+      Connecting spaces to faces.
+    </h1>
+
+    <p
+      class="text-muted"
+      style="max-width: 720px; margin: 0 auto; font-size: 1.08rem"
+    >
+      A modern rental marketplace for tenants, landlords, and drivers. Discover
+      verified rooms, trusted listings, and real connections — built for speed,
+      safety, and simplicity.
+    </p>
+
+    <!-- trust chips -->
+    <div
+      style="
+        margin-top: 18px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      "
+    >
+      <span class="text-muted">🏠 Verified Listings</span>
+      <span class="text-muted">🔒 Secure Platform</span>
+      <span class="text-muted">⭐ Trusted Community</span>
     </div>
 
-    <div class="home-hero-card">
-      <h3 class="home-card-title">Search by area</h3>
-      <p class="home-card-sub">Start with a suburb/town and a room type.</p>
-
-      <form
-        class="search-bar home-search"
-        method="get"
-        action="{% url 'home' %}"
+    <!-- CTA -->
+    <div
+      style="
+        margin-top: 24px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      "
+    >
+      <a
+        href="{% url 'room_list' %}"
+        class="btn-primary"
+        style="box-shadow: 0 8px 22px rgba(37, 99, 235, 0.25)"
       >
-        <input
-          type="text"
-          name="location"
-          placeholder="Location (e.g. Pretoria, Mamelodi)"
-          value="{{ values.location|default:'' }}"
-          aria-label="Location"
-        />
+        Explore Rooms
+      </a>
 
-        <select name="type" aria-label="Room type">
-          <option value="" {% if selected.any %}selected{% endif %}>
-            Any Type
-          </option>
-          <option value="single" {% if selected.single %}selected{% endif %}>
-            Single
-          </option>
-          <option value="shared" {% if selected.shared %}selected{% endif %}>
-            Shared
-          </option>
-          <option value="flat" {% if selected.flat %}selected{% endif %}>
-            Flat / Apartment
-          </option>
-        </select>
+      <a href="{% url 'register' %}" class="btn-secondary"> List Property </a>
 
-        <input type="hidden" name="go" value="1" />
-        <button type="submit">Search</button>
-      </form>
+      <a
+        href="{% url 'services:register_bakkie_driver' %}"
+        class="btn-secondary"
+      >
+        Become a Driver
+      </a>
+    </div>
 
-      <!-- ✅ Persona quick paths -->
-      <div class="persona-grid" aria-label="Persona quick paths">
-        <a class="persona-card" href="{% url 'home' %}?type=single&go=1">
-          <div class="persona-emoji">🧑‍🎓</div>
-          <div>
-            <div class="persona-title">Student</div>
-            <div class="persona-sub">Single rooms near campus</div>
-          </div>
-        </a>
+    <p class="text-muted" style="margin-top: 16px; font-size: 0.86rem">
+      Trusted by 1,000+ users across South Africa
+    </p>
+  </div>
 
-        <a class="persona-card" href="{% url 'home' %}?type=shared&go=1">
-          <div class="persona-emoji">🧑‍💼</div>
-          <div>
-            <div class="persona-title">Worker</div>
-            <div class="persona-sub">Shared rooms, easy commute</div>
-          </div>
-        </a>
+  <!-- =========================
+       VALUE STATS
+  ========================== -->
+  <div class="dashboard-grid" style="margin-bottom: 30px">
+    <div
+      class="form-card premium-card"
+      style="
+        text-align: center;
+        background: linear-gradient(135deg, #fff7ed, #ffedd5);
+        border: 1px solid #fed7aa;
+      "
+    >
+      <h2 style="margin: 0">{{ room_count }}</h2>
+      <p class="text-muted">Available Rooms</p>
+    </div>
 
-        <a class="persona-card" href="{% url 'home' %}?type=flat&go=1">
-          <div class="persona-emoji">👨‍👩‍👧</div>
-          <div>
-            <div class="persona-title">Family</div>
-            <div class="persona-sub">Flats & apartments</div>
-          </div>
-        </a>
+    <div
+      class="form-card premium-card"
+      style="
+        text-align: center;
+        background: linear-gradient(135deg, #fff7ed, #ffedd5);
+        border: 1px solid #fed7aa;
+      "
+    >
+      <h2 style="margin: 0">{{ landlord_count }}</h2>
+      <p class="text-muted">Landlords</p>
+    </div>
+
+    <div
+      class="form-card premium-card"
+      style="
+        text-align: center;
+        background: linear-gradient(135deg, #fff7ed, #ffedd5);
+        border: 1px solid #fed7aa;
+      "
+    >
+      <h2 style="margin: 0">{{ contact_count }}</h2>
+      <p class="text-muted">Connections</p>
+    </div>
+
+    <div
+      class="form-card premium-card"
+      style="
+        text-align: center;
+        background: linear-gradient(135deg, #fff7ed, #ffedd5);
+        border: 1px solid #fed7aa;
+      "
+    >
+      <h2 style="margin: 0">{{ review_count }}</h2>
+      <p class="text-muted">Reviews</p>
+    </div>
+  </div>
+
+  <!-- MARKET -->
+  <h2 class="page-title" style="text-align: center">
+    Built for real-world renting
+  </h2>
+
+  <div class="dashboard-grid" style="margin-top: 15px">
+    <div
+      class="form-card premium-card"
+      style="text-align: center; background: #fff7ed; border: 1px solid #fed7aa"
+    >
+      <h3>🏠 Tenants</h3>
+      <p class="text-muted">
+        Find safe, verified rooms near you without scams or stress.
+      </p>
+    </div>
+
+    <div
+      class="form-card premium-card"
+      style="text-align: center; background: #fff7ed; border: 1px solid #fed7aa"
+    >
+      <h3>🏘 Landlords</h3>
+      <p class="text-muted">
+        Fill rooms faster with serious, verified tenants.
+      </p>
+    </div>
+
+    <div
+      class="form-card premium-card"
+      style="text-align: center; background: #fff7ed; border: 1px solid #fed7aa"
+    >
+      <h3>🚚 Drivers</h3>
+      <p class="text-muted">Earn income by helping people move affordably.</p>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="form-card premium-card" style="margin-top: 40px">
+    <h2 class="page-title" style="text-align: center">How Rooms4You works</h2>
+
+    <div class="dashboard-grid" style="margin-top: 20px">
+      <div style="text-align: center">
+        <div style="font-size: 22px; font-weight: 700">1</div>
+        <h3>Discover</h3>
+        <p class="text-muted">
+          Browse verified listings built for your budget and location.
+        </p>
       </div>
 
-      <div class="home-note">
-        <strong>Tip:</strong> Never pay before viewing. If anything feels
-        suspicious, use <strong>Report</strong> on the listing.
+      <div style="text-align: center">
+        <div style="font-size: 22px; font-weight: 700">2</div>
+        <h3>Connect</h3>
+        <p class="text-muted">
+          Chat directly with landlords safely inside the platform.
+        </p>
+      </div>
+
+      <div style="text-align: center">
+        <div style="font-size: 22px; font-weight: 700">3</div>
+        <h3>Move In</h3>
+        <p class="text-muted">Arrange viewing and move with confidence.</p>
       </div>
     </div>
   </div>
-</section>
 
-<!-- ✅ Stats -->
-<div class="stat-grid">
-  <div class="stat-card" data-count="{{ room_count }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Rooms Listed</div>
-  </div>
+  <!-- FINAL CTA -->
+  <div
+    class="form-card"
+    style="
+      text-align: center;
+      margin-top: 40px;
+      background: linear-gradient(135deg, #0f172a, #111827);
+      color: white;
+      border: none;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+    "
+  >
+    <h2 style="color: white; margin-bottom: 8px">
+      Ready to find your next space?
+    </h2>
 
-  <div class="stat-card" data-count="{{ contact_count }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Contacts Made</div>
-  </div>
+    <p class="text-muted" style="color: #cbd5e1">
+      No scams. No noise. Just better renting.
+    </p>
 
-  <div class="stat-card" data-count="{{ review_count }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Reviews</div>
-  </div>
-
-  <div class="stat-card" data-count="{{ landlord_count }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Landlords</div>
+    <a
+      href="{% url 'room_list' %}"
+      class="btn-primary"
+      style="margin-top: 14px; display: inline-block"
+    >
+      Start Browsing
+    </a>
   </div>
 </div>
 
-<!-- ✅ “How it works” (public polish) -->
-<section class="how-it-works">
-  <div class="how-inner">
-    <h2 class="how-title">How it works</h2>
-
-    <div class="how-grid">
-      <div class="how-card">
-        <div class="how-badge">1</div>
-        <h3>Search smart</h3>
-        <p>
-          Use location + type filters. Sort by newest or price to find great
-          options fast.
-        </p>
-      </div>
-
-      <div class="how-card">
-        <div class="how-badge">2</div>
-        <h3>Contact safely</h3>
-        <p>
-          Use in-app contact buttons so we can monitor suspicious patterns and
-          improve safety.
-        </p>
-      </div>
-
-      <div class="how-card">
-        <div class="how-badge">3</div>
-        <h3>Confirm & review</h3>
-        <p>
-          After meeting, leave a review to help the community and improve
-          landlord trust.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{% block extra_js %}
-<script>
-  // ✅ Stat counter animation (safe even if missing)
-  (function () {
-    document.querySelectorAll(".stat-card").forEach((card) => {
-      const target = Number(card.dataset.count) || 0;
-      const numberEl = card.querySelector(".stat-number");
-      if (!numberEl) return;
-
-      let current = 0;
-      const step = Math.max(1, Math.floor(target / 40));
-
-      const timer = setInterval(() => {
-        current += step;
-        if (current >= target) {
-          current = target;
-          clearInterval(timer);
-        }
-        numberEl.textContent = current;
-      }, 20);
-    });
-  })();
-</script>
-{% endblock %} {% endblock %}
+{% endblock %}

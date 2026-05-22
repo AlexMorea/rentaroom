@@ -4059,3 +4059,94 @@ body.scroll-down .trust-strip {
     height: 240px;
   }
 }
+
+.driver-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.driver-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transition: 0.25s;
+}
+
+.driver-card:hover {
+  transform: translateY(-4px);
+}
+
+.driver-top {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.driver-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.driver-badge {
+  background: #16a34a;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.driver-meta {
+  margin-top: 18px;
+  line-height: 1.8;
+  color: #374151;
+}
+
+.driver-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn-whatsapp,
+.btn-call {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  font-weight: 700;
+}
+
+.btn-whatsapp {
+  background: #22c55e;
+}
+
+.btn-call {
+  background: #2563eb;
+}
+
+.view-profile {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  text-decoration: none;
+  color: #f97316;
+  font-weight: 700;
+}
+
+.image-slider {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

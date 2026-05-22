@@ -130,33 +130,45 @@ def landlord_images_hub(request):
 
 # PUBLIC PAGES
 def home(request):
-    """
-    Home page:
-    - Shows counters
-    - Provides search form that redirects to /rooms/ with query params
-    """
     q = (request.GET.get("q") or "").strip()
     location = (request.GET.get("location") or "").strip()
     room_type = (request.GET.get("type") or "").strip()
 
+    # redirect search to room list
     if request.GET.get("go") == "1":
         params = []
+
         if q:
             params.append(f"q={q}")
+
         if location:
             params.append(f"location={location}")
+
         if room_type:
             params.append(f"type={room_type}")
 
         querystring = "&".join(params)
-        return redirect(f"/rooms/?{querystring}" if querystring else "/rooms/")
+
+        return redirect(
+            f"/rooms/?{querystring}"
+            if querystring
+            else "/rooms/"
+        )
 
     context = {
         "room_count": Room.objects.count(),
         "contact_count": Contact.objects.count(),
         "review_count": Review.objects.count(),
-        "landlord_count": Profile.objects.filter(role="landlord").count(),
-        "values": {"q": q, "location": location, "type": room_type},
+        "landlord_count": Profile.objects.filter(
+            role="landlord"
+        ).count(),
+
+        "values": {
+            "q": q,
+            "location": location,
+            "type": room_type,
+        },
+
         "selected": {
             "any": room_type == "",
             "Single Room": room_type == "Single Room",
@@ -169,8 +181,12 @@ def home(request):
             "Apartment": room_type == "Apartment",
         },
     }
-    return render(request, "listings/home.html", context)
 
+    return render(
+        request,
+        "listings/home.html",
+        context
+    )
 
 def about(request):
     return render(request, "listings/about.html")
