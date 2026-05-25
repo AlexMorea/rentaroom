@@ -123,35 +123,50 @@
 
     <form method="post" action="{% url 'mark_success' room.id %}">
       {% csrf_token %}
-      <button class="btn-secondary">I successfully found a place</button>
+      <button class="btn-secondary">I successfully moved in</button>
     </form>
 
     <!-- ================= REVIEW ================= -->
-    <h3 style="margin-top: 18px">Leave a review</h3>
+    <h3 style="margin-top: 18px">Message landlord</h3>
 
-    <form method="post" action="{% url 'add_review' room.id %}">
+    <div
+      style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px"
+    >
+      <div
+        style="
+          width: 54px;
+          height: 54px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #111827, #374151);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 900;
+          font-size: 20px;
+        "
+      >
+        {{ room.owner.first_name|default:"L"|slice:":1"|upper }}
+      </div>
+
+      <div>
+        <strong>{{ room.owner.first_name }} {{ room.owner.last_name }}</strong>
+        <div style="opacity: 0.7">Verified landlord</div>
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'send_message' room.id %}">
       {% csrf_token %}
 
-      <select
-        name="rating"
-        class="input"
-        style="max-width: 150px; padding: 10px"
-      >
-        {% for i in "12345" %}
-        <option value="{{ i }}">{{ i }}</option>
-        {% endfor %}
-      </select>
-
       <textarea
-        name="comment"
+        name="body"
         class="input textarea"
-        placeholder="Write review..."
-        style="width: 100%; margin-top: 10px; min-height: 120px"
+        placeholder="Hi, I’m interested in this room..."
+        style="width: 100%; min-height: 120px"
+        required
       ></textarea>
 
-      <button class="btn-primary" style="margin-top: 10px">
-        Submit Review
-      </button>
+      <button class="btn-primary" style="margin-top: 10px">Send Message</button>
     </form>
 
     {% else %}
@@ -173,7 +188,6 @@
   </div>
 </div>
 
-<!-- ================= SHARE + SLIDER JS ================= -->
 <!-- ================= SHARE ================= -->
 {% block extra_js %}
 <script>

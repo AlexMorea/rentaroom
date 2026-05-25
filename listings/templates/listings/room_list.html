@@ -15,75 +15,129 @@
   />
 
   <select name="type">
-    <option value="" {% if selected.any %}selected{% endif %}>Any Type</option>
-
+    <option value="">Any Type</option>
     <option
       value="Single Room"
       {%
       if
-      selected.Single
-      Room
+      values.type=""
+      ="Single Room"
       %}selected{%
       endif
       %}
     >
       Single Room
     </option>
-
     <option
       value="Shared Room"
       {%
       if
-      selected.Shared
-      Room
+      values.type=""
+      ="Shared Room"
       %}selected{%
       endif
       %}
     >
       Shared Room
     </option>
-
-    <option value="Bachelor" {% if selected.Bachelor %}selected{% endif %}>
+    <option
+      value="Bachelor"
+      {%
+      if
+      values.type=""
+      ="Bachelor"
+      %}selected{%
+      endif
+      %}
+    >
       Bachelor
     </option>
-
-    <option value="Ensuite" {% if selected.Ensuite %}selected{% endif %}>
+    <option
+      value="Ensuite"
+      {%
+      if
+      values.type=""
+      ="Ensuite"
+      %}selected{%
+      endif
+      %}
+    >
       Ensuite
     </option>
-
     <option
       value="Student Accommodation"
       {%
       if
-      selected.Student
-      Accommodation
+      values.type=""
+      ="Student Accommodation"
       %}selected{%
       endif
       %}
     >
       Student Accommodation
     </option>
-
-    <option value="Backroom" {% if selected.Backroom %}selected{% endif %}>
+    <option
+      value="Backroom"
+      {%
+      if
+      values.type=""
+      ="Backroom"
+      %}selected{%
+      endif
+      %}
+    >
       Backroom
     </option>
-
-    <option value="Cottage" {% if selected.Cottage %}selected{% endif %}>
+    <option
+      value="Cottage"
+      {%
+      if
+      values.type=""
+      ="Cottage"
+      %}selected{%
+      endif
+      %}
+    >
       Cottage
     </option>
-
-    <option value="Apartment" {% if selected.Apartment %}selected{% endif %}>
+    <option
+      value="Apartment"
+      {%
+      if
+      values.type=""
+      ="Apartment"
+      %}selected{%
+      endif
+      %}
+    >
       Flat / Apartment
     </option>
   </select>
+
+  <!-- NEW PRICE RANGE -->
+  <input
+    type="number"
+    name="min_price"
+    placeholder="Min Price"
+    value="{{ values.min_price }}"
+  />
+
+  <input
+    type="number"
+    name="max_price"
+    placeholder="Max Price"
+    value="{{ values.max_price }}"
+  />
 
   <select name="sort">
     <option value="" {% if sort_selected.best %}selected{% endif %}>
       Best match
     </option>
+
     <option value="new" {% if sort_selected.new %}selected{% endif %}>
       Newest
     </option>
+
     <option
       value="price_low"
       {%
@@ -95,6 +149,7 @@
     >
       Price: Low → High
     </option>
+
     <option
       value="price_high"
       {%
@@ -106,9 +161,6 @@
     >
       Price: High → Low
     </option>
-    <option value="rating" {% if sort_selected.rating %}selected{% endif %}>
-      Best rated
-    </option>
   </select>
 
   <button type="submit">Search</button>
@@ -118,16 +170,53 @@
 <div
   style="
     max-width: 1000px;
-    margin: 0 auto 16px;
-    padding: 12px 14px;
+    margin: 0 auto 20px;
+    padding: 14px;
     border-radius: 14px;
-    background: rgba(37, 99, 235, 0.08);
-    border: 1px solid rgba(37, 99, 235, 0.16);
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     font-weight: 700;
   "
 >
   Showing results for <strong>{{ suggested_location }}</strong>
-  instead of “{{ searched_location }}”.
+  instead of "{{ searched_location }}"
+</div>
+{% endif %}
+
+<!-- EMPTY STATE -->
+{% if not rooms %}
+<div
+  style="
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 40px;
+    text-align: center;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  "
+>
+  <h2 style="margin-bottom: 10px">No rooms found</h2>
+
+  <p style="color: #64748b">
+    No available rooms found for your selected location/type/price.
+  </p>
+
+  <a
+    href="{% url 'room_list' %}"
+    style="
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+    "
+  >
+    Clear Filters
+  </a>
 </div>
 {% endif %}
 
@@ -168,11 +257,6 @@
     Browse More Rooms →
   </a>
 </div>
-
-<div class="map-shell">
-  <div id="roomsMap"></div>
-</div>
-
 {% endif %}
 
 <script>
@@ -181,6 +265,8 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    if (!document.getElementById("roomsMap")) return;
+
     const map = L.map("roomsMap");
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -219,7 +305,6 @@
 
         markers.push(marker);
         markerMap[room.id] = marker;
-
         bounds.push([room.latitude, room.longitude]);
       });
 
@@ -238,16 +323,12 @@
 <script>
   document.addEventListener("mouseover", function (e) {
     const card = e.target.closest(".room-card");
-
     if (!card) return;
 
     const roomId = card.dataset.roomId;
-
     const marker = window.roomMarkers?.[roomId];
 
-    if (!marker) return;
-
-    marker.openPopup();
+    if (marker) marker.openPopup();
   });
 </script>
 
@@ -259,7 +340,7 @@
     const btnBack = document.getElementById("btnBack");
     const indicator = document.getElementById("pageIndicator");
 
-    if (!wrap || !grid || !btnNext || !btnBack || !indicator) return;
+    if (!wrap || !grid || !btnNext || !btnBack) return;
 
     function getBaseParams() {
       return {
@@ -271,133 +352,65 @@
     }
 
     function buildUrl(page) {
-      const { q, location, type, sort } = getBaseParams();
-
+      const p = getBaseParams();
       const params = new URLSearchParams();
 
-      if (q) params.set("q", q);
-      if (location) params.set("location", location);
-      if (type) params.set("type", type);
-      if (sort) params.set("sort", sort);
+      if (p.q) params.set("q", p.q);
+      if (p.location) params.set("location", p.location);
+      if (p.type) params.set("type", p.type);
+      if (p.sort) params.set("sort", p.sort);
 
-      params.set("page", String(page));
+      params.set("page", page);
       params.set("ajax", "1");
 
       return "?" + params.toString();
     }
 
-    function setLoading(isLoading) {
-      [btnNext, btnBack].forEach((btn) => {
-        btn.style.pointerEvents = isLoading ? "none" : "auto";
-        btn.style.opacity = isLoading ? "0.6" : "1";
-      });
-    }
-
-    function addSkeletons(count = 3) {
-      const frag = document.createDocumentFragment();
-
-      for (let i = 0; i < count; i++) {
-        const s = document.createElement("div");
-        s.className = "skeleton";
-        frag.appendChild(s);
-      }
-
-      grid.appendChild(frag);
-    }
-
-    function clearSkeletons() {
-      grid.querySelectorAll(".skeleton").forEach((s) => s.remove());
-    }
-
-    function updateUI(meta) {
-      wrap.dataset.page = String(meta.page);
-      wrap.dataset.pages = String(meta.num_pages);
-
-      indicator.textContent = `Page ${meta.page} of ${meta.num_pages}`;
-
-      btnNext.style.display = meta.has_next ? "inline-block" : "none";
-      btnBack.style.display = meta.has_prev ? "inline-block" : "none";
-
-      btnNext.dataset.nextPage = meta.next_page ? String(meta.next_page) : "";
-      btnBack.dataset.prevPage = meta.prev_page ? String(meta.prev_page) : "";
-
-      if (meta.page <= 1) btnBack.style.display = "none";
-    }
-
     async function fetchPage(page) {
-      setLoading(true);
-      addSkeletons(3);
+      const res = await fetch(buildUrl(page), {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
 
-      try {
-        const res = await fetch(buildUrl(page), {
-          headers: { "X-Requested-With": "XMLHttpRequest" },
-        });
-
-        if (!res.ok) throw new Error("Request failed");
-
-        return await res.json();
-      } finally {
-        clearSkeletons();
-        setLoading(false);
-      }
+      return await res.json();
     }
 
-    indicator.textContent = `Page ${wrap.dataset.page} of ${wrap.dataset.pages}`;
-
-    const initialPage = parseInt(wrap.dataset.page || "1", 10);
-
-    if (initialPage <= 1) btnBack.style.display = "none";
-
-    btnNext.addEventListener("click", async (e) => {
+    btnNext.addEventListener("click", async function (e) {
       e.preventDefault();
 
-      const current = parseInt(wrap.dataset.page || "1", 10);
-
-      const next = parseInt(
-        btnNext.dataset.nextPage || String(current + 1),
-        10,
-      );
-
-      if (!next || next < 1) return;
+      const next = parseInt(wrap.dataset.page) + 1;
 
       const data = await fetchPage(next);
 
       grid.insertAdjacentHTML("beforeend", data.html);
 
-      if (data.map_rooms && window.renderMarkers) {
-        window.renderMarkers(data.map_rooms);
-      }
+      wrap.dataset.page = data.page;
+      indicator.textContent = `Page ${data.page} of ${data.num_pages}`;
 
-      updateUI(data);
+      if (!data.has_next) btnNext.style.display = "none";
 
-      const cards = grid.querySelectorAll(".room-card");
-
-      const target = cards[cards.length - 1];
-
-      if (target)
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: "end",
-        });
+      btnBack.style.display = "inline-block";
     });
 
-    btnBack.addEventListener("click", async (e) => {
+    btnBack.addEventListener("click", async function (e) {
       e.preventDefault();
 
-      const current = parseInt(wrap.dataset.page || "1", 10);
+      const prev = parseInt(wrap.dataset.page) - 1;
 
-      const prev = parseInt(
-        btnBack.dataset.prevPage || String(current - 1),
-        10,
-      );
-
-      if (!prev || prev < 1) return;
+      if (prev < 1) return;
 
       const data = await fetchPage(prev);
 
       grid.innerHTML = data.html;
 
-      updateUI(data);
+      wrap.dataset.page = data.page;
+
+      indicator.textContent = `Page ${data.page} of ${data.num_pages}`;
+
+      if (data.page <= 1) btnBack.style.display = "none";
+
+      btnNext.style.display = "inline-block";
 
       window.scrollTo({
         top: 0,

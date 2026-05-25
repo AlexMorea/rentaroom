@@ -2,6 +2,7 @@ import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
+from datetime import timedelta
 from django.db.models import Count, Q
 from django.http import HttpResponseForbidden
 from django.contrib.auth.views import PasswordResetView
@@ -15,25 +16,26 @@ from django.template.loader import render_to_string
 from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator
+from .models import Message
 from difflib import get_close_matches
 from django.contrib.auth.models import User
 from accounts.helpers import generate_membership_id
 from .models import PhoneOTP
-from django.conf import settings
-from .models import EmailVerification
 from .utils import generate_otp, send_otp_email
 from utils.email import send_template_email
 from accounts.utils import require_active_membership
 from django.utils import timezone
-from datetime import timedelta
-from django.contrib.sites.shortcuts import get_current_site
 from accounts.models import Membership
 from .forms import ListingForm
 from django.db.models import Prefetch
-import logging
 from django.db import DatabaseError
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 from .forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_display_name(user):
@@ -211,7 +213,6 @@ def room_list(request):
 
     # ================= CACHE CHECK =================
     cache_key = f"room_list:{request.get_full_path()}"
-
     cached_response = cache.get(cache_key)
 
     if cached_response:
@@ -222,6 +223,9 @@ def room_list(request):
     location = (request.GET.get("location") or "").strip()
     room_type = (request.GET.get("type") or "").strip()
     sort = (request.GET.get("sort") or "").strip()
+
+    min_price = (request.GET.get("min_price") or "").strip()
+    max_price = (request.GET.get("max_price") or "").strip()
 
     # ================= BASE QUERY =================
     rooms_qs = (
@@ -257,6 +261,7 @@ def room_list(request):
 
         if exact_location_qs.exists():
             rooms_qs = exact_location_qs
+
         else:
             all_locations = cache.get("all_locations")
 
@@ -268,14 +273,12 @@ def room_list(request):
                     .values_list("location", flat=True)
                     .distinct()
                 )
-
                 cache.set("all_locations", all_locations, 3600)
 
             lowered_map = {}
 
             for loc in all_locations:
                 key = loc.strip().lower()
-
                 if key and key not in lowered_map:
                     lowered_map[key] = loc.strip()
 
@@ -318,6 +321,19 @@ def room_list(request):
     if room_type:
         rooms_qs = rooms_qs.filter(room_type=room_type)
 
+    # ================= PRICE FILTER =================
+    if min_price:
+        try:
+            rooms_qs = rooms_qs.filter(price__gte=int(min_price))
+        except ValueError:
+            pass
+
+    if max_price:
+        try:
+            rooms_qs = rooms_qs.filter(price__lte=int(max_price))
+        except ValueError:
+            pass
+
     # ================= SORTING =================
     if sort == "new":
         rooms = rooms_qs.order_by("-created_at")
@@ -333,9 +349,7 @@ def room_list(request):
 
     # ================= PAGINATION =================
     page_number = request.GET.get("page") or 1
-
     paginator = Paginator(rooms, 8)
-
     page_obj = paginator.get_page(page_number)
 
     # ================= MAP DATA =================
@@ -370,20 +384,14 @@ def room_list(request):
                 "num_pages": paginator.num_pages,
                 "has_next": page_obj.has_next(),
                 "has_prev": page_obj.has_previous(),
-                "next_page": page_obj.next_page_number()
-                if page_obj.has_next()
-                else None,
-                "prev_page": page_obj.previous_page_number()
-                if page_obj.has_previous()
-                else None,
+                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+                "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
                 "suggested_location": suggested_location,
                 "searched_location": searched_location,
             }
         )
 
-        # CACHE AJAX RESPONSE
         cache.set(cache_key, response, 60)
-
         return response
 
     # ================= SORT UI =================
@@ -401,7 +409,7 @@ def room_list(request):
         != searched_location.strip().lower()
     )
 
-    # ================= FINAL RESPONSE =================
+    # ================= FINAL =================
     response = render(
         request,
         "listings/room_list.html",
@@ -415,6 +423,8 @@ def room_list(request):
                 "location": location,
                 "type": room_type,
                 "sort": sort,
+                "min_price": min_price,
+                "max_price": max_price,
             },
             "sort_selected": sort_selected,
             "suggested_location": suggested_location,
@@ -423,12 +433,8 @@ def room_list(request):
         },
     )
 
-    # ================= CACHE FINAL HTML =================
     cache.set(cache_key, response, 60)
-
     return response
-
-logger = logging.getLogger(__name__)
 
 
 def room_detail(request, pk):
@@ -492,152 +498,100 @@ def register(request):
     form = UserRegisterForm(request.POST or None)
 
     if request.method == "POST":
+
         if form.is_valid():
-            user = form.save()
 
-            # 🔑 EMAIL VERIFICATION
-            EmailVerification.objects.filter(user=user, is_verified=False).delete()
-            verification = EmailVerification.objects.create(user=user)
+            user = form.save()   # <-- fixed
 
-            def build_domain(request):
-                current_site = get_current_site(request)
-                scheme = "https" if not settings.DEBUG else "http"
-                return f"{scheme}://{current_site.domain}"
+            user.is_active = False
+            user.save()
 
-            domain = build_domain(request)
-            verify_link = f"{domain}/verify-email/{verification.token}/"
+            otp = generate_otp()
 
-            send_template_email(
-                subject="Verify your Rooms4You account",
-                to_email=user.email,
-                template="emails/verify_email.html",
-                context={
-                    "user": user,
-                    "verify_link": verify_link,
-                    "year": 2026
-                }
+            PhoneOTP.objects.filter(user=user).delete()
+
+            PhoneOTP.objects.create(
+                user=user,
+                phone_number=user.profile.phone_number,
+                otp=otp
             )
 
-            messages.success(request, "Check your email to verify your account ✅")
-            return redirect("login")
+            send_otp_email(user, otp)
 
-    return render(request, "listings/register.html", {"form": form})
+            set_otp_cooldown(user.id)
 
+            request.session["pending_user_id"] = user.id
 
-def verify_email(request, token):
-    try:
-        verification = EmailVerification.objects.filter(
-            token=token,
-            is_verified=False,
-            created_at__gte=timezone.now() - timedelta(hours=24)
-        ).first()
+            messages.success(
+                request,
+                "Account created. Enter the OTP sent to your email."
+            )
 
-        if not verification:
-            messages.error(request, "Invalid or expired verification link.")
-            return redirect("login")
-        
-    except EmailVerification.DoesNotExist:
-        messages.error(request, "Invalid or expired verification link.")
-        return redirect("login")
+            return redirect("verify_account")
 
-    if verification.is_expired():
-        messages.error(request, "Verification link expired.")
-        return redirect("register")
-
-    user = verification.user
-    profile = user.profile
-
-    # activate everything properly
-    verification.is_verified = True
-    verification.save()
-
-    profile.is_email_verified = True
-    profile.save()
-
-    user.is_active = True
-    user.save()
-
-    messages.success(request, "Email verified successfully 🎉")
-    return redirect("login")
+    return render(
+        request,
+        "listings/register.html",
+        {"form": form}
+    )
 
 
-def verify_phone(request):
+def verify_account(request):
     user_id = request.session.get("pending_user_id")
 
     if not user_id:
         return redirect("login")
 
-    user = User.objects.get(id=user_id)
-    profile = user.profile
-
-    # ---- calculate resend countdown ----
-    cache_key = f"otp_resend_{user.id}"
-    ttl = cache.ttl(cache_key) if hasattr(cache, "ttl") else None
-
-    # fallback if backend doesn't support ttl
-    if ttl is None:
-        ttl = 60 if cache.get(cache_key) else 0
+    user = get_object_or_404(User, id=user_id)
 
     if request.method == "POST":
+
         otp_input = request.POST.get("otp")
 
-        if not otp_input or len(otp_input) != 6:
-            messages.error(request, "Enter a valid 6-digit OTP")
-            return render(request, "listings/verify_phone.html", {
-                "error_state": True,
-                "cooldown_seconds": ttl
-            })
+        if not otp_input:
+            messages.error(request, "Enter OTP.")
+            return render(request, "listings/verify_account.html")
 
-        attempts_key = f"otp_attempts:{user.id}"
-        attempts = cache.get(attempts_key, 0)
-
-        if attempts >= 5:
-            messages.error(request, "Too many attempts. Try again later.")
-            return redirect("login")
-
-        otp_record = PhoneOTP.objects.filter(
+        record = PhoneOTP.objects.filter(
             user=user,
             is_verified=False,
-            created_at__gte=timezone.now() - timedelta(minutes=5)
+            created_at__gte=timezone.now() - timedelta(minutes=15)
         ).order_by("-created_at").first()
 
-        if otp_record and otp_record.otp == otp_input:
-            otp_record.is_verified = True
-            otp_record.save()
+        if record and record.otp == otp_input:
 
+            record.is_verified = True
+            record.save()
+
+            profile = user.profile
+            profile.is_email_verified = True
             profile.is_phone_verified = True
             profile.save()
 
+            user.is_active = True
+            user.save()
+
             PhoneOTP.objects.filter(user=user).delete()
-            cache.delete(attempts_key)
 
             login(request, user)
+
             request.session.pop("pending_user_id", None)
 
-            storage = messages.get_messages(request)
-            list(storage)
+            messages.success(
+                request,
+                "Account verified successfully 🎉"
+            )
 
-            messages.success(request, "Phone verified successfully 🎉")
-
-            if user.profile.role == "landlord":
+            if profile.role == "landlord":
                 return redirect("dashboard")
 
             return redirect("room_list")
 
-        cache.set(attempts_key, attempts + 1, timeout=300)
-
         messages.error(request, "Invalid or expired OTP")
 
-        return render(request, "listings/verify_phone.html", {
-            "error_state": True,
-            "cooldown_seconds": ttl
-        })
+    return render(request, "listings/verify_account.html")
 
-    return render(request, "listings/verify_phone.html", {
-        "cooldown_seconds": ttl
-    })
-
-
+@never_cache
 def user_login(request):
     if request.method != "POST":
         return render(request, "listings/login.html")
@@ -664,8 +618,8 @@ def user_login(request):
 
     # EMAIL CHECK
     if not user.profile.is_email_verified:
-        messages.error(request, "Please verify your email first.")
-        return redirect("login")
+        request.session["pending_user_id"] = user.id
+        return redirect("verify_pending")
 
     # PHONE CHECK
     if not user.profile.is_phone_verified:
@@ -695,6 +649,8 @@ def user_login(request):
     # LOGIN
     with transaction.atomic():
         login(request, user)
+        request.session.modified = True
+        request.session.save()
 
     # 🔐 FORCE PASSWORD CHANGE CHECK (ADD HERE)
     if getattr(user.profile, "must_change_password", False):
@@ -737,11 +693,12 @@ def user_login(request):
     return redirect("room_list")
 
 
+@require_POST
+@never_cache
 def user_logout(request):
     logout(request)
-    messages.info(request, "You’ve been logged out.")
+    messages.success(request, "You’ve been logged out.")
     return redirect("room_list")
-
 
 
 # PROFILES (tenant + landlord)
@@ -866,26 +823,73 @@ def profile(request):
 
     return render(request, "listings/profile.html", context)
 
+def resend_account_otp(request):
+    user_id = request.session.get("pending_user_id")
+
+    if not user_id:
+        return JsonResponse({
+            "success": False,
+            "error": "Session expired."
+        }, status=400)
+
+    user = get_object_or_404(User, id=user_id)
+
+    cache_key = f"otp_resend_{user.id}"
+
+    if cache.get(cache_key):
+        return JsonResponse({
+            "success": False,
+            "error": "Wait before requesting again.",
+            "cooldown": OTP_RESEND_SECONDS
+        }, status=429)
+
+    otp = generate_otp()
+
+    PhoneOTP.objects.filter(user=user).delete()
+
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number="email_verification",
+        otp=otp
+    )
+
+    send_otp_email(user, otp)
+
+    set_otp_cooldown(user.id)
+
+    return JsonResponse({
+        "success": True,
+        "message": "OTP sent.",
+        "cooldown": OTP_RESEND_SECONDS
+    })
+
 def can_resend_otp(user_id):
     key = f"otp_resend_{user_id}"
     return cache.get(key) is None
 
-def set_otp_cooldown(user_id, seconds=90):
-    cache.set(f"otp_resend_{user_id}", True, timeout=seconds)
+OTP_RESEND_SECONDS = 60
 
+def set_otp_cooldown(user_id):
+    cache.set(
+        f"otp_resend_{user_id}",
+        True,
+        timeout=OTP_RESEND_SECONDS
+    )
 
 @login_required
 def edit_profile(request):
     user = request.user
     profile = user.profile
 
-    u_form = UserUpdateForm(request.POST or None, instance=user)
-
-    # FIXED: Proper initial data 
     initial_data = {
         "country_code": profile.country_code,
         "phone_number": profile.phone_number,
     }
+
+    u_form = UserUpdateForm(
+        request.POST or None,
+        instance=user
+    )
 
     p_form = ProfileUpdateForm(
         request.POST or None,
@@ -897,47 +901,48 @@ def edit_profile(request):
 
         if u_form.is_valid() and p_form.is_valid():
 
-            changes = detect_profile_changes(user, profile, u_form, p_form)
-
             user_obj = u_form.save(commit=False)
             profile_obj = p_form.save(commit=False)
 
-           
-            country_code = p_form.cleaned_data.get("country_code")
-            phone_number = p_form.cleaned_data.get("phone_number") or profile.phone_number
+            # keep country code
+            profile_obj.country_code = (
+                p_form.cleaned_data.get("country_code")
+            )
 
-            profile_obj.country_code = country_code
+            # update phone only if entered
+            phone_number = p_form.cleaned_data.get("phone_number")
 
-            # update phone if user actually submitted one
             if phone_number:
-                profile_obj.phone_number = p_form.cleaned_data["phone_number"]
-
-            # HANDLE CHANGES
-            if changes["phone"]:
-                handle_phone_change(user_obj, profile_obj, changes["phone"])
+                profile_obj.phone_number = phone_number
 
             with transaction.atomic():
                 user_obj.save()
                 profile_obj.save()
-                
-            messages.success(request, "Profile updated successfully.")
+
+            messages.success(
+                request,
+                "Profile updated successfully."
+            )
             return redirect("profile")
 
         else:
             print("USER FORM ERRORS:", u_form.errors)
             print("PROFILE FORM ERRORS:", p_form.errors)
 
-            messages.error(request, "Please fix the errors below.")
-          
-    else:
-        u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=profile)
+            messages.error(
+                request,
+                "Please fix the errors below."
+            )
 
-    return render(request, "listings/edit_profile.html", {
-        "u_form": u_form,
-        "p_form": p_form,
-        "p": profile, 
-    })
+    return render(
+        request,
+        "listings/edit_profile.html",
+        {
+            "u_form": u_form,
+            "p_form": p_form,
+            "p": profile,
+        },
+    )
 
 
 @login_required
@@ -968,8 +973,10 @@ def dashboard(request):
     rooms_qs = Room.objects.filter(owner=request.user)
 
     image_count = RoomImage.objects.filter(room__owner=request.user).count()
+
     contact_count = RoomStat.objects.filter(
-        room__owner=request.user, stat_type__startswith="contact"
+        room__owner=request.user,
+        stat_type__startswith="contact"
     ).count()
 
     rooms = rooms_qs.annotate(
@@ -980,9 +987,19 @@ def dashboard(request):
     for r in rooms:
         r.ctr = round((r.contact_total / r.view_count) * 100, 1) if r.view_count else 0
 
-    show_profile_warning = (rooms_qs.count() == 0) or (not (request.user.email or "").strip())
+    show_profile_warning = (
+        rooms_qs.count() == 0
+        or not (request.user.email or "").strip()
+    )
 
     membership = get_or_create_membership(request.user)
+
+    # SAFE inbox query (CRM-style leads)
+    messages_received = (
+        Message.objects.filter(recipient=request.user)
+        .select_related("sender", "room")
+        .order_by("-created_at")[:8]
+    )
 
     return render(
         request,
@@ -992,7 +1009,10 @@ def dashboard(request):
             "image_count": image_count,
             "contact_count": contact_count,
             "show_profile_warning": show_profile_warning,
-            "membership": membership,  
+            "membership": membership,
+
+            # CRM inbox
+            "messages_received": messages_received,
         },
     )
 
@@ -1503,20 +1523,19 @@ def resend_otp(request):
             "error": "Session expired. Please login again."
         }, status=401)
 
-    user = User.objects.get(id=user_id)
+    user = get_object_or_404(User, id=user_id)
 
     cache_key = f"otp_resend_{user.id}"
 
     if cache.get(cache_key):
         return JsonResponse({
             "success": False,
-            "error": "Wait 60 seconds before requesting another OTP",
-            "cooldown": 60
+            "error": "Please wait before requesting another OTP.",
+            "cooldown": OTP_RESEND_SECONDS
         }, status=429)
 
     otp = generate_otp()
 
-    # Delete old OTPs first
     PhoneOTP.objects.filter(user=user).delete()
 
     PhoneOTP.objects.create(
@@ -1527,13 +1546,14 @@ def resend_otp(request):
 
     send_otp_email(user, otp)
 
-    cache.set(cache_key, True, timeout=60)
+    set_otp_cooldown(user.id)
 
     return JsonResponse({
         "success": True,
-        "message": "OTP sent",
-        "cooldown": 60
+        "message": "OTP sent successfully.",
+        "cooldown": OTP_RESEND_SECONDS
     })
+
 
 @login_required
 def heatmap(request):
@@ -1565,85 +1585,46 @@ def report_room(request, pk):
     messages.success(request, "Thanks! Your report was received ✅ We’ll review this listing.")
     return redirect("room_detail", pk=room.id)
 
-def resend_verification(request):
-    if not request.user.is_authenticated:
-        return redirect("login")
 
-    user = request.user
+@login_required
+def confirm_email_change(request):
 
-    EmailVerification.objects.filter(user=user, is_verified=False).delete()
+    if request.method == "POST":
 
-    verification = EmailVerification.objects.filter(
-        user=user,
-        is_verified=False
-    ).order_by("-created_at").first()
+        otp = request.POST.get("otp")
+        pending_email = request.session.get("pending_email")
 
-    def build_domain(request):
-        current_site = get_current_site(request)
-        scheme = "https" if not settings.DEBUG else "http"
-        return f"{scheme}://{current_site.domain}"
-    
-    domain = build_domain(request)
-    verify_link = f"{domain}/verify-email/{verification.token}/"
+        if not pending_email:
+            return redirect("profile")
 
-    send_template_email(
-        subject="Verify your Rooms4You account",
-        to_email=user.email,
-        template="emails/verify_email.html",
-        context={
-            "user": user,
-            "verify_link": verify_link,
-            "year": 2026
-        }
-    )
+        record = PhoneOTP.objects.filter(
+            user=request.user,
+            phone_number="email_change",
+            otp=otp
+        ).last()
 
-    messages.success(request, "Verification email sent again ✅")
-    return redirect("dashboard")
+        if record:
 
+            request.user.email = pending_email
+            request.user.save()
 
-def confirm_email_change(request, token):
-    try:
-        verification = EmailVerification.objects.get(token=token, is_verified=False)
+            request.user.profile.is_email_verified = True
+            request.user.profile.save()
 
-        if verification.is_expired():
-            messages.error(request, "Link expired.")
-            return redirect("login")
+            PhoneOTP.objects.filter(user=request.user).delete()
 
-        user = verification.user
-        profile = user.profile
+            request.session.pop("pending_email", None)
 
-        # 🔥 APPLY CHANGE
-        user.email = profile.pending_email
-        user.save()
+            messages.success(
+                request,
+                "Email updated successfully."
+            )
 
-        profile.pending_email = None
-        profile.email_change_token = None
-        profile.is_email_verified = True
-        profile.save()
+            return redirect("profile")
 
-        verification.is_verified = True
-        verification.save()
+        messages.error(request, "Invalid OTP.")
 
-        messages.success(request, "Email updated successfully.")
-        return redirect("profile")
-
-    except EmailVerification.DoesNotExist:
-        messages.error(request, "Invalid link.")
-        return redirect("login")
-    
-
-def detect_profile_changes(user, profile, u_form, p_form):
-    p = p_form.cleaned_data
-
-    changes = {
-        "email": None,
-        "phone": None,
-    }
-
-    if p.get("phone_number") and p["phone_number"] != profile.phone_number:
-        changes["phone"] = p["phone_number"]
-
-    return changes
+    return render(request, "listings/confirm_email.html")
 
 def handle_phone_change(user_obj, profile_obj, new_phone):
     if not new_phone or new_phone == profile_obj.phone_number:
@@ -1664,47 +1645,42 @@ def request_upgrade(request):
 @login_required
 def change_email(request):
     if request.method == "POST":
+
         new_email = (request.POST.get("email") or "").strip().lower()
 
         if not new_email:
-            messages.error(request, "Enter a valid email.")
+            messages.error(request, "Enter valid email.")
             return redirect("change_email")
 
         if User.objects.filter(email=new_email).exists():
             messages.error(request, "Email already in use.")
             return redirect("change_email")
 
-        profile = request.user.profile
+        user = request.user
 
-        # Save pending email
-        profile.pending_email = new_email
+        otp = generate_otp()
 
-        # Create token
-        verification = EmailVerification.objects.create(user=request.user)
+        PhoneOTP.objects.filter(user=user).delete()
 
-        profile.email_change_token = verification.token
-        profile.save()
-
-        # 🔥 BUILD LINK
-        confirm_link = request.build_absolute_uri(
-            reverse("confirm_email_change", args=[verification.token])
+        PhoneOTP.objects.create(
+            user=user,
+            phone_number="email_change",
+            otp=otp
         )
 
-        # 🔥 SEND EMAIL
-        send_template_email(
-            subject="Confirm your new email",
-            to_email=new_email,
-            template="emails/change_email.html",
-            context={
-                "user": request.user,
-                "confirm_link": confirm_link
-            }
+        send_otp_email(user, otp)
+
+        request.session["pending_email"] = new_email
+
+        messages.success(
+            request,
+            "OTP sent to your current email."
         )
 
-        messages.success(request, "Check your new email to confirm.")
-        return redirect("profile")
+        return redirect("confirm_email_change")
 
     return render(request, "listings/change_email.html")
+
 
 @login_required
 def change_phone(request):
@@ -1751,8 +1727,13 @@ def change_phone(request):
 @login_required
 def confirm_phone_change(request):
     if request.method == "POST":
+
         otp = request.POST.get("otp")
         pending_phone = request.session.get("pending_phone")
+        pending_country_code = request.session.get("pending_country_code")
+
+        if not pending_phone:
+            return redirect("profile")
 
         record = PhoneOTP.objects.filter(
             user=request.user,
@@ -1762,13 +1743,69 @@ def confirm_phone_change(request):
 
         if record:
             profile = request.user.profile
+
             profile.phone_number = pending_phone
+            profile.country_code = pending_country_code
+            profile.is_phone_verified = True
             profile.save()
 
-            messages.success(request, "Phone updated successfully.")
+            PhoneOTP.objects.filter(user=request.user).delete()
+
+            request.session.pop("pending_phone", None)
+            request.session.pop("pending_country_code", None)
+
+            messages.success(
+                request,
+                "Phone updated successfully."
+            )
+
             return redirect("profile")
 
+        messages.error(request, "Invalid OTP.")
+
     return render(request, "listings/confirm_phone.html")
+
+
+@login_required
+def send_message(request, room_id):
+    room = get_object_or_404(Room, id=room_id)
+
+    if request.method != "POST":
+        return redirect("room_detail", pk=room.id)
+
+    body = (request.POST.get("body") or "").strip()
+
+    if not body:
+        messages.error(request, "Message cannot be empty.")
+        return redirect("room_detail", pk=room.id)
+
+    Message.objects.create(
+        room=room,
+        sender=request.user,
+        recipient=room.owner,
+        body=body,
+    )
+
+    Contact.objects.get_or_create(
+        room=room,
+        user=request.user
+    )
+
+    messages.success(request, "Message sent to landlord.")
+    return redirect("room_detail", pk=room.id)
+
+
+@login_required
+@user_passes_test(is_landlord)
+def inbox(request):
+    messages_qs = Message.objects.filter(
+        recipient=request.user
+    ).select_related("sender", "room").order_by("-created_at")
+
+    return render(request, "listings/inbox.html", {
+        "messages": messages_qs
+    })
+
 
 @login_required
 def delete_account(request):

@@ -31,7 +31,6 @@
     data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
     data-role="{% if user.is_authenticated %}{{ user.profile.role|default:'guest' }}{% else %}guest{% endif %}"
     data-persona="{% if user.is_authenticated and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
-    data-logout-url="{% url 'logout' %}"
   >
     <!-- ================= SIDEBAR ================= -->
     {% if user.is_authenticated %}
@@ -91,9 +90,25 @@
           <a href="{% url 'about' %}">About</a>
           <a href="{% url 'contact' %}">Contact</a>
 
+          {% if user.is_authenticated %}
+
           <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>
-          <a href="{% url 'profile' %}" data-show="auth">Profile</a>
-          <a href="{% url 'logout' %}" data-show="auth">Logout</a>
+          <a href="{% url 'profile' %}">Profile</a>
+
+          <a href="#" onclick="document.getElementById('logout-form').submit()">
+            LOGOUT
+          </a>
+
+          <form
+            id="logout-form"
+            method="POST"
+            action="{% url 'logout' %}"
+            style="display: none"
+          >
+            {% csrf_token %}
+          </form>
+
+          {% endif %}
 
           <button id="authToggle" class="auth-avatar-btn" data-show="guest">
             <span>☰</span>
@@ -111,9 +126,9 @@
     <!-- ================= MAIN ================= -->
     <main class="container">
       {% if messages %}
-      <div class="toast-wrap" id="toastWrap">
+      <div class="toast-wrap">
         {% for message in messages %}
-        <div class="toast toast-{{ message.tags|default:'info' }}">
+        <div class="toast toast-{{ message.tags|default:'info' }} show">
           {{ message }}
         </div>
         {% endfor %}
@@ -137,7 +152,18 @@
             Stay logged in
           </button>
 
-          <a class="btn-primary" href="{% url 'logout' %}"> Logout now </a>
+          <a href="#" onclick="document.getElementById('logout-form').submit()">
+            LOGOUT
+          </a>
+
+          <form
+            id="logout-form"
+            method="POST"
+            action="{% url 'logout' %}"
+            style="display: none"
+          >
+            {% csrf_token %}
+          </form>
         </div>
       </div>
     </div>
@@ -277,26 +303,22 @@
 
     <!-- ================= TOASTS ================= -->
     <script>
-      const wrap = document.getElementById("toastWrap");
+      document.addEventListener("DOMContentLoaded", function () {
+        const alerts = document.querySelectorAll(".toast");
 
-      if (wrap) {
-        const toasts = wrap.querySelectorAll(".toast");
+        alerts.forEach((alert) => {
+          // ensure visible on load
+          alert.classList.add("show");
 
-        requestAnimationFrame(() =>
-          toasts.forEach((t) => t.classList.add("show")),
-        );
+          setTimeout(() => {
+            alert.classList.remove("show");
 
-        toasts.forEach((toast, i) => {
-          setTimeout(
-            () => {
-              toast.classList.remove("show");
-              toast.classList.add("hide");
-              setTimeout(() => toast.remove(), 400);
-            },
-            3500 + i * 200,
-          );
+            setTimeout(() => {
+              alert.remove();
+            }, 250);
+          }, 3000);
         });
-      }
+      });
     </script>
 
     <!-- ================= IDLE LOGOUT ================= -->
@@ -421,5 +443,13 @@
     ></script>
 
     <script src="{% static 'js/google_address_autofill.js' %}" defer></script>
+
+    <script>
+      window.onpageshow = function (e) {
+        if (e.persisted) {
+          window.location.reload(true);
+        }
+      };
+    </script>
   </body>
 </html>

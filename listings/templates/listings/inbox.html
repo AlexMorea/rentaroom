@@ -1,0 +1,76 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<h1 class="page-title">Inbox</h1>
+
+<p style="opacity: 0.6">All tenant enquiries (CRM view)</p>
+
+<div style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px">
+  {% for msg in messages %}
+
+  <div
+    class="form-card"
+    style="display: flex; gap: 12px; align-items: flex-start"
+  >
+    <!-- AVATAR -->
+    <div
+      style="
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #e5e7eb, #f9fafb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #444;
+        border: 1px solid #eee;
+      "
+    >
+      {{ msg.sender.first_name|default:"U"|slice:":1"|upper }}
+    </div>
+
+    <!-- INFO -->
+    <div style="flex: 1">
+      <div style="display: flex; justify-content: space-between">
+        <strong>{{ msg.sender.first_name }} {{ msg.sender.last_name }}</strong>
+        <small style="opacity: 0.5">{{ msg.created_at|timesince }} ago</small>
+      </div>
+
+      <div style="opacity: 0.6; font-size: 0.85rem">{{ msg.sender.email }}</div>
+
+      {% if msg.sender.profile.phone_number %}
+      <div style="opacity: 0.6; font-size: 0.85rem">
+        {{ msg.sender.profile.phone_number }}
+      </div>
+      {% endif %}
+
+      <div style="margin-top: 6px; font-size: 0.85rem">
+        📍 {{ msg.room.title }}
+      </div>
+
+      <p style="margin-top: 6px">{{ msg.body }}</p>
+
+      <!-- ACTIONS -->
+      <div style="margin-top: 10px; display: flex; gap: 10px">
+        <a href="mailto:{{ msg.sender.email }}" class="btn-secondary">Email</a>
+
+        {% if msg.sender.profile.phone_number %}
+        <a
+          href="tel:{{ msg.sender.profile.phone_number }}"
+          class="btn-secondary"
+        >
+          Call
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% empty %}
+  <div class="form-card">
+    <p>No enquiries yet.</p>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

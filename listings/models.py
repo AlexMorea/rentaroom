@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
 from django.db.models.functions import Lower
-import uuid
 import re
 from django.utils import timezone
 from datetime import timedelta
@@ -252,6 +251,37 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.room.title}"
+    
+class Message(models.Model):
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_messages"
+    )
+
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="received_messages"
+    )
+
+    body = models.TextField(max_length=1000)
+
+    is_read = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.sender} -> {self.recipient}"    
 
 class RoomStat(models.Model):
 
@@ -336,24 +366,3 @@ class PhoneOTP(models.Model):
 
     def __str__(self):
         return f"{self.phone_number} ({self.otp})"
-
-class EmailVerification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_verified = models.BooleanField(default=False)
-
-    def is_expired(self):
-        return timezone.now() > self.created_at + timedelta(hours=24)
-
-    def __str__(self):
-        return f"{self.user} - {self.token}"
-    
-class Message(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_messages")
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
-
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)    

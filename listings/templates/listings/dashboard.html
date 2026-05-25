@@ -79,6 +79,93 @@
 </div>
 {% endif %}
 
+<!-- ================= CRM INBOX (LANDLORD LEADS MVP) ================= -->
+
+<a href="{% url 'inbox' %}" style="text-decoration: none; color: inherit">
+  <div
+    class="form-card"
+    style="margin-top: 20px; cursor: pointer; border: 1px solid #eee"
+  >
+    <!-- HEADER -->
+    <div
+      style="display: flex; justify-content: space-between; align-items: center"
+    >
+      <div>
+        <h3 style="margin: 0">Inbox</h3>
+        <p style="margin: 4px 0 0; opacity: 0.6; font-size: 0.85rem">
+          Tenant enquiries (click to view all)
+        </p>
+      </div>
+
+      <span style="opacity: 0.6; font-size: 0.85rem">
+        {{ messages_received|length }} recent →
+      </span>
+    </div>
+
+    <!-- LIST (LIMITED MVP PREVIEW ONLY) -->
+    <div style="margin-top: 12px; max-height: 320px; overflow: hidden">
+      {% for msg in messages_received %}
+      <div style="padding: 12px 0; border-top: 1px solid #f1f1f1">
+        <div style="display: flex; gap: 12px; align-items: flex-start">
+          <!-- AVATAR -->
+          <div
+            style="
+              width: 42px;
+              height: 42px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #e5e7eb, #f9fafb);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+              color: #444;
+              border: 1px solid #eee;
+            "
+          >
+            {{ msg.sender.first_name|default:"U"|slice:":1"|upper }}
+          </div>
+
+          <!-- CONTENT -->
+          <div style="flex: 1; min-width: 0">
+            <div style="display: flex; justify-content: space-between">
+              <strong style="font-size: 0.95rem">
+                {{ msg.sender.first_name|default:"Unknown" }}
+              </strong>
+
+              <small style="opacity: 0.5">
+                {{ msg.created_at|timesince }} ago
+              </small>
+            </div>
+
+            <div style="opacity: 0.6; font-size: 0.8rem">
+              {{ msg.room.title }}
+            </div>
+
+            <p style="margin: 4px 0 0; font-size: 0.9rem; opacity: 0.85">
+              {{ msg.body|truncatechars:90 }}
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- FOOTER CTA -->
+    {% if messages_received|length >= 10 %}
+    <div
+      style="
+        margin-top: 10px;
+        text-align: center;
+        opacity: 0.7;
+        font-size: 0.85rem;
+      "
+    >
+      Showing latest 10 enquiries only
+    </div>
+    {% endif %}
+  </div>
+</a>
+
 <div class="dashboard-rooms" id="your-rooms">
   {% for room in rooms %}
   <div class="room-row">

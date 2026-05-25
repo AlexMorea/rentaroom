@@ -12,9 +12,7 @@ urlpatterns = [
     path("register/", views.register, name="register"),
     path("login/", views.user_login, name="login"),
     path("logout/", views.user_logout, name="logout"),
-    path("verify-phone/", views.verify_phone, name="verify_phone"),
     path("resend-otp/", views.resend_otp, name="resend_otp"),
-    path("verify-email/<uuid:token>/", views.verify_email, name="verify_email"),
     path("confirm-email-change/<uuid:token>/", views.confirm_email_change, name="confirm_email_change"),
     path("change-email/", views.change_email, name="change_email"),
     path("change-phone/", views.change_phone, name="change_phone"),
@@ -22,6 +20,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("membership/", membership_view, name="membership"),
+    path("inbox/", views.inbox, name="inbox"),
 
     # tenant save/unsave
     path("favorite/<int:room_id>/toggle/", views.toggle_favorite, name="toggle_favorite"),
@@ -76,5 +75,18 @@ urlpatterns = [
         template_name="registration/password_reset_complete.html"
     ), name="password_reset_complete"),
     path("delete-account/", views.delete_account, name="delete_account"),
+
+    path("verify-account/", views.verify_account, name="verify_account"),
+    path("resend-account-otp/", views.resend_account_otp, name="resend_account_otp"),
+    path(
+        "confirm-email-change/",
+        views.confirm_email_change,
+        name="confirm_email_change"
+    ),
+    path(
+        "rooms/<int:room_id>/message/",
+        views.send_message,
+        name="send_message"
+    ),
 ]
 

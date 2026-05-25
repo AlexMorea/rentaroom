@@ -1,0 +1,34 @@
+{% extends "listings/base.html" %} {% block content %}
+<div class="container py-5">
+  <h2>Verify your account</h2>
+  <p>Enter the OTP sent to your email.</p>
+
+  {% if messages %} {% for message in messages %}
+  <div>{{ message }}</div>
+  {% endfor %} {% endif %}
+
+  <form method="POST">
+    {% csrf_token %}
+    <input
+      type="text"
+      name="otp"
+      maxlength="6"
+      required
+      placeholder="Enter OTP"
+    />
+    <button type="submit">Verify</button>
+  </form>
+
+  <button id="resend-btn">Resend OTP</button>
+</div>
+
+<script>
+  document.getElementById("resend-btn").onclick = function () {
+    fetch("/resend-account-otp/")
+      .then((r) => r.json())
+      .then((data) => {
+        alert(data.message || data.error);
+      });
+  };
+</script>
+{% endblock %}

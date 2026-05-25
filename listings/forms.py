@@ -324,7 +324,10 @@ class RoomForm(forms.ModelForm):
                 "placeholder": "e.g. Gauteng"
             }),
 
-            "location": forms.HiddenInput(),
+            "location": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "e.g. Mamelodi East, Pretoria (or select from map later)"
+            }),
 
             "full_address": forms.TextInput(attrs={
                 "class": "input",
@@ -419,11 +422,17 @@ class RoomForm(forms.ModelForm):
         available_units = cleaned.get("available_units") or 0
         available_from = cleaned.get("available_from")
 
-        # AUTO BUILD LOCATION
-        if suburb and city:
-            cleaned["location"] = f"{suburb}, {city}"
+        # LOCATION PRIORITY SYSTEM (MVP SAFE)
+        location = (cleaned.get("location") or "").strip()
 
-        location = cleaned.get("location")
+        suburb = (cleaned.get("suburb") or "").strip()
+        city = (cleaned.get("city") or "").strip()
+
+        # If user did NOT manually enter location → auto-build it
+        if not location and suburb and city:
+            location = f"{suburb}, {city}"
+
+        cleaned["location"] = location
 
         # PHONE NORMALIZER
         cleaned["contact_phone"] = normalize_sa_phone(
@@ -482,6 +491,12 @@ class RoomForm(forms.ModelForm):
             if qs.exists():
                 raise ValidationError(
                     "You already posted this listing."
+                )
+            
+            if not cleaned.get("location"):
+                self.add_error(
+                    "location",
+                    "Please enter a location (e.g. Mamelodi East, Pretoria)."
                 )
 
         return cleaned
