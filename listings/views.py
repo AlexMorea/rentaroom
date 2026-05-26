@@ -194,6 +194,27 @@ def about(request):
     return render(request, "listings/about.html")
 
 
+def terms(request):
+    return render(
+        request,
+        "listings/terms.html"
+    )
+
+
+def privacy(request):
+    return render(
+        request,
+        "listings/privacy.html"
+    )
+
+
+def safety(request):
+    return render(
+        request,
+        "listings/safety.html"
+    )
+
+
 def services(request):
     context = {
         "rooms_available": Room.objects.filter(is_available=True).count(),
@@ -708,11 +729,10 @@ def profile(request):
     p = user.profile
 
     def dash(value):
-        """Return a clean display value instead of blanks/None (prevents 'code leak' looking output)."""
         value = (value or "").strip() if isinstance(value, str) else value
         return value if value else "—"
-    
-    # Tenant panels (saved + viewed)
+
+    # ---------------- TENANT DATA ----------------
     favorites_qs = (
         Favorite.objects.filter(user=user)
         .select_related("room")
@@ -721,14 +741,17 @@ def profile(request):
     saved_rooms = [f.room for f in favorites_qs]
 
     viewed_stats = (
-        RoomStat.objects.filter(user=user, stat_type="view")
+        RoomStat.objects.filter(
+            user=user,
+            stat_type="view"
+        )
         .select_related("room")
         .order_by("-created_at")
     )
 
-    # dedupe viewed rooms without breaking sqlite
     seen = set()
     viewed_rooms = []
+
     for s in viewed_stats:
         if not s.room_id:
             continue
@@ -737,91 +760,147 @@ def profile(request):
         seen.add(s.room_id)
         viewed_rooms.append(s.room)
 
-    
-    # Landlord analytics
+    # ---------------- LANDLORD STATS ----------------
     rooms_count = 0
     image_count = 0
     contact_count = 0
 
     if p.role == "landlord":
-        rooms = Room.objects.filter(owner=user).order_by("-created_at")
+        rooms = Room.objects.filter(owner=user)
+
         rooms_count = rooms.count()
-        image_count = RoomImage.objects.filter(room__owner=user).count()
-        contact_count = RoomStat.objects.filter(
-            room__owner=user, stat_type__startswith="contact"
+        image_count = RoomImage.objects.filter(
+            room__owner=user
         ).count()
 
-   
-    # Header badge (template doesn't need if/else)
-    persona_text = p.get_persona_display() if getattr(p, "persona", None) else "Not set"
-    badge_text = f"{persona_text}" if p.role == "tenant" else "Landlord"
-    verified_badge = "Verified" if (p.role == "landlord" and getattr(p, "is_verified", False)) else ""
+        contact_count = RoomStat.objects.filter(
+            room__owner=user,
+            stat_type__startswith="contact"
+        ).count()
 
-    # Stats (split into link stats + plain stats to avoid template if)
+    # ---------------- HEADER ----------------
+    persona_text = (
+        p.get_persona_display()
+        if p.persona
+        else "Not set"
+    )
+
+    badge_text = (
+        persona_text
+        if p.role == "tenant"
+        else "Landlord"
+    )
+
+    verified_badge = (
+        "Verified"
+        if (
+            p.role == "landlord"
+            and getattr(p, "is_verified", False)
+        )
+        else ""
+    )
+
+    # ---------------- STATS ----------------
     stat_cards = []
     stat_links = []
 
     if p.role == "tenant":
         stat_cards = [
-            {"number": len(saved_rooms), "label": "Saved rooms"},
-            {"number": len(viewed_rooms), "label": "Viewed rooms"},
+            {
+                "number": len(saved_rooms),
+                "label": "Saved rooms"
+            },
+            {
+                "number": len(viewed_rooms),
+                "label": "Viewed rooms"
+            },
         ]
     else:
         stat_links = [
-            {"href": reverse("landlord_rooms"), "number": rooms_count, "label": "Rooms"},
-            {"href": reverse("landlord_images_hub"), "number": image_count, "label": "Images"},
-            {"href": reverse("contacts_analytics"), "number": contact_count, "label": "Contacts"},
+            {
+                "href": reverse("landlord_rooms"),
+                "number": rooms_count,
+                "label": "Rooms"
+            },
+            {
+                "href": reverse("landlord_images_hub"),
+                "number": image_count,
+                "label": "Images"
+            },
+            {
+                "href": reverse("contacts_analytics"),
+                "number": contact_count,
+                "label": "Contacts"
+            },
         ]
 
-   
+    # ---------------- DETAILS ----------------
     detail_rows = [
-        {"label": "Name", "value": f"{dash(user.first_name)} {dash(user.last_name)}"},
-        {"label": "Email", "value": dash(user.email)},
+        {
+            "label": "Name",
+            "value": f"{dash(user.first_name)} {dash(user.last_name)}"
+        },
+        {
+            "label": "Email",
+            "value": dash(user.email)
+        },
+        {
+            "label": "Cell",
+            "value": dash(p.full_phone())   # <-- now works for BOTH
+        },
     ]
 
     if p.role == "tenant":
-        detail_rows.append({"label": "Persona", "value": persona_text})
+        detail_rows.append({
+            "label": "Persona",
+            "value": persona_text
+        })
+
     else:
-        # Build full phone properly
-        full_phone = p.full_phone()
+        detail_rows.extend([
+            {
+                "label": "Alt",
+                "value": dash(p.alt_no)
+            },
+            {
+                "label": "Address",
+                "value": dash(p.home_address)
+            },
+            {
+                "label": "Postal",
+                "value": dash(p.postal_code)
+            },
+        ])
 
-        detail_rows.extend(
-            [
-                {"label": "Cell", "value": dash(full_phone)},
-                {"label": "Alt", "value": dash(getattr(p, "alt_no", ""))},
-                {"label": "Address", "value": dash(getattr(p, "home_address", ""))},
-                {"label": "Postal", "value": dash(getattr(p, "postal_code", ""))},
-            ]
-        )
-
-   
-    # Tenant sections (empty list for landlord, so template just renders nothing)
+    # ---------------- TENANT SECTIONS ----------------
     tenant_sections = []
+
     if p.role == "tenant":
         tenant_sections = [
-            {"title": "Saved rooms", "rooms": saved_rooms},
-            {"title": "Viewed rooms", "rooms": viewed_rooms},
+            {
+                "title": "Saved rooms",
+                "rooms": saved_rooms
+            },
+            {
+                "title": "Viewed rooms",
+                "rooms": viewed_rooms
+            },
         ]
 
-    context = {
-        "p": p,
+    return render(
+        request,
+        "listings/profile.html",
+        {
+            "p": p,
+            "badge_text": badge_text,
+            "verified_badge": verified_badge,
+            "stat_cards": stat_cards,
+            "stat_links": stat_links,
+            "detail_rows": detail_rows,
+            "tenant_sections": tenant_sections,
+        },
+    )
 
-        # header
-        "badge_text": badge_text,
-        "verified_badge": verified_badge,
-
-        # stats
-        "stat_cards": stat_cards,
-        "stat_links": stat_links,
-
-        # details
-        "detail_rows": detail_rows,
-
-        # tenant lists
-        "tenant_sections": tenant_sections,
-    }
-
-    return render(request, "listings/profile.html", context)
 
 def resend_account_otp(request):
     user_id = request.session.get("pending_user_id")
@@ -881,11 +960,6 @@ def edit_profile(request):
     user = request.user
     profile = user.profile
 
-    initial_data = {
-        "country_code": profile.country_code,
-        "phone_number": profile.phone_number,
-    }
-
     u_form = UserUpdateForm(
         request.POST or None,
         instance=user
@@ -893,27 +967,38 @@ def edit_profile(request):
 
     p_form = ProfileUpdateForm(
         request.POST or None,
-        instance=profile,
-        initial=initial_data
+        instance=profile
     )
+
+    # hide landlord-only fields for tenants
+    if profile.role == "tenant":
+        for field in ["alt_no", "home_address", "postal_code"]:
+            p_form.fields.pop(field, None)
+
+    # hide tenant-only field for landlords
+    if profile.role == "landlord":
+        p_form.fields.pop("persona", None)
 
     if request.method == "POST":
 
-        if u_form.is_valid() and p_form.is_valid():
+        u_valid = u_form.is_valid()
+        p_valid = p_form.is_valid()
+
+        if u_valid and p_valid:
 
             user_obj = u_form.save(commit=False)
             profile_obj = p_form.save(commit=False)
 
-            # keep country code
-            profile_obj.country_code = (
-                p_form.cleaned_data.get("country_code")
+            # preserve country code
+            profile_obj.country_code = p_form.cleaned_data.get(
+                "country_code",
+                profile.country_code
             )
 
-            # update phone only if entered
-            phone_number = p_form.cleaned_data.get("phone_number")
-
-            if phone_number:
-                profile_obj.phone_number = phone_number
+            # preserve phone
+            phone = p_form.cleaned_data.get("phone_number")
+            if phone:
+                profile_obj.phone_number = phone
 
             with transaction.atomic():
                 user_obj.save()
@@ -1486,9 +1571,8 @@ class RateLimitedPasswordResetView(PasswordResetView):
         return super().form_valid(form)
 
 
-# -----------------------------
-# Landlord analytics + heatmap
-# -----------------------------
+
+# Landlord analytics 
 @login_required
 @user_passes_test(is_landlord)
 def contacts_analytics(request):
@@ -1555,34 +1639,41 @@ def resend_otp(request):
     })
 
 
-@login_required
-def heatmap(request):
-    return render(request, "listings/heatmap.html")
-
-
-def terms(request):
-    return render(request, "listings/terms.html")
-
-def privacy(request):
-    return render(request, "listings/privacy.html")
-
-def safety(request):
-    return render(request, "listings/safety.html")
-
 @require_POST
 def report_room(request, pk):
     room = get_object_or_404(Room, pk=pk)
+
     reason = (request.POST.get("reason") or "").strip()
     detail = (request.POST.get("detail") or "").strip()
 
-    # ✅ Simple logging-only report for now (safe + no DB changes)
-    # Later we can add a Report model.
+    # reason required
     if not reason:
-        messages.error(request, "Please select a reason to report this listing.")
+        messages.error(
+            request,
+            "Please select a reason to report this listing."
+        )
         return redirect("room_detail", pk=room.id)
 
-    # This is enough for MVP: WE can wire to email/admin later
-    messages.success(request, "Thanks! Your report was received ✅ We’ll review this listing.")
+    # if "other", require detail
+    if reason.lower() == "other" and not detail:
+        messages.error(
+            request,
+            "Please provide more detail for 'Other'."
+        )
+        return redirect("room_detail", pk=room.id)
+
+    # temporary logging (helps admin later)
+    print(
+        f"ROOM REPORT | room={room.id} | "
+        f"user={request.user.id if request.user.is_authenticated else 'anonymous'} | "
+        f"reason={reason} | detail={detail}"
+    )
+
+    messages.success(
+        request,
+        "Thanks! Your report was received ✅ We’ll review this listing."
+    )
+
     return redirect("room_detail", pk=room.id)
 
 

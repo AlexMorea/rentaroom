@@ -19,7 +19,7 @@
     <form method="post">
       {% csrf_token %}
 
-      <!-- ✅ GLOBAL ERROR DISPLAY -->
+      <!-- GLOBAL ERROR DISPLAY -->
       {% if u_form.non_field_errors or p_form.non_field_errors %}
       <div class="form-errors">
         {{ u_form.non_field_errors }} {{ p_form.non_field_errors }}
@@ -47,7 +47,18 @@
       <hr style="margin: 16px 0; opacity: 0.25" />
 
       {% if user.profile.role == "tenant" %}
-      <h3 style="margin: 0 0 10px; font-weight: 900">Persona</h3>
+      <h3 style="margin: 0 0 10px; font-weight: 900">Tenant details</h3>
+
+      <div class="field">
+        <label class="auth-label">Country code</label>
+        {{ p_form.country_code }} {{ p_form.country_code.errors }}
+      </div>
+
+      <div class="input-group">
+        <label>Cell Number</label>
+        <div class="input" style="opacity: 0.7">{{ p.full_phone }}</div>
+        <a href="{% url 'change_phone' %}">Change</a>
+      </div>
 
       <div class="field">
         <label class="auth-label">Persona</label>
@@ -59,7 +70,7 @@
         Landlord verification details
       </h3>
 
-      <!-- ✅ FIX: COUNTRY CODE ADDED -->
+      <!--  FIX: COUNTRY CODE ADDED -->
       <div class="field">
         <label class="auth-label">Country code</label>
         {{ p_form.country_code }} {{ p_form.country_code.errors }}
@@ -67,9 +78,7 @@
 
       <div class="input-group">
         <label>Cell Number</label>
-        <div class="input" style="opacity: 0.7">
-          {{ p.country_code }}{{ p.phone_number }}
-        </div>
+        <div class="input" style="opacity: 0.7">{{ p.full_phone }}</div>
         <a href="{% url 'change_phone' %}">Change</a>
       </div>
 

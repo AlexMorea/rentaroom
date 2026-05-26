@@ -190,10 +190,8 @@ class UserUpdateForm(forms.ModelForm):
         widgets = {
             "first_name": forms.TextInput(attrs={"class": "input"}),
             "last_name": forms.TextInput(attrs={"class": "input"}),
-            "email": forms.EmailInput(attrs={"class": "input"}),
         }
 
-    #  PREVENT DUPLICATE EMAILS
     def clean_email(self):
         email = (self.cleaned_data.get("email") or "").strip().lower()
 
@@ -243,25 +241,19 @@ class ProfileUpdateForm(forms.ModelForm):
         if not phone:
             return self.instance.phone_number
 
-        # remove non-digits
         phone = re.sub(r"[^\d]", "", phone)
 
-        # remove country code
         if phone.startswith("27"):
             phone = phone[2:]
 
-        # remove leading zero
         if phone.startswith("0"):
             phone = phone[1:]
 
         if len(phone) != 9:
-            raise forms.ValidationError(
-                "Enter valid SA number. Example: 841234567"
-            )
+            raise forms.ValidationError("Enter valid SA number. Example: 841234567")
 
         return phone
-    
-    
+        
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room

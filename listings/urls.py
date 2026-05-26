@@ -55,7 +55,6 @@ urlpatterns = [
     path("about/", views.about, name="about"),
     path("services/", views.services, name="services"),
     path("contact/", views.contact, name="contact"),
-    path("heatmap/", views.heatmap, name="heatmap"),
 
     path("password-reset/", RateLimitedPasswordResetView.as_view(
         template_name="registration/password_reset_form.html",
