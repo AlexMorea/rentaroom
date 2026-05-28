@@ -1,0 +1,50 @@
+{% if user.is_authenticated %}
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <h3>Neighbour</h3>
+  </div>
+
+  <a href="{% url 'room_list' %}"> 🏠 Browse </a>
+
+  <a href="{% url 'profile' %}"> 👤 Profile </a>
+
+  {% if user.profile.role == "landlord" %}
+
+  <a href="{% url 'dashboard' %}"> 📊 Dashboard </a>
+
+  <a href="{% url 'services:bakkie_home' %}"> 🚚 Bakkie4You </a>
+
+  {% endif %} {% if user.profile.role == "tenant" %}
+
+  <hr />
+
+  <a href="{% url 'services:bakkie_home' %}"> 🚚 Bakkie4You </a>
+
+  <a href="{% url 'services:guardian_home' %}"> 🛡 Guardian4You </a>
+
+  {% endif %} {% if user.profile.role == "driver" %}
+
+  <hr />
+
+  <a href="{% url 'services:driver_dashboard' %}"> 🚚 Driver Panel </a>
+
+  {% endif %}
+
+  <hr />
+
+  <a href="#"> ⚙ Settings </a>
+</aside>
+
+<button
+  id="sidebarToggle"
+  class="sidebar-tab"
+  type="button"
+  aria-label="Open sidebar"
+>
+  <span id="sidebarArrow">❯</span>
+</button>
+
+{% endif %}

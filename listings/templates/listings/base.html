@@ -3,7 +3,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
     <title>{% block title %}Rooms4You{% endblock %}</title>
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link
@@ -18,7 +20,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
 
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=10" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=11" />
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -32,424 +34,51 @@
     data-role="{% if user.is_authenticated %}{{ user.profile.role|default:'guest' }}{% else %}guest{% endif %}"
     data-persona="{% if user.is_authenticated and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
   >
-    <!-- ================= SIDEBAR ================= -->
-    {% if user.is_authenticated %}
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <div id="sidebar" class="sidebar">
-      <div class="sidebar-header">
-        <h3>Neighbour</h3>
-      </div>
-
-      <a href="/">🏠 Browse</a>
-      <a href="/profile/">👤 Profile</a>
-
-      {% if user.profile.role == "landlord" %}
-      <a href="/dashboard/">📊 Dashboard</a>
-      <a href="{% url 'services:bakkie_home' %}">🚚 Bakkie4You</a>
-      {% endif %} {% if user.profile.role == "tenant" %}
-      <hr />
-      <a href="{% url 'services:bakkie_home' %}">🚚 Bakkie4You</a>
-      <a href="{% url 'services:guardian_home' %}">🛡 Guardian4You</a>
-      {% endif %} {% if user.profile.role == "driver" %}
-      <hr />
-      <a href="{% url 'services:driver_dashboard' %}">🚚 Driver Panel</a>
-      {% endif %}
-
-      <hr />
-      <a href="#">⚙ Settings</a>
-    </div>
-
-    <button
-      id="sidebarToggle"
-      class="sidebar-tab"
-      aria-label="Open sidebar"
-      type="button"
+    <!-- GLOBAL LOGOUT FORM -->
+    <form
+      id="logout-form"
+      method="POST"
+      action="{% url 'logout' %}"
+      style="display: none"
     >
-      <span id="sidebarArrow">❯</span>
-    </button>
-    {% endif %}
+      {% csrf_token %}
+    </form>
 
-    <!-- ================= HEADER ================= -->
-    <header class="site-header">
-      <div class="nav-container">
-        <div class="brand">
-          <nav class="navbar">
-            <a href="{% url 'home' %}" class="navbar-logo">
-              <img
-                src="{% static 'images/rooms4you-logo.jpeg' %}"
-                alt="Rooms4You Logo"
-              />
-            </a>
-          </nav>
-        </div>
+    <!-- SIDEBAR -->
+    {% include "listings/partials/_sidebar.html" %}
 
-        <nav class="nav-links" id="navLinks">
-          <a href="{% url 'room_list' %}">Browse</a>
-          <a href="{% url 'services' %}">Services</a>
-          <a href="{% url 'about' %}">About</a>
-          <a href="{% url 'contact' %}">Contact</a>
+    <!-- HEADER -->
+    {% include "listings/partials/_navbar.html" %}
 
-          {% if user.is_authenticated %}
-
-          <a href="{% url 'dashboard' %}" data-show="landlord">Dashboard</a>
-          <a href="{% url 'profile' %}">Profile</a>
-
-          <a href="#" onclick="document.getElementById('logout-form').submit()">
-            LOGOUT
-          </a>
-
-          <form
-            id="logout-form"
-            method="POST"
-            action="{% url 'logout' %}"
-            style="display: none"
-          >
-            {% csrf_token %}
-          </form>
-
-          {% endif %}
-
-          <button id="authToggle" class="auth-avatar-btn" data-show="guest">
-            <span>☰</span>
-            <span class="avatar">👤</span>
-          </button>
-        </nav>
-
-        <button class="burger" id="burgerBtn">☰</button>
-      </div>
-    </header>
-
-    <!-- MOBILE NAV BACKDROP -->
-    <div class="nav-backdrop" id="navBackdrop"></div>
-
-    <!-- ================= MAIN ================= -->
+    <!-- MAIN -->
     <main class="container">
-      {% if messages %}
-      <div class="toast-wrap">
-        {% for message in messages %}
-        <div class="toast toast-{{ message.tags|default:'info' }} show">
-          {{ message }}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %} {% block content %}{% endblock %}
+      {% include "listings/partials/_messages.html" %}
+
+      {% block content %}
+      {% endblock content %}
     </main>
 
-    <!-- ================= IDLE MODAL ================= -->
-    {% if user.is_authenticated %}
-    <div class="idle-modal" id="idleModal">
-      <div class="idle-card">
-        <h3 class="idle-title">Still there?</h3>
+    <!-- FOOTER -->
+    {% include "listings/partials/_footer.html" %}
 
-        <p class="idle-text">
-          For your security, you'll be logged out in
-          <strong><span id="idleCountdown">60</span>s</strong>
-        </p>
+    <!-- MODALS -->
+    {% include "listings/partials/_auth_modal.html" %} 
+    {% include "listings/partials/_idle_modal.html" %}
 
-        <div class="idle-actions">
-          <button class="btn-secondary" id="stayLoggedInBtn">
-            Stay logged in
-          </button>
-
-          <a href="#" onclick="document.getElementById('logout-form').submit()">
-            LOGOUT
-          </a>
-
-          <form
-            id="logout-form"
-            method="POST"
-            action="{% url 'logout' %}"
-            style="display: none"
-          >
-            {% csrf_token %}
-          </form>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- ================= FOOTER ================= -->
-    <footer class="site-footer">
-      <div class="footer-links">
-        <a href="{% url 'terms' %}">Terms</a>
-        <span>•</span>
-        <a href="{% url 'privacy' %}">Privacy</a>
-        <span>•</span>
-        <a href="{% url 'safety' %}">Safety</a>
-        <span>•</span>
-        <a href="{% url 'contact' %}">Support</a>
-      </div>
-
-      <p>
-        Listings are posted by landlords. We actively review reports and take
-        action to protect users.
-      </p>
-
-      <p>© 2026 Rooms4You • Your data is protected.</p>
-      <span class="beta-badge">BETA v1.0</span>
-    </footer>
-
-    <!-- WhatsApp Support -->
-    <a
-      href="https://wa.me/27YOURNUMBER"
-      target="_blank"
-      style="
-        position: fixed;
-        right: 22px;
-        bottom: 22px;
-        width: 58px;
-        height: 58px;
-        background: #25d366;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 35px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        z-index: 9999;
-        text-decoration: none;
-      "
-    >
-      <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <!-- ================= SAFE AUTH CONTROL ================= -->
-    <script>
-      const root = document.body;
-      const isAuth = root.dataset.auth === "1";
-      const role = (root.dataset.role || "guest").toLowerCase();
-
-      document.querySelectorAll("[data-show]").forEach((el) => {
-        const rule = el.getAttribute("data-show");
-
-        if (rule === "auth") el.style.display = isAuth ? "" : "none";
-        if (rule === "guest") el.style.display = isAuth ? "none" : "";
-        if (rule === "landlord")
-          el.style.display = isAuth && role === "landlord" ? "" : "none";
-      });
-    </script>
-
-    <!-- ================= AUTH MODAL SAFE ================= -->
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const authBtn = document.getElementById("authToggle");
-        const modal = document.getElementById("authModal");
-
-        authBtn?.addEventListener("click", () => {
-          modal?.classList.remove("hidden");
-        });
-
-        modal?.addEventListener("click", (e) => {
-          if (e.target === modal) {
-            modal.classList.add("hidden");
-          }
-        });
-
-        document.querySelectorAll(".auth-option").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const url = btn.dataset.url;
-            if (url) window.location.href = url;
-          });
-        });
-      });
-    </script>
-
-    <!-- ================= BURGER SAFE ================= -->
-    <script>
-      const burger = document.getElementById("burgerBtn");
-      const nav = document.getElementById("navLinks");
-      const backdrop = document.getElementById("navBackdrop");
-
-      function openMenu() {
-        nav?.classList.add("show");
-        backdrop?.classList.add("show");
-        document.body.classList.add("nav-open");
-      }
-
-      function closeMenu() {
-        nav?.classList.remove("show");
-        backdrop?.classList.remove("show");
-        document.body.classList.remove("nav-open");
-      }
-
-      burger?.addEventListener("click", (e) => {
-        e.preventDefault();
-        nav?.classList.contains("show") ? closeMenu() : openMenu();
-      });
-
-      backdrop?.addEventListener("click", closeMenu);
-
-      nav?.querySelectorAll("a").forEach((link) => {
-        link.addEventListener("click", closeMenu);
-      });
-    </script>
-
-    <!-- ================= SIDEBAR SAFE ================= -->
-    <script>
-      const sidebar = document.querySelector(".sidebar");
-      const tab = document.querySelector(".sidebar-tab");
-      const overlay = document.querySelector(".sidebar-overlay");
-
-      function toggleSidebar() {
-        sidebar?.classList.toggle("open");
-        overlay?.classList.toggle("show");
-      }
-
-      tab?.addEventListener("click", toggleSidebar);
-      overlay?.addEventListener("click", toggleSidebar);
-    </script>
-
-    <!-- ================= TOASTS ================= -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const alerts = document.querySelectorAll(".toast");
-
-        alerts.forEach((alert) => {
-          // ensure visible on load
-          alert.classList.add("show");
-
-          setTimeout(() => {
-            alert.classList.remove("show");
-
-            setTimeout(() => {
-              alert.remove();
-            }, 250);
-          }, 3000);
-        });
-      });
-    </script>
-
-    <!-- ================= IDLE LOGOUT ================= -->
-    <script>
-      if (document.body.dataset.auth === "1") {
-        const IDLE = 15 * 60 * 1000;
-        const WARN = 60;
-
-        const modal = document.getElementById("idleModal");
-        const countdown = document.getElementById("idleCountdown");
-
-        let idleTimer;
-        let countTimer;
-        let remaining = WARN;
-
-        function openModal() {
-          modal?.classList.add("show");
-
-          countTimer = setInterval(() => {
-            remaining--;
-            if (countdown) countdown.textContent = remaining;
-
-            if (remaining <= 0) {
-              window.location.href = document.body.dataset.logoutUrl;
-            }
-          }, 1000);
-        }
-
-        function reset() {
-          clearTimeout(idleTimer);
-          clearInterval(countTimer);
-
-          remaining = WARN;
-          modal?.classList.remove("show");
-
-          idleTimer = setTimeout(openModal, IDLE);
-        }
-
-        ["mousemove", "mousedown", "keydown", "scroll", "touchstart"].forEach(
-          (e) => window.addEventListener(e, reset, { passive: true }),
-        );
-
-        reset();
-      }
-    </script>
-
-    {% block extra_js %}{% endblock %}
-
-    <!-- ================= AUTH MODAL ================= -->
-    <div id="authModal" class="auth-modal hidden">
-      <div class="auth-box">
-        <h2>Get Started</h2>
-
-        <button data-url="{% url 'login' %}" class="auth-option">Login</button>
-
-        <button data-url="{% url 'register' %}" class="auth-option">
-          Sign up
-        </button>
-
-        <button
-          data-url="{% url 'services:register_bakkie_driver' %}"
-          class="auth-option driver"
-        >
-          🚚 Become a Driver
-        </button>
-      </div>
-    </div>
-    <script>
-      (function () {
-        function initSlider(slider) {
-          const track = slider.querySelector("[data-slider-track]");
-          const images = track?.querySelectorAll("img") || [];
-          const prev = slider.querySelector("[data-slider-prev]");
-          const next = slider.querySelector("[data-slider-next]");
-
-          if (!track || images.length <= 1) {
-            if (prev) prev.style.display = "none";
-            if (next) next.style.display = "none";
-            return;
-          }
-
-          function getSlideWidth() {
-            return slider.clientWidth;
-          }
-
-          next?.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            track.scrollBy({
-              left: getSlideWidth(),
-              behavior: "smooth",
-            });
-          });
-
-          prev?.addEventListener("click", function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            track.scrollBy({
-              left: -getSlideWidth(),
-              behavior: "smooth",
-            });
-          });
-
-          // disable finger swipe on mobile
-          track.style.touchAction = "none";
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-          document.querySelectorAll("[data-slider]").forEach(initSlider);
-        });
-      })();
-    </script>
+    <!-- GLOBAL DATA -->
     <script>
       window.GOOGLE_MAPS_API_KEY = "{{ GOOGLE_MAPS_API_KEY }}";
     </script>
 
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places"
-      defer
-    ></script>
+    <!-- CORE JS -->
+    <script src="{% static 'js/navbar.js' %}" defer></script>
+    <script src="{% static 'js/sidebar.js' %}" defer></script>
+    <script src="{% static 'js/auth-modal.js' %}" defer></script>
+    <script src="{% static 'js/toast.js' %}" defer></script>
+    <script src="{% static 'js/idle.js' %}" defer></script>
+    <script src="{% static 'js/slider.js' %}" defer></script>
 
-    <script src="{% static 'js/google_address_autofill.js' %}" defer></script>
-
-    <script>
-      window.onpageshow = function (e) {
-        if (e.persisted) {
-          window.location.reload(true);
-        }
-      };
-    </script>
+    <!-- PAGE JS -->
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

@@ -1,34 +1,65 @@
-{% extends "listings/base.html" %} {% block content %}
-<div class="container py-5">
-  <h2>Verify your account</h2>
-  <p>Enter the OTP sent to your email.</p>
+{% extends "listings/base.html" %} {% block title %} Verify Account • Rooms4You
+{% endblock %} {% block content %}
 
-  {% if messages %} {% for message in messages %}
-  <div>{{ message }}</div>
-  {% endfor %} {% endif %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1>Verify your account</h1>
 
-  <form method="POST">
-    {% csrf_token %}
-    <input
-      type="text"
-      name="otp"
-      maxlength="6"
-      required
-      placeholder="Enter OTP"
-    />
-    <button type="submit">Verify</button>
-  </form>
+      <p>Enter the OTP sent to your email address.</p>
+    </div>
 
-  <button id="resend-btn">Resend OTP</button>
+    <form method="POST" class="auth-form">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="otp"> Verification Code </label>
+
+        <input
+          type="text"
+          id="otp"
+          name="otp"
+          maxlength="6"
+          required
+          placeholder="Enter 6-digit OTP"
+          class="input"
+        />
+      </div>
+
+      <button type="submit" class="btn-primary auth-submit">
+        Verify Account
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <button type="button" id="resend-btn" class="btn-secondary">
+        Resend OTP
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
-  document.getElementById("resend-btn").onclick = function () {
-    fetch("/resend-account-otp/")
-      .then((r) => r.json())
-      .then((data) => {
-        alert(data.message || data.error);
-      });
-  };
+  document.getElementById("resend-btn")?.addEventListener("click", async () => {
+    const btn = document.getElementById("resend-btn");
+
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+      const res = await fetch("/resend-account-otp/");
+      const data = await res.json();
+
+      alert(data.message || data.error || "OTP sent.");
+    } catch (err) {
+      alert("Failed to resend OTP.");
+    }
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = "Resend OTP";
+    }, 5000);
+  });
 </script>
+
 {% endblock %}

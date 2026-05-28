@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -9,6 +9,7 @@ from django.db.models.functions import Lower
 import re
 from django.utils import timezone
 from datetime import timedelta
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Room(models.Model):
@@ -108,14 +109,12 @@ class Room(models.Model):
                 raise ValidationError({
                     "available_units": "Must be between 1 and total_units-1."
                 })
-
-        if self.availability_status != "from":
-            self.available_from = None
-
+        
     def save(self, *args, **kwargs):
-        # FIX: no mutation in clean, only in save
         if self.availability_status == "from":
             self.available_units = 0
+        else:
+            self.available_from = None
 
         self.full_clean()
         super().save(*args, **kwargs)
@@ -133,13 +132,24 @@ class Room(models.Model):
         return f"{units} • Some available now"
 
     def __str__(self):
-        return f"{self.title} - {self.location}"
+        return f"{self.title} ({self.owner.username})"
 
 
 class Review(models.Model):
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["room", "user"],
+                name="uniq_review_room_user"
+            )
+        ]
+
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="reviews")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    rating = models.PositiveSmallIntegerField(choices=[(i, i) for i in range(1, 6)])
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -151,6 +161,7 @@ class Profile(models.Model):
     ROLE_CHOICES = [
         ("tenant", "Tenant"),
         ("landlord", "Landlord"),
+        ("driver", "Driver"),
     ]
 
     PERSONA_CHOICES = [
@@ -229,7 +240,7 @@ class Profile(models.Model):
         if phone.startswith("0"):
             phone = phone[1:]
 
-        return f"{self.country_code}{phone}"
+        return f"{self.country_code.strip()}{phone}"
         
 
     def __str__(self):
@@ -240,19 +251,32 @@ class Profile(models.Model):
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.get_or_create(user=instance)
 
 class Contact(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="contacts")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
-        unique_together = ("room", "user")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["room", "user"],
+                name="uniq_contact_room_user"
+            )
+        ]
 
     def __str__(self):
         return f"{self.user} → {self.room.title}"
     
 class Message(models.Model):
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient"]),
+            models.Index(fields=["sender"]),
+        ]
+
     room = models.ForeignKey(
         Room,
         on_delete=models.CASCADE,
@@ -276,9 +300,6 @@ class Message(models.Model):
     is_read = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.sender} -> {self.recipient}"    
@@ -308,7 +329,8 @@ class RoomImage(models.Model):
     room = models.ForeignKey(
         "Room",
         related_name="images",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        db_index=True
     )
 
     image = CloudinaryField("image")
@@ -327,10 +349,16 @@ class RoomImage(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+    
 
     def __str__(self):
         return f"Room {self.room_id} image"
+    
 
+@receiver(post_delete, sender=RoomImage)
+def delete_room_image(sender, instance, **kwargs):
+    if instance.image:
+        instance.image.delete(save=False)
 
 class Favorite(models.Model):
     # tenant saves (favoured) rooms
@@ -339,7 +367,13 @@ class Favorite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("user", "room")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "room"],
+                name="uniq_favorite_user_room"
+            )
+        ]
+
         indexes = [
             models.Index(fields=["user"]),
             models.Index(fields=["room"]),
@@ -349,6 +383,12 @@ class Favorite(models.Model):
         return f"{self.user.username} ♥ {self.room.title}"
 
 class PhoneOTP(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["phone_number"]),
+        ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=20)
 
@@ -357,12 +397,15 @@ class PhoneOTP(models.Model):
     is_verified = models.BooleanField(default=False)
 
     def is_expired(self):
-        return timezone.now() > self.created_at + timedelta(minutes=5)
+        return timezone.now() > self.created_at + timedelta(minutes=15)
     
     def save(self, *args, **kwargs):
     # Ensure ONLY one active OTP per user
-        PhoneOTP.objects.filter(user=self.user).exclude(pk=self.pk).delete()
+        PhoneOTP.objects.filter(
+            user=self.user,
+            is_verified=False
+        ).exclude(pk=self.pk).delete()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.phone_number} ({self.otp})"
+        return f"{self.phone_number} (verified={self.is_verified})"

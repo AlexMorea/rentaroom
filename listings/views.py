@@ -17,18 +17,20 @@ from django.db import IntegrityError, transaction
 from django.core.exceptions import ValidationError
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import never_cache
-from django.utils.decorators import method_decorator
 from .models import Message
 from difflib import get_close_matches
 from django.contrib.auth.models import User
 from accounts.helpers import generate_membership_id
 from .models import PhoneOTP
 from .utils import generate_otp, send_otp_email
+from accounts.state_engine import get_user_state
 from utils.email import send_template_email
 from accounts.utils import require_active_membership
 from django.utils import timezone
 from accounts.models import Membership
-from .forms import ListingForm
+from secrets import compare_digest
+from django.utils.html import strip_tags
+from PIL import Image
 from django.db.models import Prefetch
 from django.db import DatabaseError
 from .models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
@@ -61,39 +63,6 @@ def get_or_create_membership(user):
 
     return membership
 
-  
-def profile_needs_update(user):
-    if not hasattr(user, "profile"):
-        return True
-
-    p = user.profile
-
-    # basic user identity fields
-    has_first_name = bool((user.first_name or "").strip())
-    has_last_name = bool((user.last_name or "").strip())
-    has_email = bool((user.email or "").strip())
-
-    if p.role == "tenant":
-        has_persona = bool((getattr(p, "persona", "") or "").strip())
-        return not (has_first_name and has_last_name and has_email and has_persona)
-
-    if p.role == "landlord":
-        has_cell = bool(
-            p.phone_number and 
-            p.country_code and 
-            str(p.phone_number).strip()
-        )
-        has_address = bool((getattr(p, "home_address", "") or "").strip())
-        
-        return not (
-            has_first_name
-            and has_last_name
-            and has_email
-            and has_cell
-            and has_address
-        )
-
-    return False
 
 def is_landlord(user):
     return hasattr(user, "profile") and user.profile.role == "landlord"
@@ -233,11 +202,7 @@ def contact(request):
 def room_list(request):
 
     # ================= CACHE CHECK =================
-    cache_key = f"room_list:{request.get_full_path()}"
-    cached_response = cache.get(cache_key)
-
-    if cached_response:
-        return cached_response
+    cache_key = f"room_list:{request.user.id if request.user.is_authenticated else 'anon'}:{request.get_full_path()}"
 
     # ================= REQUEST PARAMS =================
     q = (request.GET.get("q") or "").strip()
@@ -412,7 +377,27 @@ def room_list(request):
             }
         )
 
-        cache.set(cache_key, response, 60)
+        cache.set(
+            cache_key,
+            {
+                "html": html,
+                "page": page_obj.number,
+                "num_pages": paginator.num_pages,
+                "has_next": page_obj.has_next(),
+                "has_prev": page_obj.has_previous(),
+                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+                "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+                "suggested_location": suggested_location,
+                "searched_location": searched_location,
+            },
+            60
+        )
+
+        cached_payload = cache.get(cache_key)
+
+        if cached_payload:
+            return JsonResponse(cached_payload)
+
         return response
 
     # ================= SORT UI =================
@@ -454,7 +439,6 @@ def room_list(request):
         },
     )
 
-    cache.set(cache_key, response, 60)
     return response
 
 
@@ -524,7 +508,7 @@ def register(request):
 
             user = form.save()   # <-- fixed
 
-            user.is_active = False
+            user.is_active = True
             user.save()
 
             otp = generate_otp()
@@ -569,6 +553,13 @@ def verify_account(request):
 
         otp_input = request.POST.get("otp")
 
+        attempt_key = f"otp_attempts_{user.id}"
+        attempts = cache.get(attempt_key, 0)
+
+        if attempts >= 5:
+            messages.error(request, "Too many attempts. Try again later.")
+            return render(request, "listings/verify_account.html")
+
         if not otp_input:
             messages.error(request, "Enter OTP.")
             return render(request, "listings/verify_account.html")
@@ -579,12 +570,12 @@ def verify_account(request):
             created_at__gte=timezone.now() - timedelta(minutes=15)
         ).order_by("-created_at").first()
 
-        if record and record.otp == otp_input:
+        if record and compare_digest(record.otp, otp_input):
 
             record.is_verified = True
             record.save()
 
-            profile = user.profile
+            profile, _ = Profile.objects.get_or_create(user=user)
             profile.is_email_verified = True
             profile.is_phone_verified = True
             profile.save()
@@ -603,24 +594,35 @@ def verify_account(request):
                 "Account verified successfully 🎉"
             )
 
-            if profile.role == "landlord":
-                return redirect("dashboard")
+            cache.delete(attempt_key)
 
-            return redirect("room_list")
+            state = get_user_state(user)
+            return redirect(state["next_route"])
 
         messages.error(request, "Invalid or expired OTP")
+
+        cache.set(attempt_key, attempts + 1, timeout=900)
 
     return render(request, "listings/verify_account.html")
 
 @never_cache
 def user_login(request):
+    ip = (
+        request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+        or request.META.get("REMOTE_ADDR")
+    )
+    login_key = f"login_attempts:{ip}"
+    attempts = cache.get(login_key, 0)
+
+    if attempts >= 10:
+        messages.error(request, "Too many login attempts. Try again later.")
+        return redirect("login")
+
     if request.method != "POST":
         return render(request, "listings/login.html")
 
     login_value = (request.POST.get("email") or "").strip()
     password = request.POST.get("password") or ""
-
-    next_url = request.GET.get("next")
 
     user_obj = (
         User.objects.filter(email__iexact=login_value).first()
@@ -628,91 +630,54 @@ def user_login(request):
     )
 
     if not user_obj:
+        cache.set(login_key, attempts + 1, timeout=900)
         messages.error(request, "Invalid credentials.")
         return redirect("login")
+    
 
     user = authenticate(request, username=user_obj.username, password=password)
 
     if not user:
+        cache.set(login_key, attempts + 1, timeout=900)
         messages.error(request, "Invalid credentials.")
         return redirect("login")
 
-    # EMAIL CHECK
-    if not user.profile.is_email_verified:
-        request.session["pending_user_id"] = user.id
-        return redirect("verify_pending")
+    profile = user.profile
 
-    # PHONE CHECK
-    if not user.profile.is_phone_verified:
+    # SAFETY ROLE FIX (prevents corruption)
+    VALID_ROLES = ["driver", "tenant", "landlord"]
 
-        if not can_resend_otp(user.id):
-            request.session["pending_user_id"] = user.id
-            return redirect("verify_phone")
-
-        PhoneOTP.objects.filter(user=user).delete()
-
-        otp = generate_otp()
-
-        PhoneOTP.objects.create(
-            user=user,
-            phone_number=user.profile.phone_number,
-            otp=otp
+    if profile.role not in VALID_ROLES:
+        logger.error(
+            "invalid_role_detected",
+            extra={
+                "user_id": user.id,
+                "role": profile.role,
+            }
         )
+        profile.role = "tenant"
+        profile.save(update_fields=["role"])
 
-        send_otp_email(user, otp)
-        set_otp_cooldown(user.id)
-
+    # OTP CHECK (ONLY ONE SYSTEM: verify_account)
+    if not profile.is_phone_verified:
         request.session["pending_user_id"] = user.id
+        logger.info(f"OTP BLOCK: user {user.id}")
+        return redirect("verify_account")
 
-        messages.warning(request, "We sent you an OTP code.")
-        return redirect("verify_phone")
+    login(request, user)
+    cache.delete(login_key)
 
-    # LOGIN
-    with transaction.atomic():
-        login(request, user)
-        request.session.modified = True
-        request.session.save()
+    messages.success(
+        request,
+        f"Welcome back {get_display_name(user)} 👋"
+    )
 
-    # 🔐 FORCE PASSWORD CHANGE CHECK (ADD HERE)
-    if getattr(user.profile, "must_change_password", False):
+    # FORCE PASSWORD CHANGE
+    if getattr(profile, "must_change_password", False):
         return redirect("change_password")
 
-    # PROFILE COMPLETION WARNING (non-blocking)
-    if profile_needs_update(user):
-        messages.info(request, "You can complete your profile anytime in settings.")
-
-    messages.success(request, f"Welcome back {get_display_name(user)} 👋")
-
-    # NEXT URL SUPPORT
-    if next_url:
-        return redirect(next_url)
-
-    # ROLE REDIRECTS
-    if hasattr(user, "profile"):
-
-        if user.profile.role == "driver":
-
-            from services.models import BakkieDriver
-
-            driver = BakkieDriver.objects.filter(
-                user=user,
-                is_verified=True
-            ).first()
-
-            if driver:
-                return redirect("services:driver_dashboard")
-
-            messages.warning(
-                request,
-                "Your driver account is pending verification."
-            )
-            return redirect("services:bakkie_home")
-
-        if user.profile.role == "landlord":
-            return redirect("dashboard")
-
-    return redirect("room_list")
-
+    state = get_user_state(user)
+    return redirect(state["next_route"])
 
 @require_POST
 @never_cache
@@ -734,8 +699,13 @@ def profile(request):
 
     # ---------------- TENANT DATA ----------------
     favorites_qs = (
-        Favorite.objects.filter(user=user)
-        .select_related("room")
+        Favorite.objects
+        .filter(user=user)
+        .select_related(
+            "room",
+            "room__owner__profile"
+        )
+        .prefetch_related("room__images")
         .order_by("-created_at")
     )
     saved_rooms = [f.room for f in favorites_qs]
@@ -745,7 +715,10 @@ def profile(request):
             user=user,
             stat_type="view"
         )
-        .select_related("room")
+        .select_related(
+            "room",
+            "room__owner__profile"
+        )
         .order_by("-created_at")
     )
 
@@ -921,6 +894,8 @@ def resend_account_otp(request):
             "error": "Wait before requesting again.",
             "cooldown": OTP_RESEND_SECONDS
         }, status=429)
+    
+    cache.delete(f"otp_attempts_{user.id}")
 
     otp = generate_otp()
 
@@ -942,9 +917,6 @@ def resend_account_otp(request):
         "cooldown": OTP_RESEND_SECONDS
     })
 
-def can_resend_otp(user_id):
-    key = f"otp_resend_{user_id}"
-    return cache.get(key) is None
 
 OTP_RESEND_SECONDS = 60
 
@@ -1011,9 +983,8 @@ def edit_profile(request):
             return redirect("profile")
 
         else:
-            print("USER FORM ERRORS:", u_form.errors)
-            print("PROFILE FORM ERRORS:", p_form.errors)
-
+            logger.error(u_form.errors)
+            logger.error(p_form.errors)
             messages.error(
                 request,
                 "Please fix the errors below."
@@ -1031,6 +1002,7 @@ def edit_profile(request):
 
 
 @login_required
+@require_POST
 def toggle_favorite(request, room_id):
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
@@ -1104,19 +1076,10 @@ def dashboard(request):
 
 @login_required
 @user_passes_test(is_landlord)
-def add_room(request):
-    return redirect("create_room")
-
-
-@login_required
-@user_passes_test(is_landlord)
 def create_room(request):
 
     # ALWAYS ensure membership exists (SAFE)
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user,
-        defaults={"tier": "starter"}
-    )
+    membership = get_or_create_membership(request.user)
 
     user_listings_count = request.user.rooms.count()
 
@@ -1235,56 +1198,29 @@ def edit_room(request, pk):
 
 
 @login_required
+@require_POST
 @user_passes_test(is_landlord)
 def delete_room(request, pk):
-    room = get_object_or_404(Room, pk=pk, owner=request.user)
 
-    if request.method == "POST":
-        room.delete()
-        return redirect("dashboard")
-    
-    return render(request, "listings/delete_room.html", {"room": room})
-
-@login_required
-def create_listing(request):
-
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user,
-        defaults={"tier": "starter"}
+    room = get_object_or_404(
+        Room,
+        pk=pk,
+        owner=request.user
     )
 
-    user_listings_count = Room.objects.filter(owner=request.user).count()
+    room.delete()
 
-    # HARD BLOCK
-    if not membership.can_create_listing(user_listings_count):
+    messages.success(
+        request,
+        "Listing deleted successfully."
+    )
 
-        if membership.status == "pending":
-            messages.warning(request, "Your payment is being verified.")
-
-        elif membership.is_trial and membership.is_trial_expired():
-            messages.error(request, "Your trial has expired. Please upgrade.")
-
-        else:
-            messages.error(request, "Listing limit reached. Upgrade to continue.")
-
-        return redirect("membership")
-
-    form = ListingForm(request.POST or None, request.FILES or None)
-
-    if request.method == "POST" and form.is_valid():
-        listing = form.save(commit=False)
-        listing.owner = request.user
-        listing.save()
-
-        messages.success(request, "Listing created successfully!")
-        return redirect("dashboard")
-
-    return render(request, "listings/create_listing.html", {"form": form})
+    return redirect("dashboard")
 
 
 # IMAGES (upload/delete/manage)
-
 @login_required
+@user_passes_test(is_landlord)
 def upload_room_images(request, room_id):
 
     if not require_active_membership(request.user):
@@ -1330,6 +1266,13 @@ def upload_room_images(request, room_id):
                 # Invalid file type
                 if not any(filename.endswith(ext) for ext in allowed_extensions):
                     continue
+                
+                try:
+                    Image.open(img).verify()
+                    img.seek(0)
+
+                except Exception:
+                    continue
 
                 # Large file protection (10MB)
                 if img.size > 10 * 1024 * 1024:
@@ -1369,6 +1312,8 @@ def upload_room_images(request, room_id):
     )
 
 @login_required
+@require_POST
+@user_passes_test(is_landlord)
 def delete_room_image(request, image_id):
 
     image = get_object_or_404(
@@ -1390,6 +1335,7 @@ MAX_IMAGES_PER_ROOM = 10
 
 
 @login_required
+@user_passes_test(is_landlord)
 def edit_room_images(request, pk):
     room = get_object_or_404(Room, pk=pk, owner=request.user)
 
@@ -1442,25 +1388,38 @@ def edit_room_images(request, pk):
 
 # REVIEWS + CONTACT TRACKING
 @login_required
+@require_POST
 def add_review(request, room_id):
     room = get_object_or_404(Room, id=room_id)
     if not Contact.objects.filter(room=room, user=request.user).exists():
         return HttpResponseForbidden("Contact landlord first.")
 
-    Review.objects.create(
+    Review.objects.update_or_create(
         room=room,
         user=request.user,
-        rating=request.POST.get("rating"),
-        comment=request.POST.get("comment", ""),
+        defaults={
+            "rating": request.POST.get("rating"),
+            "comment": request.POST.get("comment", "")
+        }
     )
     return redirect("room_detail", pk=room.id)
 
 
 @login_required
 def track_contact(request, room_id, method):
+    if method not in ["phone", "whatsapp", "email"]:
+        return HttpResponseForbidden("Invalid contact method.")
+
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
-    RoomStat.objects.create(
+    cache_key = f"contact:{request.user.id}:{room.id}:{method}"
+
+    if cache.get(cache_key):
+        return redirect("room_detail", pk=room.id)
+
+    cache.set(cache_key, True, 300)
+
+    RoomStat.objects.get_or_create(
         room=room,
         user=request.user,
         stat_type=f"contact_{method}",
@@ -1489,9 +1448,22 @@ def track_contact(request, room_id, method):
         )
 
     if method == "whatsapp":
-        if not phone_digits:
+
+        if not phone_digits or len(phone_digits) < 9:
             return redirect("room_detail", pk=room.id)
-        return redirect(f"https://wa.me/{phone_digits}")
+
+        whatsapp_url = f"https://wa.me/{phone_digits}"
+
+        return render(
+            request,
+            "listings/external_link.html",
+            {
+                "title": "Opening WhatsApp…",
+                "link": whatsapp_url,
+                "button_text": "Open WhatsApp",
+                "fallback_text": "If WhatsApp didn’t open automatically, tap the button below.",
+            },
+        )
 
     if method == "email":
         if not landlord_email:
@@ -1529,14 +1501,12 @@ def track_contact(request, room_id, method):
 @login_required
 def mark_success(request, room_id):
     room = get_object_or_404(Room, id=room_id)
-    RoomStat.objects.create(room=room, user=request.user, stat_type="success")
+    RoomStat.objects.get_or_create(room=room, user=request.user, stat_type="success")
     messages.success(request, "Thanks for confirming!")
     return redirect("room_detail", pk=room.id)
 
 
-# -----------------------------
 # Password reset (rate limited)
-# -----------------------------
 class RateLimitedPasswordResetView(PasswordResetView):
     subject_template_name = "registration/password_reset_subject.txt"
     email_template_name = "registration/password_reset_email.txt"
@@ -1545,11 +1515,11 @@ class RateLimitedPasswordResetView(PasswordResetView):
     COOLDOWN_SECONDS = 60
     MAX_PER_HOUR = 5
 
-    def form_valid(self, form):
+    def form_valid(self, form, request):
         email = (form.cleaned_data.get("email") or "").strip().lower()
         ip = (
-            self.request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
-            or self.request.META.get("REMOTE_ADDR", "unknown")
+            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR")
         )
 
         base_key = f"pwreset:{ip}:{email}"
@@ -1569,7 +1539,6 @@ class RateLimitedPasswordResetView(PasswordResetView):
         cache.set(hour_key, count + 1, timeout=3600)
 
         return super().form_valid(form)
-
 
 
 # Landlord analytics 
@@ -1598,47 +1567,7 @@ def contacts_analytics(request):
 
     return render(request, "listings/contacts_analytics.html", {"rooms": rooms, "totals": totals})
 
-def resend_otp(request):
-    user_id = request.session.get("pending_user_id")
-
-    if not user_id:
-        return JsonResponse({
-            "success": False,
-            "error": "Session expired. Please login again."
-        }, status=401)
-
-    user = get_object_or_404(User, id=user_id)
-
-    cache_key = f"otp_resend_{user.id}"
-
-    if cache.get(cache_key):
-        return JsonResponse({
-            "success": False,
-            "error": "Please wait before requesting another OTP.",
-            "cooldown": OTP_RESEND_SECONDS
-        }, status=429)
-
-    otp = generate_otp()
-
-    PhoneOTP.objects.filter(user=user).delete()
-
-    PhoneOTP.objects.create(
-        user=user,
-        phone_number=user.profile.phone_number,
-        otp=otp
-    )
-
-    send_otp_email(user, otp)
-
-    set_otp_cooldown(user.id)
-
-    return JsonResponse({
-        "success": True,
-        "message": "OTP sent successfully.",
-        "cooldown": OTP_RESEND_SECONDS
-    })
-
-
+@login_required
 @require_POST
 def report_room(request, pk):
     room = get_object_or_404(Room, pk=pk)
@@ -1662,8 +1591,7 @@ def report_room(request, pk):
         )
         return redirect("room_detail", pk=room.id)
 
-    # temporary logging (helps admin later)
-    print(
+    logger.info(
         f"ROOM REPORT | room={room.id} | "
         f"user={request.user.id if request.user.is_authenticated else 'anonymous'} | "
         f"reason={reason} | detail={detail}"
@@ -1691,10 +1619,11 @@ def confirm_email_change(request):
         record = PhoneOTP.objects.filter(
             user=request.user,
             phone_number="email_change",
-            otp=otp
+            otp=otp,
+            created_at__gte=timezone.now() - timedelta(minutes=15)
         ).last()
-
-        if record:
+        
+        if record and compare_digest(record.otp, otp):
 
             request.user.email = pending_email
             request.user.save()
@@ -1702,7 +1631,10 @@ def confirm_email_change(request):
             request.user.profile.is_email_verified = True
             request.user.profile.save()
 
-            PhoneOTP.objects.filter(user=request.user).delete()
+            PhoneOTP.objects.filter(
+                user=request.user,
+                created_at__gte=timezone.now() - timedelta(minutes=15)
+            ).delete()
 
             request.session.pop("pending_email", None)
 
@@ -1725,12 +1657,14 @@ def handle_phone_change(user_obj, profile_obj, new_phone):
     profile_obj.is_phone_verified = False
 
 @login_required
+@require_POST
 def request_upgrade(request):
     membership = get_or_create_membership(request.user)
 
-    membership.mark_as_paid()
+    membership.status = "pending"
+    membership.save(update_fields=["status"])
 
-    messages.success(request, "Payment request submitted. We will verify shortly.")
+    messages.success(request, "Payment request submitted.")
     return redirect("dashboard")
 
 @login_required
@@ -1829,7 +1763,8 @@ def confirm_phone_change(request):
         record = PhoneOTP.objects.filter(
             user=request.user,
             phone_number=pending_phone,
-            otp=otp
+            otp=otp,
+            created_at__gte=timezone.now() - timedelta(minutes=15)
         ).last()
 
         if record:
@@ -1865,9 +1800,33 @@ def send_message(request, room_id):
         return redirect("room_detail", pk=room.id)
 
     body = (request.POST.get("body") or "").strip()
+    body = strip_tags(body)
 
     if not body:
         messages.error(request, "Message cannot be empty.")
+        return redirect("room_detail", pk=room.id)
+
+    if len(body) > 2000:
+        messages.error(request, "Message too long.")
+        return redirect("room_detail", pk=room.id)
+
+    if request.user == room.owner:
+        messages.error(request, "You cannot message yourself.")
+        return redirect("room_detail", pk=room.id)
+    
+    if request.user.profile.role != "tenant":
+        return HttpResponseForbidden()
+
+    recent_count = Message.objects.filter(
+        sender=request.user,
+        created_at__gte=timezone.now() - timedelta(minutes=1)
+    ).count()
+
+    if recent_count >= 5:
+        messages.error(
+            request,
+            "Too many messages sent. Please wait a minute."
+        )
         return redirect("room_detail", pk=room.id)
 
     Message.objects.create(
@@ -1903,13 +1862,12 @@ def delete_account(request):
     if request.method == "POST":
         user = request.user
 
-        # Logout first (important)
-        logout(request)
+        with transaction.atomic():
+            logout(request)
+            user.is_active = False
+            user.save(update_fields=["is_active"])
 
-        # 🧨 Delete user (this cascades Profile, Membership, etc.)
-        user.delete()
-
-        messages.success(request, "Your account has been deleted.")
+        messages.success(request, "Your account has been deactivated.")
         return redirect("room_list")
 
     return render(request, "listings/delete_account.html")

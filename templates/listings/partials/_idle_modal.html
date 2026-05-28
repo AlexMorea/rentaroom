@@ -1,0 +1,30 @@
+{% if user.is_authenticated %}
+<div class="idle-modal" id="idleModal">
+  <div class="idle-card">
+    <h3 class="idle-title">Still there?</h3>
+
+    <p class="idle-text">
+      For your security, you'll be logged out in
+      <strong><span id="idleCountdown">60</span>s</strong>
+    </p>
+
+    <div class="idle-actions">
+      <button class="btn-secondary" id="stayLoggedInBtn" type="button">
+        Stay logged in
+      </button>
+
+      <a href="#"
+         onclick="event.preventDefault(); document.getElementById('idle-logout-form').submit();">
+        Logout
+      </a>
+
+      <form id="idle-logout-form"
+            method="POST"
+            action="{% url 'logout' %}"
+            class="hidden">
+        {% csrf_token %}
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}

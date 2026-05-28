@@ -1,7 +1,8 @@
 from django.contrib import admin
-from django.urls import path, include, re_path
+from django.urls import path, include
 from django.conf import settings
-from django.views.static import serve as static_serve
+from django.conf.urls.static import static
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -10,10 +11,8 @@ urlpatterns = [
     path("services/", include("services.urls")),
 ]
 
-# Serve uploaded media (portfolio-friendly)
-urlpatterns += [
-    re_path(
-        r"^media/(?P<path>.*)$", static_serve, {"document_root": settings.MEDIA_ROOT}
-    ),
-
-]
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )

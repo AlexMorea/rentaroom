@@ -2,20 +2,21 @@
 
 <h2>Confirm your new email</h2>
 
-<p>Hi {{ user.first_name }},</p>
-
-<p>You requested to change your email on Rooms4You.</p>
-
-<p>Click below to confirm:</p>
+<p>Hi {{ user.first_name|default:"there" }},</p>
 
 <p>
-  <a
-    href="{{ confirm_link }}"
-    style="padding: 10px 20px; background: #000; color: #fff"
-  >
-    Confirm New Email
-  </a>
+  We received a request to update the email address linked to your Rooms4You
+  account.
 </p>
 
-<p>If this wasn’t you, ignore this email.</p>
+<p>Click the button below to confirm this change.</p>
+
+<a href="{{ confirm_link }}" class="btn"> Confirm Email Change </a>
+
+<div class="info-card">
+  <p style="margin: 0">
+    If you did not request this change, you can safely ignore this email.
+  </p>
+</div>
+
 {% endblock %}

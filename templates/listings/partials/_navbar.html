@@ -1,0 +1,64 @@
+{% load static %}
+
+<header class="site-header">
+  <div class="nav-container">
+    <!-- LOGO -->
+    <div class="brand">
+      <a href="{% url 'home' %}" class="navbar-logo">
+        <img
+          src="{% static 'images/rooms4you-logo.jpeg' %}"
+          alt="Rooms4You Logo"
+        />
+      </a>
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="nav-links" id="navLinks">
+      <a href="{% url 'room_list' %}">Browse</a>
+      <a href="{% url 'services' %}">Services</a>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'contact' %}">Contact</a>
+
+      {% if user.is_authenticated %} {% if user.profile.role == "landlord" %}
+      <a href="{% url 'dashboard' %}"> Dashboard </a>
+      {% endif %}
+
+      <a href="{% url 'profile' %}"> Profile </a>
+
+      <a
+        href="#"
+        onclick="
+          event.preventDefault();
+          document.getElementById('logout-form').submit();
+        "
+      >
+        Logout
+      </a>
+
+      <form
+        id="logout-form"
+        method="POST"
+        action="{% url 'logout' %}"
+        class="hidden"
+      >
+        {% csrf_token %}
+      </form>
+
+      {% else %}
+
+      <button id="authToggle" class="auth-avatar-btn" type="button">
+        <span>☰</span>
+        <span class="avatar">👤</span>
+      </button>
+
+      {% endif %}
+    </nav>
+
+    <!-- MOBILE BURGER -->
+    <button class="burger" id="burgerBtn" type="button" aria-label="Open menu">
+      ☰
+    </button>
+  </div>
+</header>
+
+<div class="nav-backdrop" id="navBackdrop"></div>

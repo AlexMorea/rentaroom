@@ -1,57 +1,101 @@
 {% load static %} {% load humanize %} {% for room in rooms %}
-<div class="room-card" data-room-id="{{ room.id }}">
+
+<article class="room-card" data-room-id="{{ room.id }}">
+  <!-- ================= MEDIA ================= -->
   <div class="room-media">
     <div
       class="slider-shell"
       data-slider
       data-room-url="{% url 'room_detail' room.id %}"
     >
+      <!-- IMAGE TRACK -->
       <div class="image-slider" data-slider-track>
         {% for img in room.images.all|slice:":10" %}
+
         <img
           src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
-          alt="Room image"
+          alt="{{ room.title }}"
           loading="lazy"
         />
+
         {% empty %}
+
         <img
           src="{% static 'img/placeholder.jpg' %}"
-          alt="No image"
+          alt="No image available"
           loading="lazy"
         />
+
         {% endfor %}
       </div>
 
+      <!-- SLIDER CONTROLS -->
       {% if room.images.all|length > 1 %}
-      <button class="slider-btn slider-prev" data-slider-prev>‹</button>
-      <button class="slider-btn slider-next" data-slider-next>›</button>
+
+      <button
+        class="slider-btn slider-prev"
+        data-slider-prev
+        type="button"
+        aria-label="Previous image"
+      >
+        ‹
+      </button>
+
+      <button
+        class="slider-btn slider-next"
+        data-slider-next
+        type="button"
+        aria-label="Next image"
+      >
+        ›
+      </button>
+
       {% endif %}
 
       <div class="slider-dots" data-slider-dots></div>
     </div>
 
-    {% if room.contact_count|default:0 >= 3 %}
-    <span class="badge badge-popular">Popular</span>
-    {% endif %} {% if room.owner.profile.is_verified_landlord %}
-    <span class="badge badge-verified"> ★ Verified Landlord </span>
-    {% endif %}
-  </div>
-
-  <!-- Only the info section is clickable -->
-  <a href="{% url 'room_detail' room.id %}" class="room-link">
-    <div class="room-info">
-      <h3 class="room-title">{{ room.title }}</h3>
-      <p class="room-meta">{{ room.location }}</p>
-      <p class="room-price">R {{ room.price }} p.m</p>
-      <p class="availability-badge">{{ room.availability_badge_text }}</p>
-      <p class="room-meta" style="margin-top: 6px">
-        Posted {{ room.created_at|timesince }} ago
-      </p>
-      {% if room.avg_rating %}
-      <p class="rating">⭐ {{ room.avg_rating|floatformat:1 }}/5</p>
+    <!-- BADGES -->
+    <div class="room-badges">
+      {% if room.contact_count|default:0 >= 3 %}
+      <span class="badge badge-popular"> Popular </span>
+      {% endif %} {% if room.owner.profile.is_verified_landlord %}
+      <span class="badge badge-verified"> ★ Verified </span>
       {% endif %}
     </div>
+  </div>
+
+  <!-- ================= INFO ================= -->
+  <a
+    href="{% url 'room_detail' room.id %}"
+    class="room-link"
+    aria-label="View {{ room.title }}"
+  >
+    <div class="room-info">
+      <div class="room-top">
+        <h3 class="room-title">{{ room.title }}</h3>
+
+        <p class="room-price">
+          R{{ room.price|intcomma }}
+          <span>/month</span>
+        </p>
+      </div>
+
+      <p class="room-location">{{ room.location }}</p>
+
+      <div class="room-meta-row">
+        <span class="availability-badge">
+          {{ room.availability_badge_text }}
+        </span>
+
+        {% if room.avg_rating %}
+        <span class="rating"> ⭐ {{ room.avg_rating|floatformat:1 }} </span>
+        {% endif %}
+      </div>
+
+      <p class="room-posted">Posted {{ room.created_at|timesince }} ago</p>
+    </div>
   </a>
-</div>
+</article>
 
 {% endfor %}

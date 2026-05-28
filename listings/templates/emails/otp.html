@@ -1,9 +1,15 @@
 {% extends "emails/base_email.html" %} {% block content %}
+
 <h1>Your Verification Code</h1>
 
-<p>Use the code below to continue:</p>
+<p>Use the OTP below to continue securely.</p>
 
-<h2 style="letter-spacing: 4px">{{ otp }}</h2>
+<div class="otp-box">{{ otp }}</div>
 
 <p>This code expires in 15 minutes.</p>
+
+<div class="info-card">
+  <p style="margin: 0">Never share this code with anyone.</p>
+</div>
+
 {% endblock %}

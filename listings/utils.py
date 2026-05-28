@@ -1,6 +1,7 @@
 import secrets
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from services.models import BakkieDriver
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from utils.email import send_template_email
@@ -65,3 +66,20 @@ def normalize_sa_phone(phone):
 
     # fallback
     return f"+27{phone}"
+
+def get_user_state(user):
+    """
+    Single source of truth for user routing.
+    """
+    profile = user.profile
+
+    driver = None
+    if profile.role == "driver":
+        driver = BakkieDriver.objects.filter(user=user).first()
+
+    return {
+        "role": profile.role,
+        "is_verified": profile.is_phone_verified,
+        "must_change_password": getattr(profile, "must_change_password", False),
+        "driver": driver,
+    }

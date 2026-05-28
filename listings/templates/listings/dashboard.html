@@ -1,36 +1,31 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %}
+{% load static %}
 
-<div
-  style="
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
-  "
->
-  <h1 class="page-title" style="margin: 0">Landlord Dashboard</h1>
+{% block title %}
+Dashboard • Rooms4You
+{% endblock %}
 
-  <a href="{% url 'create_room' %}" class="btn-primary">+ Add Room</a>
-</div>
+{% block content %}
+
+{% url 'create_room' as create_room_url %}
+
+<!-- ================= DASHBOARD HEADER ================= -->
+
+{% include "listings/partials/_dashboard_header.html" with title="Landlord Dashboard" subtitle="Manage your listings, enquiries and analytics." button_url=create_room_url button_text="+ Add Room" %}
+<!-- ================= PROFILE WARNING ================= -->
 
 {% if show_profile_warning %}
-<div
-  style="
-    background: #fff7ed;
-    border: 1px solid #fed7aa;
-    color: #9a3412;
-    padding: 12px 14px;
-    border-radius: 12px;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow);
-  "
->
-  <strong>Complete your profile</strong> : add at least one room listing and
-  ensure your contact details are set so tenants can reach you smoothly.
+<div class="alert-card alert-warning">
+  <strong>Complete your profile</strong>
+
+  <p>
+    Add at least one room listing and ensure your contact details are properly
+    configured so tenants can contact you smoothly.
+  </p>
 </div>
 {% endif %}
+
+<!-- ================= STATS ================= -->
 
 <div class="dashboard-grid">
   <a href="{% url 'landlord_rooms' %}" class="stat-card stat-link">
@@ -52,163 +47,116 @@
 <!-- ================= MEMBERSHIP CTA ================= -->
 
 {% if membership.tier == "starter" and membership.status == "active" %}
-<div
-  class="form-card"
-  style="margin-bottom: 16px; border-left: 4px solid orange"
->
-  <h3 style="margin: 0 0 8px; font-weight: 900">Upgrade Your Account 🚀</h3>
+<div class="form-card membership-card">
+  <div class="membership-content">
+    <div>
+      <h3>Upgrade Your Account 🚀</h3>
 
-  <p style="margin: 0 0 10px">
-    Your {{ membership.get_tier_display }} plan is active. Upgrade to unlock
-    more listings and visibility.
-  </p>
+      <p>
+        Your {{ membership.get_tier_display }} plan is active. Upgrade to unlock
+        more listings and better visibility.
+      </p>
 
-  <p style="font-weight: 800">Membership ID: {{ membership.membership_id }}</p>
+      <p class="membership-id">
+        Membership ID:
+        <strong>{{ membership.membership_id }}</strong>
+      </p>
 
-  <p style="opacity: 0.8">
-    Use this as your payment reference when making a deposit.
-  </p>
+      <small> Use this as your payment reference when making a deposit. </small>
+    </div>
 
-  <a
-    href="{% url 'membership' %}"
-    class="btn-primary"
-    style="background: orange"
-  >
-    Upgrade Now!
-  </a>
+    <a href="{% url 'membership' %}" class="btn-primary" style="background: linear-gradient(135deg,#f59e0b,#ea580c); border:none;">
+      Upgrade Now
+    </a>
+  </div>
 </div>
 {% endif %}
 
-<!-- ================= CRM INBOX (LANDLORD LEADS MVP) ================= -->
+<!-- ================= INBOX PREVIEW ================= -->
 
-<a href="{% url 'inbox' %}" style="text-decoration: none; color: inherit">
-  <div
-    class="form-card"
-    style="margin-top: 20px; cursor: pointer; border: 1px solid #eee"
-  >
-    <!-- HEADER -->
-    <div
-      style="display: flex; justify-content: space-between; align-items: center"
-    >
+<a href="{% url 'inbox' %}" class="dashboard-link-card">
+  <div class="form-card inbox-preview-card">
+    <div class="inbox-header">
       <div>
-        <h3 style="margin: 0">Inbox</h3>
-        <p style="margin: 4px 0 0; opacity: 0.6; font-size: 0.85rem">
-          Tenant enquiries (click to view all)
-        </p>
+        <h3>Inbox</h3>
+
+        <p>Tenant enquiries (click to view all)</p>
       </div>
 
-      <span style="opacity: 0.6; font-size: 0.85rem">
-        {{ messages_received|length }} recent →
-      </span>
+      <span class="inbox-count"> {{ messages_received|length }} recent → </span>
     </div>
 
-    <!-- LIST (LIMITED MVP PREVIEW ONLY) -->
-    <div style="margin-top: 12px; max-height: 320px; overflow: hidden">
+    <div class="inbox-preview-list">
       {% for msg in messages_received %}
-      <div style="padding: 12px 0; border-top: 1px solid #f1f1f1">
-        <div style="display: flex; gap: 12px; align-items: flex-start">
-          <!-- AVATAR -->
-          <div
-            style="
-              width: 42px;
-              height: 42px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, #e5e7eb, #f9fafb);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: 700;
-              color: #444;
-              border: 1px solid #eee;
-            "
-          >
-            {{ msg.sender.first_name|default:"U"|slice:":1"|upper }}
+
+      <div class="inbox-item">
+        <div class="inbox-avatar">
+          {{ msg.sender.first_name|default:"U"|slice:":1"|upper }}
+        </div>
+
+        <div class="inbox-body">
+          <div class="inbox-top">
+            <strong> {{ msg.sender.first_name|default:"Unknown" }} </strong>
+
+            <small> {{ msg.created_at|timesince }} ago </small>
           </div>
 
-          <!-- CONTENT -->
-          <div style="flex: 1; min-width: 0">
-            <div style="display: flex; justify-content: space-between">
-              <strong style="font-size: 0.95rem">
-                {{ msg.sender.first_name|default:"Unknown" }}
-              </strong>
+          <div class="inbox-room">{{ msg.room.title }}</div>
 
-              <small style="opacity: 0.5">
-                {{ msg.created_at|timesince }} ago
-              </small>
-            </div>
-
-            <div style="opacity: 0.6; font-size: 0.8rem">
-              {{ msg.room.title }}
-            </div>
-
-            <p style="margin: 4px 0 0; font-size: 0.9rem; opacity: 0.85">
-              {{ msg.body|truncatechars:90 }}
-            </p>
-          </div>
+          <p class="inbox-message">{{ msg.body|truncatechars:90 }}</p>
         </div>
       </div>
-      {% endfor %}
+
+      {% empty %}
+      {% include "listings/partials/_empty_state.html" with title="No enquiries yet" message="Tenant messages and enquiries will appear here once people contact you." %} {% endfor %}
     </div>
 
-    <!-- FOOTER CTA -->
     {% if messages_received|length >= 10 %}
-    <div
-      style="
-        margin-top: 10px;
-        text-align: center;
-        opacity: 0.7;
-        font-size: 0.85rem;
-      "
-    >
-      Showing latest 10 enquiries only
-    </div>
+    <div class="inbox-footer">Showing latest 10 enquiries only</div>
     {% endif %}
   </div>
 </a>
 
-<div class="dashboard-rooms" id="your-rooms">
-  {% for room in rooms %}
-  <div class="room-row">
-    <div>
-      <strong>{{ room.title }}</strong>
+<!-- ================= YOUR ROOMS ================= -->
 
-      <div style="opacity: 0.75; font-size: 0.9rem">{{ room.location }}</div>
+<div class="dashboard-section">
+  <div class="section-header">
+    <h2>Your Listings</h2>
+  </div>
 
-      <div style="opacity: 0.75; font-size: 0.85rem; margin-top: 6px">
-        Views: {{ room.view_count }} • Contacts: {{ room.contact_total }} • CTR:
-        {{ room.ctr }}%
+  <div class="dashboard-rooms" id="your-rooms">
+    {% for room in rooms %}
+
+    <div class="room-row">
+      <div class="room-row-content">
+        <strong class="room-row-title"> {{ room.title }} </strong>
+
+        <div class="room-row-location">{{ room.location }}</div>
+
+        <div class="room-row-stats">
+          Views: {{ room.view_count }} • Contacts: {{ room.contact_total }} •
+          CTR: {{ room.ctr }}%
+        </div>
+      </div>
+
+      <div class="room-actions">
+        <a href="{% url 'upload_room_images' room.id %}"> Images </a>
+
+        <a href="{% url 'edit_room' room.id %}"> Edit </a>
+
+        <a
+          href="{% url 'delete_room' room.id %}"
+          onclick="return confirm('Delete this room?');"
+          class="danger-link"
+        >
+          Delete
+        </a>
       </div>
     </div>
 
-    <div class="room-actions">
-      <a href="{% url 'upload_room_images' room.id %}">Images</a>
-      <a href="{% url 'edit_room' room.id %}">Edit</a>
-      <a
-        href="{% url 'delete_room' room.id %}"
-        onclick="return confirm('Delete this room?');"
-      >
-        Delete
-      </a>
-    </div>
+    {% empty %}
+    {% include "listings/partials/_empty_state.html" with title="No listings yet" message="Start by creating your first room listing and make it visible to tenants." button_url=create_room_url button_text="+ Add your first room" %} {% endfor %}
   </div>
-
-  {% empty %}
-  <div
-    style="
-      background: white;
-      padding: 18px;
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      text-align: center;
-    "
-  >
-    <p style="margin: 0 0 12px">You haven't added any rooms yet.</p>
-
-    <a href="{% url 'create_room' %}" class="btn-primary">
-      + Add your first room
-    </a>
-  </div>
-  {% endfor %}
 </div>
 
 {% endblock %}

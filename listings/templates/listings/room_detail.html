@@ -1,198 +1,251 @@
 {% extends "listings/base.html" %} {% load static %} {% block content %}
 
-<h1 class="page-title">{{ room.title }}</h1>
+<section class="room-detail-page">
+  <!-- ================= TITLE ================= -->
+  <div class="detail-header">
+    <div>
+      <h1 class="page-title detail-title">{{ room.title }}</h1>
 
-<div
-  class="room-card room-detail-card"
-  style="max-width: 900px; margin: 0 auto"
->
-  <!-- ================= IMAGE SLIDER ================= -->
-  <div class="room-media room-detail-media">
-    <div class="slider-shell slider-shell-detail" data-slider>
-      <div class="image-slider image-slider-detail" data-slider-track>
-        {% for img in room.images.all|slice:":10" %}
-        <img
-          src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
-          alt="Room image"
-          loading="lazy"
-        />
-        {% empty %}
-        <img
-          src="{% static 'img/placeholder.jpg' %}"
-          alt="No image"
-          loading="lazy"
-        />
-        {% endfor %}
-      </div>
+      <p class="detail-location">📍 {{ room.location }}</p>
+    </div>
 
-      {% if room.images.all|length > 1 %}
-      <button type="button" class="slider-btn slider-prev" data-slider-prev>
-        ‹
-      </button>
+    <div class="detail-price-wrap">
+      <div class="detail-price">R{{ room.price }}</div>
 
-      <button type="button" class="slider-btn slider-next" data-slider-next>
-        ›
-      </button>
-      {% endif %}
+      <span>/month</span>
     </div>
   </div>
 
-  <!-- ================= INFO ================= -->
-  <div class="room-info">
-    <p class="room-meta"><strong>Location:</strong> {{ room.location }}</p>
-    <p class="room-price">R {{ room.price }} p.m</p>
-    <p class="room-meta">
-      <strong>Type:</strong> {{ room.get_room_type_display }}
-    </p>
+  <!-- ================= MAIN CARD ================= -->
+  <div class="room-detail-card">
+    <!-- ================= MEDIA ================= -->
+    <div class="room-detail-media">
+      <div class="slider-shell slider-shell-detail" data-slider>
+        <div class="image-slider image-slider-detail" data-slider-track>
+          {% for img in room.images.all|slice:":10" %}
 
-    <p class="availability-badge">{{ room.availability_badge_text }}</p>
+          <img
+            src="{{ img.image.url|add:'?f_auto,q_auto,w=1200,c_fill' }}"
+            alt="{{ room.title }}"
+            loading="lazy"
+          />
 
-    <div style="margin-top: 10px; line-height: 1.6; opacity: 0.9">
-      {{ room.description }}
-    </div>
+          {% empty %}
 
-    <hr style="margin: 16px 0; opacity: 0.2" />
+          <img
+            src="{% static 'img/placeholder.jpg' %}"
+            alt="No image available"
+            loading="lazy"
+          />
 
-    <!-- ================= ACTIONS ================= -->
-    <div
-      style="
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: space-between;
-      "
-    >
-      <button type="button" class="btn-secondary" id="shareBtn">
-        🔗 Share
-      </button>
+          {% endfor %}
+        </div>
 
-      <form
-        method="post"
-        action="{% url 'report_room' room.id %}"
-        style="display: flex; gap: 10px; flex-wrap: wrap"
-      >
-        {% csrf_token %}
+        {% if room.images.all|length > 1 %}
 
-        <select
-          name="reason"
-          class="input"
-          style="min-width: 200px; border-radius: 12px; padding: 10px"
+        <button
+          type="button"
+          class="slider-btn slider-prev"
+          data-slider-prev
+          aria-label="Previous image"
         >
-          <option value="">Report reason…</option>
-          <option value="spam">Spam</option>
-          <option value="scam">Scam</option>
-          <option value="abuse">Abuse</option>
-          <option value="wrong_info">Wrong info</option>
-        </select>
+          ‹
+        </button>
 
-        <button type="submit" class="btn-secondary">🚩 Report</button>
-      </form>
-    </div>
+        <button
+          type="button"
+          class="slider-btn slider-next"
+          data-slider-next
+          aria-label="Next image"
+        >
+          ›
+        </button>
 
-    <hr style="margin: 16px 0; opacity: 0.2" />
-
-    <!-- ================= CONTACT ================= -->
-    <h3>Contact landlord</h3>
-
-    {% if user.is_authenticated %} {% if user.profile.role == "tenant" %}
-    <a class="btn-secondary" href="{% url 'toggle_favorite' room.id %}">
-      {% if is_saved %}✅ Saved{% else %}❤️ Save{% endif %}
-    </a>
-    {% endif %}
-
-    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px">
-      {% if room.contact_phone %}
-      <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}">
-        📞 Call
-      </a>
-      {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
-      <a
-        class="btn-primary"
-        href="{% url 'track_contact' room.id 'whatsapp' %}"
-      >
-        <i class="fa-brands fa-whatsapp"></i> WhatsApp
-      </a>
-      {% endif %} {% if room.owner.email or room.contact_email %}
-      <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}">
-        📧 Email
-      </a>
-      {% endif %}
-    </div>
-
-    <hr style="margin: 16px 0; opacity: 0.2" />
-
-    <form method="post" action="{% url 'mark_success' room.id %}">
-      {% csrf_token %}
-      <button class="btn-secondary">I successfully moved in</button>
-    </form>
-
-    <!-- ================= REVIEW ================= -->
-    <h3 style="margin-top: 18px">Message landlord</h3>
-
-    <div
-      style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px"
-    >
-      <div
-        style="
-          width: 54px;
-          height: 54px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #111827, #374151);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 900;
-          font-size: 20px;
-        "
-      >
-        {{ room.owner.first_name|default:"L"|slice:":1"|upper }}
-      </div>
-
-      <div>
-        <strong>{{ room.owner.first_name }} {{ room.owner.last_name }}</strong>
-        <div style="opacity: 0.7">Verified landlord</div>
+        {% endif %}
       </div>
     </div>
 
-    <form method="post" action="{% url 'send_message' room.id %}">
-      {% csrf_token %}
+    <!-- ================= CONTENT ================= -->
+    <div class="detail-content">
+      <!-- META -->
+      <div class="detail-meta-grid">
+        <div class="meta-card">
+          <span class="meta-label">Room Type</span>
+          <strong>{{ room.get_room_type_display }}</strong>
+        </div>
 
-      <textarea
-        name="body"
-        class="input textarea"
-        placeholder="Hi, I’m interested in this room..."
-        style="width: 100%; min-height: 120px"
-        required
-      ></textarea>
+        <div class="meta-card">
+          <span class="meta-label">Availability</span>
+          <strong>{{ room.availability_badge_text }}</strong>
+        </div>
 
-      <button class="btn-primary" style="margin-top: 10px">Send Message</button>
-    </form>
+        <div class="meta-card">
+          <span class="meta-label">Posted</span>
+          <strong>{{ room.created_at|timesince }} ago</strong>
+        </div>
+      </div>
 
-    {% else %}
+      <!-- DESCRIPTION -->
+      <section class="detail-section">
+        <h3>Description</h3>
 
-    <div class="empty-card">
-      <p>Please log in to contact landlord.</p>
+        <div class="detail-description">{{ room.description|linebreaks }}</div>
+      </section>
 
-      <a
-        class="btn-primary"
-        href="{% url 'login' %}?next={% url 'room_detail' room.id %}"
-      >
-        Login
-      </a>
+      <!-- ACTIONS -->
+      <section class="detail-section">
+        <div class="detail-actions">
+          <button type="button" class="btn-secondary" id="shareBtn">
+            🔗 Share
+          </button>
 
-      <a class="btn-secondary" href="{% url 'register' %}"> Create account </a>
+          {% if user.is_authenticated and user.profile.role == "tenant" %}
+
+          <a class="btn-secondary" href="{% url 'toggle_favorite' room.id %}">
+            {% if is_saved %} ✅ Saved {% else %} ❤️ Save {% endif %}
+          </a>
+
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="detail-section">
+        <div class="section-header">
+          <h3>Contact landlord</h3>
+        </div>
+
+        {% if user.is_authenticated %}
+
+        <!-- LANDLORD -->
+        <div class="landlord-card">
+          <div class="landlord-avatar">
+            {{ room.owner.first_name|default:"L"|slice:":1"|upper }}
+          </div>
+
+          <div>
+            <strong>
+              {{ room.owner.first_name }} {{ room.owner.last_name }}
+            </strong>
+
+            <div class="landlord-status">Verified landlord</div>
+          </div>
+        </div>
+
+        <!-- CONTACT BUTTONS -->
+        <div class="contact-actions">
+          {% if room.contact_phone %}
+          <a
+            class="btn-primary"
+            href="{% url 'track_contact' room.id 'phone' %}"
+          >
+            📞 Call
+          </a>
+          {% endif %} {% if room.contact_whatsapp or room.contact_phone %}
+          <a
+            class="btn-primary whatsapp-btn"
+            href="{% url 'track_contact' room.id 'whatsapp' %}"
+          >
+            <i class="fa-brands fa-whatsapp"></i>
+            WhatsApp
+          </a>
+          {% endif %} {% if room.owner.email or room.contact_email %}
+          <a
+            class="btn-primary"
+            href="{% url 'track_contact' room.id 'email' %}"
+          >
+            📧 Email
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- MESSAGE -->
+        <form
+          method="post"
+          action="{% url 'send_message' room.id %}"
+          class="message-form"
+        >
+          {% csrf_token %}
+
+          <textarea
+            name="body"
+            class="input textarea"
+            placeholder="Hi, I’m interested in this room..."
+            required
+          ></textarea>
+
+          <button class="btn-primary">Message Landlord</button>
+        </form>
+
+        <!-- SUCCESS -->
+        <form
+          method="post"
+          action="{% url 'mark_success' room.id %}"
+          class="success-form"
+        >
+          {% csrf_token %}
+
+          <button class="btn-secondary">I successfully moved in</button>
+        </form>
+
+        {% else %}
+
+        <div class="empty-card">
+          <p>Please login to contact the landlord.</p>
+
+          <div class="auth-actions">
+            <a
+              class="btn-primary"
+              href="{% url 'login' %}?next={% url 'room_detail' room.id %}"
+            >
+              Login
+            </a>
+
+            <a class="btn-secondary" href="{% url 'register' %}">
+              Create account
+            </a>
+          </div>
+        </div>
+
+        {% endif %}
+      </section>
+
+      <!-- REPORT -->
+      <section class="detail-section">
+        <h3>Report listing</h3>
+
+        <form
+          method="post"
+          action="{% url 'report_room' room.id %}"
+          class="report-form"
+        >
+          {% csrf_token %}
+
+          <select name="reason" class="input" required>
+            <option value="">Select reason</option>
+
+            <option value="spam">Spam</option>
+
+            <option value="scam">Scam</option>
+
+            <option value="abuse">Abuse</option>
+
+            <option value="wrong_info">Wrong information</option>
+          </select>
+
+          <button type="submit" class="btn-secondary">🚩 Report</button>
+        </form>
+      </section>
     </div>
-
-    {% endif %}
   </div>
-</div>
+</section>
 
-<!-- ================= SHARE ================= -->
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
+
 <script>
   (function () {
     const btn = document.getElementById("shareBtn");
+
     if (!btn) return;
 
     btn.addEventListener("click", async () => {
@@ -204,20 +257,24 @@
             title: document.title,
             url: url,
           });
+
           return;
         }
       } catch (e) {}
 
       try {
         await navigator.clipboard.writeText(url);
+
         btn.textContent = "✅ Copied";
+
         setTimeout(() => {
           btn.textContent = "🔗 Share";
-        }, 1500);
+        }, 1600);
       } catch (e) {
         prompt("Copy link:", url);
       }
     });
   })();
 </script>
-{% endblock %} {% endblock %}
+
+{% endblock %}

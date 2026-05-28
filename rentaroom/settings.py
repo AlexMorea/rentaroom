@@ -13,7 +13,10 @@ except ImportError:
 
 
 # ================= CORE =================
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-me")
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-dev-key-local-only"
+)
 DEBUG = os.environ.get("DEBUG", "0") == "1"
 
 
@@ -56,7 +59,6 @@ INSTALLED_APPS = [
 
 # ================= MIDDLEWARE =================
 MIDDLEWARE = [
-    'listings.middleware.DisableCacheMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -66,6 +68,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "accounts.middleware.MembershipMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "listings.middleware.DisableCacheMiddleware",
 ]
 
 
@@ -154,6 +157,7 @@ X_FRAME_OPTIONS = "DENY"
 
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
+SECURE_REFERRER_POLICY = "same-origin"
 
 
 # ================= STATIC / MEDIA =================
@@ -177,7 +181,7 @@ DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 
 # ================= AUTH =================
-LOGIN_URL = "/login/"
+LOGIN_URL = "accounts/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/rooms/"
 
@@ -202,7 +206,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "thabisomorea@gmail.co
 DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 
 
-# ================= LOGGING =================a
+# ================= LOGGING =================
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,

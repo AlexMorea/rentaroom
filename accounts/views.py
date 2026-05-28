@@ -4,12 +4,19 @@ from django.utils import timezone
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404
+from listings.models import Profile
 
 from .models import Membership
 
 
 def landlord_only(request):
-    profile = request.user.profile
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        messages.error(request, "Profile missing.")
+        return redirect("room_list")
 
     if profile.role == "landlord":
         return None
@@ -26,7 +33,6 @@ def landlord_only(request):
             request,
             "Drivers do not have memberships."
         )
-
         return redirect("driver_dashboard")
 
     messages.error(request, "Access denied.")
@@ -156,6 +162,7 @@ def admin_membership_dashboard(request):
 
 
 @staff_member_required
+@require_POST
 def approve_membership(request, pk):
     membership = Membership.objects.get(id=pk)
 
@@ -178,9 +185,9 @@ def approve_membership(request, pk):
 
 
 @staff_member_required
+@require_POST
 def reject_membership(request, pk):
-    membership = Membership.objects.get(id=pk)
-
+    membership = get_object_or_404(Membership, id=pk)
     membership.reject_payment()
 
     messages.warning(
@@ -189,20 +196,6 @@ def reject_membership(request, pk):
     )
 
     return redirect("admin_membership_dashboard")
-
-
-@login_required
-def request_payment(request):
-
-    denied = landlord_only(request)
-    if denied:
-        return denied
-
-    membership = request.user.membership
-    membership.mark_as_paid()
-
-    return redirect("membership")
-
 
 @login_required
 def membership_payment_view(request, tier):

@@ -8,6 +8,10 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from .forms import BakkieDriverForm
+from django.db import transaction
+from django.contrib.auth import get_user_model
+
 
 
 from .models import (
@@ -17,7 +21,7 @@ from .models import (
     BakkieDriver
 )
 
-from .forms import GuardianSessionForm, BakkieDriverForm
+from .forms import GuardianSessionForm
 
 
 
@@ -173,10 +177,8 @@ def bakkie_home(request):
 def register_bakkie_driver(request):
 
     if request.method == "POST":
-        form = BakkieDriverForm(
-            request.POST,
-            request.FILES
-        )
+
+        form = BakkieDriverForm(request.POST, request.FILES)
 
         if form.is_valid():
 
@@ -187,95 +189,97 @@ def register_bakkie_driver(request):
                 phone = phone[1:]
 
             phone = f"+27{phone}"
-
-            # login uses email
             username = email
 
-            # prevent duplicate users
             if User.objects.filter(username=username).exists():
-                messages.warning(
-                    request,
-                    "A driver with this email already exists. Please login."
-                )
+                messages.warning(request, "A driver with this email already exists.")
                 return redirect("login")
 
-            # create temp password
             temp_password = get_random_string(10)
 
-            # create django user
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=temp_password
-            )
+            with transaction.atomic():
 
-            # create driver profile
-            driver = form.save(commit=False)
-            driver.phone_number = phone
-            driver.email = email
-            driver.user = user
-            driver.is_verified = True   # beta instant access
-            driver.save()
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=temp_password,
+                    is_active=True  # allow login but restrict access via verification
+                )
 
-            # assign role
-            profile = user.profile
-            profile.role = "driver"
-            profile.save()
+                driver = form.save(commit=False)
+                driver.user = user
+                driver.phone_number = phone
+                driver.email = email
+                driver.is_verified = False
+                driver.save()
 
-            # email credentials
+                profile = user.profile
+                profile.role = "driver"
+                profile.phone_number = phone
+                profile.is_phone_verified = True
+                profile.is_email_verified = True
+
+                # SAFE CHECK (prevents crash if field exists or not)
+                if hasattr(profile, "must_change_password"):
+                    profile.must_change_password = True
+
+                profile.save()
+
+            # EMAIL
             try:
                 send_mail(
                     "Your Rooms4You Driver Account",
                     (
-                        f"Welcome to Rooms4You Bakkie4You.\n\n"
+                        f"Welcome to Bakkie4You.\n\n"
                         f"Login Email: {email}\n"
                         f"Temporary Password: {temp_password}\n\n"
-                        f"Please login and change your password immediately."
+                        f"Your application is under review."
                     ),
                     None,
                     [email],
                     fail_silently=False,
                 )
 
-                messages.success(
-                    request,
-                    "Driver registered successfully. Login details sent to your email."
-                )
-
-            except Exception:
+            except Exception as e:
+                print("EMAIL ERROR:", e)
                 messages.warning(
                     request,
-                    f"Driver created successfully. Temporary password: {temp_password}"
+                    f"Driver created. Temp password: {temp_password}"
                 )
+                return redirect("login")
+
+            messages.success(
+                request,
+                "Driver registered successfully. Awaiting approval."
+            )
 
             return redirect("login")
+
+        else:
+            print("FORM ERRORS:", form.errors)
+            messages.error(request, "Please fix the errors below.")
 
     else:
         form = BakkieDriverForm()
 
-    return render(
-        request,
-        "services/register_driver.html",
-        {"form": form}
-    )
+    return render(request, "services/register_driver.html", {
+        "form": form
+    })
 
 
 @login_required
 def driver_dashboard(request):
 
-    driver = BakkieDriver.objects.filter(
-        user=request.user
-    ).first()
+    driver = BakkieDriver.objects.filter(user=request.user).first()
 
     if not driver:
-        messages.error(
-            request,
-            "No driver profile found."
-        )
+        messages.error(request, "Driver profile not found.")
         return redirect("services:bakkie_home")
 
-    return render(
-        request,
-        "services/driver_dashboard.html",
-        {"driver": driver}
-    )
+    if not driver.is_verified:
+        messages.warning(request, "Account still pending approval.")
+        return redirect("services:bakkie_home")
+
+    return render(request, "services/driver_dashboard.html", {
+        "driver": driver
+    })

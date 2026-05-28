@@ -1,0 +1,13 @@
+<div class="dashboard-header">
+  <div>
+    <h1 class="page-title">{{ title }}</h1>
+
+    {% if subtitle %}
+    <p class="page-subtitle">{{ subtitle }}</p>
+    {% endif %}
+  </div>
+
+  {% if button_url %}
+  <a href="{{ button_url }}" class="btn-primary"> {{ button_text }} </a>
+  {% endif %}
+</div>

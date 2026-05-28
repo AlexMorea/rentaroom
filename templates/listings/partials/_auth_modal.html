@@ -1,0 +1,16 @@
+<div id="authModal" class="auth-modal hidden">
+  <div class="auth-box">
+    <h2>Get Started</h2>
+
+    <button data-url="{% url 'login' %}" class="auth-option">Login</button>
+
+    <button data-url="{% url 'register' %}" class="auth-option">Sign up</button>
+
+    <button
+      data-url="{% url 'services:register_bakkie_driver' %}"
+      class="auth-option driver"
+    >
+      🚚 Become a Driver
+    </button>
+  </div>
+</div>

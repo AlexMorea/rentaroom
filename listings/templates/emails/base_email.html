@@ -1,100 +1,196 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ subject }}</title>
+
+    <title>{{ subject|default:"Rooms4You" }}</title>
 
     <style>
       body {
         margin: 0;
-        padding: 0;
-        background-color: #0f0f0f;
-        font-family: Arial, sans-serif;
+        padding: 24px 12px;
+        background: #f4f7fb;
+        font-family: Inter, Arial, Helvetica, sans-serif;
+        color: #0f172a;
       }
 
-      .container {
-        max-width: 600px;
-        margin: auto;
-        background: #1a1a1a;
-        border-radius: 12px;
+      .email-wrapper {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      .email-card {
+        background: #ffffff;
+        border-radius: 24px;
         overflow: hidden;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
       }
 
-      .header {
+      .email-header {
+        padding: 32px 24px;
         text-align: center;
-        padding: 20px;
-        background: #000;
+        background: linear-gradient(135deg, #111827, #1e293b);
       }
 
       .logo {
-        width: 140px;
+        width: 150px;
+        max-width: 100%;
       }
 
-      .content {
-        padding: 25px;
-        color: #ffffff;
-        text-align: center;
+      .email-content {
+        padding: 40px 32px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin-top: 0;
+        color: #0f172a;
+        line-height: 1.2;
       }
 
       h1 {
-        font-size: 22px;
-        margin-bottom: 10px;
+        font-size: 30px;
+        margin-bottom: 18px;
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-bottom: 18px;
       }
 
       p {
+        margin: 0 0 18px;
         font-size: 15px;
-        line-height: 1.6;
-        color: #ccc;
+        line-height: 1.7;
+        color: #475569;
       }
 
       .btn {
         display: inline-block;
-        margin-top: 20px;
         padding: 14px 24px;
-        background: linear-gradient(135deg, #ff7a18, #ff3c3c);
-        color: #fff !important;
+        margin-top: 12px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #ffffff !important;
         text-decoration: none;
-        border-radius: 8px;
-        font-weight: bold;
-        transition: 0.3s ease;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 700;
       }
 
-      .btn:hover {
-        opacity: 0.85;
+      .btn-secondary {
+        background: linear-gradient(135deg, #111827, #1f2937);
       }
 
-      .footer {
-        padding: 15px;
+      .info-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 18px;
+        margin: 24px 0;
+      }
+
+      .otp-box {
+        display: inline-block;
+        padding: 16px 24px;
+        border-radius: 16px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        font-size: 32px;
+        letter-spacing: 8px;
+        font-weight: 800;
+        color: #1d4ed8;
+        margin: 16px 0;
+      }
+
+      .email-footer {
+        padding: 24px;
         text-align: center;
-        font-size: 12px;
-        color: #888;
+        border-top: 1px solid #e5e7eb;
+        background: #f8fafc;
       }
 
-      @media only screen and (max-width: 600px) {
-        .content {
-          padding: 20px;
+      .email-footer p {
+        margin: 4px 0;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+
+      .footer-links {
+        margin-top: 10px;
+      }
+
+      .footer-links a {
+        color: #64748b;
+        text-decoration: none;
+        margin: 0 8px;
+        font-size: 12px;
+      }
+
+      @media only screen and (max-width: 640px) {
+        body {
+          padding: 12px;
+        }
+
+        .email-content {
+          padding: 28px 20px;
         }
 
         h1 {
-          font-size: 20px;
+          font-size: 25px;
+        }
+
+        h2 {
+          font-size: 21px;
+        }
+
+        .otp-box {
+          font-size: 26px;
+          letter-spacing: 5px;
+          padding: 14px 18px;
+        }
+
+        .btn {
+          display: block;
+          text-align: center;
         }
       }
     </style>
   </head>
 
   <body>
-    <div class="container">
-      <div class="header">
-        <img
-          src="https://rooms4you.co.za/static/rooms4you-logo.png"
-          class="logo"
-        />
+    <div class="email-wrapper">
+      <div class="email-card">
+        <!-- HEADER -->
+        <div class="email-header">
+          <img
+            src="https://rooms4you.co.za/static/images/rooms4you-logo.jpeg"
+            alt="Rooms4You"
+            class="logo"
+          />
+        </div>
+
+        <!-- CONTENT -->
+        <div class="email-content">{% block content %}{% endblock %}</div>
+
+        <!-- FOOTER -->
+        <div class="email-footer">
+          <p>© {{ year }} Rooms4You • South Africa</p>
+
+          <p>Helping tenants and landlords connect safely.</p>
+
+          <div class="footer-links">
+            <a href="https://rooms4you.co.za/terms/"> Terms </a>
+
+            <a href="https://rooms4you.co.za/privacy/"> Privacy </a>
+
+            <a href="https://rooms4you.co.za/safety/"> Safety </a>
+          </div>
+        </div>
       </div>
-
-      <div class="content">{% block content %}{% endblock %}</div>
-
-      <div class="footer">© {{ year }} Rooms4You. All rights reserved.</div>
     </div>
   </body>
 </html>

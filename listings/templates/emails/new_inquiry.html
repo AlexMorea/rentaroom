@@ -1,20 +1,27 @@
 {% extends "emails/base_email.html" %} {% block content %}
 
-<h2>New inquiry on your listing</h2>
+<h2>New enquiry on your listing</h2>
 
-<p>Hello {{ room.owner.first_name }},</p>
-
-<p>{{ user.first_name }} is interested in your room:</p>
+<p>Hello {{ room.owner.first_name|default:"there" }},</p>
 
 <p>
-  <strong>{{ room.title }}</strong><br />
-  {{ room.location }}
+  {{ user.first_name|default:"A tenant" }} is interested in your room listing.
 </p>
 
-<p>Log in to Rooms4You to manage your listing.</p>
+<div class="info-card">
+  <p>
+    <strong>Listing:</strong>
+    {{ room.title }}
+  </p>
 
-<br />
-<p>— Rooms4You Team</p>
-<p>{{ year }}</p>
+  <p>
+    <strong>Location:</strong>
+    {{ room.location }}
+  </p>
+</div>
+
+<p>Log in to your dashboard to manage enquiries and respond to tenants.</p>
+
+<a href="https://rooms4you.co.za/dashboard/" class="btn"> Open Dashboard </a>
 
 {% endblock %}

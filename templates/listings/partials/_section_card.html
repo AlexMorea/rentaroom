@@ -1,0 +1,13 @@
+<div class="section-card">
+  {% if card_title %}
+  <div class="section-card-header">
+    <h3>{{ card_title }}</h3>
+
+    {% if card_action %}
+    <div>{{ card_action|safe }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="section-card-body">{{ content|safe }}</div>
+</div>

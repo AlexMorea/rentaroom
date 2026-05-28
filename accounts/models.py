@@ -105,6 +105,17 @@ class Membership(models.Model):
 
     # PAYMENT FLOW METHODS
 
+    def reject_payment(self):
+            self.status = "suspended"
+            self.payment_requested = False
+
+            if self.proof_of_payment:
+                self.proof_of_payment.delete(save=False)
+
+            self.proof_of_payment = None
+            self.save()
+
+
     def mark_payment_submitted(self, tier, proof_file):
         self.status = "pending"
         self.payment_requested = True
@@ -113,15 +124,16 @@ class Membership(models.Model):
         self.proof_of_payment = proof_file
         self.save()
 
-    def activate_membership(self, admin_user=None):
+    def activate_membership(self, tier=None, admin_user=None):
+        if tier:
+            self.requested_tier = tier
+
         if not self.requested_tier:
             return
 
         self.tier = self.requested_tier
         self.status = "active"
         self.is_active = True
-
-        # CRITICAL FIX
         self.is_trial = False
 
         self.payment_requested = False
@@ -130,12 +142,6 @@ class Membership(models.Model):
         self.approved_by = admin_user
         self.approved_at = timezone.now()
 
-        self.save()
-
-    def reject_payment(self):
-        self.status = "suspended"
-        self.payment_requested = False
-        self.proof_of_payment = None
         self.save()
 
     @property
