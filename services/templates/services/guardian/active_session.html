@@ -1,0 +1,139 @@
+<div class="guardian-session-card">
+
+  <div class="guardian-session-header">
+
+    <div class="guardian-status">
+
+      <div class="guardian-live-dot"></div>
+
+      ACTIVE GUARDIAN SESSION
+
+    </div>
+
+    <span class="verified-badge">
+      🛡 Protection Enabled
+    </span>
+
+  </div>
+
+  <div class="guardian-details-grid">
+
+    <div class="guardian-detail-item">
+      <span>Destination</span>
+      <strong>{{ active_session.destination }}</strong>
+    </div>
+
+    <div class="guardian-detail-item">
+      <span>Status</span>
+      <strong>{{ active_session.get_status_display }}</strong>
+    </div>
+
+    <div class="guardian-detail-item">
+      <span>Started</span>
+      <strong>
+        {{ active_session.started_at|date:"M d, Y H:i" }}
+      </strong>
+    </div>
+
+    <div class="guardian-detail-item">
+      <span>Emergency Contact</span>
+      <strong>
+        {{ active_session.emergency_contact_name }}
+      </strong>
+    </div>
+
+    <div class="guardian-detail-item">
+      <span>Contact Number</span>
+      <strong>
+        {{ active_session.emergency_contact_phone }}
+      </strong>
+    </div>
+
+  </div>
+
+  <div class="guardian-info-box">
+
+    <h3>How Guardian Protects You</h3>
+
+    <ul>
+
+      <li>
+        ✓ Your location can be tracked during this session
+      </li>
+
+      <li>
+        ✓ Emergency alerts include GPS coordinates
+      </li>
+
+      <li>
+        ✓ Session remains active until manually ended
+      </li>
+
+      <li>
+        ✓ Additional safety features are coming soon
+      </li>
+
+    </ul>
+
+  </div>
+
+  <div class="guardian-action-grid">
+
+    <button
+      class="btn-primary"
+      onclick="startTracking({{ active_session.id }})"
+    >
+      📍 Start Live Tracking
+    </button>
+
+    <button
+      class="btn-danger"
+      onclick="triggerPanic({{ active_session.id }})"
+    >
+      🚨 Emergency SOS
+    </button>
+
+    <a
+      href="{% url 'services:end_guardian_session' active_session.id %}"
+      class="btn-secondary"
+    >
+      End Session
+    </a>
+
+  </div>
+
+</div>
+
+<div class="service-card">
+
+  <h2>🚀 Coming Soon</h2>
+
+  <div class="roadmap-grid">
+
+    <div class="roadmap-card">
+      Safe Arrival Detection
+    </div>
+
+    <div class="roadmap-card">
+      Trusted Contact Alerts
+    </div>
+
+    <div class="roadmap-card">
+      Route Monitoring
+    </div>
+
+    <div class="roadmap-card">
+      Auto Check-In
+    </div>
+
+    <div class="roadmap-card">
+      AI Risk Alerts
+    </div>
+
+    <div class="roadmap-card">
+      Emergency Service Integration
+    </div>
+
+  </div>
+
+</div>

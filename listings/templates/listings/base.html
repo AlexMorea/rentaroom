@@ -22,6 +22,9 @@
 
     <link rel="stylesheet" href="{% static 'css/base.css' %}?v=11" />
 
+    {% block extra_css %}
+    {% endblock %}
+
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       defer

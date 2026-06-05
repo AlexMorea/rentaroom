@@ -1,0 +1,64 @@
+{% extends "services/shared/services_base.html" %}
+
+{% block services_content %}
+
+{% include "services/shared/service_hero.html" with badge="🚚 BOOK DRIVER" title="Request Transport" description="Submit your move request to this verified driver." %}
+
+<div class="service-card">
+
+  <h2>Booking Information</h2>
+
+  <ul>
+    <li>✓ Driver receives request instantly</li>
+    <li>✓ Driver can accept or decline</li>
+    <li>✓ Direct coordination</li>
+    <li>✓ Booking history coming soon</li>
+  </ul>
+
+</div>
+
+<div class="service-card">
+
+  <form method="POST">
+
+    {% csrf_token %}
+
+    <label>Pickup Location</label>
+    {{ form.pickup_location }}
+
+    <label>Drop-off Location</label>
+    {{ form.dropoff_location }}
+
+    <label>Move Date & Time</label>
+    {{ form.scheduled_time }}
+
+    <label>Additional Notes</label>
+    {{ form.notes }}
+
+    <button
+        type="submit"
+        class="btn-primary"
+        style="width:100%;"
+    >
+        Request Booking
+    </button>
+
+  </form>
+
+</div>
+
+<div class="service-card">
+
+  <h2>Future Features</h2>
+
+  <ul>
+    <li>⭐ Live Tracking</li>
+    <li>⭐ Instant Pricing</li>
+    <li>⭐ Payments</li>
+    <li>⭐ Insurance</li>
+    <li>⭐ Reviews</li>
+  </ul>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "services/shared/services_base.html" %}
+{% load static %}
+
+{% block services_content %}
+
+{% include "services/shared/service_hero.html" with badge="🚚 DRIVER REGISTRATION" title="Become a Bakkie4You Driver" description="Turn your vehicle into income by helping people move rooms, furniture and essentials." %}
+
+<!-- WHY DRIVER -->
+<div class="service-card">
+  <h2>Why Become A Driver?</h2>
+
+  <ul>
+    <li>💸 Earn extra income</li>
+    <li>📍 Accept nearby jobs</li>
+    <li>🚚 Use your own vehicle</li>
+    <li>⏱ Choose your availability</li>
+    <li>🏆 Early Beta driver advantage</li>
+  </ul>
+</div>
+
+<!-- EARNINGS -->
+<div class="service-card">
+   <h3 style="margin: 0 0 8px 0">💸 How You Earn (Beta Model)</h3>
+   <p style="margin: 0; font-size: 0.95rem; line-height: 1.5">
+        ✔ You earn <strong>85% – 90% per job</strong><br />
+        ✔ Rooms4You takes only <strong>10% – 15% + small R5–R15 fee</strong
+        ><br />
+        ✔ No monthly subscription (for now)<br />
+        ✔ You get paid per completed job
+    </p>
+</div>
+
+<!-- FORM -->
+<div class="service-card">
+  <h2>Driver Application</h2>
+
+  
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="form-grid">
+
+            <div>
+                <label>Full Name</label>
+                {{ form.full_name }}
+            </div>
+
+            <div>
+                <label>Email Address</label>
+                {{ form.email }}
+            </div>
+
+            <div>
+                <label>Phone Number</label>
+                {{ form.phone_number }}
+            </div>
+
+            <div>
+                <label>Vehicle Type</label>
+                {{ form.vehicle_type }}
+            </div>
+
+            <div>
+                <label>Vehicle Registration</label>
+                {{ form.vehicle_registration }}
+            </div>
+
+            <div>
+                <label>City</label>
+                {{ form.city }}
+            </div>
+
+            <div>
+                <label>Province</label>
+                {{ form.province }}
+            </div>
+
+            <div class="form-full">
+                <label>Address</label>
+                {{ form.address }}
+            </div>
+
+            <div>
+                <label>Vehicle Image</label>
+                {{ form.vehicle_image }}
+            </div>
+
+            <div>
+                <label>Driver Licence</label>
+                {{ form.licence_image }}
+            </div>
+
+            <div class="form-full" style="margin-top:15px;">
+
+                <label
+                    style="
+                    display:flex;
+                    align-items:flex-start;
+                    gap:10px;
+                    line-height:1.6;
+                    "
+                >
+
+                    {{ form.terms_accepted }}
+
+                    <span>
+
+                        I agree to the
+
+                        <a
+                            href="{% url 'services:driver_terms' %}"
+                            target="_blank"
+                        >
+                            Driver Terms & Conditions
+                        </a>
+
+                        and
+
+                        <a
+                            href="{% url 'privacy' %}"
+                            target="_blank"
+                        >
+                            Privacy Policy
+                        </a>.
+
+                    </span>
+
+                </label>
+
+                {% if form.terms_accepted.errors %}
+                    <div class="form-error">
+                        {{ form.terms_accepted.errors }}
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {{ form.latitude }}
+        {{ form.longitude }}
+
+
+        <button
+            type="submit"
+            class="btn-primary"
+            style="width:100%;margin-top:20px;"
+        >
+            Submit Driver Application
+        </button>
+
+    </form>
+
+</div>
+
+<!-- FUTURE -->
+<div class="service-card">
+  <h2>Future Driver Features</h2>
+
+  <ul>
+    <li>⭐ Driver Ratings</li>
+    <li>⭐ Driver Reviews</li>
+    <li>⭐ Job Leaderboards</li>
+    <li>⭐ Earnings Dashboard</li>
+    <li>⭐ Priority Job Matching</li>
+  </ul>
+</div>
+
+{% endblock %}

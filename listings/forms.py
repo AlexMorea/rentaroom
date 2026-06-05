@@ -58,8 +58,7 @@ class UserRegisterForm(forms.Form):
     )
 
     terms_accepted = forms.BooleanField(
-        required=False,
-        label="I agree to the Terms & Conditions",
+        required=True,
     )
 
     password1 = forms.CharField(
@@ -123,8 +122,13 @@ class UserRegisterForm(forms.Form):
                 self.add_error("home_address", "Address required.")
             if not cleaned.get("postal_code"):
                 self.add_error("postal_code", "Postal code required.")
+
+            # POPIA CONSENT ENFORCEMENT (GLOBAL RULE)
             if not cleaned.get("terms_accepted"):
-                self.add_error("terms_accepted", "You must accept terms.")
+                self.add_error(
+                    "terms_accepted",
+                    "You must accept the Terms of Service and Privacy Policy to continue."
+                )
 
         return cleaned
         
@@ -163,7 +167,9 @@ class UserRegisterForm(forms.Form):
             profile.alt_no = normalize_sa_phone(alt) if alt else ""
             profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
             profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
-            profile.terms_accepted = True
+            profile.terms_accepted = self.cleaned_data["terms_accepted"]
+            profile.terms_accepted_at = timezone.now()
+            profile.privacy_accepted_at = timezone.now()
 
         profile.save()
 

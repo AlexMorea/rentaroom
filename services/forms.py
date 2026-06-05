@@ -1,5 +1,5 @@
 from django import forms
-from .models import GuardianSession, BakkieDriver
+from .models import GuardianSession, BakkieDriver, MoveBooking
 
 
 class GuardianSessionForm(forms.ModelForm):
@@ -35,6 +35,11 @@ class BakkieDriverForm(forms.ModelForm):
         widget=forms.ClearableFileInput(attrs={"class": "input"})
     )
 
+    terms_accepted = forms.BooleanField(
+        required=True,
+        label="I agree to the Driver Terms and Privacy Policy"
+    )
+
     class Meta:
         model = BakkieDriver
 
@@ -49,6 +54,7 @@ class BakkieDriverForm(forms.ModelForm):
             "province",
             "latitude",
             "longitude",
+            "vehicle_image",
             "licence_image",
         ]
 
@@ -61,4 +67,48 @@ class BakkieDriverForm(forms.ModelForm):
             "city": forms.TextInput(attrs={"class": "input"}),
             "latitude": forms.HiddenInput(),
             "longitude": forms.HiddenInput(),
+        }
+
+class MoveBookingForm(forms.ModelForm):
+
+    class Meta:
+
+        model = MoveBooking
+
+        fields = [
+            "pickup_location",
+            "dropoff_location",
+            "scheduled_time",
+            "notes",
+        ]
+
+        widgets = {
+
+            "pickup_location": forms.TextInput(
+                attrs={
+                    "class": "input",
+                    "placeholder": "Pickup location"
+                }
+            ),
+
+            "dropoff_location": forms.TextInput(
+                attrs={
+                    "class": "input",
+                    "placeholder": "Drop-off location"
+                }
+            ),
+
+            "scheduled_time": forms.DateTimeInput(
+                attrs={
+                    "class": "input",
+                    "type": "datetime-local"
+                }
+            ),
+
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "input",
+                    "rows": 4
+                }
+            ),
         }

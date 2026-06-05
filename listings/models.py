@@ -208,6 +208,10 @@ class Profile(models.Model):
 
   
     terms_accepted = models.BooleanField(default=False)
+    # POPIA COMPLIANCE TRACKING (IMPORTANT)
+
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    privacy_accepted_at = models.DateTimeField(null=True, blank=True)
 
     gps_latitude = models.FloatField(null=True, blank=True)
     gps_longitude = models.FloatField(null=True, blank=True)

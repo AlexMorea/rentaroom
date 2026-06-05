@@ -1,0 +1,45 @@
+{% extends "services/shared/services_base.html" %}
+
+{% block services_content %}
+
+<h1>Incoming Booking Requests</h1>
+
+{% for booking in bookings %}
+
+<div class="service-card">
+
+<h3>
+
+{{ booking.tenant.username }}
+
+</h3>
+
+<p>
+
+{{ booking.pickup_location }}
+
+→
+
+{{ booking.dropoff_location }}
+
+</p>
+
+<p>
+
+{{ booking.get_status_display }}
+
+</p>
+
+</div>
+
+{% empty %}
+
+<div class="service-card">
+
+No bookings received.
+
+</div>
+
+{% endfor %}
+
+{% endblock %}

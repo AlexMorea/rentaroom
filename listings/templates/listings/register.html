@@ -1,166 +1,145 @@
-{% extends "listings/base.html" %} {% block body_class %}auth-page{% endblock %}
+{% extends "listings/base.html" %}
+{% block body_class %}auth-page{% endblock %}
 {% block content %}
+
 <div class="auth-shell">
   <div class="auth-card">
+
     <h1 class="page-title">Welcome to Rooms4You</h1>
     <h2 class="auth-title">Create account</h2>
 
     <form method="post" class="auth-form">
-      {% csrf_token %} {{ form.non_field_errors }}
+      {% csrf_token %}
+
+      {{ form.non_field_errors }}
 
       <!-- BASIC INFO -->
       <div class="field">
-        <label class="auth-label">First name</label>
-        {{ form.first_name }} {{ form.first_name.errors }}
+        <label>First name</label>
+        {{ form.first_name }}
       </div>
 
       <div class="field">
-        <label class="auth-label">Last name</label>
-        {{ form.last_name }} {{ form.last_name.errors }}
+        <label>Last name</label>
+        {{ form.last_name }}
       </div>
 
       <div class="field">
-        <label class="auth-label">Email</label>
-        {{ form.email }} {{ form.email.errors }}
+        <label>Email</label>
+        {{ form.email }}
+        <small style="color:gray">OTP will be sent here</small>
       </div>
 
       <div class="field">
-        <label class="auth-label">Account type</label>
-        {{ form.role }} {{ form.role.errors }}
+        <label>Account type</label>
+        {{ form.role }}
       </div>
 
-      <!-- PHONE FOR ALL USERS -->
+      <!-- PHONE -->
       <div class="field">
-        <label class="auth-label">Phone Number</label>
-        <div style="display: flex; gap: 10px">
-          <div style="width: 120px">{{ form.country_code }}</div>
-          <div style="flex: 1">{{ form.phone_number }}</div>
+        <label>Phone Number</label>
+        <div style="display:flex;gap:10px">
+          <div style="width:120px">{{ form.country_code }}</div>
+          <div style="flex:1">{{ form.phone_number }}</div>
         </div>
-        <small style="color: gray">
-          An OTP will be sent to this number for verification
-        </small>
-        {{ form.phone_number.errors }}
       </div>
 
-      <!-- TENANT FIELDS -->
+      <!-- TENANT -->
       <div id="tenantFields">
         <div class="field">
-          <label class="auth-label">Persona</label>
-          {{ form.persona }} {{ form.persona.errors }}
+          <label>Persona</label>
+          {{ form.persona }}
         </div>
       </div>
 
-      <!-- LANDLORD FIELDS -->
-      <div id="landlordFields" style="display: none">
+      <!-- LANDLORD -->
+      <div id="landlordFields" style="display:none">
+
         <div class="field">
-          <label class="auth-label">Alternative number</label>
-          {{ form.alt_no }} {{ form.alt_no.errors }}
+          <label>Alternative number</label>
+          {{ form.alt_no }}
         </div>
 
         <div class="field">
-          <label class="auth-label">Home address</label>
-          {{ form.home_address }} {{ form.home_address.errors }}
-          <small class="auth-small">
-            For verification & integrity. Not public.
-          </small>
+          <label>Home address</label>
+          {{ form.home_address }}
         </div>
 
         <div class="field">
-          <label class="auth-label">Postal code</label>
-          {{ form.postal_code }} {{ form.postal_code.errors }}
+          <label>Postal code</label>
+          {{ form.postal_code }}
         </div>
 
-        <div class="field" style="margin-top: 10px">
-          <label
-            style="
-              display: flex;
-              gap: 10px;
-              align-items: flex-start;
-              font-weight: 800;
-            "
-          >
-            {{ form.terms_accepted }}
-            <span>{{ form.terms_accepted.label }}</span>
-          </label>
-          {{ form.terms_accepted.errors }}
-        </div>
       </div>
 
-      <!-- PASSWORDS -->
+      <!-- PASSWORD -->
       <div class="field">
-        <label class="auth-label">Password</label>
-        <div class="pw-wrap">
-          {{ form.password1 }}
-          <button class="pw-toggle" type="button" data-toggle="#id_password1">
-            👁
-          </button>
-        </div>
-        {{ form.password1.errors }}
+        <label>Password</label>
+        {{ form.password1 }}
       </div>
 
       <div class="field">
-        <label class="auth-label">Repeat password</label>
-        <div class="pw-wrap">
-          {{ form.password2 }}
-          <button class="pw-toggle" type="button" data-toggle="#id_password2">
-            👁
-          </button>
-        </div>
-        {{ form.password2.errors }}
+        <label>Repeat Password</label>
+        {{ form.password2 }}
       </div>
 
-      <button class="btn-primary auth-btn" type="submit">Create account</button>
+      <!-- ✅ CONSENT (LINK HIGHLIGHTED + UX IMPROVED) -->
+      <div class="form-group" style="margin-top:20px">
+
+        <label style="display:flex;gap:10px;align-items:flex-start;line-height:1.6">
+
+          {{ form.terms_accepted }}
+
+          <span>
+            I agree to the
+            <a href="{% url 'terms' %}" target="_blank"
+              style="color:#2563eb; font-weight:600; text-decoration:underline;">
+              Terms of Service
+            </a>
+            and
+            <a href="{% url 'privacy' %}" target="_blank"
+              style="color:#2563eb; font-weight:600; text-decoration:underline;">
+              Privacy Policy
+            </a>
+            and consent to the processing of my personal information under POPIA.
+          </span>
+
+        </label>
+
+        {{ form.terms_accepted.errors }}
+
+      </div>
+      <!-- SUBMIT -->
+      <button class="btn-primary auth-btn" type="submit">
+        Create account
+      </button>
+
     </form>
 
-    <p class="auth-hint" style="margin-top: 10px">
-      <a class="auth-link" href="{% url 'password_reset' %}"
-        >Forgot password?</a
-      >
-    </p>
-
-    <p class="auth-hint">
-      Already registered?
-      <a class="auth-link" href="{% url 'login' %}">Login</a>
-    </p>
-
-    <p class="auth-hint" style="font-size: 12px; color: gray; margin-top: 15px">
-      By submitting this form, you agree to our
-      <a href="#">Terms and Conditions</a>
-    </p>
   </div>
 </div>
-{% endblock %} {% block extra_js %}
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
-  const roleSel = document.getElementById("id_role");
-  const landlord = document.getElementById("landlordFields");
-  const tenant = document.getElementById("tenantFields");
+const roleSel = document.getElementById("id_role");
+const landlord = document.getElementById("landlordFields");
+const tenant = document.getElementById("tenantFields");
 
-  function syncRoleUI() {
-    const role = (roleSel?.value || "").toLowerCase();
-    if (role === "landlord") {
-      landlord.style.display = "block";
-      tenant.style.display = "none";
-    } else {
-      landlord.style.display = "none";
-      tenant.style.display = "block";
-    }
+function toggle() {
+  const role = roleSel?.value;
+
+  if (role === "landlord") {
+    landlord.style.display = "block";
+    tenant.style.display = "none";
+  } else {
+    landlord.style.display = "none";
+    tenant.style.display = "block";
   }
+}
 
-  if (roleSel) {
-    roleSel.addEventListener("change", syncRoleUI);
-    syncRoleUI();
-  }
-
-  // Password toggle
-  document.querySelectorAll("[data-toggle]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const input = document.querySelector(btn.dataset.toggle);
-      if (!input) return;
-
-      const hidden = input.type === "password";
-      input.type = hidden ? "text" : "password";
-      btn.textContent = hidden ? "🙈" : "👁";
-    });
-  });
+roleSel?.addEventListener("change", toggle);
+toggle();
 </script>
 {% endblock %}

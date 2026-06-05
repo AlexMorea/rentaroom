@@ -1,0 +1,114 @@
+{% extends "services/shared/services_base.html" %}
+
+{% block services_content %}
+
+<div class="service-card">
+
+    {% if driver.vehicle_image %}
+        <img
+            src="{{ driver.vehicle_image.url }}"
+            class="dashboard-vehicle-image"
+        >
+    {% endif %}
+
+    <div class="driver-dashboard-header">
+
+        <div>
+
+            <h1>{{ driver.full_name }}</h1>
+
+            <p>
+                {{ driver.city }},
+                {{ driver.province }}
+            </p>
+
+        </div>
+
+        <div>
+
+            {% if driver.is_verified %}
+                <span class="verified-badge">
+                    ✓ Verified Driver
+                </span>
+            {% endif %}
+
+            {% if driver.is_online %}
+                <span class="online-badge">
+                    🟢 Available
+                </span>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="driver-profile-grid">
+
+    <div class="driver-profile-item">
+        <span>Vehicle</span>
+        <strong>
+            {{ driver.get_vehicle_type_display }}
+        </strong>
+    </div>
+
+    <div class="driver-profile-item">
+        <span>Rating</span>
+        <strong>
+            ⭐ {{ driver.rating }}
+        </strong>
+    </div>
+
+    <div class="driver-profile-item">
+        <span>Completed Jobs</span>
+        <strong>
+            {{ driver.completed_jobs }}
+        </strong>
+    </div>
+
+    <div class="driver-profile-item">
+        <span>Response Rate</span>
+        <strong>
+            {{ driver.response_rate }}%
+        </strong>
+    </div>
+
+</div>
+
+<div class="service-card">
+
+    <h2>About This Driver</h2>
+
+    <p>
+
+        This verified Bakkie4You driver is available to assist with:
+
+    </p>
+
+    <ul>
+
+        <li>Room Moves</li>
+
+        <li>Furniture Transport</li>
+
+        <li>Student Relocations</li>
+
+        <li>Local Deliveries</li>
+
+    </ul>
+
+</div>
+
+<div class="service-card">
+
+    <a
+        href="{% url 'services:create_booking' driver.id %}"
+        class="btn-primary"
+    >
+        Request Transport
+    </a>
+
+</div>
+
+{% endblock %}

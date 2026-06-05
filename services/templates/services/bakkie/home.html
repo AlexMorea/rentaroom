@@ -1,0 +1,161 @@
+{% extends "services/shared/services_base.html" %}
+{% load static %}
+
+{% block services_content %}
+
+{% include "services/shared/service_hero.html" with badge="🚚 Bakkie4You Beta" title="Moving Made Simple in South Africa" description="Connect with trusted local drivers to move rooms, furniture and essentials safely and affordably." %}
+
+<!-- TRUST STRIP -->
+<div class="trust-strip">
+  <div class="trust-item">✓ Verified Drivers</div>
+  <div class="trust-item">✓ Local Transport</div>
+  <div class="trust-item">✓ Furniture Moving</div>
+  <div class="trust-item">✓ Same-Day Help</div>
+</div>
+
+<!-- WHY -->
+<div class="service-card">
+  <h2>Why Bakkie4You Exists</h2>
+  <p>
+    Moving into a new room in South Africa is stressful, expensive and unsafe when relying on random transport.
+    Bakkie4You connects tenants with verified local drivers to make moving simple, fast and reliable.
+  </p>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="service-card">
+  <h2>How It Works</h2>
+
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <h3>1. Find Driver</h3>
+      <p>Browse verified drivers near you.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>2. Request Move</h3>
+      <p>Send a transport request instantly.</p>
+    </div>
+
+    <div class="feature-card">
+      <h3>3. Move Safely</h3>
+      <p>Get help moving your items quickly.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- DRIVERS -->
+<h2 class="page-title">Verified Drivers</h2>
+
+<div class="driver-grid">
+
+    {% for driver in drivers %}
+    <div class="driver-card">
+
+      {% if driver.vehicle_image %}
+      <img
+        src="{{ driver.vehicle_image.url }}"
+        alt="{{ driver.full_name }}"
+        class="driver-card-image"
+      >
+      {% endif %}
+
+      <div class="driver-card-header">
+
+        <h3>{{ driver.full_name }}</h3>
+
+        <div class="driver-badge-row">
+
+          {% if driver.is_verified %}
+          <span class="verified-badge">
+            ✓ Verified
+          </span>
+          {% endif %}
+
+          {% if driver.is_online %}
+          <span class="online-badge">
+            🟢 Online
+          </span>
+          {% endif %}
+
+        </div>
+
+      </div>
+
+      <div class="driver-stats">
+
+        <div class="driver-stat">
+          ⭐ {{ driver.rating }}
+        </div>
+
+        <div class="driver-stat">
+          ✓ {{ driver.completed_jobs }} Jobs
+        </div>
+
+        <div class="driver-stat">
+          ⚡ {{ driver.response_rate }}%
+        </div>
+
+      </div>
+
+      <div class="driver-meta">
+
+        <p>
+          🚚 {{ driver.get_vehicle_type_display }}
+        </p>
+
+        <p>
+          📍 {{ driver.city }}, {{ driver.province }}
+        </p>
+
+      </div>
+
+      <div class="driver-actions">
+
+        <a
+          href="{% url 'services:driver_profile' driver.id %}"
+          class="btn-primary"
+        >
+          View Profile
+        </a>
+
+        <a
+          href="{% url 'services:create_booking' driver.id %}"
+          class="btn-secondary"
+        >
+          Book Driver
+        </a>
+
+      </div>
+</div>
+  {% empty %}
+  <div class="service-card">
+    No drivers available yet.
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- COMING SOON -->
+<div class="service-card">
+  <h2>🚀 Coming Soon</h2>
+
+  <div class="roadmap-grid">
+    <div class="roadmap-card">⭐ Driver Ratings</div>
+    <div class="roadmap-card">⭐ Live Tracking</div>
+    <div class="roadmap-card">⭐ Instant Pricing</div>
+    <div class="roadmap-card">⭐ In-App Payments</div>
+    <div class="roadmap-card">⭐ Route Optimisation</div>
+    <div class="roadmap-card">⭐ Driver Reviews</div>
+  </div>
+</div>
+
+<div class="service-card">
+  <a class="btn-primary" href="{% url 'services:register_bakkie_driver' %}">
+    Become a Driver
+  </a>
+</div>
+
+{% endblock %}

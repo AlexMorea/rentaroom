@@ -101,9 +101,23 @@
 
           {% if user.is_authenticated and user.profile.role == "tenant" %}
 
-          <a class="btn-secondary" href="{% url 'toggle_favorite' room.id %}">
-            {% if is_saved %} ✅ Saved {% else %} ❤️ Save {% endif %}
-          </a>
+          <form id="favoriteForm">
+              {% csrf_token %}
+
+              <button
+                  type="button"
+                  class="btn-secondary"
+                  id="favoriteBtn"
+                  data-room="{{ room.id }}"
+              >
+                  {% if is_saved %}
+                      ✅ Saved
+                  {% else %}
+                      ❤️ Save
+                  {% endif %}
+              </button>
+
+          </form>
 
           {% endif %}
         </div>
@@ -276,5 +290,116 @@
     });
   })();
 </script>
+
+<script>
+
+const favoriteBtn = document.getElementById("favoriteBtn");
+const favoriteForm = document.getElementById("favoriteForm");
+
+if (favoriteBtn && favoriteForm) {
+
+    favoriteBtn.addEventListener("click", async function () {
+
+        const roomId = this.dataset.room;
+
+        const csrfToken =
+            favoriteForm.querySelector(
+                "[name=csrfmiddlewaretoken]"
+            ).value;
+
+        try {
+
+            const response = await fetch(
+                `/rooms/${roomId}/favorite/`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                console.error(
+                    "Server returned:",
+                    response.status
+                );
+                return;
+            }
+
+            const data = await response.json();
+
+            const toast =
+                document.getElementById(
+                    "favoriteToast"
+                );
+
+            if (data.saved) {
+
+                favoriteBtn.innerHTML =
+                    "✅ Saved";
+
+                if (toast) {
+
+                    toast.textContent =
+                        "Room saved ✔";
+
+                    toast.classList.add(
+                        "show"
+                    );
+
+                    setTimeout(() => {
+
+                        toast.classList.remove(
+                            "show"
+                        );
+
+                    }, 2000);
+                }
+
+            } else {
+
+                favoriteBtn.innerHTML =
+                    "❤️ Save";
+
+                if (toast) {
+
+                    toast.textContent =
+                        "Room removed";
+
+                    toast.classList.add(
+                        "show"
+                    );
+
+                    setTimeout(() => {
+
+                        toast.classList.remove(
+                            "show"
+                        );
+
+                    }, 2000);
+                }
+
+            }   
+
+        } catch (error) {
+
+            console.error(
+                "Favorite error:",
+                error
+            );
+        }
+
+    });
+
+}
+
+</script>
+
+<div id="favoriteToast" class="favorite-toast">
+    Saved ✔
+</div>
 
 {% endblock %}

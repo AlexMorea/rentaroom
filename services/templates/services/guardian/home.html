@@ -1,0 +1,99 @@
+{% extends "services/shared/services_base.html" %}
+
+{% block services_content %}
+
+{% include "services/shared/service_hero.html" with badge="🛡 Guardian4You Beta" title="Stay Safe During Property Viewings" description="Live location sharing, emergency alerts and tenant safety tools built for South Africa." %}
+
+<div class="service-card">
+
+  <h2>Start Protection</h2>
+
+  <p>
+    Going to a property viewing? Start a Guardian Session before you leave.
+  </p>
+
+  <a
+    href="{% url 'services:start_guardian_session' %}"
+    class="btn-primary"
+  >
+    🛡 Start Guardian Session
+  </a>
+
+</div>
+
+{% if active_session %}
+
+    {% include "services/guardian/active_session.html" %}
+
+{% endif %}
+
+<!-- WHY -->
+<div class="service-card">
+  <h2>Why Guardian4You Exists</h2>
+
+  <p>
+    Many tenants meet landlords for the first time during property viewings.
+    Guardian4You ensures your trusted contacts know where you are and can respond in emergencies.
+  </p>
+</div>
+
+<!-- SAFETY TIPS -->
+<div class="service-card">
+  <h2>🛡 Safety Tips</h2>
+
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      🌞 Meet During Daylight
+    </div>
+
+    <div class="feature-card">
+      📞 Tell Someone Your Plans
+    </div>
+
+    <div class="feature-card">
+      📍 Verify Property Location
+    </div>
+
+    <div class="feature-card">
+      🚫 Avoid Carrying Cash
+    </div>
+
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="service-grid">
+
+  <div class="service-card">
+    <h3>📍 Live Tracking</h3>
+    <p>Share your live location with trusted contacts.</p>
+  </div>
+
+  <div class="service-card">
+    <h3>🚨 Emergency SOS</h3>
+    <p>Instant panic alert with GPS location.</p>
+  </div>
+
+  <div class="service-card">
+    <h3>👨‍👩‍👧 Guardian Sessions</h3>
+    <p>Track viewing journeys in real time.</p>
+  </div>
+
+</div>
+
+<!-- COMING SOON -->
+<div class="service-card">
+  <h2>🚀 Coming Soon</h2>
+
+  <div class="roadmap-grid">
+    <div class="roadmap-card">Safe Arrival Detection</div>
+    <div class="roadmap-card">Trusted Contacts</div>
+    <div class="roadmap-card">Route Monitoring</div>
+    <div class="roadmap-card">AI Risk Alerts</div>
+    <div class="roadmap-card">Auto Check-In</div>
+    <div class="roadmap-card">Emergency Integration</div>
+  </div>
+</div>
+
+{% endblock %}

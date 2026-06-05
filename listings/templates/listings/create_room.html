@@ -206,6 +206,26 @@
       </div>
 
       <div class="form-field">
+        <label>Suburb</label>
+        {{ form.suburb }}
+      </div>
+
+      <div class="form-field">
+        <label>Town</label>
+        {{ form.town }}
+      </div>
+
+      <div class="form-field">
+        <label>City</label>
+        {{ form.city }}
+      </div>
+
+      <div class="form-field">
+        <label>Province</label>
+        {{ form.province }}
+      </div>
+
+      <div class="form-field">
         <label for="id_postal_code">Area / Postal Code (Required)</label>
         {{ form.postal_code }}
         <small class="field-hint">Example: “0122”.</small>
@@ -317,7 +337,7 @@
         />
 
         <p class="help-text">
-          Tip: upload bright, wide photos (front view + room corners). Max 10.
+          Upload up to 10 photos. You can select images multiple times and remove any before saving.
         </p>
 
         <div
@@ -416,42 +436,99 @@
 </script>
 
 <script>
-  // ✅ Image preview + max 10 client-side guard (server still enforces too)
-  (function () {
+(function () {
+
     const input = document.getElementById("imagesInput");
     const wrap = document.getElementById("imagePreview");
+
     if (!input || !wrap) return;
 
-    function clear() {
-      wrap.innerHTML = "";
+    let selectedFiles = [];
+
+    function renderPreviews() {
+
+        wrap.innerHTML = "";
+
+        const counter = document.createElement("div");
+        counter.className = "image-counter";
+        counter.innerHTML =
+            `<strong>${selectedFiles.length}/10</strong> images selected`;
+
+        wrap.appendChild(counter);
+
+        selectedFiles.forEach((file, index) => {
+
+            const card = document.createElement("div");
+            card.className = "img-preview-item";
+
+            const img = document.createElement("img");
+            img.src = URL.createObjectURL(file);
+
+            const removeBtn =
+                document.createElement("button");
+
+            removeBtn.type = "button";
+            removeBtn.className = "remove-image-btn";
+            removeBtn.innerHTML = "✕";
+
+            removeBtn.addEventListener("click", () => {
+
+                selectedFiles.splice(index, 1);
+
+                const dt = new DataTransfer();
+
+                selectedFiles.forEach(f => {
+                    dt.items.add(f);
+                });
+
+                input.files = dt.files;
+
+                renderPreviews();
+            });
+
+            card.appendChild(img);
+            card.appendChild(removeBtn);
+
+            wrap.appendChild(card);
+
+        });
     }
 
     input.addEventListener("change", () => {
-      clear();
-      const files = Array.from(input.files || []);
 
-      if (files.length > 10) {
-        // keep first 10 only
+        const newFiles =
+            Array.from(input.files);
+
+        if (!newFiles.length) return;
+
+        selectedFiles = [
+            ...selectedFiles,
+            ...newFiles
+        ];
+
+        if (selectedFiles.length > 10) {
+
+            alert(
+                "Maximum 10 images allowed."
+            );
+
+            selectedFiles =
+                selectedFiles.slice(0, 10);
+        }
+
         const dt = new DataTransfer();
-        files.slice(0, 10).forEach((f) => dt.items.add(f));
+
+        selectedFiles.forEach(file => {
+            dt.items.add(file);
+        });
+
         input.files = dt.files;
-      }
 
-      Array.from(input.files || []).forEach((file) => {
-        const url = URL.createObjectURL(file);
+        renderPreviews();
 
-        const card = document.createElement("div");
-        card.className = "img-preview-item";
-
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = "Selected room image";
-        img.loading = "lazy";
-
-        card.appendChild(img);
-        wrap.appendChild(card);
-      });
     });
-  })();
+
+})();
 </script>
+
 {% endblock %}

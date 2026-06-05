@@ -1,0 +1,29 @@
+{% extends "listings/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link
+  rel="stylesheet"
+  href="{% static 'services/css/services.css' %}?v=5"
+/>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+
+<script src="{% static 'services/js/availability.js' %}" defer></script>
+<script src="{% static 'services/js/live-map.js' %}" defer></script>
+<script src="{% static 'services/js/guardian.js' %}" defer></script>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="services-shell">
+
+  {% block services_content %}
+  {% endblock %}
+
+</div>
+
+{% endblock %}

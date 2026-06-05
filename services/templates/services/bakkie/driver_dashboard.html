@@ -1,0 +1,253 @@
+{% extends "services/shared/services_base.html" %}
+
+{% block title %}
+Driver Dashboard • Rooms4You
+{% endblock %}
+
+{% block services_content %}
+
+{% include "services/shared/service_hero.html" with badge="🚚 BAKKIE4YOU DRIVER PORTAL" title="Driver Dashboard" description="Manage your profile, bookings and availability from one place." %}
+
+<!-- DRIVER PROFILE -->
+<div class="service-card">
+
+  <div class="driver-dashboard-header">
+
+    <div>
+
+      <h2>{{ driver.full_name }}</h2>
+
+      <p>
+        {{ driver.city }}, {{ driver.province }}
+      </p>
+
+    </div>
+
+    <div>
+
+      {% if driver.is_verified %}
+        <span class="verified-badge">
+          ✓ Verified Driver
+        </span>
+      {% else %}
+        <span class="pending-badge">
+          Pending Verification
+        </span>
+      {% endif %}
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- KPI STATS -->
+<div class="dashboard-grid">
+
+  <div class="stat-card">
+
+    <div class="stat-number">
+      {{ total_bookings }}
+    </div>
+
+    <div class="stat-label">
+      Total Bookings
+    </div>
+
+  </div>
+
+  <div class="stat-card">
+
+    <div class="stat-number">
+      {{ completed_jobs }}
+    </div>
+
+    <div class="stat-label">
+      Completed Jobs
+    </div>
+
+  </div>
+
+  <div class="stat-card">
+
+    <div class="stat-number">
+      {{ pending_jobs }}
+    </div>
+
+    <div class="stat-label">
+      Pending Requests
+    </div>
+
+  </div>
+
+  <div class="stat-card">
+
+    <div class="stat-number">
+      {{ driver.rating }}
+    </div>
+
+    <div class="stat-label">
+      Driver Rating
+    </div>
+
+  </div>
+
+</div>
+
+<!-- DRIVER STATUS -->
+<div class="service-card">
+
+  <h2>Driver Availability</h2>
+
+  {% if driver.is_online %}
+
+    <div class="live-pill">
+      🟢 Online & Accepting Requests
+    </div>
+
+  {% else %}
+
+    <div class="offline-pill live-pill">
+      ⚪ Offline
+    </div>
+
+  {% endif %}
+
+  <p style="margin-top:15px;">
+    Your availability controls whether tenants can see you as available for transport requests.
+  </p>
+
+</div>
+
+<!-- VEHICLE -->
+<div class="service-card">
+
+  <h2>Your Vehicle</h2>
+
+  {% if driver.vehicle_image %}
+
+    <img
+      src="{{ driver.vehicle_image.url }}"
+      class="dashboard-vehicle-image"
+    >
+
+  {% endif %}
+
+  <div class="driver-profile-grid">
+
+    <div class="driver-profile-item">
+      <span>Vehicle Type</span>
+      <strong>{{ driver.get_vehicle_type_display }}</strong>
+    </div>
+
+    <div class="driver-profile-item">
+      <span>Registration</span>
+      <strong>{{ driver.vehicle_registration }}</strong>
+    </div>
+
+    <div class="driver-profile-item">
+      <span>Province</span>
+      <strong>{{ driver.province }}</strong>
+    </div>
+
+    <div class="driver-profile-item">
+      <span>Phone</span>
+      <strong>{{ driver.phone_number }}</strong>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- BETA EARNINGS -->
+<div class="service-card">
+
+  <h2>💸 Typical Beta Earnings</h2>
+
+  <div class="roadmap-grid">
+
+    <div class="roadmap-card">
+      Small Move<br>
+      <strong>R150 – R400</strong>
+    </div>
+
+    <div class="roadmap-card">
+      Room Move<br>
+      <strong>R300 – R800</strong>
+    </div>
+
+    <div class="roadmap-card">
+      Furniture Delivery<br>
+      <strong>R200 – R600</strong>
+    </div>
+
+    <div class="roadmap-card">
+      Large Load<br>
+      <strong>R600+</strong>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FUTURE ROADMAP -->
+<div class="service-card">
+
+  <h2>🚀 Coming Soon</h2>
+
+  <div class="roadmap-grid">
+
+    <div class="roadmap-card">
+      Earnings Analytics
+    </div>
+
+    <div class="roadmap-card">
+      Monthly Revenue Reports
+    </div>
+
+    <div class="roadmap-card">
+      Driver Reviews
+    </div>
+
+    <div class="roadmap-card">
+      Driver Rankings
+    </div>
+
+    <div class="roadmap-card">
+      Demand Heatmaps
+    </div>
+
+    <div class="roadmap-card">
+      Smart Availability
+    </div>
+
+  </div>
+
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="service-card">
+
+  <h2>Quick Actions</h2>
+
+  <div class="dashboard-actions">
+
+    <a
+      href="{% url 'services:driver_bookings' %}"
+      class="btn-primary"
+    >
+      📦 View Bookings
+    </a>
+
+    <a
+      href="{% url 'services:bakkie_home' %}"
+      class="btn-secondary"
+    >
+      🚚 Browse Marketplace
+    </a>
+
+  </div>
+
+</div>
+
+{% endblock %}

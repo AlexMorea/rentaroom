@@ -1,0 +1,48 @@
+{% extends "services/shared/services_base.html" %}
+
+{% block services_content %}
+
+{% include "services/shared/service_hero.html" with badge="🛡 Guardian4You" title="Start Guardian Protection" description="Tell us where you're going and who should be contacted in an emergency." %}
+
+<div class="service-card">
+
+    <h2>Guardian Session Details</h2>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.destination.id_for_label }}">
+                Destination
+            </label>
+            {{ form.destination }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.emergency_contact_name.id_for_label }}">
+                Emergency Contact Name
+            </label>
+            {{ form.emergency_contact_name }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.emergency_contact_phone.id_for_label }}">
+                Emergency Contact Number
+            </label>
+            {{ form.emergency_contact_phone }}
+        </div>
+
+        <button
+            type="submit"
+            class="btn-primary"
+            style="width:100%;"
+        >
+            🛡 Start Protection
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

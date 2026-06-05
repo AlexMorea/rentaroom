@@ -1,0 +1,57 @@
+<div class="service-chips-wrapper">
+
+{% if user.is_authenticated %}
+
+    {% if driver %}
+
+        <a
+        href="{% url 'services:driver_dashboard' %}"
+        class="service-chip">
+        📊 Dashboard
+        </a>
+
+        <a
+        href="{% url 'services:driver_bookings' %}"
+        class="service-chip">
+        📦 Bookings
+        </a>
+
+    {% else %}
+
+        <a
+        href="{% url 'services:guardian_home' %}"
+        class="service-chip">
+        🛡 Guardian4You
+        </a>
+
+        <a
+        href="{% url 'services:bakkie_home' %}"
+        class="service-chip">
+        🚚 Bakkie4You
+        </a>
+
+        <a
+        href="{% url 'services:register_bakkie_driver' %}"
+        class="service-chip">
+        💼 Become Driver
+        </a>
+
+    {% endif %}
+
+{% else %}
+
+    <a
+    href="{% url 'services:guardian_home' %}"
+    class="service-chip">
+    🛡 Guardian4You
+    </a>
+
+    <a
+    href="{% url 'services:bakkie_home' %}"
+    class="service-chip">
+    🚚 Bakkie4You
+    </a>
+
+{% endif %}
+
+</div>

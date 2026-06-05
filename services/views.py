@@ -8,9 +8,9 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from .forms import BakkieDriverForm
+from .forms import BakkieDriverForm, MoveBookingForm
 from django.db import transaction
-from django.contrib.auth import get_user_model
+from .models import MoveBooking, ServiceAnalyticsEvent
 
 
 
@@ -36,7 +36,7 @@ def guardian_home(request):
 
     form = GuardianSessionForm()
 
-    return render(request, "services/guardian_home.html", {
+    return render(request, "services/guardian/home.html", {
         "active_session": active_session,
         "form": form
     })
@@ -52,11 +52,13 @@ def start_guardian_session(request):
 
         if form.is_valid():
 
-            # close any existing session
             GuardianSession.objects.filter(
                 user=request.user,
                 is_active=True
-            ).update(is_active=False, status="ended")
+            ).update(
+                is_active=False,
+                status="ended"
+            )
 
             session = form.save(commit=False)
             session.user = request.user
@@ -65,12 +67,29 @@ def start_guardian_session(request):
             session.started_at = timezone.now()
             session.save()
 
-            messages.success(request, "Guardian session started.")
+            ServiceAnalyticsEvent.objects.create(
+                event_type="guardian_started",
+                user=request.user,
+            )
+
+            messages.success(
+                request,
+                "Guardian protection activated."
+            )
 
             return redirect("services:guardian_home")
 
-    return redirect("services:guardian_home")
+    else:
 
+        form = GuardianSessionForm()
+
+    return render(
+        request,
+        "services/guardian/start_session.html",
+        {
+            "form": form
+        }
+    )
 
 
 # SAVE GPS LOCATION (AJAX)
@@ -132,6 +151,11 @@ def trigger_panic_alert(request, session_id):
     session.status = "panic"
     session.save(update_fields=["status"])
 
+    ServiceAnalyticsEvent.objects.create(
+        event_type="panic_triggered",
+        user=request.user,
+    )
+
     return JsonResponse({
         "success": True,
         "alert_id": alert.id
@@ -169,7 +193,7 @@ def bakkie_home(request):
         is_verified=True
     ).order_by("-created_at")
 
-    return render(request, "services/bakkie_home.html", {
+    return render(request, "services/bakkie/home.html", {
         "drivers": drivers
     })
 
@@ -207,10 +231,17 @@ def register_bakkie_driver(request):
                 )
 
                 driver = form.save(commit=False)
+
                 driver.user = user
                 driver.phone_number = phone
                 driver.email = email
+
                 driver.is_verified = False
+
+                driver.terms_accepted = True
+                driver.terms_accepted_at = timezone.now()
+                driver.privacy_accepted_at = timezone.now()
+
                 driver.save()
 
                 profile = user.profile
@@ -262,7 +293,7 @@ def register_bakkie_driver(request):
     else:
         form = BakkieDriverForm()
 
-    return render(request, "services/register_driver.html", {
+    return render(request, "services/bakkie/register.html", {
         "form": form
     })
 
@@ -276,10 +307,184 @@ def driver_dashboard(request):
         messages.error(request, "Driver profile not found.")
         return redirect("services:bakkie_home")
 
-    if not driver.is_verified:
-        messages.warning(request, "Account still pending approval.")
+    if driver.application_status == "pending":
+        messages.warning(
+            request,
+            "Your driver application is still under review."
+        )
         return redirect("services:bakkie_home")
 
-    return render(request, "services/driver_dashboard.html", {
+    if driver.application_status == "rejected":
+        messages.error(
+            request,
+            "Your application was not approved."
+        )
+        return redirect("services:bakkie_home")
+    
+    bookings = MoveBooking.objects.filter(
+        driver=driver
+    )
+
+    context = {
+        "driver": driver,
+        "total_bookings": bookings.count(),
+        "completed_jobs": bookings.filter(
+            status="completed"
+        ).count(),
+        "pending_jobs": bookings.filter(
+            status="pending"
+        ).count(),
+    }
+
+    return render(request, "services/driver_dashboard.html", context
+    )
+
+    
+@login_required
+@require_POST
+def toggle_driver_availability(request):
+
+    driver = get_object_or_404(
+        BakkieDriver,
+        user=request.user
+    )
+
+    driver.is_online = not driver.is_online
+
+    if driver.is_online:
+        driver.availability_status = "available"
+    else:
+        driver.availability_status = "offline"
+
+    driver.last_seen = timezone.now()
+
+    driver.save(
+        update_fields=[
+            "is_online",
+            "availability_status",
+            "last_seen",
+        ]
+    )
+
+    return JsonResponse({
+        "success": True,
+        "available": driver.is_online,
+        "status": driver.availability_status,
+    })
+
+
+def driver_profile(request, driver_id):
+
+    driver = get_object_or_404(
+        BakkieDriver,
+        id=driver_id,
+        is_verified=True
+    )
+
+    ServiceAnalyticsEvent.objects.create(
+        event_type="driver_view",
+        user=request.user,
+        metadata={
+            "driver": driver.id
+        }
+    )
+
+    return render(request, "services/bakkie/driver_profile.html", {
         "driver": driver
     })
+
+@login_required
+def create_booking(request, driver_id):
+
+    driver = get_object_or_404(
+        BakkieDriver,
+        id=driver_id,
+        is_verified=True
+    )
+
+    if request.method == "POST":
+
+        form = MoveBookingForm(request.POST)
+
+        if form.is_valid():
+
+            booking = form.save(commit=False)
+
+            booking.tenant = request.user
+            booking.driver = driver
+
+            booking.save()
+
+            ServiceAnalyticsEvent.objects.create(
+                event_type="booking_created",
+                user=request.user,
+                metadata={
+                    "driver": driver.id
+                }
+            )
+
+            messages.success(
+                request,
+                "Booking request submitted."
+            )
+
+            return redirect(
+                "services:my_bookings"
+            )
+
+    else:
+
+        form = MoveBookingForm()
+
+    return render(
+        request,
+        "services/bakkie/booking_form.html",
+        {
+            "form": form,
+            "driver": driver,
+        }
+    )
+
+@login_required
+def my_bookings(request):
+
+    bookings = MoveBooking.objects.filter(
+        tenant=request.user
+    ).select_related(
+        "driver"
+    ).order_by("-created_at")
+
+    return render(
+        request,
+        "services/bakkie/my_bookings.html",
+        {
+            "bookings": bookings
+        }
+    )
+
+@login_required
+def driver_bookings(request):
+
+    driver = get_object_or_404(
+        BakkieDriver,
+        user=request.user
+    )
+
+    bookings = MoveBooking.objects.filter(
+        driver=driver
+    ).order_by("-created_at")
+
+    return render(
+        request,
+        "services/bakkie/driver_bookings.html",
+        {
+            "driver": driver,
+            "bookings": bookings,
+        }
+    )
+
+def driver_terms(request):
+    return render(
+        request,
+        "services/driver_terms.html"
+    )
