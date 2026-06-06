@@ -37,6 +37,20 @@ def send_otp_email(user, otp):
         }
     )
 
+
+def send_welcome_email(user):
+    send_template_email(
+        subject="Welcome to Rooms4You",
+        to_email=user.email,
+        template="emails/welcome.html",
+        context={
+            "user": user,
+            "app_url": "https://rooms4you.co.za",
+            "year": 2026,
+        }
+    )
+
+
 def normalize_sa_phone(phone):
     """
     0845643877 -> +27845643877

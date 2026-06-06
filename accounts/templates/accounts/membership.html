@@ -49,32 +49,43 @@
 
   <!-- MEMBERSHIP CARDS -->
   <div class="dashboard-grid" style="margin-top: 20px">
+
     <!-- STARTER -->
     <div class="form-card">
       <h3 style="margin-bottom: 6px">Starter4You</h3>
-      <div style="opacity: 0.7; font-weight: 600">Free</div>
+
+      <div style="opacity: 0.7; font-weight: 600">
+        Free Forever
+      </div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>2 Property Listings Only</strong></li>
-        <li>Basic visibility only</li>
-        <li>No analytics</li>
-        <li>No priority placement</li>
-        <li>No support priority</li>
+        <li><strong>Up to 3 Active Listings</strong></li>
+        <li>Receive Tenant Enquiries</li>
+        <li>WhatsApp Contact Access</li>
+        <li>Availability Status</li>
+        <li>Basic Search Visibility</li>
+        <li>Manage Listings Anytime</li>
       </ul>
     </div>
 
     <!-- BRONZE -->
-    <div class="form-card" style="border: 1px solid rgba(255, 165, 0, 0.3)">
+    <div
+      class="form-card"
+      style="border: 1px solid rgba(249, 115, 22, 0.35)"
+    >
       <h3 style="margin-bottom: 6px">Bronze4You</h3>
-      <div style="font-weight: 700">R79.00/mo</div>
+
+      <div style="font-weight: 700">
+        R49.00/mo
+      </div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Up to 5 Property Listings</strong></li>
-        <li>Basic priority in search</li>
-        <li>Verified landlord badge</li>
-        <li>No analytics</li>
-        <li>Email support</li>
-        <li>Better exposure than Starter</li>
+        <li><strong>Up to 10 Active Listings</strong></li>
+        <li>Verified Landlord Badge</li>
+        <li>Priority Search Placement</li>
+        <li>Listing Performance Stats</li>
+        <li>Faster Tenant Exposure</li>
+        <li>Email Support</li>
       </ul>
 
       <a
@@ -86,17 +97,46 @@
     </div>
 
     <!-- SILVER -->
-    <div class="form-card" style="border: 1px solid rgba(59, 130, 246, 0.3)">
-      <h3 style="margin-bottom: 6px">Silver4You ⭐</h3>
-      <div style="font-weight: 700">R149.00/mo</div>
+    <div
+      class="form-card"
+      style="
+        border: 2px solid #3b82f6;
+        position: relative;
+        box-shadow: 0 8px 20px rgba(59,130,246,0.12);
+      "
+    >
+      <div
+        style="
+          position:absolute;
+          top:-12px;
+          right:12px;
+          background:#f97316;
+          color:white;
+          padding:4px 10px;
+          border-radius:999px;
+          font-size:0.75rem;
+          font-weight:700;
+        "
+      >
+        MOST POPULAR
+      </div>
+
+      <h3 style="margin-bottom: 6px">
+        Silver4You ⭐
+      </h3>
+
+      <div style="font-weight: 700">
+        R99.00/mo
+      </div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Up to 15 Property Listings</strong></li>
-        <li>Higher ranking in search</li>
-        <li>Analytics dashboard</li>
-        <li>Availability system</li>
-        <li>Priority support</li>
-        <li>Recommended for active landlords</li>
+        <li><strong>Up to 30 Active Listings</strong></li>
+        <li>Verified Landlord Badge</li>
+        <li>Higher Search Ranking</li>
+        <li>Featured Listing Rotation</li>
+        <li>Analytics Dashboard</li>
+        <li>Tenant Demand Insights</li>
+        <li>Priority Support</li>
       </ul>
 
       <a
@@ -113,31 +153,39 @@
       style="
         border: 2px solid gold;
         transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       "
     >
-      <h3 style="margin-bottom: 6px">Gold4You 👑</h3>
-      <div style="font-weight: 700">R299.00/mo</div>
-      <div style="font-weight: 800; font-size: 1.2rem">Premium</div>
+      <h3 style="margin-bottom: 6px">
+        Gold4You 👑
+      </h3>
+
+      <div style="font-weight: 700">
+        R199.00/mo
+      </div>
+
+      <div style="font-weight: 800; font-size: 1.1rem">
+        Premium
+      </div>
 
       <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Unlimited Property Listings</strong></li>
-        <li>Featured listings</li>
-        <li>Top search placement</li>
-        <li>Marketing boost</li>
-        <li>Advanced analytics</li>
-        <li>Full support access</li>
+        <li><strong>Unlimited Active Listings</strong></li>
+        <li>Top Search Placement</li>
+        <li>Featured Listings</li>
+        <li>Advanced Analytics</li>
+        <li>Marketing Boosts</li>
+        <li>Early Access Features</li>
+        <li>Premium Support</li>
       </ul>
 
-      <div style="margin-top: 16px">
-        <a
-          href="{% url 'membership_payment' 'gold' %}"
-          class="btn-primary w-100 mt-3 tier-gold-btn"
-        >
-          Go 4 Gold
-        </a>
-      </div>
+      <a
+        href="{% url 'membership_payment' 'gold' %}"
+        class="btn-primary w-100 mt-3 tier-gold-btn"
+      >
+        Go 4 Gold
+      </a>
     </div>
+
   </div>
 
   <!-- FUTURE FEATURES -->
@@ -154,14 +202,16 @@
 
     <ul style="list-style: none; padding: 0; line-height: 2">
       <li>📢 Listing Boosts</li>
-      <li>🛡 Rental Insurance</li>
-      <li>📊 Smart Analytics</li>
-      <li>🤖 Auto Tenant Matching</li>
       <li>🏅 Featured Listings</li>
+      <li>📊 Advanced Analytics</li>
+      <li>✅ Verified Landlord Plus</li>
+      <li>📍 Location Spotlight Placement</li>
+      <li>📱 WhatsApp Lead Tracking</li>
+      <li>🔥 Vacancy Promotion Campaigns</li>
     </ul>
 
     <p class="text-muted">
-      These features will unlock progressively after launch.
+      More tools designed to help landlords fill rooms faster and increase occupancy.
     </p>
   </div>
 

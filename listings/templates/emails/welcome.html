@@ -1,13 +1,88 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "emails/base_email.html" %}
+
+{% block content %}
 
 <h1>Welcome to Rooms4You 🎉</h1>
 
-<p>Your journey to finding safe and affordable accommodation starts now.</p>
-
 <p>
-  Browse listings, connect with landlords, and manage everything in one place.
+Hello {{ user.first_name|default:user.email }},
 </p>
 
-<a href="{{ app_url }}" class="btn"> Explore Rooms </a>
+<p>
+Thank you for joining Rooms4You.
+</p>
+
+<p>
+Our mission is simple:
+<strong>make finding accommodation easier, safer, and more accessible for everyone in South Africa.</strong>
+</p>
+
+<p>
+Whether you're looking for your next room or advertising available accommodation, you're now part of a growing community connecting tenants and landlords across the country.
+</p>
+
+{% if user.profile.role == "landlord" %}
+
+<h3>For Landlords</h3>
+
+<p>
+You can now create listings, upload photos, manage enquiries, and reach prospective tenants faster from a single platform.
+</p>
+
+{% else %}
+
+<h3>For Tenants</h3>
+
+<p>
+You can now browse available rooms, save favourites, contact landlords directly, and discover accommodation opportunities in your area and beyond.
+</p>
+
+{% endif %}
+
+<div class="info-card">
+
+<p style="margin:0;">
+<strong>Safety First:</strong><br>
+Always verify a property in person before making any payment, and avoid sending money without confirming the legitimacy of the listing and landlord.
+</p>
+
+</div>
+
+<p>
+We're just getting started.
+</p>
+
+<p>
+Imagine a future where every available room in every township, suburb, and city across South Africa can be discovered instantly from anywhere, at any time.
+</p>
+
+<p>
+That is the vision we're building toward—and we're excited to have you with us from the beginning.
+</p>
+
+<p>
+Tell your friends. Tell your family. Tell your neighbours.
+</p>
+
+<p>
+The more people who join Rooms4You, the easier it becomes for everyone to find accommodation and fill vacancies.
+</p>
+
+<p style="text-align:center;">
+<a href="{{ app_url }}" class="btn">
+Explore Rooms4You
+</a>
+</p>
+
+<p>
+Thank you for being part of the journey.
+</p>
+
+<p>
+Warm regards,<br>
+<strong>Alex "MathMetiX" Morea</strong><br>
+Founder & CEO<br>
+Rooms4You
+</p>
 
 {% endblock %}

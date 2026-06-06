@@ -1,41 +1,41 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "emails/base_email.html" %}
 
-<h1>🎉 Your Listing is Live</h1>
+{% block content %}
 
-<p>Hi {{ room.owner.first_name|default:"there" }},</p>
+<h1>Your Listing Is Now Live 🎉</h1>
 
 <p>
-  Your room listing has been successfully published and is now visible to
-  potential tenants.
+Hello {{ room.owner.first_name|default:"there" }},
+</p>
+
+<p>
+Your room listing has been successfully published and is now visible to
+prospective tenants on Rooms4You.
 </p>
 
 <div class="info-card">
-  <p>
-    <strong>Title:</strong>
-    {{ room.title }}
-  </p>
-
-  <p>
-    <strong>Location:</strong>
-    {{ room.location }}
-  </p>
-
-  <p>
-    <strong>Price:</strong>
-    R{{ room.price }}
-  </p>
-
-  <p>
-    <strong>Status:</strong>
-    {{ room.availability_badge_text }}
-  </p>
+  <p><strong>Title:</strong> {{ room.title }}</p>
+  <p><strong>Location:</strong> {{ room.location }}</p>
+  <p><strong>Price:</strong> R{{ room.price }}</p>
+  <p><strong>Status:</strong> {{ room.availability_badge_text }}</p>
 </div>
 
 <p>
-  Listings with multiple images and clear descriptions usually perform much
-  better.
+Listings with high-quality photos, accurate pricing, and detailed descriptions
+typically receive more enquiries and engagement.
 </p>
 
-<a href="https://rooms4you.co.za/dashboard/" class="btn"> View Dashboard </a>
+<p>
+You can manage your listing, view enquiries, and monitor performance from your
+dashboard.
+</p>
+
+<a href="https://rooms4you.co.za/dashboard/" class="btn">
+  Open Dashboard
+</a>
+
+<p>
+Thank you for choosing Rooms4You.
+</p>
 
 {% endblock %}

@@ -22,7 +22,7 @@ from difflib import get_close_matches
 from django.contrib.auth.models import User
 from accounts.helpers import generate_membership_id
 from .models import PhoneOTP
-from .utils import generate_otp, send_otp_email
+from .utils import generate_otp, send_otp_email, send_welcome_email
 from accounts.state_engine import get_user_state
 from utils.email import send_template_email
 from accounts.utils import require_active_membership
@@ -584,6 +584,11 @@ def verify_account(request):
             user.save()
 
             PhoneOTP.objects.filter(user=user).delete()
+
+            try:
+                send_welcome_email(user)
+            except Exception:
+                pass
 
             login(request, user)
 
@@ -1566,6 +1571,7 @@ class RateLimitedPasswordResetView(PasswordResetView):
         cache.set(base_key + ":hour", count + 1, timeout=3600)
 
         return super().form_valid(form)
+    
 
 # Landlord analytics 
 @login_required

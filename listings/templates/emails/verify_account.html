@@ -1,65 +1,28 @@
-{% extends "listings/base.html" %} {% block title %} Verify Account • Rooms4You
-{% endblock %} {% block content %}
+{% extends "emails/base_email.html" %}
 
-<div class="auth-shell">
-  <div class="auth-card">
-    <div class="auth-header">
-      <h1>Verify your account</h1>
+{% block content %}
 
-      <p>Enter the OTP sent to your email address.</p>
-    </div>
+<h1>Verify Your Account</h1>
 
-    <form method="POST" class="auth-form">
-      {% csrf_token %}
+<p>
+Use the verification code below to complete your Rooms4You account setup.
+</p>
 
-      <div class="form-group">
-        <label for="otp"> Verification Code </label>
+<div class="otp-box">{{ otp }}</div>
 
-        <input
-          type="text"
-          id="otp"
-          name="otp"
-          maxlength="6"
-          required
-          placeholder="Enter 6-digit OTP"
-          class="input"
-        />
-      </div>
+<p>
+This verification code will expire in 15 minutes.
+</p>
 
-      <button type="submit" class="btn-primary auth-submit">
-        Verify Account
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      <button type="button" id="resend-btn" class="btn-secondary">
-        Resend OTP
-      </button>
-    </div>
-  </div>
+<div class="info-card">
+  <p style="margin:0;">
+    For your security, never share this code with anyone. Rooms4You will never
+    ask for your verification code by phone, email, or WhatsApp.
+  </p>
 </div>
 
-<script>
-  document.getElementById("resend-btn")?.addEventListener("click", async () => {
-    const btn = document.getElementById("resend-btn");
-
-    btn.disabled = true;
-    btn.textContent = "Sending...";
-
-    try {
-      const res = await fetch("/resend-account-otp/");
-      const data = await res.json();
-
-      alert(data.message || data.error || "OTP sent.");
-    } catch (err) {
-      alert("Failed to resend OTP.");
-    }
-
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.textContent = "Resend OTP";
-    }, 5000);
-  });
-</script>
+<p>
+If you did not create a Rooms4You account, you can safely ignore this email.
+</p>
 
 {% endblock %}
