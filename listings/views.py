@@ -1534,14 +1534,17 @@ def mark_success(request, room_id):
 # Password reset (rate limited)
 class RateLimitedPasswordResetView(PasswordResetView):
     subject_template_name = "registration/password_reset_subject.txt"
-    email_template_name = "registration/password_reset_email.txt"
+    email_template_name = "registration/password_reset_email.html"
     html_email_template_name = "registration/password_reset_email.html"
 
     COOLDOWN_SECONDS = 60
     MAX_PER_HOUR = 5
 
-    def form_valid(self, form, request):
+    def form_valid(self, form):
+        request = self.request
+
         email = (form.cleaned_data.get("email") or "").strip().lower()
+
         ip = (
             request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
             or request.META.get("REMOTE_ADDR")
@@ -1549,22 +1552,20 @@ class RateLimitedPasswordResetView(PasswordResetView):
 
         base_key = f"pwreset:{ip}:{email}"
 
-        cooldown_key = base_key + ":cooldown"
-        if cache.get(cooldown_key):
-            messages.error(self.request, "Please wait a bit before requesting another reset email.")
+        if cache.get(base_key + ":cooldown"):
+            messages.error(request, "Please wait before trying again.")
             return self.form_invalid(form)
 
-        hour_key = base_key + ":hour"
-        count = cache.get(hour_key, 0)
+        count = cache.get(base_key + ":hour", 0)
+
         if count >= self.MAX_PER_HOUR:
-            messages.error(self.request, "Too many reset attempts. Please try again later.")
+            messages.error(request, "Too many attempts. Try later.")
             return self.form_invalid(form)
 
-        cache.set(cooldown_key, 1, timeout=self.COOLDOWN_SECONDS)
-        cache.set(hour_key, count + 1, timeout=3600)
+        cache.set(base_key + ":cooldown", 1, timeout=self.COOLDOWN_SECONDS)
+        cache.set(base_key + ":hour", count + 1, timeout=3600)
 
         return super().form_valid(form)
-
 
 # Landlord analytics 
 @login_required
