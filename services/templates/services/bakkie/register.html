@@ -91,48 +91,51 @@
                 {{ form.licence_image }}
             </div>
 
-            <div class="form-full" style="margin-top:15px;">
+            <!-- ✅ CONSENT -->
+            <div
+                class="form-group form-full"
+                style="margin-top:20px;text-align:center;"
+            >
 
                 <label
                     style="
-                    display:flex;
-                    align-items:flex-start;
-                    gap:10px;
-                    line-height:1.6;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        gap:8px;
+                        font-size:.85rem;
+                        line-height:1.4;
+                        text-align:left;
+                        max-width:100%;
+                        margin:0 auto;
                     "
                 >
 
                     {{ form.terms_accepted }}
 
                     <span>
-
                         I agree to the
-
                         <a
                             href="{% url 'services:driver_terms' %}"
                             target="_blank"
+                            style="color:#2563eb;font-weight:600;text-decoration:underline;"
                         >
                             Driver Terms & Conditions
                         </a>
-
                         and
-
                         <a
                             href="{% url 'privacy' %}"
                             target="_blank"
+                            style="color:#2563eb;font-weight:600;text-decoration:underline;"
                         >
                             Privacy Policy
-                        </a>.
-
+                        </a>
+                        and consent to the processing of my personal information under POPIA.
                     </span>
 
                 </label>
 
-                {% if form.terms_accepted.errors %}
-                    <div class="form-error">
-                        {{ form.terms_accepted.errors }}
-                    </div>
-                {% endif %}
+                {{ form.terms_accepted.errors }}
 
             </div>
 

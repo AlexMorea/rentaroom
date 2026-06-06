@@ -35,6 +35,15 @@
         {{ form.role }}
       </div>
 
+      <small style="color:gray">
+      Want to become a driver?
+      <a href="{% url 'services:register_bakkie_driver' %}"
+        style="color:#2563eb;font-weight:600;text-decoration:underline;"
+      >
+      Apply here
+      </a>
+      </small>
+
       <!-- PHONE -->
       <div class="field">
         <label>Phone Number</label>
@@ -109,6 +118,8 @@
         {{ form.terms_accepted.errors }}
 
       </div>
+
+      
       <!-- SUBMIT -->
       <button class="btn-primary auth-btn" type="submit">
         Create account

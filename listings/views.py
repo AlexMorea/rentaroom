@@ -676,6 +676,9 @@ def user_login(request):
     if getattr(profile, "must_change_password", False):
         return redirect("change_password")
 
+    if profile.role == "driver":
+        return redirect("services:bakkie/driver_dashboard")
+
     state = get_user_state(user)
     return redirect(state["next_route"])
 

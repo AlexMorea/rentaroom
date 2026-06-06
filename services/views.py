@@ -486,5 +486,5 @@ def driver_bookings(request):
 def driver_terms(request):
     return render(
         request,
-        "services/driver_terms.html"
+        "services/bakkie/driver_terms.html"
     )

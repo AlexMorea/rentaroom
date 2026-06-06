@@ -160,8 +160,7 @@ class Review(models.Model):
 class Profile(models.Model):
     ROLE_CHOICES = [
         ("tenant", "Tenant"),
-        ("landlord", "Landlord"),
-        ("driver", "Driver"),
+        ("landlord", "Landlord"),    
     ]
 
     PERSONA_CHOICES = [

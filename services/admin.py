@@ -51,67 +51,7 @@ class PanicAlertAdmin(admin.ModelAdmin):
     list_filter = ("resolved",)
 
 
-@admin.register(BakkieDriver)
-class BakkieDriverAdmin(admin.ModelAdmin):
 
-    list_display = (
-        "id",
-        "full_name",
-        "email",
-        "phone_number",
-        "vehicle_type",
-        "city",
-        "application_status",
-        "is_verified",
-        "terms_accepted",
-        "created_at",
-    )
-
-    list_filter = (
-        "application_status",
-        "is_verified",
-        "vehicle_type",
-        "terms_accepted",
-        "created_at",
-    )
-
-    search_fields = (
-        "full_name",
-        "email",
-        "phone_number",
-        "vehicle_registration",
-        "city",
-    )
-
-    readonly_fields = (
-        "created_at",
-        "verified_at",
-        "terms_accepted_at",
-        "privacy_accepted_at",
-    )
-
-    list_editable = (
-        "application_status",
-        "is_verified",
-    )
-
-    def save_model(self, request, obj, form, change):
-
-        if obj.is_verified and not obj.verified_at:
-            obj.verified_at = timezone.now()
-
-        if obj.application_status == "approved":
-            obj.is_verified = True
-
-        super().save_model(request, obj, form, change)
-
-        if obj.user:
-            profile = obj.user.profile
-            profile.role = "driver"
-            profile.is_verified = obj.is_verified
-            profile.is_phone_verified = True
-            profile.is_email_verified = True
-            profile.save()
 @admin.register(MoveBooking)
 class MoveBookingAdmin(admin.ModelAdmin):
 
