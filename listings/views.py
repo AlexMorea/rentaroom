@@ -883,13 +883,16 @@ def profile(request):
     )
 
 
+OTP_RESEND_SECONDS = 60
+
+
 def resend_account_otp(request):
     user_id = request.session.get("pending_user_id")
 
     if not user_id:
         return JsonResponse({
-            "success": False,
-            "error": "Session expired."
+            "level": "error",
+            "message": "Your session has expired. Please restart the verification process."
         }, status=400)
 
     user = get_object_or_404(User, id=user_id)
@@ -898,11 +901,12 @@ def resend_account_otp(request):
 
     if cache.get(cache_key):
         return JsonResponse({
-            "success": False,
-            "error": "Wait before requesting again.",
+            "level": "warning",
+            "message": "Please wait before requesting another OTP.",
             "cooldown": OTP_RESEND_SECONDS
         }, status=429)
-    
+
+    # reset failed attempts safely
     cache.delete(f"otp_attempts_{user.id}")
 
     otp = generate_otp()
@@ -920,13 +924,11 @@ def resend_account_otp(request):
     set_otp_cooldown(user.id)
 
     return JsonResponse({
-        "success": True,
-        "message": "OTP sent.",
+        "level": "success",
+        "message": "OTP sent successfully.",
         "cooldown": OTP_RESEND_SECONDS
     })
 
-
-OTP_RESEND_SECONDS = 60
 
 def set_otp_cooldown(user_id):
     cache.set(
@@ -935,6 +937,7 @@ def set_otp_cooldown(user_id):
         timeout=OTP_RESEND_SECONDS
     )
 
+    
 @login_required
 def edit_profile(request):
     user = request.user
@@ -1421,17 +1424,29 @@ def edit_room_images(request, pk):
 @require_POST
 def add_review(request, room_id):
     room = get_object_or_404(Room, id=room_id)
-    if not Contact.objects.filter(room=room, user=request.user).exists():
-        return HttpResponseForbidden("Contact landlord first.")
+
+    # ROLE CHECK (SYSTEM MESSAGE INSTEAD OF RAW ERROR)
+    if hasattr(request.user, "profile") and request.user.profile.role != "tenant":
+        messages.warning(request, "Only tenants are allowed to review rooms.")
+        return redirect("room_detail", pk=room.id)
+
+    rating = request.POST.get("rating")
+    comment = request.POST.get("comment", "")
+
+    if not rating:
+        messages.error(request, "Please provide a rating before submitting your review.")
+        return redirect("room_detail", pk=room.id)
 
     Review.objects.update_or_create(
         room=room,
         user=request.user,
         defaults={
-            "rating": request.POST.get("rating"),
-            "comment": request.POST.get("comment", "")
+            "rating": int(rating),
+            "comment": comment
         }
     )
+
+    messages.success(request, "Your review has been submitted successfully.")
     return redirect("room_detail", pk=room.id)
 
 

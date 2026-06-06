@@ -4638,3 +4638,41 @@ body.scroll-down .trust-strip {
   }
 
 }
+
+.img-preview-grid{
+    display:grid;
+    grid-template-columns:
+    repeat(auto-fill,minmax(140px,1fr));
+    gap:12px;
+    margin-top:15px;
+}
+
+.img-preview-item{
+    position:relative;
+}
+
+.img-preview-item img{
+    width:100%;
+    height:140px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+.remove-image-btn{
+    position:absolute;
+    top:6px;
+    right:6px;
+    border:none;
+    cursor:pointer;
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:#fff;
+    font-weight:bold;
+}
+
+.image-counter{
+    grid-column:1/-1;
+    margin-bottom:10px;
+    font-size:14px;
+}
