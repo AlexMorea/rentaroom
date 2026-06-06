@@ -205,9 +205,9 @@ def membership_payment_view(request, tier):
         return denied
 
     VALID_TIERS = {
-        "bronze": "R79",
-        "silver": "R149",
-        "gold": "R299"
+        "bronze": "R49",
+        "silver": "R99",
+        "gold": "R199"
     }
 
     tier = tier.lower()
