@@ -160,7 +160,7 @@
   <form method="post" enctype="multipart/form-data" class="form-card">
     {% csrf_token %}
 
-    <!-- ✅ Non-field errors -->
+    <!-- Non-field errors -->
     {% if form.non_field_errors %}
     <div class="form-alert form-alert-error">
       <strong>Fix these issues:</strong>

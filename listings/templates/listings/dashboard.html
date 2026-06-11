@@ -11,7 +11,7 @@ Dashboard • Rooms4You
 
 <!-- ================= DASHBOARD HEADER ================= -->
 
-{% include "listings/partials/_dashboard_header.html" with title="Landlord Dashboard" subtitle="Manage your listings, enquiries and analytics." button_url=create_room_url button_text="+ Add Room" %}
+{% include "listings/partials/_dashboard_header.html" with title="Landlord Dashboard" button_url=create_room_url button_text="List Your Room in 2 Minutes" %}
 <!-- ================= PROFILE WARNING ================= -->
 
 {% if show_profile_warning %}
@@ -155,7 +155,7 @@ Dashboard • Rooms4You
     </div>
 
     {% empty %}
-    {% include "listings/partials/_empty_state.html" with title="No listings yet" message="Start by creating your first room listing and make it visible to tenants." button_url=create_room_url button_text="+ Add your first room" %} {% endfor %}
+    {% include "listings/partials/_empty_state.html" with title="No listings yet" message="Start by creating your first room listing and make it visible to tenants." button_url=create_room_url button_text="List Your First Room in 2 Minutes" %} {% endfor %}
   </div>
 </div>
 

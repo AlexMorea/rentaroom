@@ -1,0 +1,140 @@
+{% extends "listings/base.html" %}
+{% block content %}
+
+<h1 class="page-title">Support Centre</h1>
+
+<div class="form-shell">
+
+  <div class="form-card">
+
+    <div style="text-align:center;margin-bottom:24px;">
+
+      <h2 style="margin-bottom:10px;">
+        Need Help?
+      </h2>
+
+      <p style="opacity:.85;max-width:650px;margin:auto;">
+        Our team is here to help with listings, account issues,
+        landlord reports, safety concerns and platform feedback.
+      </p>
+
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div
+      style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+        gap:14px;
+        margin-bottom:24px;
+      "
+    >
+
+      <div class="form-card" style="margin:0;">
+        <h3>🏠 Listing Issues</h3>
+        <p style="opacity:.8;">
+          Report suspicious, inaccurate or duplicate listings.
+        </p>
+      </div>
+
+      <div class="form-card" style="margin:0;">
+        <h3>🔒 Account Support</h3>
+        <p style="opacity:.8;">
+          Login problems, verification and profile issues.
+        </p>
+      </div>
+
+      <div class="form-card" style="margin:0;">
+        <h3>🛡 Safety Reports</h3>
+        <p style="opacity:.8;">
+          Report scams, abuse or unsafe behaviour.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Contact Methods -->
+
+    <h3>Contact Options</h3>
+
+    <div
+      style="
+        display:flex;
+        flex-wrap:wrap;
+        gap:12px;
+        margin-top:14px;
+      "
+    >
+
+      <a
+        href="mailto:support@rooms4you.co.za"
+        class="btn-primary"
+      >
+        📧 Email Support
+      </a>
+
+      <a class="btn-primary whatsapp-btn" href="https://wa.me/27717243852" target="_blank">
+        <i class="fa-brands fa-whatsapp"></i> WhatsApp Support
+      </a>
+      
+      <a
+        href="{% url 'room_list' %}"
+        class="btn-secondary"
+      >
+        Browse Rooms
+      </a>
+
+    </div>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
+    <!-- WhatsApp Notice -->
+
+    <div
+      style="
+        background:#ecfdf5;
+        border:1px solid #86efac;
+        padding:16px;
+        border-radius:14px;
+      "
+    >
+
+      <strong>💬 Quickest Response</strong>
+
+      <p style="margin:8px 0 0;">
+        For faster assistance, use the green WhatsApp button
+        floating at the bottom-right corner of every page.
+        This is usually the fastest way to reach us during beta.
+      </p>
+
+    </div>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
+    <h3>Support Hours</h3>
+
+    <p style="margin-bottom:8px;">
+      Monday – Friday
+    </p>
+
+    <p style="opacity:.85;">
+      09:00 – 17:00 (SAST)
+    </p>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
+    <h3>Before Contacting Support</h3>
+
+    <ul style="line-height:1.8;">
+      <li>Include your account email address.</li>
+      <li>Include the room title if reporting a listing.</li>
+      <li>Provide screenshots where possible.</li>
+      <li>Describe the issue clearly for faster assistance.</li>
+    </ul>
+
+  </div>
+
+</div>
+
+{% endblock %}

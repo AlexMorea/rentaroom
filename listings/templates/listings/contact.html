@@ -1,31 +1,178 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %}
+{% block content %}
 
-<h1 class="page-title">Contact Us</h1>
+<h1 class="page-title">Contact Rooms4You</h1>
 
 <div class="form-shell">
-  <div class="form-card">
-    <p style="margin-top: 0">
-      Need help, want to report a listing, or have suggestions to improve
-      Rooms4You? Reach out using the details below.
-    </p>
 
-    <div style="display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px">
-      <a class="btn-primary" href="mailto:support@rooms4you.co.za"
-        >📧 Email Support</a
+  <div class="form-card">
+
+    <div style="text-align:center;margin-bottom:24px;">
+
+      <span
+        style="
+          display:inline-block;
+          padding:8px 14px;
+          border-radius:999px;
+          background:#eef2ff;
+          color:#4338ca;
+          font-size:.8rem;
+          font-weight:700;
+          margin-bottom:12px;
+        "
       >
-      <a class="btn-secondary" href="{% url 'room_list' %}">Browse Rooms</a>
+        COMPANY CONTACT
+      </span>
+
+      <h2 style="margin-bottom:10px;">
+        We'd Love To Hear From You
+      </h2>
+
+      <p style="max-width:700px;margin:auto;opacity:.85;">
+        Whether you're interested in partnerships, media enquiries,
+        business opportunities, investor discussions, or general feedback,
+        we're always happy to connect.
+      </p>
+
     </div>
 
-    <hr style="margin: 18px 0; opacity: 0.2" />
+    <!-- Contact Options -->
 
-    <h3 style="margin: 0 0 10px">Support hours</h3>
-    <p style="margin: 0; opacity: 0.85">Mon – Fri: 09:00 – 17:00 (SAST)</p>
+    <div
+      style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+        gap:16px;
+        margin-bottom:24px;
+      "
+    >
 
-    <p style="margin-top: 14px; opacity: 0.75; font-size: 0.9rem">
-      Tip: If you’re reporting a listing, include the room title + location so
-      we can find it quickly.
+      <div
+        style="
+          border:1px solid #e5e7eb;
+          border-radius:16px;
+          padding:18px;
+        "
+      >
+        <h3 style="margin-top:0;">📧 Email</h3>
+
+        <p style="opacity:.8;">
+          For business enquiries, partnerships and general communication.
+        </p>
+
+        <a
+          href="mailto:hello@rooms4you.co.za"
+          style="font-weight:700;"
+        >
+          hello@rooms4you.co.za
+        </a>
+      </div>
+
+      <div
+        style="
+          border:1px solid #e5e7eb;
+          border-radius:16px;
+          padding:18px;
+        "
+      >
+        <h3 style="margin-top:0;">🤝 Partnerships</h3>
+
+        <p style="opacity:.8;">
+          Property managers, student housing providers,
+          moving companies and strategic collaborations.
+        </p>
+      </div>
+
+      <div
+        style="
+          border:1px solid #e5e7eb;
+          border-radius:16px;
+          padding:18px;
+        "
+      >
+        <h3 style="margin-top:0;">📰 Media & Press</h3>
+
+        <p style="opacity:.8;">
+          Press enquiries, interviews and media requests.
+        </p>
+      </div>
+
+    </div>
+
+    <div
+      style="
+        display:flex;
+        gap:12px;
+        flex-wrap:wrap;
+        justify-content:center;
+      "
+    >
+
+      <a
+        href="mailto:hello@rooms4you.co.za"
+        class="btn-primary"
+      >
+        📧 Contact Us
+      </a>
+
+      <a
+        href="{% url 'support' %}"
+        class="btn-secondary"
+      >
+        Need Support?
+      </a>
+
+      <a
+        href="{% url 'room_list' %}"
+        class="btn-secondary"
+      >
+        Browse Rooms
+      </a>
+
+    </div>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
+    <h3>About Rooms4You</h3>
+
+    <p style="line-height:1.8;opacity:.9;">
+      Rooms4You is building South Africa's trusted room-rental ecosystem,
+      connecting tenants, landlords and moving services through one
+      modern platform.
     </p>
+
+    <p style="line-height:1.8;opacity:.9;">
+      Our mission is to make finding accommodation safer, faster and
+      more transparent while empowering landlords and service providers
+      with better digital tools.
+    </p>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
+    <div
+      style="
+        background:#f8fafc;
+        border:1px solid #e2e8f0;
+        border-radius:16px;
+        padding:18px;
+      "
+    >
+
+      <strong>🛟 Looking for customer support?</strong>
+
+      <p style="margin:8px 0 0;">
+        If you need help with your account, listings, verification,
+        reports or technical issues, please visit our
+        <a href="{% url 'support' %}" class="auth-link">
+          Support Centre
+        </a>
+        or use the WhatsApp support button available throughout the platform.
+      </p>
+
+    </div>
+
   </div>
+
 </div>
 
 {% endblock %}

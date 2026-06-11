@@ -1,37 +1,5 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<style>
-  /* =========================
-     PREMIUM HERO GLOW
-  ========================= */
-  @keyframes r4uGlow {
-    0% {
-      transform: scale(1);
-      opacity: 0.55;
-    }
-    50% {
-      transform: scale(1.18);
-      opacity: 0.9;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 0.55;
-    }
-  }
-
-  .r4u-glow {
-    animation: r4uGlow 6s ease-in-out infinite;
-  }
-
-  .premium-card {
-    transition: all 0.28s ease;
-  }
-
-  .premium-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
-  }
-</style>
 
 <div class="container py-5">
   <!-- =========================
@@ -169,11 +137,12 @@
         Browse Rooms
       </a>
 
-      <a href="{% url 'register' %}" class="btn-secondary"> List Property </a>
+      <a href="{% url 'register' %}" class="btn-primary" style="background: #16a34a"> Get Your Room Seen Today </a>
 
       <a
         href="{% url 'services:register_bakkie_driver' %}"
-        class="btn-secondary"
+        class="btn-primary"
+        style="background: linear-gradient(135deg,#f59e0b,#ea580c); border:none;"
       >
         Become a Driver
       </a>
@@ -234,11 +203,6 @@
   </div>
 
   <div class="social-proof">
-
-    <p>
-        Trusted by growing communities of tenants,
-        landlords and moving partners across South Africa.
-    </p>
 
   </div>
 
@@ -466,9 +430,7 @@
     </h2>
 
     <p class="text-muted" style="color: #cbd5e1">
-      Find verified rooms, connect directly with landlords,
-      and move with confidence through South Africa's growing
-      rental community.
+      Rooms4You is the fastest, easiest place to find and advertise rooms in township and student-rental markets across Pretoria and surrounding areas.
     </p>
 
     <a

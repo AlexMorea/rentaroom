@@ -71,14 +71,33 @@
 </div>
 
 <!-- ================= TENANT LISTS (renders nothing for landlord because list is empty) ================= -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+<div
+  style="
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:16px;
+  "
+>
   {% for section in tenant_sections %}
   <div class="form-card">
     <h3 style="margin: 0 0 10px; font-weight: 900">{{ section.title }}</h3>
 
     {% for r in section.rooms %}
-    <div class="room-row">
-      <div>
+    <div
+      class="room-row"
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        padding:12px;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        margin-bottom:10px;
+        flex-wrap:wrap;
+      "
+    >
+      <div style="flex:1;min-width:0;">
         <strong>{{ r.title }}</strong>
         <div style="opacity: 0.75; font-size: 0.9rem">{{ r.location }}</div>
       </div>

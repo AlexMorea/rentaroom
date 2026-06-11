@@ -3,168 +3,390 @@
 <h1 class="page-title">Browse Rooms</h1>
 
 <div class="scam-warning">
-  Rooms4You recommends renting only from verified landlords.
+  🛡 Never pay deposits upfront without viewing the property and confirming the landlord's identity.
 </div>
 
-<form class="search-bar" method="get" action="{% url 'room_list' %}">
-  <input
-    type="text"
-    name="location"
-    placeholder="Location (e.g. Pretoria, Mamelodi)"
-    value="{{ values.location }}"
-  />
+<style>
+.search-toolbar {
+  max-width: 1100px;
+  margin: 0 auto 24px;
+}
 
-  <select name="type">
-    <option value="">Any Type</option>
-    <option
-      value="Single Room"
-      {%
-      if
-      values.type=""
-      ="Single Room"
-      %}selected{%
-      endif
-      %}
-    >
-      Single Room
-    </option>
-    <option
-      value="Shared Room"
-      {%
-      if
-      values.type=""
-      ="Shared Room"
-      %}selected{%
-      endif
-      %}
-    >
-      Shared Room
-    </option>
-    <option
-      value="Bachelor"
-      {%
-      if
-      values.type=""
-      ="Bachelor"
-      %}selected{%
-      endif
-      %}
-    >
-      Bachelor
-    </option>
-    <option
-      value="Ensuite"
-      {%
-      if
-      values.type=""
-      ="Ensuite"
-      %}selected{%
-      endif
-      %}
-    >
-      Ensuite
-    </option>
-    <option
-      value="Student Accommodation"
-      {%
-      if
-      values.type=""
-      ="Student Accommodation"
-      %}selected{%
-      endif
-      %}
-    >
-      Student Accommodation
-    </option>
-    <option
-      value="Backroom"
-      {%
-      if
-      values.type=""
-      ="Backroom"
-      %}selected{%
-      endif
-      %}
-    >
-      Backroom
-    </option>
-    <option
-      value="Cottage"
-      {%
-      if
-      values.type=""
-      ="Cottage"
-      %}selected{%
-      endif
-      %}
-    >
-      Cottage
-    </option>
-    <option
-      value="Apartment"
-      {%
-      if
-      values.type=""
-      ="Apartment"
-      %}selected{%
-      endif
-      %}
-    >
-      Flat / Apartment
-    </option>
-  </select>
+.search-input,
+.filter-input,
+.filter-select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
 
-  <!-- NEW PRICE RANGE -->
-  <input
-    type="number"
-    name="min_price"
-    placeholder="Min Price"
-    value="{{ values.min_price }}"
-  />
+.search-input:focus,
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+}
 
-  <input
-    type="number"
-    name="max_price"
-    placeholder="Max Price"
-    value="{{ values.max_price }}"
-  />
+.filter-toggle-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+}
 
-  <select name="sort">
-    <option value="" {% if sort_selected.best %}selected{% endif %}>
-      Best match
-    </option>
+.filter-toggle-btn:hover {
+  transform: translateY(-1px);
+  background: #1d4ed8;
+}
 
-    <option value="new" {% if sort_selected.new %}selected{% endif %}>
-      Newest
-    </option>
+.filter-panel {
+  display: none;
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 30px rgba(0,0,0,.08);
+  margin-bottom: 18px;
+}
 
-    <option
-      value="price_low"
-      {%
-      if
-      sort_selected.price_low
-      %}selected{%
-      endif
-      %}
+.filter-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.apply-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.apply-btn:hover {
+  background: #1d4ed8;
+}
+
+.reset-btn {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+
+@media (max-width:768px) {
+  .filter-toggle-btn {
+    width: 100%;
+  }
+
+  .filter-actions {
+    flex-direction: column;
+  }
+
+  .apply-btn,
+  .reset-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>
+
+<form method="get" action="{% url 'room_list' %}">
+
+  <!-- Search Row -->
+  <div class="search-toolbar">
+
+  <div
+    style="
+      display:flex;
+      gap:10px;
+      margin-bottom:14px;
+      align-items:center;
+      flex-wrap:wrap;
+    "
+  >
+
+    <div
+      style="
+        flex:1;
+        position:relative;
+        min-width:280px;
+      "
     >
-      Price: Low → High
-    </option>
 
-    <option
-      value="price_high"
-      {%
-      if
-      sort_selected.price_high
-      %}selected{%
-      endif
-      %}
+      <input
+        type="text"
+        name="q"
+        class="search-input"
+        placeholder="Search rooms, area or location"
+        value="{{ values.q }}"
+        style="padding-right:55px;"
+      />
+
+      <button
+        type="submit"
+        style="
+          position:absolute;
+          right:6px;
+          top:6px;
+          bottom:6px;
+          width:42px;
+          border:none;
+          border-radius:10px;
+          background:#2563eb;
+          color:white;
+          cursor:pointer;
+          font-size:18px;
+        "
+        aria-label="Search"
+      >
+        🔍
+      </button>
+
+    </div>
+
+    <button
+      type="button"
+      id="toggleFilters"
+      class="filter-toggle-btn"
     >
-      Price: High → Low
-    </option>
-  </select>
+      ⚙ Filters
+    </button>
 
-  <button type="submit">Search</button>
+  </div>
+
+  <!-- Filter Drawer -->
+  <div
+    id="filterPanel"
+    class="filter-panel"
+    style="
+      display:none;
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:18px;
+      margin-bottom:16px;
+    "
+  >
+
+    <div class="filter-grid">
+
+      <input
+        type="text"
+        name="location"
+        class="filter-input"
+        placeholder="Location"
+        value="{{ values.location }}"
+      />
+
+      <select name="type" class="filter-select">
+        <option value="">Any Type</option>
+        <option 
+          value="Single Room"
+          {% if values.type == "Single Room" %}
+          selected
+          {% endif %}
+        >
+          Single Room
+        </option>
+
+        <option 
+          value="Shared Room"
+          {% if values.type == "Shared Room" %}
+          selected
+          {% endif %}
+
+        >
+          Shared Room
+
+        </option>
+
+        <option 
+          value="Bachelor"
+          {% if values.type == "Bachelor" %}
+          selected
+          {% endif %}
+        
+        >
+          Bachelor
+        </option>
+
+        <option 
+          value="Ensuite"
+          {% if values.type == "Ensuite" %}
+          selected
+          {% endif %}
+        
+        >
+          Ensuite
+
+        </option>
+        <option 
+          value="Student Accommodation"
+          {% if values.type == "Student Accommodation" %}
+          selected  
+          {% endif %}
+        
+        >
+          Student Accommodation
+        </option>
+        <option 
+          value="Backroom"
+          {% if values.type == "Backroom" %}
+          selected
+          {% endif %}
+        >
+          Backroom
+
+        </option>
+        <option 
+          value="Cottage"
+          {% if values.type == "Cottage" %}
+          selected
+          {% endif %}
+        >
+          Cottage
+
+        </option>
+        <option 
+          value="Apartment"
+          {% if values.type == "Apartment" %}
+          selected   
+          {% endif %}
+
+        >
+          Flat / Apartment
+
+        </option>
+      </select>
+
+      <input
+        type="number"
+        name="min_price"
+        class="filter-input"
+        placeholder="Min Price"
+        value="{{ values.min_price }}"
+      />
+
+      <input
+        type="number"
+        name="max_price"
+        class="filter-input"
+        placeholder="Max Price"
+        value="{{ values.max_price }}"
+      />
+
+      <select name="sort" class="filter-select">
+        <option value="">Best Match</option>
+        <option
+          value="newest"
+          {% if values.sort == "newest" %}
+          selected
+          {% endif %}
+        >
+          Newest
+        </option>
+         <option
+          value="oldest"
+          {% if values.sort == "oldest" %}
+          selected
+          {% endif %}
+        >
+          Oldest
+        </option>
+        <option
+          value="price_low"
+          {% if values.sort == "price_low" %}
+          selected
+          {% endif %}
+        >
+          Price: Low → High
+        </option>
+        <option
+          value="price_high"
+          {% if values.sort == "price_high" %}
+          selected
+          {% endif %}
+        >
+          Price: High → Low
+        </option>
+      </select>
+
+      <div
+        style="
+          display:flex;
+          gap:10px;
+        "
+      >
+        <button
+          type="submit"
+          class="btn-primary"
+        >
+          Apply Filters
+        </button>
+
+        <a
+          href="{% url 'room_list' %}"
+          class="btn-secondary"
+        >
+          Reset
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+
 </form>
+
+{% if values.q or values.location or values.type or values.min_price or values.max_price %}
+<div style="
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+">
+  {% if values.q %}
+  <span class="badge">🔍 {{ values.q }}</span>
+  {% endif %}
+
+  {% if values.location %}
+  <span class="badge">📍 {{ values.location }}</span>
+  {% endif %}
+
+  {% if values.type %}
+  <span class="badge">{{ values.type }}</span>
+  {% endif %}
+
+  {% if values.min_price %}
+  <span class="badge">Min R{{ values.min_price }}</span>
+  {% endif %}
+
+  {% if values.max_price %}
+  <span class="badge">Max R{{ values.max_price }}</span>
+  {% endif %}
+</div>
+{% endif %}
 
 {% if show_location_suggestion %}
 <div
@@ -198,9 +420,22 @@
 >
   <h2 style="margin-bottom: 10px">No rooms found</h2>
 
-  <p style="color: #64748b">
-    No available rooms found for your selected location/type/price.
+  <p style="color:#64748b;margin-bottom:12px;">
+    No rooms match your current filters.
   </p>
+
+  <ul
+    style="
+      list-style:none;
+      padding:0;
+      margin:0;
+      color:#64748b;
+    "
+  >
+    <li>✓ Increase your maximum budget</li>
+    <li>✓ Search nearby areas</li>
+    <li>✓ Remove some filters</li>
+  </ul>
 
   <a
     href="{% url 'room_list' %}"
@@ -230,6 +465,8 @@
   id="paginationWrap"
   data-q="{{ values.q|default:'' }}"
   data-location="{{ values.location|default:'' }}"
+  data-min-price="{{ values.min_price|default:'' }}"
+  data-max-price="{{ values.max_price|default:'' }}"
   data-type="{{ values.type|default:'' }}"
   data-sort="{{ values.sort|default:'' }}"
   data-page="{{ page_obj.number }}"
@@ -348,6 +585,8 @@
         location: wrap.dataset.location || "",
         type: wrap.dataset.type || "",
         sort: wrap.dataset.sort || "",
+        min_price: wrap.dataset.minPrice || "",
+        max_price: wrap.dataset.maxPrice || "",
       };
     }
 
@@ -357,6 +596,8 @@
 
       if (p.q) params.set("q", p.q);
       if (p.location) params.set("location", p.location);
+      if (p.min_price) params.set("min_price", p.min_price);
+      if (p.max_price) params.set("max_price", p.max_price);
       if (p.type) params.set("type", p.type);
       if (p.sort) params.set("sort", p.sort);
 
@@ -419,5 +660,29 @@
     });
   })();
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const btn = document.getElementById("toggleFilters");
+  const panel = document.getElementById("filterPanel");
+
+  if (!btn || !panel) return;
+
+  btn.addEventListener("click", function () {
+
+    if (panel.style.display === "none") {
+      panel.style.display = "block";
+      btn.innerHTML = "✕ Close";
+    } else {
+      panel.style.display = "none";
+      btn.innerHTML = "⚙ Filters";
+    }
+
+  });
+
+});
+</script>
+
 
 {% endblock %}

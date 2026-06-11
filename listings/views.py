@@ -159,8 +159,13 @@ def home(request):
         context
     )
 
+
 def about(request):
     return render(request, "listings/about.html")
+
+
+def support(request):
+    return render(request, "listings/support.html")
 
 
 def terms(request):

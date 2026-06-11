@@ -1,20 +1,76 @@
+{% load static %}
 <footer class="site-footer">
+
+  <div style="margin-bottom:14px;text-align:center;">
+
+    <a href="{% url 'home' %}">
+      <img
+        src="{% static 'images/rooms4you-logo.jpeg' %}"
+        alt="Rooms4You"
+        style="
+          height:56px;
+          width:auto;
+          margin-bottom:10px;
+        "
+      >
+    </a>
+
+    <p style="margin:0;opacity:.8;">
+      South Africa's growing platform for rooms,
+      landlords, moving services and safer renting.
+    </p>
+
+  </div>
   <div class="footer-links">
-    <a href="{% url 'terms' %}">Terms</a>
+
+    <a href="{% url 'contact' %}">Contact Us</a>
     <span>•</span>
 
-    <a href="{% url 'privacy' %}">Privacy</a>
+    <a href="{% url 'support' %}">Support Centre</a>
     <span>•</span>
 
-    <a href="{% url 'safety' %}">Safety</a>
+    <a href="{% url 'safety' %}">Safety Centre</a>
     <span>•</span>
 
-    <a href="{% url 'contact' %}">Support</a>
+    <a href="{% url 'terms' %}">Terms of Service</a>
+    <span>•</span>
+
+    <a href="{% url 'privacy' %}">Privacy Policy</a>
+
+  </div>
+
+  <div
+    style="
+      display:flex;
+      justify-content:center;
+      gap:16px;
+      margin:18px 0;
+    "
+  >
+    <a href="#" aria-label="Instagram" style="color:inherit;font-size:22px;">
+      <i class="fab fa-instagram"></i>
+    </a>
+
+    <a href="#" aria-label="Facebook" style="color:inherit;font-size:22px;">
+      <i class="fab fa-facebook"></i>
+    </a>
+
+    <a href="#" aria-label="X" style="color:inherit;font-size:22px;">
+      <i class="fab fa-x-twitter"></i>
+    </a>
+
+    <a href="#" aria-label="TikTok" style="color:inherit;font-size:22px;">
+      <i class="fab fa-tiktok"></i>
+    </a>
   </div>
 
   <p>
-    Listings are posted by landlords. We actively review reports and take action
-    to protect users.
+    Listings are posted by landlords. We actively review reports,
+    investigate safety concerns and take action to protect users.
+  </p>
+
+  <p style="opacity:.8;">
+    🇿🇦 Proudly built in South Africa.
   </p>
 
   <p>
@@ -22,31 +78,34 @@
     Rooms4You™ is owned and operated by 4You (Pty) Ltd.
   </p>
 
-  <span class="beta-badge">BETA v1.0</span>
+  <span class="beta-badge">
+    BETA v1.0
+  </span>
+
 </footer>
 
 <!-- WhatsApp Support -->
- <a
-    href="https://wa.me/27717243852"
-    target="_blank"
-    style="
-      position: fixed;
-      right: 22px;
-      bottom: 22px;
-      width: 58px;
-      height: 58px;
-      background: #25d366;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 35px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-      z-index: 9999;
-      text-decoration: none;
-    "
-  >
-    <i class="fab fa-whatsapp"></i>
-  </a>
-
+<a
+  href="https://wa.me/27717243852"
+  target="_blank"
+  aria-label="WhatsApp Support"
+  style="
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 58px;
+    height: 58px;
+    background: #25d366;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 35px;
+    box-shadow: 0 8px 25px rgba(0,0,0,.2);
+    z-index: 9999;
+    text-decoration: none;
+  "
+>
+  <i class="fab fa-whatsapp"></i>
+</a>

@@ -573,3 +573,31 @@ main.container {
     }
 
 }
+
+@keyframes r4uGlow {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    50% {
+      transform: scale(1.18);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+  }
+
+  .r4u-glow {
+    animation: r4uGlow 6s ease-in-out infinite;
+  }
+
+  .premium-card {
+    transition: all 0.28s ease;
+  }
+
+  .premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
+  }
