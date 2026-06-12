@@ -1,4 +1,4 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %} {% load profile_extras %} {% block content %}
 
 <h1 class="page-title">Inbox</h1>
 
@@ -38,11 +38,13 @@
 
       <div style="opacity: 0.6; font-size: 0.85rem">{{ msg.sender.email }}</div>
 
-      {% if msg.sender.profile.phone_number %}
-      <div style="opacity: 0.6; font-size: 0.85rem">
-        {{ msg.sender.profile.phone_number }}
-      </div>
-      {% endif %}
+      {% with sender_profile=msg.sender|profile %}
+        {% if sender_profile and sender_profile.phone_number %}
+          <div style="opacity: 0.6; font-size: 0.85rem">
+            {{ sender_profile.phone_number }}
+          </div>
+        {% endif %}
+      {% endwith %}
 
       <div style="margin-top: 6px; font-size: 0.85rem">
         📍 {{ msg.room.title }}
@@ -54,14 +56,11 @@
       <div style="margin-top: 10px; display: flex; gap: 10px">
         <a href="mailto:{{ msg.sender.email }}" class="btn-secondary">Email</a>
 
-        {% if msg.sender.profile.phone_number %}
-        <a
-          href="tel:{{ msg.sender.profile.phone_number }}"
-          class="btn-secondary"
-        >
-          Call
-        </a>
-        {% endif %}
+        {% with sender_profile=msg.sender|profile %}
+          {% if sender_profile and sender_profile.phone_number %}
+            <a href="tel:{{ sender_profile.phone_number }}" class="btn-secondary">Call</a>
+          {% endif %}
+        {% endwith %}
       </div>
     </div>
   </div>

@@ -18,7 +18,7 @@ urlpatterns = [
 
     path(
         "guardian/panic/",
-        views.panic_alert,
+        views.trigger_panic_alert,
         name="panic_alert"
     ),
 

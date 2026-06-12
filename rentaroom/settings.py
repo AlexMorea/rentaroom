@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import secrets
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,11 +14,17 @@ except ImportError:
 
 
 # ================= CORE =================
-SECRET_KEY = os.environ.get(
-    "SECRET_KEY",
-    "django-insecure-dev-key-local-only"
-)
+# DEBUG should be determined early so we can enforce SECRET_KEY requirements
 DEBUG = os.environ.get("DEBUG", "0") == "1"
+
+# Prefer an explicit SECRET_KEY via env. In development (DEBUG=True) generate
+# a strong ephemeral key if none is provided. In production require the env var.
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = secrets.token_urlsafe(50)
+    else:
+        raise RuntimeError("The SECRET_KEY environment variable must be set in production.")
 
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
@@ -55,6 +62,9 @@ INSTALLED_APPS = [
     "listings",
     "services",
 ]
+
+# Use BigAutoField by default to silence model warnings about AutoField
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # ================= MIDDLEWARE =================

@@ -71,8 +71,32 @@ def is_landlord(user):
 
 @login_required
 def landlord_rooms(request):
-    rooms = Room.objects.filter(owner=request.user).order_by("-created_at")
-    return render(request, "listings/landlord_rooms.html", {"rooms": rooms})
+    # Use select_related/prefetch to avoid N+1 and add pagination
+    rooms_qs = (
+        Room.objects.filter(owner=request.user)
+        .select_related("owner__profile")
+        .prefetch_related(
+            Prefetch(
+                "images",
+                queryset=RoomImage.objects.only("id", "image", "room_id")
+            )
+        )
+        .order_by("-created_at")
+    )
+
+    page_number = request.GET.get("page") or 1
+    paginator = Paginator(rooms_qs, 10)
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "listings/landlord_rooms.html",
+        {
+            "rooms": page_obj.object_list,
+            "page_obj": page_obj,
+            "paginator": paginator,
+        },
+    )
 
 
 @login_required
@@ -218,6 +242,27 @@ def room_list(request):
     min_price = (request.GET.get("min_price") or "").strip()
     max_price = (request.GET.get("max_price") or "").strip()
 
+    # ================= SANITIZE INPUT =================
+    # whitelist sort values and room types to avoid unexpected filters
+    valid_sorts = {"", "new", "price_low", "price_high"}
+    if sort not in valid_sorts:
+        sort = ""
+
+    valid_room_types = [t[0] for t in Room.ROOM_TYPES]
+    if room_type and room_type not in valid_room_types:
+        room_type = ""
+
+    # ================= AJAX (early) =================
+    is_ajax = (
+        request.GET.get("ajax") == "1"
+        or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    )
+
+    # If we have a cached payload for this exact request, return it immediately for AJAX
+    cached_payload = cache.get(cache_key)
+    if is_ajax and cached_payload:
+        return JsonResponse(cached_payload)
+
     # ================= BASE QUERY =================
     rooms_qs = (
         Room.objects.filter(is_available=True)
@@ -354,12 +399,7 @@ def room_list(request):
         )
     )
 
-    # ================= AJAX =================
-    is_ajax = (
-        request.GET.get("ajax") == "1"
-        or request.headers.get("X-Requested-With") == "XMLHttpRequest"
-    )
-
+    # ================= AJAX RESPONSE =================
     if is_ajax:
 
         html = render_to_string(
@@ -368,42 +408,22 @@ def room_list(request):
             request=request,
         )
 
-        response = JsonResponse(
-            {
-                "html": html,
-                "page": page_obj.number,
-                "num_pages": paginator.num_pages,
-                "has_next": page_obj.has_next(),
-                "has_prev": page_obj.has_previous(),
-                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
-                "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
-                "suggested_location": suggested_location,
-                "searched_location": searched_location,
-            }
-        )
+        payload = {
+            "html": html,
+            "page": page_obj.number,
+            "num_pages": paginator.num_pages,
+            "has_next": page_obj.has_next(),
+            "has_prev": page_obj.has_previous(),
+            "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+            "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
+            "suggested_location": suggested_location,
+            "searched_location": searched_location,
+        }
 
-        cache.set(
-            cache_key,
-            {
-                "html": html,
-                "page": page_obj.number,
-                "num_pages": paginator.num_pages,
-                "has_next": page_obj.has_next(),
-                "has_prev": page_obj.has_previous(),
-                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
-                "prev_page": page_obj.previous_page_number() if page_obj.has_previous() else None,
-                "suggested_location": suggested_location,
-                "searched_location": searched_location,
-            },
-            60
-        )
+        # Cache the JSON payload for a short time
+        cache.set(cache_key, payload, 60)
 
-        cached_payload = cache.get(cache_key)
-
-        if cached_payload:
-            return JsonResponse(cached_payload)
-
-        return response
+        return JsonResponse(payload)
 
     # ================= SORT UI =================
     sort_selected = {
@@ -1680,8 +1700,9 @@ def confirm_email_change(request):
             request.user.email = pending_email
             request.user.save()
 
-            request.user.profile.is_email_verified = True
-            request.user.profile.save()
+            profile = request.user.profile
+            profile.is_email_verified = True
+            profile.save()
 
             PhoneOTP.objects.filter(
                 user=request.user,
@@ -1866,7 +1887,8 @@ def send_message(request, room_id):
         messages.error(request, "You cannot message yourself.")
         return redirect("room_detail", pk=room.id)
     
-    if request.user.profile.role != "tenant":
+    profile = request.user.profile
+    if profile.role != "tenant":
         return HttpResponseForbidden()
 
     recent_count = Message.objects.filter(

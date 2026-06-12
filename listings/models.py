@@ -10,6 +10,7 @@ import re
 from django.utils import timezone
 from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models import Avg
 
 
 class Room(models.Model):
@@ -133,6 +134,22 @@ class Room(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.owner.username})"
+
+    @property
+    def avg_rating(self):
+        """Return average rating for this room or None if no reviews."""
+        agg = self.reviews.aggregate(avg=Avg("rating"))
+        val = agg.get("avg")
+        return float(val) if val is not None else None
+
+    @property
+    def review_count(self):
+        return self.reviews.count()
+
+    @property
+    def contact_count(self):
+        # lightweight contact count (RoomStat preferred for analytics)
+        return RoomStat.objects.filter(room=self, stat_type__startswith="contact").count()
 
 
 class Review(models.Model):
