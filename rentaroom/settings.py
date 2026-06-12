@@ -3,7 +3,6 @@ import os
 import re
 import secrets
 from dotenv import load_dotenv
-from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -268,12 +267,19 @@ CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")
 # Celery beat schedule dictionary placeholder. Populate in production
 # settings or via an environment-specific settings module.
 CELERY_BEAT_SCHEDULE = {}
+
 # Default periodic task: compute materialized room scores once per hour.
-# Override or extend in production if you run Celery Beat elsewhere.
-CELERY_BEAT_SCHEDULE.update({
-    "compute-scores-hourly": {
-        "task": "listings.tasks.compute_scores_task",
-        "schedule": crontab(minute=0, hour="*/1"),
-        "args": (False,),
-    }
-})
+# Only add the schedule if Celery is installed and `crontab` is available.
+try:
+    from celery.schedules import crontab
+
+    CELERY_BEAT_SCHEDULE.update({
+        "compute-scores-hourly": {
+            "task": "listings.tasks.compute_scores_task",
+            "schedule": crontab(minute=0, hour="*/1"),
+            "args": (False,),
+        }
+    })
+except Exception:
+    # Celery not installed in this environment; leave schedule empty.
+    pass
