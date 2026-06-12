@@ -57,14 +57,15 @@
 
     <!-- BADGES -->
     <div class="room-badges">
-        {% if room.contact_count|default:0 >= 3 %}
-      <span class="badge badge-popular"> Popular </span>
+      {% if room.contact_count|default:0 >= 3 %}
+        <span class="badge badge-popular"> Popular </span>
+      {% endif %}
+
       {% with owner_profile=room.owner|profile %}
         {% if owner_profile and owner_profile.is_verified_landlord %}
           <span class="badge badge-verified"> ★ Verified </span>
         {% endif %}
       {% endwith %}
-    {% endif %}
     </div>
   </div>
 
