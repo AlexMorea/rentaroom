@@ -31,6 +31,9 @@ class Room(models.Model):
             models.Index(fields=["location"]),
             models.Index(fields=["price"]),
             models.Index(fields=["created_at"]),
+            # Composite index to speed up queries that filter by availability
+            # and order by materialized score + created_at (used for default ordering)
+            models.Index(fields=["is_available", "score", "created_at"], name="room_avail_score_created_idx"),
         ]
         
     ROOM_TYPES = [
@@ -84,6 +87,10 @@ class Room(models.Model):
 
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # denormalized hit counter (kept small and indexed for fast ordering)
+    hits = models.PositiveIntegerField(default=0, db_index=True)
+    # materialized composite score (optional performance optimization)
+    score = models.PositiveIntegerField(default=0, db_index=True)
 
     def clean(self):
         if self.total_units < 1:

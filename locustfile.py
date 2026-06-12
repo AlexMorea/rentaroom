@@ -14,4 +14,4 @@ class RoomsUser(HttpUser):
 
     @task(1)
     def room_detail(self):
-        self.client.get("/room/1/")
+        self.client.get("/rooms/1/")

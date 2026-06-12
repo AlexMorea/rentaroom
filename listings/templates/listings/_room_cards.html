@@ -57,7 +57,7 @@
 
     <!-- BADGES -->
     <div class="room-badges">
-      {% if room.contact_count|default:0 >= 3 %}
+      {% if popular_ids and room.id in popular_ids %}
         <span class="badge badge-popular"> Popular </span>
       {% endif %}
 
@@ -92,8 +92,10 @@
           {{ room.availability_badge_text }}
         </span>
 
-        {% if room.avg_rating %}
-        <span class="rating"> ⭐ {{ room.avg_rating|floatformat:1 }} </span>
+        {% if room.avg_rating_value %}
+          <span class="rating"> ⭐ {{ room.avg_rating_value|floatformat:1 }} </span>
+        {% elif room.avg_rating %}
+          <span class="rating"> ⭐ {{ room.avg_rating|floatformat:1 }} </span>
         {% endif %}
       </div>
 

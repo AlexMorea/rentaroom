@@ -3,6 +3,7 @@ import os
 import re
 import secrets
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -250,3 +251,29 @@ LOGGING = {
 }
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
+# ----------------- Popularity & Scoring Defaults -----------------
+# Composite popularity score threshold (rooms with score >= this are "popular").
+# Can be overridden with the POPULAR_SCORE_THRESHOLD environment variable.
+POPULAR_SCORE_THRESHOLD = int(os.environ.get("POPULAR_SCORE_THRESHOLD", "100"))
+
+# Toggle whether the code should prefer a materialized `Room.score` column
+# for ordering and badge decisions. Default enabled but override with env var.
+USE_MATERIALIZED_SCORE = env_bool("USE_MATERIALIZED_SCORE", "True")
+
+# ----------------- Celery Defaults -----------------
+# Broker URL for Celery (empty by default — Celery disabled until configured).
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")
+
+# Celery beat schedule dictionary placeholder. Populate in production
+# settings or via an environment-specific settings module.
+CELERY_BEAT_SCHEDULE = {}
+# Default periodic task: compute materialized room scores once per hour.
+# Override or extend in production if you run Celery Beat elsewhere.
+CELERY_BEAT_SCHEDULE.update({
+    "compute-scores-hourly": {
+        "task": "listings.tasks.compute_scores_task",
+        "schedule": crontab(minute=0, hour="*/1"),
+        "args": (False,),
+    }
+})

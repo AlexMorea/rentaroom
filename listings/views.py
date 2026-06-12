@@ -3,7 +3,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
 from datetime import timedelta
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, IntegerField, ExpressionWrapper, Avg
+from django.conf import settings
+POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 from django.http import HttpResponseForbidden
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse
@@ -264,9 +266,26 @@ def room_list(request):
         return JsonResponse(cached_payload)
 
     # ================= BASE QUERY =================
+    # Limit loaded fields in list view to reduce memory/serialization overhead.
     rooms_qs = (
         Room.objects.filter(is_available=True)
         .select_related("owner__profile")
+        .only(
+            "id",
+            "title",
+            "price",
+            "location",
+            "latitude",
+            "longitude",
+            "score",
+            "hits",
+            "created_at",
+            "owner_id",
+            "available_units",
+            "total_units",
+            "availability_status",
+            "available_from",
+        )
         .prefetch_related(
             Prefetch(
                 "images",
@@ -277,6 +296,10 @@ def room_list(request):
                 )
             )
         )
+        # annotate average rating to avoid per-object aggregates in templates
+        # use a different name than the `avg_rating` property to avoid
+        # AttributeError when Django tries to set the annotated value.
+        .annotate(avg_rating_value=Avg("reviews__rating"))
     )
 
     suggested_location = ""
@@ -370,9 +393,18 @@ def room_list(request):
         except ValueError:
             pass
 
+    # Optionally use materialized score for fast ordering; falls back to DB-side
+    # aggregation when `USE_MATERIALIZED_SCORE` is False.
+    USE_MATERIALIZED_SCORE = getattr(settings, "USE_MATERIALIZED_SCORE", True)
+
+
     # ================= SORTING =================
-    if sort == "new":
+    # accept both 'new' and 'newest' from templates
+    if sort in {"new", "newest"}:
         rooms = rooms_qs.order_by("-created_at")
+
+    elif sort == "oldest":
+        rooms = rooms_qs.order_by("created_at")
 
     elif sort == "price_low":
         rooms = rooms_qs.order_by("price", "-created_at")
@@ -381,7 +413,8 @@ def room_list(request):
         rooms = rooms_qs.order_by("-price", "-created_at")
 
     else:
-        rooms = rooms_qs.order_by("-created_at")
+        # Default 'best match' -- order by composite score then newest
+        rooms = rooms_qs.order_by("-score", "-created_at")
 
     # ================= PAGINATION =================
     page_number = request.GET.get("page") or 1
@@ -399,12 +432,59 @@ def room_list(request):
         )
     )
 
+    # cache popular ids to avoid running the aggregate query on every request
+    cache_key = f"popular_ids_v1:{'mat' if USE_MATERIALIZED_SCORE else 'calc'}:{POPULAR_SCORE_THRESHOLD}"
+    popular_ids = cache.get(cache_key)
+
+    if popular_ids is None:
+        if USE_MATERIALIZED_SCORE:
+            popular_ids = list(
+                Room.objects.filter(is_available=True, score__gte=POPULAR_SCORE_THRESHOLD)
+                .order_by("-score", "-hits", "-created_at")
+                .values_list("id", flat=True)[:20]
+            )
+        else:
+            # fallback to computed score when materialized score is disabled
+            annotated = (
+                Room.objects.filter(is_available=True)
+                .annotate(
+                    views_count=Count(
+                        "roomstat",
+                        filter=Q(roomstat__stat_type="view"),
+                        distinct=False,
+                    ),
+                    contacts_count=Count(
+                        "roomstat",
+                        filter=Q(roomstat__stat_type__startswith="contact"),
+                        distinct=False,
+                    ),
+                    favorites_count=Count("favorited_by", distinct=True),
+                    reviews_count=Count("reviews", distinct=True),
+                )
+                .annotate(
+                    score=ExpressionWrapper(
+                        F("hits") * 3
+                        + F("views_count") * 1
+                        + F("contacts_count") * 8
+                        + F("favorites_count") * 2
+                        + F("reviews_count") * 2,
+                        output_field=IntegerField(),
+                    )
+                )
+                .filter(score__gte=POPULAR_SCORE_THRESHOLD)
+                .order_by("-score", "-hits", "-created_at")
+            )
+
+            popular_ids = list(annotated.values_list("id", flat=True)[:20])
+
+        cache.set(cache_key, popular_ids, 300)
+
     # ================= AJAX RESPONSE =================
     if is_ajax:
 
         html = render_to_string(
             "listings/_room_cards.html",
-            {"rooms": page_obj.object_list},
+            {"rooms": page_obj.object_list, "popular_ids": popular_ids},
             request=request,
         )
 
@@ -461,6 +541,7 @@ def room_list(request):
             "suggested_location": suggested_location,
             "searched_location": searched_location,
             "show_location_suggestion": show_location_suggestion,
+            "popular_ids": popular_ids,
         },
     )
 
@@ -487,16 +568,54 @@ def room_detail(request, pk):
     )
 
     # lightweight analytics write
+    # Create view stat asynchronously so the detail page responds quickly.
     try:
-        RoomStat.objects.create(
-            room_id=room.id,
-            user=request.user if request.user.is_authenticated else None,
-            stat_type="view",
-        )
+        if settings.CELERY_BROKER_URL:
+            # If Celery is configured prefer using a task (fast path). We import
+            # lazily to avoid hard dependency during tests.
+            try:
+                from .tasks import create_room_view_stat_task
 
+                create_room_view_stat_task.delay(room.id, request.user.id if request.user.is_authenticated else None)
+            except Exception:
+                # Fallback to background thread if Celery import fails
+                import threading
+
+                def _async_stat(rid, uid):
+                    try:
+                        RoomStat.objects.create(
+                            room_id=rid,
+                            user_id=uid,
+                            stat_type="view",
+                        )
+                    except Exception:
+                        logger.exception("Failed to write RoomStat in background")
+
+                threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
+        else:
+            # No Celery broker configured — do a lightweight background thread
+            import threading
+
+            def _async_stat(rid, uid):
+                try:
+                    RoomStat.objects.create(
+                        room_id=rid,
+                        user_id=uid,
+                        stat_type="view",
+                    )
+                except Exception:
+                    logger.exception("Failed to write RoomStat in background")
+
+            threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
+    except Exception as e:
+        logger.warning("Failed to schedule background RoomStat write: %s", str(e))
+
+    # increment denormalized hit counter (fast, uses F() to avoid race)
+    try:
+        Room.objects.filter(pk=room.id).update(hits=F("hits") + 1)
     except DatabaseError as e:
         logger.warning(
-            "Failed to create room view stat for room %s: %s",
+            "Failed to increment hits for room %s: %s",
             room.id,
             str(e)
         )
