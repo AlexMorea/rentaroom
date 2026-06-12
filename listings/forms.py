@@ -401,6 +401,18 @@ class RoomForm(forms.ModelForm):
         self.fields["total_units"].label = "Total units"
         self.fields["available_units"].label = "Units available now"
 
+        # Client-side helper: mark contact fields required in the widget
+        try:
+            role = getattr(self.user, "profile", None) and self.user.profile.role
+        except Exception:
+            role = None
+
+        if role == "landlord":
+            for fld in ("contact_phone", "contact_whatsapp"):
+                if fld in self.fields:
+                    self.fields[fld].required = True
+                    self.fields[fld].widget.attrs.setdefault("required", "required")
+
     def clean(self):
         cleaned = super().clean()
 
@@ -441,6 +453,24 @@ class RoomForm(forms.ModelForm):
             cleaned["contact_whatsapp"] = normalize_sa_phone(
                 cleaned.get("contact_whatsapp")
             )
+
+        # Landlord must provide both contact phone and WhatsApp for listings
+        try:
+            role = getattr(self.user, "profile", None) and self.user.profile.role
+        except Exception:
+            role = None
+
+        if role == "landlord":
+            if not cleaned.get("contact_phone"):
+                self.add_error(
+                    "contact_phone",
+                    "Landlords must provide a contact phone number."
+                )
+            if not cleaned.get("contact_whatsapp"):
+                self.add_error(
+                    "contact_whatsapp",
+                    "Landlords must provide a WhatsApp number."
+                )
 
         # availability
         if status == "from":

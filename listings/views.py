@@ -1156,6 +1156,8 @@ def create_room(request):
 
     form = RoomForm(request.POST or None, request.FILES or None, user=request.user)
 
+    # rendering uses the canonical create_room template
+
     if request.method == "POST" and form.is_valid():
         try:
             with transaction.atomic():
