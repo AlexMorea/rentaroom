@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import re
 import secrets
 from dotenv import load_dotenv
 
@@ -23,6 +24,26 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = secrets.token_urlsafe(50)
+        # Persist a single SECRET_KEY line into .env so sessions remain valid
+        # across dev server restarts. Replace an existing SECRET_KEY entry if
+        # present, otherwise append.
+        try:
+            env_path = BASE_DIR / ".env"
+            env_text = ""
+            if env_path.exists():
+                env_text = env_path.read_text(encoding="utf-8")
+
+            if re.search(r"^SECRET_KEY=", env_text, flags=re.M):
+                new_text = re.sub(r"^SECRET_KEY=.*$", f"SECRET_KEY={SECRET_KEY}", env_text, flags=re.M)
+                env_path.write_text(new_text, encoding="utf-8")
+            else:
+                with open(env_path, "a", encoding="utf-8") as f:
+                    if not env_text.endswith("\n") and env_text:
+                        f.write("\n")
+                    f.write(f"SECRET_KEY={SECRET_KEY}\n")
+        except Exception:
+            # best-effort only — don't block startup
+            pass
     else:
         raise RuntimeError("The SECRET_KEY environment variable must be set in production.")
 

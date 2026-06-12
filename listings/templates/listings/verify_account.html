@@ -32,33 +32,113 @@
 
     <div class="auth-footer">
       <button type="button" id="resend-btn" class="btn-secondary">
-        Resend OTP
+        <span id="resend-text">Resend OTP</span>
       </button>
+
+      <div id="resend-message" aria-live="polite" style="margin-top:8px"></div>
     </div>
   </div>
 </div>
 
 <script>
-  document.getElementById("resend-btn")?.addEventListener("click", async () => {
-    const btn = document.getElementById("resend-btn");
+;(function () {
+  const BTN_ID = "resend-btn";
+  const TEXT_ID = "resend-text";
+  const MSG_ID = "resend-message";
+  const STORAGE_KEY = "otp_resend_until";
+  const DEFAULT_COOLDOWN = 90;
 
+  const btn = document.getElementById(BTN_ID);
+  const txt = document.getElementById(TEXT_ID);
+  const msg = document.getElementById(MSG_ID);
+
+  function setMessage(text, level) {
+    if (!msg) return;
+    msg.textContent = text || "";
+    msg.className = level ? `msg-${level}` : "";
+  }
+
+  function startCountdown(seconds) {
+    const until = Date.now() + seconds * 1000;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, String(until));
+    } catch (e) {}
+
+    updateCountdown();
+  }
+
+  function updateCountdown() {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      enableButton();
+      return;
+    }
+
+    const until = parseInt(raw, 10);
+    const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+
+    if (remaining <= 0) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      enableButton();
+      return;
+    }
+
+    disableButton();
+    if (txt) txt.textContent = `Resend in ${remaining}s`;
+
+    setTimeout(updateCountdown, 1000);
+  }
+
+  function disableButton() {
+    if (!btn) return;
     btn.disabled = true;
-    btn.textContent = "Sending...";
+  }
+
+  function enableButton() {
+    if (!btn) return;
+    btn.disabled = false;
+    if (txt) txt.textContent = "Resend OTP";
+  }
+
+  async function handleResend() {
+    if (!btn) return;
+    disableButton();
+    if (txt) txt.textContent = "Sending...";
+    setMessage("");
 
     try {
       const res = await fetch("/resend-account-otp/");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      alert(data.message || data.error || "OTP sent.");
+      const cooldown = (data && data.cooldown) || DEFAULT_COOLDOWN;
+
+      if (res.ok) {
+        setMessage(data.message || "OTP sent.", "success");
+        startCountdown(cooldown);
+        return;
+      }
+
+      if (res.status === 429) {
+        setMessage(data.message || "Please wait before requesting another OTP.", "warning");
+        startCountdown(cooldown);
+        return;
+      }
+
+      setMessage(data.message || "Failed to resend OTP.", "error");
+      enableButton();
+
     } catch (err) {
-      alert("Failed to resend OTP.");
+      setMessage("Failed to resend OTP.", "error");
+      enableButton();
     }
+  }
 
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.textContent = "Resend OTP";
-    }, 5000);
-  });
+  // Attach click handler
+  btn?.addEventListener("click", handleResend);
+
+  // Initialize countdown on load
+  updateCountdown();
+})();
 </script>
 
 {% endblock %}

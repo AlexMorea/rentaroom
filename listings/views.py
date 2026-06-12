@@ -908,7 +908,7 @@ def profile(request):
     )
 
 
-OTP_RESEND_SECONDS = 60
+OTP_RESEND_SECONDS = 90
 
 
 def resend_account_otp(request):
