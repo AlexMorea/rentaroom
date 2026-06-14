@@ -4706,3 +4706,94 @@ body.scroll-down .trust-strip {
     margin-bottom:10px;
     font-size:14px;
 }
+
+.site-header {
+position: sticky;
+top: 0;
+z-index: 1000;
+
+background: rgba(255,255,255,.92);
+backdrop-filter: blur(12px);
+
+border-bottom: 1px solid #e5e7eb;
+}
+
+.brand {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.navbar-logo img {
+height: 52px;
+width: auto;
+}
+
+.trust-pill {
+background: #eff6ff;
+color: #2563eb;
+
+padding: 6px 10px;
+border-radius: 999px;
+
+font-size: 12px;
+font-weight: 700;
+
+white-space: nowrap;
+}
+
+.nav-links a {
+position: relative;
+transition: all .2s ease;
+}
+
+.nav-links a:hover {
+color: #2563eb;
+transform: translateY(-1px);
+}
+
+.nav-links a::after {
+content: "";
+
+position: absolute;
+left: 0;
+bottom: -4px;
+
+width: 0;
+height: 2px;
+
+background: #2563eb;
+
+transition: width .25s ease;
+}
+
+.nav-links a:hover::after {
+width: 100%;
+}
+
+.dashboard-btn {
+background: #2563eb;
+color: white !important;
+
+padding: 10px 16px;
+border-radius: 12px;
+
+font-weight: 700;
+}
+
+.dashboard-btn:hover {
+background: #1d4ed8;
+transform: translateY(-1px);
+}
+
+.dashboard-btn::after {
+display: none;
+}
+
+@media (max-width: 768px) {
+
+.trust-pill {
+display: none;
+}
+
+}

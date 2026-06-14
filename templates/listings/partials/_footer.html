@@ -1,111 +1,176 @@
 {% load static %}
+
 <footer class="site-footer">
 
-  <div style="margin-bottom:14px;text-align:center;">
+  <!-- Brand -->
 
-    <a href="{% url 'home' %}">
-      <img
-        src="{% static 'images/rooms4you-logo.jpeg' %}"
-        alt="Rooms4You"
-        style="
-          height:56px;
-          width:auto;
-          margin-bottom:10px;
-        "
-      >
-    </a>
+  <div style="margin-bottom:18px;text-align:center;">
 
-    <p style="margin:0;opacity:.8;">
-      South Africa's growing platform for rooms,
-      landlords, moving services and safer renting.
-    </p>
+<a href="{% url 'home' %}">
+  <img
+    src="{% static 'images/rooms4you-logo.jpeg' %}"
+    alt="Rooms4You"
+    style="
+      height:56px;
+      width:auto;
+      margin-bottom:12px;
+    "
+  >
+</a>
+
+<p
+  style="
+    margin:0;
+    font-weight:800;
+    font-size:17px;
+    color:#3b82f6;
+    letter-spacing:.5px;
+  "
+>
+  Connecting Spaces To Faces.
+</p>
+
+<p style="margin-top:8px;opacity:.85;">
+  Rooms4You helps South Africans discover rooms,
+  connect with verified landlords, and rent with confidence.
+</p>
 
   </div>
+
+  <!-- Company Links -->
+
   <div class="footer-links">
 
-    <a href="{% url 'contact' %}">Contact Us</a>
-    <span>•</span>
 
-    <a href="{% url 'support' %}">Support Centre</a>
-    <span>•</span>
+<a href="{% url 'about' %}">About</a>
+<span>•</span>
 
-    <a href="{% url 'safety' %}">Safety Centre</a>
-    <span>•</span>
+<a href="{% url 'contact' %}">Contact</a>
+<span>•</span>
 
-    <a href="{% url 'terms' %}">Terms of Service</a>
-    <span>•</span>
+<a href="{% url 'support' %}">Support Centre</a>
+<span>•</span>
 
-    <a href="{% url 'privacy' %}">Privacy Policy</a>
+<a href="{% url 'safety' %}">Safety Centre</a>
+
 
   </div>
+
+  <!-- Legal Links -->
+
+  <div
+    class="footer-links"
+    style="margin-top:10px;"
+  >
+
+
+<a href="{% url 'terms' %}">Terms of Service</a>
+<span>•</span>
+
+<a href="{% url 'privacy' %}">Privacy Policy</a>
+
+
+  </div>
+
+  <!-- Social -->
 
   <div
     style="
       display:flex;
       justify-content:center;
-      gap:16px;
-      margin:18px 0;
+      gap:18px;
+      margin:22px 0;
     "
   >
-    <a href="#" aria-label="Instagram" style="color:inherit;font-size:22px;">
+    <a href="https://instagram.com/rooms4youza" aria-label="Instagram" style="color:inherit;font-size:22px;">
       <i class="fab fa-instagram"></i>
     </a>
 
-    <a href="#" aria-label="Facebook" style="color:inherit;font-size:22px;">
-      <i class="fab fa-facebook"></i>
-    </a>
+<a href="https://facebook.com/rooms4youza" aria-label="Facebook" style="color:inherit;font-size:22px;">
+  <i class="fab fa-facebook"></i>
+</a>
 
-    <a href="#" aria-label="X" style="color:inherit;font-size:22px;">
-      <i class="fab fa-x-twitter"></i>
-    </a>
+<a href="https://x.com/rooms4youza" aria-label="X" style="color:inherit;font-size:22px;">
+  <i class="fab fa-x-twitter"></i>
+</a>
 
-    <a href="#" aria-label="TikTok" style="color:inherit;font-size:22px;">
-      <i class="fab fa-tiktok"></i>
-    </a>
+<a href="https://tiktok.com/@rooms4youza" aria-label="TikTok" style="color:inherit;font-size:22px;">
+  <i class="fab fa-tiktok"></i>
+</a>
+
   </div>
 
+  <!-- Trust Statement -->
+
   <p>
-    Listings are posted by landlords. We actively review reports,
-    investigate safety concerns and take action to protect users.
+    Rooms4You actively reviews reports, investigates safety concerns,
+    and works to reduce scams through verification and community reporting.
+  </p>
+
+  <!-- Coverage -->
+
+  <p style="opacity:.8;">
+    Serving Pretoria, Mamelodi, Soshanguve, Mabopane,
+    Ga-Rankuwa, Hammanskraal, Atteridgeville,
+    and communities across South Africa.
+  </p>
+
+  <!-- Company -->
+
+  <p style="opacity:.85;">
+    Owned and operated by
+    <strong>4You (Pty) Ltd</strong>.
+  </p>
+
+  <p style="opacity:.85;">
+    Founded in South Africa by
+    <strong>Alex "MathMetiX" Morea</strong> and
+    <strong>Jacob Bogopa</strong>.
   </p>
 
   <p style="opacity:.8;">
     🇿🇦 Proudly built in South Africa.
   </p>
 
+  <!-- Copyright -->
+
   <p>
     © 2026 Rooms4You™. All rights reserved.
-    Rooms4You™ is owned and operated by 4You (Pty) Ltd.
   </p>
 
+  <!-- Beta Badge -->
+
   <span class="beta-badge">
-    BETA v1.0
+    Public Beta • 2026
   </span>
 
 </footer>
 
 <!-- WhatsApp Support -->
+
 <a
-  href="https://wa.me/27717243852"
-  target="_blank"
-  aria-label="WhatsApp Support"
-  style="
-    position: fixed;
-    right: 22px;
-    bottom: 22px;
-    width: 58px;
-    height: 58px;
-    background: #25d366;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 35px;
-    box-shadow: 0 8px 25px rgba(0,0,0,.2);
-    z-index: 9999;
-    text-decoration: none;
-  "
+href="https://wa.me/27717243852"
+target="_blank"
+rel="noopener noreferrer"
+aria-label="WhatsApp Support"
+style="
+position: fixed;
+right: 22px;
+bottom: 22px;
+width: 58px;
+height: 58px;
+background: #25d366;
+color: white;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 35px;
+box-shadow: 0 8px 25px rgba(0,0,0,.2);
+z-index: 9999;
+text-decoration: none;
+"
+
 >
-  <i class="fab fa-whatsapp"></i>
-</a>
+
+<i class="fab fa-whatsapp"></i> </a>
