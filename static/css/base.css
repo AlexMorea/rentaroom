@@ -4797,3 +4797,12 @@ display: none;
 }
 
 }
+
+.site-footer .fab {
+  transition: all .2s ease;
+}
+
+.site-footer a:hover .fab {
+  transform: translateY(-2px) scale(1.08);
+  opacity: .8;
+}
