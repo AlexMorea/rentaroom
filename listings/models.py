@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from cloudinary.models import CloudinaryField
+from cloudinary import uploader
 from django.db.models.functions import Lower
 import re
 from django.utils import timezone
@@ -384,8 +385,37 @@ class RoomImage(models.Model):
 
 @receiver(post_delete, sender=RoomImage)
 def delete_room_image(sender, instance, **kwargs):
-    if instance.image:
-        instance.image.delete(save=False)
+    # Safely remove the stored image. CloudinaryField may provide a FieldFile
+    # with a .delete() method or a CloudinaryResource without it. Handle both.
+    try:
+        if not instance.image:
+            return
+
+        # Prefer built-in delete when available (FileField/FieldFile)
+        if hasattr(instance.image, "delete"):
+            try:
+                instance.image.delete(save=False)
+                return
+            except Exception:
+                # fallback to uploader below
+                pass
+
+        # Try to obtain a public_id or name for CloudinaryResource/string
+        public_id = None
+        if hasattr(instance.image, "public_id") and instance.image.public_id:
+            public_id = instance.image.public_id
+        elif hasattr(instance.image, "name") and instance.image.name:
+            public_id = instance.image.name
+
+        if public_id:
+            try:
+                uploader.destroy(public_id, invalidate=True, resource_type="image")
+            except Exception:
+                # best-effort; don't raise during post_delete signal
+                pass
+    except Exception:
+        # Swallow any unexpected errors in the signal handler
+        pass
 
 class Favorite(models.Model):
     # tenant saves (favoured) rooms

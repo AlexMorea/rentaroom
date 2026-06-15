@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
+from django.conf import settings
 from .forms import BakkieDriverForm, MoveBookingForm
 from django.db import transaction
 from .models import MoveBooking, ServiceAnalyticsEvent
@@ -258,6 +259,7 @@ def register_bakkie_driver(request):
 
             # EMAIL
             try:
+                from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
                 send_mail(
                     "Your Rooms4You Driver Account",
                     (
@@ -266,7 +268,7 @@ def register_bakkie_driver(request):
                         f"Temporary Password: {temp_password}\n\n"
                         f"Your application is under review."
                     ),
-                    None,
+                    from_email,
                     [email],
                     fail_silently=False,
                 )
@@ -381,9 +383,10 @@ def driver_profile(request, driver_id):
         is_verified=True
     )
 
+    # Record analytics; if the viewer is anonymous, store `user=None`.
     ServiceAnalyticsEvent.objects.create(
         event_type="driver_view",
-        user=request.user,
+        user=request.user if getattr(request, "user", None) and request.user.is_authenticated else None,
         metadata={
             "driver": driver.id
         }
