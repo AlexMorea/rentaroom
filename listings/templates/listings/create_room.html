@@ -340,6 +340,8 @@
           Upload up to 10 photos. You can select images multiple times and remove any before saving.
         </p>
 
+        <div id="imagesError" class="field-error" role="alert" aria-live="polite" style="display:none;margin-top:.5rem;"></div>
+
         <div
           id="imagePreview"
           class="img-preview-grid"
@@ -439,96 +441,133 @@
 
 <script>
 (function () {
+  const input = document.getElementById("imagesInput");
+  const wrap = document.getElementById("imagePreview");
+  const err = document.getElementById("imagesError");
 
-    const input = document.getElementById("imagesInput");
-    const wrap = document.getElementById("imagePreview");
+  if (!input || !wrap) return;
 
-    if (!input || !wrap) return;
+  let selectedFiles = [];
 
-    let selectedFiles = [];
+  function showError(msg) {
+    if (!err) return;
+    err.style.display = "block";
+    err.textContent = msg;
+  }
 
-    function renderPreviews() {
+  function clearError() {
+    if (!err) return;
+    err.style.display = "none";
+    err.textContent = "";
+  }
 
-        wrap.innerHTML = "";
+  function readFileToDataURL(file) {
+    return new Promise((resolve) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
 
-        const counter = document.createElement("div");
-        counter.className = "image-counter";
-        counter.innerHTML =
-            `<strong>${selectedFiles.length}/10</strong> images selected`;
+  async function renderPreviews() {
+    wrap.innerHTML = "";
 
-        wrap.appendChild(counter);
+    const counter = document.createElement("div");
+    counter.className = "image-counter";
+    counter.innerHTML = `<strong>${selectedFiles.length}/10</strong> images selected`;
+    wrap.appendChild(counter);
 
-        selectedFiles.forEach((file, index) => {
+    for (let index = 0; index < selectedFiles.length; index++) {
+      const file = selectedFiles[index];
 
-            const card = document.createElement("div");
-            card.className = "img-preview-item";
+      const card = document.createElement("div");
+      card.className = "img-preview-item";
 
-            const img = document.createElement("img");
-            img.src = URL.createObjectURL(file);
+      const img = document.createElement("img");
+      // Prefer createObjectURL but fallback to FileReader data URL
+      try {
+        img.src = URL.createObjectURL(file);
+      } catch (e) {
+        const data = await readFileToDataURL(file);
+        if (data) img.src = data;
+        else img.alt = "Preview unavailable";
+      }
 
-            const removeBtn =
-                document.createElement("button");
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "remove-image-btn";
+      removeBtn.innerHTML = "✕";
 
-            removeBtn.type = "button";
-            removeBtn.className = "remove-image-btn";
-            removeBtn.innerHTML = "✕";
+      removeBtn.addEventListener("click", async () => {
+        // remove file from selectedFiles
+        selectedFiles.splice(index, 1);
 
-            removeBtn.addEventListener("click", () => {
-
-                selectedFiles.splice(index, 1);
-
-                const dt = new DataTransfer();
-
-                selectedFiles.forEach(f => {
-                    dt.items.add(f);
-                });
-
-                input.files = dt.files;
-
-                renderPreviews();
-            });
-
-            card.appendChild(img);
-            card.appendChild(removeBtn);
-
-            wrap.appendChild(card);
-
-        });
-    }
-
-    input.addEventListener("change", () => {
-
-        const newFiles =
-            Array.from(input.files);
-
-        if (!newFiles.length) return;
-
-        selectedFiles = [
-            ...selectedFiles,
-            ...newFiles
-        ];
-
-        if (selectedFiles.length > 10) {
-
-            alert(
-                "Maximum 10 images allowed."
-            );
-
-            selectedFiles =
-                selectedFiles.slice(0, 10);
+        // try to update the input.files if DataTransfer is supported
+        try {
+          const dt = new DataTransfer();
+          selectedFiles.forEach(f => dt.items.add(f));
+          input.files = dt.files;
+        } catch (e) {
+          // Some mobile browsers restrict programmatic setting of input.files
+          // If that's the case, inform the user and allow them to reselect
+          showError("Could not update selected files programmatically on this device. To remove an image, reselect images without the ones you want removed.");
         }
 
-        const dt = new DataTransfer();
-
-        selectedFiles.forEach(file => {
-            dt.items.add(file);
-        });
-
-        input.files = dt.files;
-
         renderPreviews();
+      });
 
-    });
+      card.appendChild(img);
+      card.appendChild(removeBtn);
+      wrap.appendChild(card);
+    }
+  }
+
+  input.addEventListener("change", async () => {
+    clearError();
+
+    let newFiles = [];
+
+    try {
+      newFiles = Array.from(input.files || []);
+    } catch (e) {
+      // input.files access may throw if permissions were denied on mobile
+      showError("Could not access selected images. If you denied permissions, please allow access to your Photos or choose 'Photo Library' instead of 'Camera'.");
+      return;
+    }
+
+    if (!newFiles.length) {
+      // No files selected — could be a permission denial or cancel
+      showError("No images were selected. If you cancelled or denied permission, please try again and allow access to photos.");
+      return;
+    }
+
+    selectedFiles = [
+      ...selectedFiles,
+      ...newFiles
+    ];
+
+    if (selectedFiles.length > 10) {
+      showError("Maximum 10 images allowed. Extra images were ignored.");
+      selectedFiles = selectedFiles.slice(0, 10);
+    }
+
+    // try to update input.files; if not supported, we still keep selectedFiles for preview
+    try {
+      const dt = new DataTransfer();
+      selectedFiles.forEach(file => dt.items.add(file));
+      input.files = dt.files;
+    } catch (e) {
+      // Some browsers (esp older mobile) disallow setting input.files; continue but warn
+      showError("Your browser restricts programmatic file updates; images will still upload on submit but removing individual images may require reselecting.");
+    }
+
+    renderPreviews();
+  });
 
 })();
 </script>
