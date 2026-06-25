@@ -1160,44 +1160,28 @@ def edit_profile(request):
 @require_POST
 def toggle_favorite(request, room_id):
 
-    room = get_object_or_404(
-        Room,
-        id=room_id,
-        is_available=True
-    )
+    room = get_object_or_404(Room, id=room_id, is_available=True)
 
-    if (
-        not hasattr(request.user, "profile")
-        or request.user.profile.role != "tenant"
-    ):
-        return JsonResponse(
-            {
-                "success": False
-            },
-            status=403
-        )
+    # Role check (safe guard)
+    profile = getattr(request.user, "profile", None)
 
-    fav, created = Favorite.objects.get_or_create(
+    if not profile or profile.role != "tenant":
+        messages.error(request, "Only tenants can save rooms.")
+        return redirect("room_detail", pk=room.id)  # ✅ FIXED
+
+    favorite, created = Favorite.objects.get_or_create(
         user=request.user,
         room=room
     )
 
     if created:
-
-        saved = True
-
+        messages.success(request, "❤️ Room added to saved listings.")
     else:
+        favorite.delete()
+        messages.info(request, "🗑️ Room removed from saved listings.")
 
-        fav.delete()
-
-        saved = False
-
-    return JsonResponse(
-        {
-            "success": True,
-            "saved": saved
-        }
-    )
+    # IMPORTANT FIX HERE TOO
+    return redirect("room_detail", pk=room.id)  # ✅ FIXED
 
 
 # LANDLORD: dashboard + CRUD

@@ -88,10 +88,15 @@
 
             {% if user.is_authenticated and user.profile.role == "tenant" %}
 
-            <form id="favoriteForm">
+            <form method="POST" action="{% url 'toggle_favorite' room.id %}">
               {% csrf_token %}
-              <button type="button" class="btn-secondary" id="favoriteBtn" data-room="{{ room.id }}">
-                {% if is_saved %} ✅ Saved {% else %} ❤️ Save {% endif %}
+
+              <button type="submit" class="btn-secondary">
+                {% if is_saved %}
+                  ✅ Saved
+                {% else %}
+                  ❤️ Save
+                {% endif %}
               </button>
             </form>
 
@@ -264,5 +269,35 @@
     </div>
   </div>
 </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const shareBtn = document.getElementById("shareBtn");
+
+  if (shareBtn) {
+    shareBtn.addEventListener("click", async function () {
+      const url = window.location.href;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: document.title,
+            url: url,
+          });
+        } catch (e) {}
+      } else {
+        try {
+          await navigator.clipboard.writeText(url);
+          alert("Link copied to clipboard.");
+        } catch (e) {
+          prompt("Copy this link:", url);
+        }
+      }
+    });
+  }
+});
+</script>
+
+
 
 {% endblock %}
