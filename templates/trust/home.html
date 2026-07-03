@@ -1,0 +1,401 @@
+{% extends "listings/base.html" %}
+{% load static %}
+
+{% block title %}Trust Center | Rooms4You{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- HERO -->
+    <div class="form-card"
+         style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;border:none;text-align:center;margin-bottom:30px;padding:45px;">
+
+        <div style="font-size:70px;margin-bottom:10px;">
+            🛡️
+        </div>
+
+        <h1 style="margin-bottom:15px;font-size:2.4rem;">
+            Welcome to the Rooms4You Trust Center
+        </h1>
+
+        <p style="max-width:850px;margin:auto;font-size:1.1rem;line-height:1.8;opacity:.95;">
+
+            Your safety is our priority.
+
+            Learn how to avoid scams, recognise fake landlords,
+            verify official Rooms4You communication,
+            understand our verification process,
+            and rent with confidence.
+
+        </p>
+
+        <div style="margin-top:30px;">
+
+            <a href="{% url 'trust:stay_safe' %}"
+               class="btn-primary"
+               style="margin-right:10px;">
+
+                Stay Safe
+
+            </a>
+
+            <a href="{% url 'trust:official_communication' %}"
+               class="btn-primary"
+               style="background:white;color:#2563eb;">
+
+                Verify Rooms4You
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- TRUST PROMISE -->
+
+    <div class="form-card">
+
+        <h2 class="page-title">
+
+            Our Trust Promise
+
+        </h2>
+
+        <hr>
+
+        <p style="line-height:1.9;">
+
+            Rooms4You was created to make finding rental accommodation safer,
+            easier and more transparent.
+
+            We continuously improve our platform,
+            educate our community about scams,
+            investigate reports of fraud,
+            and verify landlords where possible.
+
+            While no online marketplace can completely eliminate fraud,
+            informed users are far less likely to become victims.
+
+            Together, we can build South Africa's safest township rental marketplace.
+
+        </p>
+
+    </div>
+
+    <!-- QUICK LINKS -->
+
+    <h2 class="page-title mt-5">
+
+        Explore the Trust Center
+
+    </h2>
+
+    <div class="dashboard-grid">
+
+        <div class="form-card">
+
+            <div style="font-size:40px;">🛡️</div>
+
+            <h3>Stay Safe</h3>
+
+            <p>
+
+                Learn how scammers operate and how to protect yourself.
+
+            </p>
+
+            <a href="{% url 'trust:stay_safe' %}"
+               class="btn-primary">
+
+                Learn More
+
+            </a>
+
+        </div>
+
+        <div class="form-card">
+
+            <div style="font-size:40px;">✔️</div>
+
+            <h3>Official Communication</h3>
+
+            <p>
+
+                Learn how to identify genuine Rooms4You emails,
+                phone numbers and websites.
+
+            </p>
+
+            <a href="{% url 'trust:official_communication' %}"
+               class="btn-primary">
+
+                Verify
+
+            </a>
+
+        </div>
+
+        <div class="form-card">
+
+            <div style="font-size:40px;">🏠</div>
+
+            <h3>Renting Safely</h3>
+
+            <p>
+
+                Everything you should check before paying any landlord.
+
+            </p>
+
+            <a href="{% url 'trust:renting_safely' %}"
+               class="btn-primary">
+
+                Read Guide
+
+            </a>
+
+        </div>
+
+        <div class="form-card">
+
+            <div style="font-size:40px;">⭐</div>
+
+            <h3>Verification</h3>
+
+            <p>
+
+                Understand what the Verified badge means.
+
+            </p>
+
+            <a href="{% url 'trust:verification' %}"
+               class="btn-primary">
+
+                Learn More
+
+            </a>
+
+        </div>
+
+        <div class="form-card">
+
+            <div style="font-size:40px;">🚨</div>
+
+            <h3>Fraud Alerts</h3>
+
+            <p>
+
+                Stay updated about the latest scams affecting renters.
+
+            </p>
+
+            <a href="{% url 'trust:fraud_alerts' %}"
+               class="btn-primary">
+
+                View Alerts
+
+            </a>
+
+        </div>
+
+        <div class="form-card">
+
+            <div style="font-size:40px;">📢</div>
+
+            <h3>Report Fraud</h3>
+
+            <p>
+
+                Report suspicious landlords,
+                fake listings or impersonation.
+
+            </p>
+
+            <a href="{% url 'trust:report_fraud' %}"
+               class="btn-primary">
+
+                Report
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- OFFICIAL DETAILS -->
+
+    <div class="form-card mt-5"
+         style="background:#eff6ff;border:1px solid #bfdbfe;">
+
+        <h2>
+
+            Official Rooms4You Details
+
+        </h2>
+
+        <hr>
+
+        <div class="dashboard-grid">
+
+            <div>
+
+                <strong>🌍 Website</strong>
+
+                <p>
+
+                    https://rooms4you.co.za
+
+                </p>
+
+            </div>
+
+            <div>
+
+                <strong>📧 Emails</strong>
+
+                <p>
+
+                    hello@rooms4you.co.za
+
+                    <br>
+
+                    support@rooms4you.co.za
+
+                    <br>
+
+                    info@rooms4you.co.za
+
+                    <br>
+
+                    safety@rooms4you.co.za
+
+                </p>
+
+            </div>
+
+            <div>
+
+                <strong>📞 Phone</strong>
+
+                <p>
+
+                    071 724 3852
+
+                </p>
+
+            </div>
+
+            <div>
+
+                <strong>📱 Social Media</strong>
+
+                <p>
+
+                    @Rooms4youZA
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CURRENT SAFETY ALERT -->
+
+    <div class="form-card mt-4"
+         style="border-left:6px solid #f97316;">
+
+        <h2>
+
+            🚨 Current Safety Alert
+
+        </h2>
+
+        <hr>
+
+        <p>
+
+            Some scammers pretend to be landlords and ask tenants
+            to pay deposits before viewing properties.
+
+            Rooms4You does not collect rental deposits.
+
+            Always inspect the property,
+            verify the landlord,
+            and never rush into making payment.
+
+        </p>
+
+    </div>
+
+    <!-- CHECKLIST -->
+
+    <div class="form-card mt-4">
+
+        <h2>
+
+            ✔ Before You Pay Any Landlord
+
+        </h2>
+
+        <hr>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Visited the property where possible</li>
+
+            <li>✔ Confirmed the address</li>
+
+            <li>✔ Verified the landlord</li>
+
+            <li>✔ Checked listing photos carefully</li>
+
+            <li>✔ Asked questions</li>
+
+            <li>✔ Verified payment details</li>
+
+            <li>✔ Trust your instincts if something feels wrong</li>
+
+        </ul>
+
+    </div>
+
+    <!-- CONTACT -->
+
+    <div class="form-card mt-4"
+         style="text-align:center;background:#f8fafc;">
+
+        <h2>
+
+            Need Help?
+
+        </h2>
+
+        <p>
+
+            If you're unsure whether a message,
+            phone call,
+            email or listing is genuine,
+            contact our Safety Team before taking action.
+
+        </p>
+
+        <h4>
+
+            📧 safety@rooms4you.co.za
+
+        </h4>
+
+        <h4>
+
+            📞 071 724 3852
+
+        </h4>
+
+    </div>
+
+</div>
+
+{% endblock %}

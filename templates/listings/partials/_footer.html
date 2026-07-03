@@ -51,7 +51,7 @@
 <a href="{% url 'support' %}">Support Centre</a>
 <span>•</span>
 
-<a href="{% url 'safety' %}">Safety Centre</a>
+<a href="{% url 'trust:home' %}">Trust Centre</a>
 
 
   </div>
@@ -102,10 +102,105 @@
 
   <!-- Trust Statement -->
 
-  <p>
-    Rooms4You actively reviews reports, investigates safety concerns,
-    and works to reduce scams through verification and community reporting.
+  <!-- Mobile Apps -->
+
+  <div
+  style="
+  display:flex;
+  justify-content:center;
+  gap:16px;
+  flex-wrap:wrap;
+  margin:28px 0;
+  ">
+
+  <div
+  style="
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 20px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;
+  min-width:220px;
+  ">
+
+  <i class="fab fa-google-play" style="font-size:30px;color:#34a853;"></i>
+
+  <div>
+
+  <strong>Google Play</strong>
+
+  <br>
+
+  <small style="opacity:.8;">Coming Soon</small>
+
+  </div>
+
+  </div>
+
+  <div
+  style="
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 20px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;
+  min-width:220px;
+  ">
+
+  <i class="fab fa-apple" style="font-size:32px;"></i>
+
+  <div>
+
+  <strong>Apple App Store</strong>
+
+  <br>
+
+  <small style="opacity:.8;">Coming Soon</small>
+
+  </div>
+
+  </div>
+
+  </div>
+
+  <!-- Trust Promise -->
+
+  <div
+  style="
+  max-width:760px;
+  margin:24px auto;
+  padding:18px;
+  background:rgba(255,255,255,.05);
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  ">
+
+  <h4 style="margin-top:0;">
+
+  🛡 Our Trust Promise
+
+  </h4>
+
+  <p style="margin-bottom:0;">
+
+  Rooms4You actively investigates fraud reports,
+  reviews suspicious listings,
+  verifies landlords where possible,
+  and continuously improves platform safety.
+
+  <strong>
+
+  We never ask tenants to send rental deposits directly to Rooms4You.
+
+  </strong>
+
   </p>
+
+  </div>
+
+
 
   <!-- Coverage -->
 
@@ -115,21 +210,64 @@
     and communities across South Africa.
   </p>
 
-  <!-- Company -->
+  <!-- Mission -->
 
-  <p style="opacity:.85;">
-    Owned and operated by
-    <strong>4You (Pty) Ltd</strong>.
+  <div
+  style="
+  max-width:760px;
+  margin:24px auto;
+  padding:18px;
+  background:rgba(255,255,255,.05);
+  border-radius:14px;
+  ">
+
+  <h4 style="margin-top:0;">
+
+  ❤️ Our Mission
+
+  </h4>
+
+  <p style="margin-bottom:0;">
+
+  We're building South Africa's most trusted rental marketplace by combining technology,
+  transparency,
+  and community.
+
+  Every verified landlord,
+  every honest tenant,
+  and every reported scam helps create a safer renting experience.
+
   </p>
 
-  <p style="opacity:.85;">
-    Founded in South Africa by
-    <strong>Alex "MathMetiX" Morea</strong>.
+  </div>
+
+  <!-- Company -->
+
+  <div style="margin-top:24px;">
+
+  <p style="opacity:.9;">
+
+  Owned and operated by
+
+  <strong>4You (Pty) Ltd</strong>
+
+  </p>
+
+  <p style="opacity:.9;">
+
+  Founded by
+
+  <strong>Alex "MathMetiX" Morea</strong>
+
   </p>
 
   <p style="opacity:.8;">
-    🇿🇦 Proudly built in South Africa.
+
+  🇿🇦 Proudly built with ❤️ in South Africa.
+
   </p>
+
+  </div>
 
   <!-- Copyright -->
 
@@ -140,7 +278,7 @@
   <!-- Beta Badge -->
 
   <span class="beta-badge">
-    Public Beta • 2026
+    Public Beta • Version 1.0 • 2026
   </span>
 
 </footer>

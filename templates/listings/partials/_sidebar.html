@@ -3,48 +3,200 @@
 <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
 <aside id="sidebar" class="sidebar">
-  <div class="sidebar-header">
-    <h3>NEIGHBOUR</h3>
-  </div>
 
-  <a href="{% url 'room_list' %}"> 🏠 Rooms </a>
+    <!-- Sidebar Header -->
 
-  <a href="{% url 'profile' %}"> 👤 Profile </a>
+    <div class="sidebar-header">
 
-  {% if user.profile.role == "landlord" %}
+        <p
+            style="
+            margin:0;
+            font-size:.85rem;
+            color:#64748b;
+            font-weight:600;
+            ">
+            Welcome back,
+        </p>
 
-  <a href="{% url 'dashboard' %}"> 📊 Dashboard </a>
+        <h3 style="margin:4px 0 0 0;">
 
-  <a href="{% url 'services:bakkie_home' %}"> 🚚 Bakkie4You </a>
+            {{ user.first_name|default:user.username }} 👋
 
-  {% endif %} {% if user.profile.role == "tenant" %}
+        </h3>
 
-  <hr />
+        <div
+            style="
+            margin-top:14px;
+            padding:12px;
+            background:linear-gradient(135deg,#eff6ff,#f8fafc);
+            border:1px solid rgba(59,130,246,.18);
+            border-radius:12px;
+            ">
 
-  <a href="{% url 'services:bakkie_home' %}"> 🚚 Bakkie4You </a>
+            <div style="font-weight:700;margin-bottom:6px;">
 
-  <a href="{% url 'services:guardian_home' %}"> 🛡 Guardian4You </a>
+                {% if user.profile.role == "tenant" %}
 
-  {% endif %} {% if user.profile.role == "driver" %}
+                    🏡 Tenant
 
-  <hr />
+                {% elif user.profile.role == "landlord" %}
 
-  <a href="{% url 'services:driver_dashboard' %}"> 🚚 Driver Panel </a>
+                    🏠 Landlord
 
-  {% endif %}
+                {% elif user.profile.role == "driver" %}
 
-  <hr />
+                    🚚 Driver Partner
 
-  <a href="#"> ⚙ Settings </a>
+                {% endif %}
+
+            </div>
+
+            <div
+                style="
+                font-size:.86rem;
+                opacity:.85;
+                line-height:1.5;
+                ">
+
+                {% if user.profile.role == "tenant" %}
+
+                    Finding trusted rooms across South Africa.
+
+                {% elif user.profile.role == "landlord" %}
+
+                    Growing your rental business one tenant at a time.
+
+                {% elif user.profile.role == "driver" %}
+
+                    Helping move South Africa, one trip at a time.
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <hr class="sidebar-divider">
+
+    <!-- Main Navigation -->
+
+    <a href="{% url 'room_list' %}">
+        🏠 Rooms
+    </a>
+
+    <a href="{% url 'profile' %}">
+        👤 My Profile
+    </a>
+
+    <hr class="sidebar-divider">
+
+    <!-- Landlord -->
+
+    {% if user.profile.role == "landlord" %}
+
+        <a href="{% url 'dashboard' %}">
+            📊 Dashboard
+        </a>
+
+        <a href="{% url 'services:bakkie_home' %}">
+            🚚 Bakkie4You
+        </a>
+
+        <a href="{% url 'trust:home' %}">
+            🛡 Trust Center
+            <span
+                style="
+                float:right;
+                font-size:.70rem;
+                background:#3b82f6;
+                color:#fff;
+                padding:2px 8px;
+                border-radius:999px;
+                ">
+                NEW
+            </span>
+        </a>
+
+    {% endif %}
+
+    <!-- Tenant -->
+
+    {% if user.profile.role == "tenant" %}
+
+        <a href="{% url 'services:bakkie_home' %}">
+            🚚 Bakkie4You
+        </a>
+
+        <a href="{% url 'services:guardian_home' %}">
+            🛡 Guardian4You
+        </a>
+
+        <a href="{% url 'trust:home' %}">
+            🛡 Trust Center
+            <span
+                style="
+                float:right;
+                font-size:.70rem;
+                background:#3b82f6;
+                color:#fff;
+                padding:2px 8px;
+                border-radius:999px;
+                ">
+                NEW
+            </span>
+        </a>
+
+    {% endif %}
+
+    <!-- Driver -->
+
+    {% if user.profile.role == "driver" %}
+
+        <a href="{% url 'services:driver_dashboard' %}">
+            🚚 Driver Panel
+        </a>
+
+        <a href="{% url 'trust:home' %}">
+            🛡 Trust Center
+            <span
+                style="
+                float:right;
+                font-size:.70rem;
+                background:#3b82f6;
+                color:#fff;
+                padding:2px 8px;
+                border-radius:999px;
+                ">
+                NEW
+            </span>
+        </a>
+
+    {% endif %}
+
+    <hr class="sidebar-divider">
+
+    <!-- General -->
+
+    <a href="{% url 'contact' %}">
+        ✉️ Contact Us
+    </a>
+
+    <a href="{% url 'support' %}">
+        ❓ Support Centre
+    </a>
+
 </aside>
 
 <button
-  id="sidebarToggle"
-  class="sidebar-tab"
-  type="button"
-  aria-label="Open sidebar"
->
-  <span id="sidebarArrow">❯</span>
+    id="sidebarToggle"
+    class="sidebar-tab"
+    type="button"
+    aria-label="Open sidebar">
+
+    <span id="sidebarArrow">❯</span>
+
 </button>
 
 {% endif %}

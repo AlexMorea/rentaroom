@@ -1,0 +1,272 @@
+{% extends "listings/base.html" %}
+
+{% block title %}Renting Safely | Rooms4You{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- HERO -->
+
+    <div class="form-card"
+         style="background:linear-gradient(135deg,#0f766e,#115e59);color:white;border:none;text-align:center;padding:45px;margin-bottom:30px;">
+
+        <div style="font-size:70px;">🏠</div>
+
+        <h1 style="margin-top:10px;">
+            Rent With Confidence
+        </h1>
+
+        <p style="max-width:850px;margin:20px auto;font-size:1.08rem;line-height:1.8;">
+
+            Finding the right room is exciting, but taking a few simple precautions can protect your money, your personal information, and your peace of mind. Use this guide before agreeing to rent any property.
+
+        </p>
+
+    </div>
+
+    <!-- STEP 1 -->
+
+    <div class="form-card">
+
+        <h2>1️⃣ Research the Listing</h2>
+
+        <hr>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Read the entire listing carefully.</li>
+
+            <li>✔ Check the monthly rent and any additional costs.</li>
+
+            <li>✔ Review all available photos.</li>
+
+            <li>✔ Make sure the description matches the photos.</li>
+
+            <li>✔ If something seems unclear, ask questions before proceeding.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- STEP 2 -->
+
+    <div class="form-card mt-4">
+
+        <h2>2️⃣ Verify the Landlord</h2>
+
+        <hr>
+
+        <p>
+
+            Before paying or signing anything, make sure you're dealing with the correct person.
+
+        </p>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Check whether the landlord has a Verified badge.</li>
+
+            <li>✔ Confirm their contact details.</li>
+
+            <li>✔ Ask who owns or manages the property.</li>
+
+            <li>✔ Don't ignore warning signs or inconsistent answers.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- STEP 3 -->
+
+    <div class="form-card mt-4">
+
+        <h2>3️⃣ View the Property</h2>
+
+        <hr>
+
+        <p>
+
+            Whenever possible, inspect the property before making any payment.
+
+        </p>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Confirm the address.</li>
+
+            <li>✔ Check that the room matches the photos.</li>
+
+            <li>✔ Inspect doors, windows, plumbing and electricity.</li>
+
+            <li>✔ Ask about house rules, visitors and shared spaces.</li>
+
+            <li>✔ Meet the landlord or property manager.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- STEP 4 -->
+
+    <div class="form-card mt-4">
+
+        <h2>4️⃣ Understand the Costs</h2>
+
+        <hr>
+
+        <p>
+
+            Make sure you know exactly what you're expected to pay.
+
+        </p>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Monthly rent.</li>
+
+            <li>✔ Deposit (if applicable).</li>
+
+            <li>✔ Electricity or water charges.</li>
+
+            <li>✔ Parking fees.</li>
+
+            <li>✔ Any once-off administration fees.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- STEP 5 -->
+
+    <div class="form-card mt-4">
+
+        <h2>5️⃣ Before You Pay</h2>
+
+        <hr>
+
+        <div style="background:#fff7ed;padding:20px;border-radius:10px;">
+
+            <strong style="color:#ea580c;">
+
+                Take a moment to complete this checklist.
+
+            </strong>
+
+        </div>
+
+        <ul style="line-height:2;margin-top:20px;">
+
+            <li>☐ I have viewed the property or made reasonable arrangements to verify it.</li>
+
+            <li>☐ I know who I am paying.</li>
+
+            <li>☐ I understand what the payment covers.</li>
+
+            <li>☐ I have asked all my questions.</li>
+
+            <li>☐ I feel comfortable proceeding.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- STEP 6 -->
+
+    <div class="form-card mt-4">
+
+        <h2>6️⃣ Keep Records</h2>
+
+        <hr>
+
+        <p>
+
+            Keep copies of important information throughout the rental process.
+
+        </p>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Payment confirmations.</li>
+
+            <li>✔ Chat messages.</li>
+
+            <li>✔ Emails.</li>
+
+            <li>✔ Rental agreements.</li>
+
+            <li>✔ Photos taken during your viewing.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- ROOMS4YOU TODAY -->
+
+    <div class="form-card mt-4"
+         style="background:#eff6ff;border:1px solid #bfdbfe;">
+
+        <h2>🛡️ Renting on Rooms4You Today</h2>
+
+        <hr>
+
+        <p>
+
+            At the moment, Rooms4You helps tenants and landlords connect. Rental payments are made directly between tenants and landlords. We do not currently collect or hold rental deposits.
+
+        </p>
+
+        <p>
+
+            We're actively working on additional trust and safety features, including enhanced landlord verification and secure payment options, to make renting even safer in the future.
+
+        </p>
+
+    </div>
+
+    <!-- IF SOMETHING FEELS WRONG -->
+
+    <div class="form-card mt-4"
+         style="border-left:6px solid #dc2626;">
+
+        <h2>🚩 If Something Doesn't Feel Right</h2>
+
+        <hr>
+
+        <p>
+
+            If you feel pressured, notice inconsistent information, or suspect fraudulent activity, pause the process. Take time to verify the details before making any payment or sharing personal information.
+
+        </p>
+
+        <a href="{% url 'trust:report_fraud' %}"
+           class="btn-primary">
+
+            Report Suspicious Activity
+
+        </a>
+
+    </div>
+
+    <!-- CTA -->
+
+    <div class="form-card mt-4"
+         style="text-align:center;background:#f8fafc;">
+
+        <h2>Need Help?</h2>
+
+        <p>
+
+            If you're unsure about a listing, landlord or payment request, contact the Rooms4You Safety Team before taking action.
+
+        </p>
+
+        <h4>📧 safety@rooms4you.co.za</h4>
+
+        <h4>📞 071 724 3852</h4>
+
+    </div>
+
+</div>
+
+{% endblock %}

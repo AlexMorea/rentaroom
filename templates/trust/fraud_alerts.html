@@ -1,0 +1,298 @@
+{% extends "listings/base.html" %}
+
+{% block title %}Fraud Alerts | Rooms4You{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- HERO -->
+
+    <div class="form-card"
+         style="background:linear-gradient(135deg,#dc2626,#991b1b);color:white;border:none;text-align:center;padding:45px;margin-bottom:30px;">
+
+        <div style="font-size:70px;">🚨</div>
+
+        <h1 style="margin-top:10px;">
+            Fraud Alerts
+        </h1>
+
+        <p style="max-width:850px;margin:20px auto;font-size:1.08rem;line-height:1.8;">
+
+            Stay informed about common scams, suspicious activity and important
+            safety notices affecting the Rooms4You community.
+
+            We update this page whenever new scam trends are identified.
+
+        </p>
+
+    </div>
+
+    <!-- STATUS -->
+
+    <div class="form-card"
+         style="background:#ecfdf5;border:1px solid #86efac;">
+
+        <h2>
+
+            🟢 Current Platform Status
+
+        </h2>
+
+        <hr>
+
+        <p>
+
+            There are currently <strong>no known security breaches</strong>
+            affecting Rooms4You.
+
+        </p>
+
+        <p>
+
+            However, scammers may still attempt to impersonate landlords,
+            tenants or even Rooms4You staff.
+            Staying informed is your best protection.
+
+        </p>
+
+    </div>
+
+    <!-- ACTIVE ALERT -->
+
+    <div class="form-card mt-4"
+         style="border-left:6px solid #dc2626;">
+
+        <span style="
+            display:inline-block;
+            background:#dc2626;
+            color:white;
+            padding:5px 12px;
+            border-radius:999px;
+            font-size:.85rem;
+            font-weight:bold;
+            margin-bottom:15px;">
+
+            ACTIVE ALERT
+
+        </span>
+
+        <h2>
+
+            Fake Deposit Requests
+
+        </h2>
+
+        <p style="color:#6b7280;">
+
+            Last Updated: July 2026
+
+        </p>
+
+        <hr>
+
+        <p>
+
+            We've received reports of scammers asking tenants to pay deposits
+            before viewing properties.
+
+            In many cases the scammer disappears immediately after receiving
+            payment.
+
+        </p>
+
+        <h4>
+
+            How to Stay Safe
+
+        </h4>
+
+        <ul style="line-height:2;">
+
+            <li>✔ View the property whenever possible.</li>
+
+            <li>✔ Verify the landlord.</li>
+
+            <li>✔ Don't rush into making payment.</li>
+
+            <li>✔ Contact us if something seems suspicious.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- SCAM TYPES -->
+
+    <h2 class="page-title mt-5">
+
+        Common Rental Scams
+
+    </h2>
+
+    <div class="dashboard-grid">
+
+        <div class="form-card">
+
+            <h3>💳 Deposit Scam</h3>
+
+            <p>
+
+                A scammer asks for money before you can inspect the property.
+
+            </p>
+
+        </div>
+
+        <div class="form-card">
+
+            <h3>🏠 Fake Property</h3>
+
+            <p>
+
+                Photos are stolen from another website and used to advertise a
+                room that doesn't exist.
+
+            </p>
+
+        </div>
+
+        <div class="form-card">
+
+            <h3>📱 WhatsApp Impersonation</h3>
+
+            <p>
+
+                Someone pretends to represent Rooms4You or the landlord using a
+                different phone number.
+
+            </p>
+
+        </div>
+
+        <div class="form-card">
+
+            <h3>📧 Fake Emails</h3>
+
+            <p>
+
+                Fraudsters send emails pretending to be Rooms4You using similar
+                email addresses.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- WHAT TO DO -->
+
+    <div class="form-card mt-5">
+
+        <h2>
+
+            🚩 What Should You Do?
+
+        </h2>
+
+        <hr>
+
+        <ol style="line-height:2;">
+
+            <li>Stop communicating if something feels suspicious.</li>
+
+            <li>Do not send money until you're comfortable.</li>
+
+            <li>Take screenshots of messages.</li>
+
+            <li>Save email addresses and phone numbers.</li>
+
+            <li>Report the incident to Rooms4You.</li>
+
+        </ol>
+
+    </div>
+
+    <!-- SAFETY REMINDERS -->
+
+    <div class="form-card mt-4"
+         style="background:#eff6ff;border:1px solid #bfdbfe;">
+
+        <h2>
+
+            🔒 Safety Reminders
+
+        </h2>
+
+        <hr>
+
+        <ul style="line-height:2;">
+
+            <li>✔ Rooms4You never asks tenants to send rental deposits to us.</li>
+
+            <li>✔ We never ask for your password.</li>
+
+            <li>✔ We never ask for your OTP.</li>
+
+            <li>✔ Always verify official communication.</li>
+
+            <li>✔ Report suspicious behaviour immediately.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- UPCOMING -->
+
+    <div class="form-card mt-4"
+         style="background:#fff7ed;border:1px solid #fdba74;">
+
+        <h2>
+
+            🚀 Coming Soon
+
+        </h2>
+
+        <hr>
+
+        <p>
+
+            Soon this page will display live fraud alerts,
+            community safety notices,
+            recent scam trends,
+            and security announcements directly from the Rooms4You Trust & Safety Team.
+
+        </p>
+
+    </div>
+
+    <!-- REPORT -->
+
+    <div class="form-card mt-4"
+         style="text-align:center;">
+
+        <h2>
+
+            Have You Encountered a Scam?
+
+        </h2>
+
+        <p>
+
+            Reporting suspicious activity helps us investigate,
+            remove fraudulent listings,
+            and protect other members of our community.
+
+        </p>
+
+        <a href="{% url 'trust:report_fraud' %}"
+           class="btn-primary">
+
+            🚨 Report Fraud
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}
