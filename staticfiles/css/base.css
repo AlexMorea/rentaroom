@@ -369,6 +369,36 @@ body.nav-open {
   background: transparent;
 }
 
+/* Inline message styles used by OTP resend UI */
+.msg-success {
+  color: #065f46; /* teal-800 */
+  background: rgba(16, 185, 129, 0.08); /* green-ish subtle */
+  border-left: 4px solid #10b981;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.msg-warning {
+  color: #92400e; /* amber-800 */
+  background: rgba(245, 158, 11, 0.06);
+  border-left: 4px solid #f59e0b;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.msg-error {
+  color: #7f1d1d; /* red-800 */
+  background: rgba(239, 68, 68, 0.06);
+  border-left: 4px solid #ef4444;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+
+
 .slider-btn {
   position: absolute;
   top: 50%;
@@ -4675,4 +4705,110 @@ body.scroll-down .trust-strip {
     grid-column:1/-1;
     margin-bottom:10px;
     font-size:14px;
+}
+
+.site-header {
+position: sticky;
+top: 0;
+z-index: 1000;
+
+background: rgba(255,255,255,.92);
+backdrop-filter: blur(12px);
+
+border-bottom: 1px solid #e5e7eb;
+}
+
+.brand {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.navbar-logo img {
+height: 52px;
+width: auto;
+}
+
+.trust-pill {
+background: #eff6ff;
+color: #2563eb;
+
+padding: 6px 10px;
+border-radius: 999px;
+
+font-size: 12px;
+font-weight: 700;
+
+white-space: nowrap;
+}
+
+.nav-links a {
+position: relative;
+transition: all .2s ease;
+}
+
+.nav-links a:hover {
+color: #2563eb;
+transform: translateY(-1px);
+}
+
+.nav-links a::after {
+content: "";
+
+position: absolute;
+left: 0;
+bottom: -4px;
+
+width: 0;
+height: 2px;
+
+background: #2563eb;
+
+transition: width .25s ease;
+}
+
+.nav-links a:hover::after {
+width: 100%;
+}
+
+.dashboard-btn {
+background: #2563eb;
+color: white !important;
+
+padding: 10px 16px;
+border-radius: 12px;
+
+font-weight: 700;
+}
+
+.dashboard-btn:hover {
+background: #1d4ed8;
+transform: translateY(-1px);
+}
+
+.dashboard-btn::after {
+display: none;
+}
+
+@media (max-width: 768px) {
+
+.trust-pill {
+display: none;
+}
+
+}
+
+.site-footer .fab {
+  transition: all .2s ease;
+}
+
+.site-footer a:hover .fab {
+  transform: translateY(-2px) scale(1.08);
+  opacity: .8;
+}
+
+.sidebar-divider{
+    border:0;
+    border-top:1px solid rgba(0,0,0,.08);
+    margin:18px 0;
 }
