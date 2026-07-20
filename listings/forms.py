@@ -40,21 +40,36 @@ class UserRegisterForm(forms.Form):
     )
 
     phone_number = forms.CharField(
-        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Phone number"})
+        widget=forms.TextInput(attrs={
+            "class": "input",
+            "placeholder": "Phone number",
+            "inputmode": "tel",
+            "autocomplete": "tel",
+        })
     )
 
     # landlord extras
     alt_no = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Alternative number (optional)"}),
+        widget=forms.TextInput(attrs={
+            "class": "input",
+            "placeholder": "Alternative number (optional)",
+            "inputmode": "tel",
+            "autocomplete": "tel",
+        }),
     )
     home_address = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Full home address"}),
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Full home address", "autocomplete": "street-address"}),
     )
     postal_code = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Postal code"}),
+        widget=forms.TextInput(attrs={
+            "class": "input",
+            "placeholder": "Postal code",
+            "inputmode": "numeric",
+            "autocomplete": "postal-code",
+        }),
     )
 
     terms_accepted = forms.BooleanField(
@@ -221,7 +236,7 @@ class ProfileUpdateForm(forms.ModelForm):
 
     phone_number = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={"class": "input"})
+        widget=forms.TextInput(attrs={"class": "input", "inputmode": "tel", "autocomplete": "tel"})
     )
 
     class Meta:
@@ -236,9 +251,9 @@ class ProfileUpdateForm(forms.ModelForm):
         ]
         widgets = {
             "persona": forms.Select(attrs={"class": "input"}),
-            "alt_no": forms.TextInput(attrs={"class": "input"}),
-            "home_address": forms.TextInput(attrs={"class": "input"}),
-            "postal_code": forms.TextInput(attrs={"class": "input"}),
+            "alt_no": forms.TextInput(attrs={"class": "input", "inputmode": "tel", "autocomplete": "tel"}),
+            "home_address": forms.TextInput(attrs={"class": "input", "autocomplete": "street-address"}),
+            "postal_code": forms.TextInput(attrs={"class": "input", "inputmode": "numeric", "autocomplete": "postal-code"}),
         }
 
     def clean_phone_number(self):
@@ -334,7 +349,9 @@ class RoomForm(forms.ModelForm):
 
             "postal_code": forms.TextInput(attrs={
                 "class": "input",
-                "placeholder": "e.g. 0122"
+                "placeholder": "e.g. 0122",
+                "inputmode": "numeric",
+                "autocomplete": "postal-code"
             }),
 
             "room_type": forms.Select(attrs={
@@ -343,12 +360,16 @@ class RoomForm(forms.ModelForm):
 
             "contact_phone": forms.TextInput(attrs={
                 "class": "input",
-                "placeholder": "e.g. 0845643877"
+                "placeholder": "e.g. 0845643877",
+                "inputmode": "tel",
+                "autocomplete": "tel"
             }),
 
             "contact_whatsapp": forms.TextInput(attrs={
                 "class": "input",
-                "placeholder": "optional"
+                "placeholder": "optional",
+                "inputmode": "tel",
+                "autocomplete": "tel"
             }),
 
             "contact_email": forms.EmailInput(attrs={
@@ -540,4 +561,3 @@ class ListingForm(forms.ModelForm):
     class Meta:
         model = Room
         exclude = ["owner", "created_at"]
-

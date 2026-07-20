@@ -60,304 +60,278 @@
 
 .filter-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
+  align-items: start;
 }
 
 .filter-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  /* spans the full width of the grid instead of squeezing into one column */
+  grid-column: 1 / -1;
 }
-
-.apply-btn {
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 14px;
-  padding: 14px 20px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.apply-btn:hover {
-  background: #1d4ed8;
-}
-
-.reset-btn {
-  background: #f8fafc;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 14px 20px;
-  text-decoration: none;
-  font-weight: 700;
-}
-
 
 @media (max-width:768px) {
   .filter-toggle-btn {
     width: 100%;
   }
 
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
   .filter-actions {
     flex-direction: column;
   }
 
-  .apply-btn,
-  .reset-btn {
+  .filter-actions .btn-primary,
+  .filter-actions .btn-secondary {
     width: 100%;
     text-align: center;
   }
 }
 </style>
 
-<form method="get" action="{% url 'room_list' %}">
-
   <!-- Search Row -->
-  <div class="search-toolbar">
-
-  <div
-    style="
-      display:flex;
-      gap:10px;
-      margin-bottom:14px;
-      align-items:center;
-      flex-wrap:wrap;
-    "
-  >
-
-    <div
-      style="
-        flex:1;
-        position:relative;
-        min-width:280px;
-      "
-    >
-
-      <input
-        type="text"
-        name="q"
-        class="search-input"
-        placeholder="Search rooms, area or location"
-        value="{{ values.q }}"
-        style="padding-right:55px;"
-      />
-
-      <button
-        type="submit"
-        style="
-          position:absolute;
-          right:6px;
-          top:6px;
-          bottom:6px;
-          width:42px;
-          border:none;
-          border-radius:10px;
-          background:#2563eb;
-          color:white;
-          cursor:pointer;
-          font-size:18px;
-        "
-        aria-label="Search"
-      >
-        🔍
-      </button>
-
-    </div>
-
-    <button
-      type="button"
-      id="toggleFilters"
-      class="filter-toggle-btn"
-    >
-      ⚙ Filters
-    </button>
-
-  </div>
-
-  <!-- Filter Drawer -->
-  <div
-    id="filterPanel"
-    class="filter-panel"
-    style="
-      display:none;
-      background:#fff;
-      border:1px solid #e5e7eb;
-      border-radius:16px;
-      padding:18px;
-      margin-bottom:16px;
-    "
-  >
-
-    <div class="filter-grid">
-
-      <input
-        type="text"
-        name="location"
-        class="filter-input"
-        placeholder="Location"
-        value="{{ values.location }}"
-      />
-
-      <select name="type" class="filter-select">
-        <option value="">Any Type</option>
-        <option 
-          value="Single Room"
-          {% if values.type == "Single Room" %}
-          selected
-          {% endif %}
-        >
-          Single Room
-        </option>
-
-        <option 
-          value="Shared Room"
-          {% if values.type == "Shared Room" %}
-          selected
-          {% endif %}
-
-        >
-          Shared Room
-
-        </option>
-
-        <option 
-          value="Bachelor"
-          {% if values.type == "Bachelor" %}
-          selected
-          {% endif %}
-        
-        >
-          Bachelor
-        </option>
-
-        <option 
-          value="Ensuite"
-          {% if values.type == "Ensuite" %}
-          selected
-          {% endif %}
-        
-        >
-          Ensuite
-
-        </option>
-        <option 
-          value="Student Accommodation"
-          {% if values.type == "Student Accommodation" %}
-          selected  
-          {% endif %}
-        
-        >
-          Student Accommodation
-        </option>
-        <option 
-          value="Backroom"
-          {% if values.type == "Backroom" %}
-          selected
-          {% endif %}
-        >
-          Backroom
-
-        </option>
-        <option 
-          value="Cottage"
-          {% if values.type == "Cottage" %}
-          selected
-          {% endif %}
-        >
-          Cottage
-
-        </option>
-        <option 
-          value="Apartment"
-          {% if values.type == "Apartment" %}
-          selected   
-          {% endif %}
-
-        >
-          Flat / Apartment
-
-        </option>
-      </select>
-
-      <input
-        type="number"
-        name="min_price"
-        class="filter-input"
-        placeholder="Min Price"
-        value="{{ values.min_price }}"
-      />
-
-      <input
-        type="number"
-        name="max_price"
-        class="filter-input"
-        placeholder="Max Price"
-        value="{{ values.max_price }}"
-      />
-
-      <select name="sort" class="filter-select">
-        <option value="">Best Match</option>
-        <option
-          value="newest"
-          {% if values.sort == "newest" %}
-          selected
-          {% endif %}
-        >
-          Newest
-        </option>
-         <option
-          value="oldest"
-          {% if values.sort == "oldest" %}
-          selected
-          {% endif %}
-        >
-          Oldest
-        </option>
-        <option
-          value="price_low"
-          {% if values.sort == "price_low" %}
-          selected
-          {% endif %}
-        >
-          Price: Low → High
-        </option>
-        <option
-          value="price_high"
-          {% if values.sort == "price_high" %}
-          selected
-          {% endif %}
-        >
-          Price: High → Low
-        </option>
-      </select>
+  <div class="search-toolbar-wrapper">
+    <form method="get" action="{% url 'room_list' %}">
+    <div class="search-toolbar">
 
       <div
         style="
           display:flex;
           gap:10px;
+          margin-bottom:14px;
+          align-items:center;
+          flex-wrap:wrap;
         "
       >
-        <button
-          type="submit"
-          class="btn-primary"
+
+        <div
+          style="
+            flex:1;
+            position:relative;
+            min-width:280px;
+          "
         >
-          Apply Filters
+
+          <input
+            type="text"
+            name="q"
+            class="search-input"
+            placeholder="Search rooms, area or location"
+            value="{{ values.q }}"
+            style="padding-right:55px;"
+          />
+
+          <button
+            type="submit"
+            style="
+              position:absolute;
+              right:6px;
+              top:6px;
+              bottom:6px;
+              width:42px;
+              border:none;
+              border-radius:10px;
+              background:#2563eb;
+              color:white;
+              cursor:pointer;
+              font-size:18px;
+            "
+            aria-label="Search"
+          >
+            🔍
+          </button>
+
+        </div>
+
+        <button
+          type="button"
+          id="toggleFilters"
+          class="filter-toggle-btn"
+          aria-expanded="false"
+          aria-controls="filterPanel"
+        >
+          ⚙ Filters
         </button>
 
-        <a
-          href="{% url 'room_list' %}"
-          class="btn-secondary"
-        >
-          Reset
-        </a>
       </div>
 
-    </div>
+      <!-- Filter Drawer -->
+      <div
+        id="filterPanel"
+        class="filter-panel"
+        style="display:none;"
+      >
 
+        <div class="filter-grid">
+
+          <input
+            type="text"
+            name="location"
+            class="filter-input"
+            placeholder="Location"
+            value="{{ values.location }}"
+          />
+
+          <select name="type" class="filter-select">
+            <option value="">Any Type</option>
+            <option 
+              value="Single Room"
+              {% if values.type == "Single Room" %}
+              selected
+              {% endif %}
+            >
+              Single Room
+            </option>
+
+            <option 
+              value="Shared Room"
+              {% if values.type == "Shared Room" %}
+              selected
+              {% endif %}
+
+            >
+              Shared Room
+
+            </option>
+
+            <option 
+              value="Bachelor"
+              {% if values.type == "Bachelor" %}
+              selected
+              {% endif %}
+            
+            >
+              Bachelor
+            </option>
+
+            <option 
+              value="Ensuite"
+              {% if values.type == "Ensuite" %}
+              selected
+              {% endif %}
+            
+            >
+              Ensuite
+
+            </option>
+            <option 
+              value="Student Accommodation"
+              {% if values.type == "Student Accommodation" %}
+              selected  
+              {% endif %}
+            
+            >
+              Student Accommodation
+            </option>
+            <option 
+              value="Backroom"
+              {% if values.type == "Backroom" %}
+              selected
+              {% endif %}
+            >
+              Backroom
+
+            </option>
+            <option 
+              value="Cottage"
+              {% if values.type == "Cottage" %}
+              selected
+              {% endif %}
+            >
+              Cottage
+
+            </option>
+            <option 
+              value="Apartment"
+              {% if values.type == "Apartment" %}
+              selected   
+              {% endif %}
+
+            >
+              Flat / Apartment
+
+            </option>
+          </select>
+
+          <input
+            type="number"
+            name="min_price"
+            class="filter-input"
+            placeholder="Min Price"
+            value="{{ values.min_price }}"
+          />
+
+          <input
+            type="number"
+            name="max_price"
+            class="filter-input"
+            placeholder="Max Price"
+            value="{{ values.max_price }}"
+          />
+
+          <select name="sort" class="filter-select">
+            <option value="">Best Match</option>
+            <option
+              value="newest"
+              {% if values.sort == "newest" %}
+              selected
+              {% endif %}
+            >
+              Newest
+            </option>
+            <option
+              value="oldest"
+              {% if values.sort == "oldest" %}
+              selected
+              {% endif %}
+            >
+              Oldest
+            </option>
+            <option
+              value="price_low"
+              {% if values.sort == "price_low" %}
+              selected
+              {% endif %}
+            >
+              Price: Low → High
+            </option>
+            <option
+              value="price_high"
+              {% if values.sort == "price_high" %}
+              selected
+              {% endif %}
+            >
+              Price: High → Low
+            </option>
+          </select>
+
+          <div class="filter-actions">
+            <button
+              type="submit"
+              class="btn-primary"
+            >
+              Apply Filters
+            </button>
+
+            <a
+              href="{% url 'room_list' %}"
+              class="btn-secondary"
+            >
+              Reset
+            </a>
+          </div>
+
+        </div>
+
+      </div>
   </div>
-
-</form>
+    </form>
+  </div>
 
 {% if values.q or values.location or values.type or values.min_price or values.max_price %}
 <div style="
@@ -674,15 +648,83 @@ document.addEventListener("DOMContentLoaded", function () {
     if (panel.style.display === "none") {
       panel.style.display = "block";
       btn.innerHTML = "✕ Close";
+      btn.setAttribute("aria-expanded", "true");
     } else {
       panel.style.display = "none";
       btn.innerHTML = "⚙ Filters";
+      btn.setAttribute("aria-expanded", "false");
     }
 
   });
 
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const toolbar = document.querySelector(".search-toolbar-wrapper");
+    const filterPanelEl = document.getElementById("filterPanel");
+
+    if (!toolbar) return;
+
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    // Below this scroll position, always keep the toolbar visible —
+    // it should never hide while the user is still near the top of the page.
+    const SHOW_NEAR_TOP = 80;
+
+    // Ignore tiny scroll jitters (e.g. mobile browser address-bar
+    // show/hide, momentum scroll noise) so it doesn't flicker.
+    const DELTA_THRESHOLD = 6;
+
+    function isFilterPanelOpen() {
+      return filterPanelEl && filterPanelEl.style.display === "block";
+    }
+
+    function handleScroll() {
+      const currentScrollY = window.scrollY;
+
+      // Shadow state — deepens once the page has scrolled at all.
+      if (currentScrollY > 20) {
+        toolbar.classList.add("scrolled");
+      } else {
+        toolbar.classList.remove("scrolled");
+      }
+
+      const delta = currentScrollY - lastScrollY;
+
+      if (currentScrollY <= SHOW_NEAR_TOP) {
+        // Always visible near the top of the page.
+        toolbar.classList.remove("toolbar-hidden");
+      } else if (isFilterPanelOpen()) {
+        // Never hide mid-interaction while filters are open.
+        toolbar.classList.remove("toolbar-hidden");
+      } else if (delta > DELTA_THRESHOLD) {
+        // Scrolling down past the threshold -> hide to save screen space.
+        toolbar.classList.add("toolbar-hidden");
+      } else if (delta < -DELTA_THRESHOLD) {
+        // Any meaningful scroll up -> reveal immediately.
+        toolbar.classList.remove("toolbar-hidden");
+      }
+
+      lastScrollY = currentScrollY;
+      ticking = false;
+    }
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!ticking) {
+          window.requestAnimationFrame(handleScroll);
+          ticking = true;
+        }
+      },
+      { passive: true }
+    );
+
+});
 </script>
+
 
 
 {% endblock %}

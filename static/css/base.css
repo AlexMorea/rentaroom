@@ -115,10 +115,15 @@ a {
 
 .burger {
   display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
   background: none;
   border: none;
   font-size: 1.8rem;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ✅ TRUST STRIP (shrinks header cleanly, no thick empty space) */
@@ -590,6 +595,16 @@ body.nav-open {
   transform: translateY(-1px);
 }
 
+/* Loading state applied by form-submit-state.js while a form is
+   submitting, so the button reads as busy and can't be double-tapped. */
+button.is-submitting,
+input.is-submitting {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
+
 /* ================= FORMS ================= */
 
 .form-shell {
@@ -805,7 +820,7 @@ body.nav-open {
   }
 
   .burger {
-    display: block;
+    display: flex;
     z-index: 2200;
     position: relative;
   }
@@ -1035,26 +1050,38 @@ body.nav-open .nav-links * {
   opacity: 0.9;
 }
 
-/* Inputs: consistent height + clean padding */
-.auth-form input.input,
+/* Inputs: consistent height + clean padding.
+   Applied globally by .input class (not just inside .auth-form) so
+   add_room / create_room / contact and every other form gets the same
+   touch-friendly sizing, not just login/register. font-size is 1rem
+   (16px) minimum to prevent iOS Safari auto-zooming on focus. */
+input.input,
+select.input,
 .auth-form input[type="text"],
 .auth-form input[type="email"],
 .auth-form input[type="password"],
 .auth-form input[type="tel"],
 .auth-form select,
-.auth-form textarea {
+.auth-form textarea,
+input[type="text"].input,
+input[type="email"].input,
+input[type="password"].input,
+input[type="tel"].input,
+input[type="number"].input,
+input[type="date"].input {
   width: 100%;
   height: 46px;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.2;
 }
 
 /* Textareas shouldn't be forced to 46px */
-.auth-form textarea {
+.auth-form textarea,
+textarea.input {
   height: auto;
   min-height: 120px;
 }
@@ -1288,10 +1315,15 @@ a {
 
 .burger {
   display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
   background: none;
   border: none;
   font-size: 1.8rem;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ✅ TRUST STRIP (shrinks header cleanly, no thick empty space) */
@@ -1962,7 +1994,7 @@ body.nav-open {
   }
 
   .burger {
-    display: block;
+    display: flex;
     z-index: 2200;
     position: relative;
   }
@@ -2192,26 +2224,38 @@ body.nav-open .nav-links * {
   opacity: 0.9;
 }
 
-/* Inputs: consistent height + clean padding */
-.auth-form input.input,
+/* Inputs: consistent height + clean padding.
+   Applied globally by .input class (not just inside .auth-form) so
+   add_room / create_room / contact and every other form gets the same
+   touch-friendly sizing, not just login/register. font-size is 1rem
+   (16px) minimum to prevent iOS Safari auto-zooming on focus. */
+input.input,
+select.input,
 .auth-form input[type="text"],
 .auth-form input[type="email"],
 .auth-form input[type="password"],
 .auth-form input[type="tel"],
 .auth-form select,
-.auth-form textarea {
+.auth-form textarea,
+input[type="text"].input,
+input[type="email"].input,
+input[type="password"].input,
+input[type="tel"].input,
+input[type="number"].input,
+input[type="date"].input {
   width: 100%;
   height: 46px;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.2;
 }
 
 /* Textareas shouldn't be forced to 46px */
-.auth-form textarea {
+.auth-form textarea,
+textarea.input {
   height: auto;
   min-height: 120px;
 }
@@ -2401,7 +2445,7 @@ body.auth-page .auth-form textarea {
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.2;
 }
 
@@ -4811,4 +4855,63 @@ display: none;
     border:0;
     border-top:1px solid rgba(0,0,0,.08);
     margin:18px 0;
+}
+
+.search-toolbar-wrapper.scrolled{
+
+    box-shadow:0 8px 24px rgba(0,0,0,.12);
+
+}
+
+@media (max-width:768px){
+
+.search-toolbar-wrapper{
+
+    top:60px;
+
+    padding:10px 0;
+
+}
+
+}
+
+.room-grid{
+
+    margin-top:20px;
+
+}
+
+.search-toolbar-wrapper{
+    position:sticky;
+    top:70px;              /* adjust to your navbar height */
+    z-index:1000;
+
+    background:#ffffff;
+
+    padding:12px 0;
+
+    border-bottom:1px solid #e5e7eb;
+
+    box-shadow:0 4px 18px rgba(0,0,0,.06);
+    transform: translateY(0);
+    transition: transform 0.25s ease, box-shadow 0.2s ease;
+    will-change: transform;
+}
+
+/* Hidden while scrolling down (mobile-app style, like Booking.com/Airbnb) —
+   slides fully out of view above the sticky header, and slides back in
+   the instant the user scrolls up or reaches the top of the page.
+   Direction detection lives in room_list.html's scroll listener. */
+.search-toolbar-wrapper.toolbar-hidden {
+    transform: translateY(-110%);
+}
+
+.search-toolbar{
+
+    max-width:1100px;
+
+    margin:0 auto;
+
+    padding:0 16px;
+
 }
