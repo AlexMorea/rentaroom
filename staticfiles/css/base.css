@@ -4861,6 +4861,20 @@ display: none;
 
     box-shadow:0 8px 24px rgba(0,0,0,.12);
 
+    /* Compact mode: once the page has scrolled, tighten the toolbar's
+       own spacing so it takes up less vertical real estate and stops
+       competing with the room cards for screen space. Input/button
+       sizes are untouched here on purpose — this only trims the
+       wrapper's padding and the gap below it, so tap targets stay
+       full-size and accessible. */
+    padding: 6px 0;
+
+}
+
+.search-toolbar-wrapper.scrolled .search-toolbar{
+
+    margin-bottom: 0;
+
 }
 
 @media (max-width:768px){
@@ -4870,6 +4884,12 @@ display: none;
     top:60px;
 
     padding:10px 0;
+
+}
+
+.search-toolbar-wrapper.scrolled{
+
+    padding: 4px 0;
 
 }
 
@@ -4893,6 +4913,17 @@ display: none;
     border-bottom:1px solid #e5e7eb;
 
     box-shadow:0 4px 18px rgba(0,0,0,.06);
+    transform: translateY(0);
+    transition: transform 0.25s ease, box-shadow 0.2s ease, padding 0.2s ease;
+    will-change: transform;
+}
+
+/* Hidden while scrolling down (mobile-app style, like Booking.com/Airbnb) —
+   slides fully out of view above the sticky header, and slides back in
+   the instant the user scrolls up or reaches the top of the page.
+   Direction detection lives in room_list.html's scroll listener. */
+.search-toolbar-wrapper.toolbar-hidden {
+    transform: translateY(-110%);
 }
 
 .search-toolbar{
