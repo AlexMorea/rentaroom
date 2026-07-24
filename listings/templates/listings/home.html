@@ -1,9 +1,16 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %}
+{% load static %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}?v=1" />
+{% endblock %}
 
-<div class="container py-5">
+{% block content %}
+
+<div class="landing-page">
+
   <!-- =========================
-       PREMIUM HERO BANNER
+       1. HERO SECTION
   ========================== -->
   <div
     class="form-card"
@@ -92,16 +99,14 @@
         font-weight: 800;
       "
     >
-      Find Rooms, Trusted Landlords & Moving Help - All in One Place.
+      South Africa's Trusted Digital Rental Marketplace
     </h1>
 
     <p
       class="text-muted"
       style="max-width: 720px; margin: 0 auto; font-size: 1.08rem"
     >
-      Discover affordable rooms, connect directly with landlords,
-      and access trusted moving services across South Africa -
-      all in one modern platform built for speed, safety, and simplicity.
+      Find verified rooms. Connect with trusted landlords. Rent with confidence.
     </p>
 
     <!-- trust chips -->
@@ -132,27 +137,120 @@
       <a
         href="{% url 'room_list' %}"
         class="btn-primary"
-        style="box-shadow: 0 8px 22px rgba(37, 99, 235, 0.25)"
       >
-        Browse Rooms
+        Find a Room
       </a>
 
-      <a href="{% url 'register' %}" class="btn-primary" style="background: #16a34a"> Get Your Room Seen Today </a>
-
       <a
-        href="{% url 'services:register_bakkie_driver' %}"
+        href="{% url 'register' %}"
         class="btn-primary"
-        style="background: linear-gradient(135deg,#f59e0b,#ea580c); border:none;"
+        style="background: #16a34a"
       >
-        Become a Driver
+        List Your Property
       </a>
     </div>
 
+    <p class="text-muted" style="margin-top: 18px; font-size: 0.85rem;">
+      A product of 4You (Pty) Ltd
+    </p>
+
   </div>
+
   <!-- =========================
-       VALUE STATS
+       2. WHAT IS ROOMS4YOU?
   ========================== -->
-  <div class="dashboard-grid" style="margin-bottom: 30px">
+  <div class="form-card premium-card landing-section" style="text-align: center;">
+    <div class="section-header" style="margin-bottom: 0;">
+      <span class="section-badge">WHAT IS ROOMS4YOU?</span>
+      <h2 class="page-title" style="margin-bottom: 10px;">
+        A Simpler Way To Rent
+      </h2>
+      <p class="section-subtitle">
+        Rooms4You is a South African property technology (PropTech) platform
+        that connects tenants with landlords through a trusted, simple, and
+        secure digital rental marketplace.
+      </p>
+    </div>
+  </div>
+
+  <!-- =========================
+       3. THE PROBLEM
+  ========================== -->
+  <div class="form-card premium-card landing-section">
+    <div class="section-header">
+      <span class="section-badge">THE CHALLENGE</span>
+      <h2 class="page-title">The Problem We're Solving</h2>
+      <p class="section-subtitle">
+        Finding a room in South Africa's informal rental market is harder
+        and riskier than it should be.
+      </p>
+    </div>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <span class="problem-icon">🚨</span>
+        <p>Rental scams that cost tenants money before they've even seen a room.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">🎭</span>
+        <p>Fake listings for rooms that don't exist or aren't actually available.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">🔍</span>
+        <p>Difficulty finding affordable rooms without endless scrolling and dead ends.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">🏚️</span>
+        <p>No trusted platform focused specifically on affordable accommodation.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       4. OUR SOLUTION
+  ========================== -->
+  <div class="form-card premium-card landing-section">
+    <div class="section-header">
+      <span class="section-badge">THE SOLUTION</span>
+      <h2 class="page-title">How Rooms4You Solves It</h2>
+      <p class="section-subtitle">
+        Built from the ground up to remove the risk and hassle from renting.
+      </p>
+    </div>
+
+    <div class="solution-grid">
+      <div class="solution-card">
+        <div class="solution-icon">✅</div>
+        <h4>Verified Landlords</h4>
+        <p>Landlords go through verification before listing rooms on the platform.</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">💬</div>
+        <h4>Secure Messaging</h4>
+        <p>Chat directly with landlords inside the platform, no need to share personal numbers upfront.</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">🔎</div>
+        <h4>Easy Room Discovery</h4>
+        <p>Search and filter by location, price, and room type in seconds.</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">🚩</div>
+        <h4>Report Suspicious Listings</h4>
+        <p>A built-in reporting system so the community can flag scams quickly.</p>
+      </div>
+      <div class="solution-card">
+        <div class="solution-icon">💰</div>
+        <h4>Affordable Housing Focus</h4>
+        <p>Built specifically for township and student-rental markets, not luxury listings.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       VALUE STATS (existing)
+  ========================== -->
+  <div class="dashboard-grid landing-section" style="margin-bottom: 0;">
     <div
       class="form-card premium-card"
       style="
@@ -202,12 +300,10 @@
     </div>
   </div>
 
-  <div class="social-proof">
-
-  </div>
-
-  <!-- SERVICES ECOSYSTEM -->
-  <div class="form-card premium-card services-showcase">
+  <!-- =========================
+       SERVICES ECOSYSTEM (existing)
+  ========================== -->
+  <div class="form-card premium-card services-showcase landing-section">
 
     <div class="section-header">
       <span class="section-badge">
@@ -218,7 +314,7 @@
         Everything You Need To Rent Smarter
       </h2>
 
-      <p class="text-muted">
+      <p class="section-subtitle">
         Rooms4You goes beyond listings. We help you find accommodation,
         move safely and connect with trusted people.
       </p>
@@ -228,9 +324,7 @@
 
       <div class="service-showcase-card">
         <div class="service-icon">🏠</div>
-
         <h3>Rooms4You</h3>
-
         <p>
           Discover verified rooms and rental opportunities
           across South Africa.
@@ -239,9 +333,7 @@
 
       <div class="service-showcase-card">
         <div class="service-icon">🚚</div>
-
         <h3>Bakkie4You</h3>
-
         <p>
           Connect with trusted drivers for affordable
           moving assistance.
@@ -250,9 +342,7 @@
 
       <div class="service-showcase-card">
         <div class="service-icon">🛡</div>
-
         <h3>Guardian4You</h3>
-
         <p>
           Extra protection during property viewings with
           safety-first features.
@@ -263,100 +353,157 @@
 
   </div>
 
-  <!-- MARKET -->
-  <h2 class="page-title" style="text-align: center">
-    Built for real-world renting
-  </h2>
-
-  <div class="dashboard-grid" style="margin-top: 15px">
-    <div
-      class="form-card premium-card"
-      style="text-align: center; background: #fff7ed; border: 1px solid #fed7aa"
-    >
-      <h3>🏠 Tenants</h3>
-      <p class="text-muted">
-        Find safe, verified rooms near you without scams or stress.
-      </p>
-    </div>
-
-    <div
-      class="form-card premium-card"
-      style="text-align: center; background: #fff7ed; border: 1px solid #fed7aa"
-    >
-      <h3>🏘 Landlords</h3>
-      <p class="text-muted">
-        Fill rooms faster with serious, verified tenants.
-      </p>
-    </div>
-
-    <div
-      class="form-card premium-card"
-      style="text-align: center; background: #fff7ed; border: 1px solid #fed7aa"
-    >
-      <h3>🚚 Drivers</h3>
-      <p class="text-muted">Earn income by helping people move affordably.</p>
-    </div>
-  </div>
-
-  <!-- TRUST SECTION -->
-  <div class="form-card premium-card trust-section">
+  <!-- =========================
+       5. TRUST & SAFETY (merged with existing trust section)
+  ========================== -->
+  <div class="form-card premium-card trust-section landing-section">
 
     <div class="section-header">
-
-      <span class="section-badge">
-        TRUST & SAFETY
-      </span>
-
-      <h2 class="page-title">
-        Why South Africans Trust Rooms4You
-      </h2>
-
+      <span class="section-badge">TRUST & SAFETY</span>
+      <h2 class="page-title">Why South Africans Trust Rooms4You</h2>
+      <p class="section-subtitle">
+        Safety isn't an afterthought here — it's built into how the platform works.
+      </p>
     </div>
 
     <div class="trust-grid">
 
       <div class="trust-card">
-        <h3>✓ Verified Listings</h3>
+        <h3>✓ Email Verification</h3>
+        <p>Every account confirms a real, working email address before it can list or message.</p>
+      </div>
 
-        <p>
-          We are building a safer marketplace where
-          genuine opportunities stand out.
-        </p>
+      <div class="trust-card">
+        <h3>✓ Phone Verification</h3>
+        <p>Phone numbers are verified via OTP, adding a second layer of accountability.</p>
+      </div>
+
+      <div class="trust-card">
+        <h3>✓ Reporting System</h3>
+        <p>Flag a suspicious listing or user in a couple of taps — no digging through menus.</p>
+      </div>
+
+      <div class="trust-card">
+        <h3>✓ Safety Tips</h3>
+        <p>Practical guidance on viewings, deposits, and spotting common scam patterns.</p>
+      </div>
+
+      <div class="trust-card">
+        <h3>✓ Community Reporting</h3>
+        <p>Every user can help keep the platform clean by flagging bad actors.</p>
+      </div>
+
+      <div class="trust-card">
+        <h3>✓ Platform Moderation</h3>
+        <p>Reports are reviewed by our team, not left to sit unaddressed.</p>
+      </div>
+
+      <div class="trust-card">
+        <h3>✓ Verified Listings</h3>
+        <p>We are building a safer marketplace where genuine opportunities stand out.</p>
       </div>
 
       <div class="trust-card">
         <h3>✓ Safer Viewings</h3>
-
-        <p>
-          Guardian4You helps users stay safer when
-          meeting landlords.
-        </p>
+        <p>Guardian4You helps users stay safer when meeting landlords in person.</p>
       </div>
 
       <div class="trust-card">
         <h3>✓ Direct Communication</h3>
-
-        <p>
-          Connect directly with property owners and
-          reduce unnecessary middlemen.
-        </p>
+        <p>Connect directly with property owners and reduce unnecessary middlemen.</p>
       </div>
 
       <div class="trust-card">
         <h3>✓ Community Reviews</h3>
-
-        <p>
-          Transparency helps tenants and landlords
-          make better decisions.
-        </p>
+        <p>Transparency helps tenants and landlords make better decisions.</p>
       </div>
 
     </div>
 
   </div>
 
-  <!-- HOW IT WORKS -->
-  <div class="form-card premium-card" style="margin-top: 40px">
+  <!-- =========================
+       6. WHO WE SERVE (merged with existing market section)
+  ========================== -->
+  <div class="landing-section">
+    <div class="section-header">
+      <span class="section-badge">WHO WE SERVE</span>
+      <h2 class="page-title">Built For Real-World Renting</h2>
+    </div>
+
+    <div class="audience-grid">
+
+      <div class="audience-card">
+        <h3>🏠 Tenants</h3>
+        <ul>
+          <li>Find affordable accommodation</li>
+          <li>Save time searching</li>
+          <li>Stay safer while viewing rooms</li>
+        </ul>
+        <a href="{% url 'room_list' %}" class="btn-primary">Find a Room</a>
+      </div>
+
+      <div class="audience-card">
+        <h3>🏘 Landlords</h3>
+        <ul>
+          <li>List rooms in minutes</li>
+          <li>Reach quality, verified tenants</li>
+          <li>Manage listings in one place</li>
+        </ul>
+        <a href="{% url 'register' %}" class="btn-primary">List Your Property</a>
+      </div>
+
+      <div class="audience-card">
+        <h3>🚚 Drivers</h3>
+        <ul>
+          <li>Earn income helping people move</li>
+          <li>Flexible, on-demand jobs</li>
+          <li>Connect with tenants nearby</li>
+        </ul>
+        <a
+          href="{% url 'services:register_bakkie_driver' %}"
+          class="btn-primary"
+          style="background: linear-gradient(135deg,#f59e0b,#ea580c); border:none;"
+        >
+          Become a Driver
+        </a>
+      </div>
+
+      <div class="audience-card">
+        <h3>🤝 Communities</h3>
+        <ul>
+          <li>Promote safer renting practices</li>
+          <li>Improve access to housing</li>
+          <li>Help reduce fraud together</li>
+        </ul>
+        <a href="{% url 'trust:home' %}" class="btn-secondary">Trust Centre</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================
+       7. WHY ROOMS4YOU?
+  ========================== -->
+  <div class="form-card premium-card landing-section" style="text-align: center;">
+    <div class="section-header" style="margin-bottom: 18px;">
+      <span class="section-badge">WHY ROOMS4YOU?</span>
+      <h2 class="page-title">Simple Reasons To Choose Us</h2>
+    </div>
+
+    <div class="why-grid">
+      <span class="why-chip">🇿🇦 South African Focused</span>
+      <span class="why-chip">💰 Affordable Housing</span>
+      <span class="why-chip">🛡 Built For Trust</span>
+      <span class="why-chip">📱 Mobile Friendly</span>
+      <span class="why-chip">🔒 Secure Platform</span>
+    </div>
+  </div>
+
+  <!-- =========================
+       HOW IT WORKS (existing)
+  ========================== -->
+  <div class="form-card premium-card landing-section">
     <h2 class="page-title" style="text-align: center">How Rooms4You Works</h2>
 
     <div class="dashboard-grid" style="margin-top: 20px">
@@ -384,41 +531,133 @@
     </div>
   </div>
 
-  <!-- MISSION -->
-  <div class="form-card premium-card mission-section">
-
-    <span class="section-badge">
-      OUR MISSION
-    </span>
-
-    <h2 class="page-title">
-      Built For South Africa
-    </h2>
+  <!-- =========================
+       8. ABOUT 4YOU (PTY) LTD
+  ========================== -->
+  <div class="form-card premium-card mission-section landing-section">
+    <span class="section-badge">ABOUT THE COMPANY</span>
+    <h2 class="page-title">About 4You (Pty) Ltd</h2>
 
     <p>
-      Rooms4You was created to solve one of South Africa's
-      biggest rental challenges: finding accommodation
-      safely, quickly, and affordably.
+      4You (Pty) Ltd is a South African technology company founded to build
+      trusted digital solutions that solve everyday challenges through
+      innovative, user-focused platforms.
     </p>
 
     <p>
-      Renting a room should not involve scams,
-      unsafe meetings, fake listings, or unnecessary stress.
+      Our first flagship product is Rooms4You, a digital marketplace
+      dedicated to making affordable accommodation easier and safer to
+      access across South Africa.
     </p>
-    <p>
-      Our mission is to bring <strong>trust, technology, and convenience</strong> to South
-      Africa’s informal rental economy - making affordable housing and room discovery
-      safer, faster, and more transparent for everyone.
-    </p>
-
   </div>
 
-  <!-- FINAL CTA -->
+  <!-- =========================
+       9. MEET THE FOUNDER
+  ========================== -->
+  <div class="form-card premium-card landing-section">
+    <span class="section-badge">THE TEAM</span>
+    <h2 class="page-title">Meet the Founder</h2>
+
+    <div class="founder-card">
+      <!-- Placeholder avatar. To use a real photo instead: add the load
+           static tag to the top of this file, save the image at
+           static/images/founder.jpg, then replace the div below with an
+           img tag pointing at that static path via the static template
+           tag (not written literally here on purpose - Django would try
+           to resolve it immediately, and this project's Manifest static
+           storage errors on missing files at render time, not just at
+           collectstatic time). -->
+      <div class="founder-avatar">AM</div>
+
+      <div>
+        <p class="founder-name">Alex Thabiso Morea</p>
+        <p class="founder-role">Founder & CEO</p>
+        <p class="founder-bio">
+          Rooms4You was built out of a simple belief: finding a safe,
+          affordable place to stay shouldn't be this hard. What started as
+          a way to solve a everyday South African problem has grown into a
+          platform built to bring trust and transparency to the rental
+          market — for tenants, landlords, and everyone in between.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       10 & 11. VISION & MISSION
+  ========================== -->
+  <div class="landing-section">
+    <div class="vision-mission-grid">
+
+      <div class="vm-card" id="vision">
+        <h3>Our Vision</h3>
+        <p>
+          To become South Africa's most trusted digital marketplace for
+          affordable accommodation, while improving access, transparency,
+          and safety for both tenants and landlords.
+        </p>
+      </div>
+
+      <div class="vm-card" id="mission">
+        <h3>Our Mission</h3>
+        <p>
+          To simplify the rental journey by connecting people through
+          trusted technology that makes finding and listing affordable
+          accommodation easier, safer, and more accessible.
+        </p>
+        <p style="margin-top: 10px;">
+          Renting a room should not involve scams, unsafe meetings, fake
+          listings, or unnecessary stress. Our mission is to bring
+          <strong>trust, technology, and convenience</strong> to South
+          Africa's informal rental economy — making affordable housing
+          and room discovery safer, faster, and more transparent for
+          everyone.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================
+       12. CORE VALUES
+  ========================== -->
+  <div class="form-card premium-card landing-section" style="text-align: center;">
+    <span class="section-badge">WHAT DRIVES US</span>
+    <h2 class="page-title">Core Values</h2>
+
+    <div class="values-grid">
+      <span class="value-chip">🎯 Quality</span>
+      <span class="value-chip">🤝 Responsibility</span>
+      <span class="value-chip">🛡 Integrity</span>
+      <span class="value-chip">💬 Honesty</span>
+      <span class="value-chip">💡 Innovation</span>
+      <span class="value-chip">🌍 Community</span>
+    </div>
+  </div>
+
+  <!-- =========================
+       13. CURRENT STATUS
+  ========================== -->
+  <div class="landing-section">
+    <div class="status-banner">
+      <span class="status-dot"></span>
+      <div>
+        <h3>Currently in Public Beta</h3>
+        <p>
+          Rooms4You is currently in its early growth stage as we continue
+          improving the platform based on user feedback.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================
+       FINAL CTA (existing)
+  ========================== -->
   <div
-    class="form-card"
+    class="form-card landing-section"
     style="
       text-align: center;
-      margin-top: 40px;
       background: linear-gradient(135deg, #0f172a, #111827);
       color: white;
       border: none;
@@ -441,6 +680,57 @@
       Browse Available Rooms
     </a>
   </div>
+
+  <!-- =========================
+       14. CONTACT
+  ========================== -->
+  <div class="form-card premium-card landing-section">
+    <div class="section-header">
+      <span class="section-badge">GET IN TOUCH</span>
+      <h2 class="page-title">Contact Us</h2>
+      <p class="section-subtitle">
+        Have a question, a partnership idea, or found something that
+        doesn't look right? We'd love to hear from you.
+      </p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-card">
+        <p style="margin: 0 0 6px; font-weight: 700;">General</p>
+        <a href="mailto:hello@rooms4you.co.za">hello@rooms4you.co.za</a>
+      </div>
+
+      <div class="contact-card">
+        <p style="margin: 0 0 6px; font-weight: 700;">Support</p>
+        <a href="mailto:support@rooms4you.co.za">support@rooms4you.co.za</a>
+      </div>
+
+      <div class="contact-card">
+        <p style="margin: 0 0 6px; font-weight: 700;">Website</p>
+        <a href="{% url 'home' %}">rooms4you.co.za</a>
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="{% url 'contact' %}" class="btn-primary">Go To Contact Form</a>
+    </div>
+
+    <div class="contact-social-row">
+      <a href="https://instagram.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <i class="fab fa-instagram"></i>
+      </a>
+      <a href="https://facebook.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+        <i class="fab fa-facebook"></i>
+      </a>
+      <a href="https://x.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="X">
+        <i class="fab fa-x-twitter"></i>
+      </a>
+      <a href="https://tiktok.com/@rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+        <i class="fab fa-tiktok"></i>
+      </a>
+    </div>
+  </div>
+
 </div>
 
 {% endblock %}

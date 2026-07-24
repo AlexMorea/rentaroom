@@ -37,40 +37,52 @@
 
   </div>
 
-  <!-- Company Links -->
+  <!-- Footer Columns -->
 
-  <div class="footer-links">
+  <div class="footer-columns">
 
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'home' %}#mission">Mission</a>
+      <a href="{% url 'home' %}#vision">Vision</a>
+      <span class="footer-soon">Careers (Coming Soon)</span>
+    </div>
 
-<a href="{% url 'about' %}">About</a>
-<span>•</span>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <a href="{% url 'room_list' %}">Browse Rooms</a>
+      <a href="{% url 'register' %}">List Property</a>
+      <a href="{% url 'login' %}">Bakkie4You</a>
+      <a href="{% url 'login' %}">Guardian4You</a>
+    </div>
 
-<a href="{% url 'contact' %}">Contact</a>
-<span>•</span>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="{% url 'privacy' %}">Privacy Policy</a>
+      <a href="{% url 'terms' %}">Terms of Service</a>
+      <span class="footer-soon">Cookie Policy (Coming Soon)</span>
+      <a href="{% url 'trust:home' %}">Community Guidelines</a>
+    </div>
 
-<a href="{% url 'support' %}">Support Centre</a>
-<span>•</span>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <a href="{% url 'contact' %}">Contact Us</a>
+      <a href="{% url 'support' %}">Help Centre</a>
+      <a href="{% url 'trust:report_fraud' %}">Report a Listing</a>
+      <a href="{% url 'trust:stay_safe' %}">Safety Centre</a>
+    </div>
 
-<a href="{% url 'trust:home' %}">Trust Centre</a>
-
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <a href="mailto:hello@rooms4you.co.za">hello@rooms4you.co.za</a>
+      <a href="mailto:support@rooms4you.co.za">support@rooms4you.co.za</a>
+      <a href="https://rooms4you.co.za">rooms4you.co.za</a>
+    </div>
 
   </div>
 
-  <!-- Legal Links -->
-
-  <div
-    class="footer-links"
-    style="margin-top:10px;"
-  >
-
-
-<a href="{% url 'terms' %}">Terms of Service</a>
-<span>•</span>
-
-<a href="{% url 'privacy' %}">Privacy Policy</a>
-
-
-  </div>
+  <hr class="footer-divider">
 
   <!-- Social -->
 
