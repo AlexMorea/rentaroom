@@ -8,6 +8,11 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- PWA -->
+    <link rel="manifest" href="{% static 'manifest.json' %}" />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}" />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
@@ -20,9 +25,9 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
 
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=11" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=12" />
 
-    <link rel="stylesheet" href="{% static 'css/trust.css' %}?v=11" />
+    <link rel="stylesheet" href="{% static 'css/trust.css' %}?v=1" />
       
 
     {% block extra_css %}
@@ -84,6 +89,19 @@
     <script src="{% static 'js/idle.js' %}" defer></script>
     <script src="{% static 'js/slider.js' %}" defer></script>
     <script src="{% static 'js/form-submit-state.js' %}" defer></script>
+
+    <!-- PWA: service worker registration -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/service-worker.js").catch(() => {
+            // Silent on purpose - a failed SW registration shouldn't
+            // surface as a user-facing error, the site works fine
+            // without it.
+          });
+        });
+      }
+    </script>
 
     <!-- PAGE JS -->
     {% block extra_js %}{% endblock %}

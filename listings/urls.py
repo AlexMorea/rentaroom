@@ -99,6 +99,7 @@ urlpatterns = [
     # interactions
     path("rooms/<int:room_id>/review/", views.add_review, name="add_review"),
     path("rooms/<int:room_id>/message/", views.send_message, name="send_message"),
+    path("rooms/<int:room_id>/conversation/<int:other_user_id>/", views.conversation_thread, name="conversation_thread"),
 
     path("rooms/<int:room_id>/favorite/", views.toggle_favorite, name="toggle_favorite"),
     path("rooms/<int:room_id>/contact/<str:method>/", views.track_contact, name="track_contact"),
@@ -112,5 +113,10 @@ urlpatterns = [
     path("dashboard/contacts/", views.contacts_analytics, name="contacts_analytics"),
 
     path("landlord/rooms/", views.landlord_rooms, name="landlord_rooms"),
+    path("landlord/rooms/<int:room_id>/toggle-vacancy/", views.toggle_room_vacancy, name="toggle_room_vacancy"),
+    path("landlord/<int:user_id>/profile/", views.landlord_profile, name="landlord_profile"),
     path("landlord/images/", views.landlord_images_hub, name="landlord_images_hub"),
+
+    # PWA
+    path("offline/", views.offline_page, name="offline"),
 ]

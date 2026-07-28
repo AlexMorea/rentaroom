@@ -1,0 +1,43 @@
+{% extends "listings/base.html" %}
+{% block title %}Confirm Move-In{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Confirm Move-In</h1>
+
+<div class="form-card" style="max-width:520px; margin:0 auto; text-align:center;">
+  <h3 style="margin:0 0 6px;">{{ placement.room.title }}</h3>
+  <p class="text-muted" style="margin:0 0 20px;">
+    Move-in date: {{ placement.move_in_date|date:"d M Y" }}
+  </p>
+
+  {% if already_answered %}
+    <p class="text-muted">You've already responded to this. We're waiting on the other party to confirm too.</p>
+  {% else %}
+    <p style="margin-bottom:20px;">
+      {% if is_this_tenant %}
+        Did you move into this room?
+      {% else %}
+        Did your tenant move into this room?
+      {% endif %}
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div style="display:flex; flex-direction:column; gap:12px; text-align:left; max-width:280px; margin:0 auto 20px;">
+        {% for radio in form.confirmed %}
+          <label style="display:flex; align-items:center; gap:10px; font-weight:600;">
+            {{ radio.tag }} {{ radio.choice_label }}
+          </label>
+        {% endfor %}
+      </div>
+
+      {% if form.errors %}
+        <p style="color:#dc2626; margin-bottom:14px;">Please choose an option.</p>
+      {% endif %}
+
+      <button type="submit" class="btn-primary" style="width:100%;">Submit</button>
+    </form>
+  {% endif %}
+</div>
+
+{% endblock %}

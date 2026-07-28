@@ -144,6 +144,25 @@ class Membership(models.Model):
 
         self.save()
 
+    def suspend_for_unpaid_placement_fee(self, invoice):
+        """
+        Reuses the same suspension mechanism as reject_payment() (status
+        + is_active), rather than inventing separate suspension logic
+        for placement fees. can_create_listing() already blocks new
+        listings once is_active is False - existing listings are left
+        untouched (not deleted), and the landlord regains access as
+        soon as an admin marks the invoice paid and reactivates them.
+
+        Deliberately NOT called automatically from anywhere yet - see
+        placements/management/commands/flag_overdue_placement_fees.py,
+        which is gated behind settings.PLACEMENT_FEE_AUTO_SUSPEND
+        (defaults to False) so this can't start suspending real
+        landlord accounts without a conscious decision to turn it on.
+        """
+        self.status = "suspended"
+        self.is_active = False
+        self.save()
+
     @property
     def days_left(self):
         if self.trial_end:

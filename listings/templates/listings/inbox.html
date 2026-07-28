@@ -1,73 +1,56 @@
-{% extends "listings/base.html" %} {% load profile_extras %} {% block content %}
+{% extends "listings/base.html" %}
+{% block title %}Messages{% endblock %}
+{% block content %}
 
-<h1 class="page-title">Inbox</h1>
+<h1 class="page-title">Messages</h1>
 
-<p style="opacity: 0.6">All tenant enquiries (CRM view)</p>
+<p class="text-muted" style="text-align:center; margin-bottom:20px;">
+  All conversations happen here, inside Rooms4You - no phone numbers or
+  emails are ever shown between tenants and landlords.
+</p>
 
-<div style="margin-top: 20px; display: flex; flex-direction: column; gap: 12px">
-  {% for msg in messages %}
+<div style="display:flex; flex-direction:column; gap:10px; max-width:720px; margin:0 auto;">
+  {% for conv in conversations %}
 
-  <div
+  <a
+    href="{% url 'conversation_thread' conv.room.id conv.other_user.id %}"
     class="form-card"
-    style="display: flex; gap: 12px; align-items: flex-start"
+    style="display:flex; gap:14px; align-items:center; text-decoration:none; color:inherit;"
   >
-    <!-- AVATAR -->
     <div
       style="
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #e5e7eb, #f9fafb);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        color: #444;
-        border: 1px solid #eee;
+        width:48px; height:48px; min-width:48px; border-radius:50%;
+        background:linear-gradient(135deg, #2563eb, #1e40af);
+        color:#fff; display:flex; align-items:center; justify-content:center;
+        font-weight:800; font-size:1.1rem;
       "
     >
-      {{ msg.sender.first_name|default:"U"|slice:":1"|upper }}
+      {{ conv.other_user.first_name|default:conv.other_user.username|slice:":1"|upper }}
     </div>
 
-    <!-- INFO -->
-    <div style="flex: 1">
-      <div style="display: flex; justify-content: space-between">
-        <strong>{{ msg.sender.first_name }} {{ msg.sender.last_name }}</strong>
-        <small style="opacity: 0.5">{{ msg.created_at|timesince }} ago</small>
+    <div style="flex:1; min-width:0;">
+      <div style="display:flex; justify-content:space-between; gap:10px;">
+        <strong>{{ conv.other_user.get_full_name|default:conv.other_user.username }}</strong>
+        <small class="text-muted" style="white-space:nowrap;">{{ conv.last_message.created_at|timesince }} ago</small>
       </div>
 
-      <div style="opacity: 0.6; font-size: 0.85rem">{{ msg.sender.email }}</div>
+      <p class="text-muted" style="margin:2px 0 4px; font-size:0.85rem;">
+        📍 {{ conv.room.title }}
+      </p>
 
-      {% with sender_profile=msg.sender|profile %}
-        {% if sender_profile and sender_profile.phone_number %}
-          <div style="opacity: 0.6; font-size: 0.85rem">
-            {{ sender_profile.phone_number }}
-          </div>
-        {% endif %}
-      {% endwith %}
-
-      <div style="margin-top: 6px; font-size: 0.85rem">
-        📍 {{ msg.room.title }}
-      </div>
-
-      <p style="margin-top: 6px">{{ msg.body }}</p>
-
-      <!-- ACTIONS -->
-      <div style="margin-top: 10px; display: flex; gap: 10px">
-        <a href="mailto:{{ msg.sender.email }}" class="btn-secondary">Email</a>
-
-        {% with sender_profile=msg.sender|profile %}
-          {% if sender_profile and sender_profile.phone_number %}
-            <a href="tel:{{ sender_profile.phone_number }}" class="btn-secondary">Call</a>
-          {% endif %}
-        {% endwith %}
-      </div>
+      <p style="margin:0; font-size:0.9rem; color:#334155; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+        {% if conv.last_message.sender_id == request.user.id %}You: {% endif %}{{ conv.last_message.body }}
+      </p>
     </div>
-  </div>
+
+    {% if conv.unread_count %}
+    <span class="badge" style="background:#2563eb; color:#fff;">{{ conv.unread_count }}</span>
+    {% endif %}
+  </a>
 
   {% empty %}
-  <div class="form-card">
-    <p>No enquiries yet.</p>
+  <div class="form-card" style="text-align:center;">
+    <p class="text-muted">No conversations yet.</p>
   </div>
   {% endfor %}
 </div>

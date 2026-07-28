@@ -1,0 +1,126 @@
+{% extends "listings/base.html" %}
+{% block title %}Placements Dashboard{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Your Placements</h1>
+
+<p class="scam-warning" style="margin-bottom:20px;">
+  Every enquiry on your listings automatically becomes a Placement here -
+  track it through to move-in and your success fee.
+</p>
+
+<details class="form-section-details" style="margin-bottom:22px;">
+  <summary>How the Success Fee works</summary>
+
+  <div style="padding:4px 4px 16px;">
+    <p style="margin:0 0 12px; color:#334155; line-height:1.7;">
+      Rooms4You is free to list on. We only charge a once-off
+      <strong>Success Fee</strong> after a placement actually works out -
+      both you and the tenant confirm they've moved in. No successful
+      placement, no fee.
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+      <tbody>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 4px; color:#475569;">Rent R800 – R1,500</td>
+          <td style="padding:8px 4px; text-align:right; font-weight:700;">R100</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 4px; color:#475569;">Rent R1,501 – R2,500</td>
+          <td style="padding:8px 4px; text-align:right; font-weight:700;">R150</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e2e8f0;">
+          <td style="padding:8px 4px; color:#475569;">Rent R2,501 – R4,000</td>
+          <td style="padding:8px 4px; text-align:right; font-weight:700;">R250</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 4px; color:#475569;">Rent above R4,000</td>
+          <td style="padding:8px 4px; text-align:right; font-weight:700;">R350</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="margin:0 0 12px; color:#334155; line-height:1.7;">
+      <strong>Why we charge it:</strong> it's what keeps Rooms4You free to
+      list on, lets us keep verifying landlords and moderating listings, and
+      keeps the platform focused on actually placing tenants - not just
+      collecting listing fees whether or not anyone moves in.
+    </p>
+
+    <p style="margin:0; padding:12px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; color:#7f1d1d; line-height:1.6;">
+      <strong>If a Success Fee isn't paid:</strong> you'll get a reminder
+      first. If it's still unpaid after a grace period, your account is
+      suspended - you won't be able to add new listings until it's settled.
+      Existing listings and your history aren't deleted, and reactivating
+      is as simple as clearing the outstanding fee.
+    </p>
+  </div>
+</details>
+
+{% if not active_placements %}
+  <div class="form-card" style="text-align:center;">
+    <p class="text-muted">No active placements yet. Once a tenant contacts you about a room, it'll show up here.</p>
+  </div>
+{% endif %}
+
+<div class="dashboard-grid">
+  {% for placement in active_placements %}
+  <div class="form-card premium-card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+      <div>
+        <h3 style="margin:0 0 4px;">{{ placement.room.title }}</h3>
+        <p class="text-muted" style="margin:0;">Tenant: {{ placement.tenant.get_full_name|default:placement.tenant.username }}</p>
+      </div>
+      <span class="badge">{{ placement.get_status_display }}</span>
+    </div>
+
+    <div style="margin-top:14px; font-size:0.9rem; color:#475569;">
+      {% if placement.viewing_date %}
+        <p style="margin:4px 0;">📅 Viewing: {{ placement.viewing_date|date:"d M Y, H:i" }}</p>
+      {% endif %}
+      {% if placement.move_in_date %}
+        <p style="margin:4px 0;">🏠 Move-in: {{ placement.move_in_date|date:"d M Y" }}</p>
+      {% endif %}
+    </div>
+
+    {% if placement.status == "success_fee_due" or placement.status == "paid" %}
+      <div style="margin-top:12px; padding:10px 14px; background:#fff7ed; border:1px solid #fed7aa; border-radius:12px;">
+        <strong>Success Fee:</strong> R{{ placement.invoice.amount|default:placement.expected_success_fee }}
+        &nbsp;·&nbsp;
+        <span class="text-muted">{{ placement.invoice.get_status_display|default:"Pending" }}</span>
+      </div>
+    {% endif %}
+
+    {% if placement.status == "verification_required" %}
+      <div style="margin-top:12px; padding:10px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:#7f1d1d;">
+        ⚠ Move-in confirmations don't match. Our team is reviewing this - we'll be in touch.
+      </div>
+    {% elif placement.awaiting_move_in_confirmation and placement.landlord_confirmed_move_in is None %}
+      <a href="{% url 'placements:confirm_move_in' placement.id %}" class="btn-primary" style="margin-top:12px; display:inline-block;">
+        Confirm Move-In
+      </a>
+    {% endif %}
+
+    <a href="{% url 'placements:update_placement' placement.id %}" class="btn-secondary" style="margin-top:12px; display:inline-block;">
+      Update Placement
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+{% if all_placements|length > active_placements|length %}
+  <h2 class="page-title" style="margin-top:36px;">Placement History</h2>
+  <div class="dashboard-grid">
+    {% for placement in all_placements %}
+      {% if placement.status == "paid" or placement.status == "cancelled" %}
+      <div class="form-card" style="opacity:0.75;">
+        <h3 style="margin:0 0 4px;">{{ placement.room.title }}</h3>
+        <p class="text-muted" style="margin:0;">{{ placement.tenant.get_full_name|default:placement.tenant.username }} · {{ placement.get_status_display }}</p>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% endblock %}

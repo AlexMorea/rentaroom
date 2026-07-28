@@ -5004,3 +5004,85 @@ display: none;
   border: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
+/* =====================================================================
+   MINIMAL SPACING UTILITIES
+   9 templates already use these Bootstrap-style class names (py-5,
+   mt-3/4/5, mb-5) expecting spacing utilities, but none were ever
+   defined anywhere in the project - completely dead classes. Adding
+   only the exact set actually used, not a full utility framework.
+===================================================================== */
+.py-5 { padding-top: 3rem; padding-bottom: 3rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-4 { margin-top: 1.5rem; }
+.mt-5 { margin-top: 3rem; }
+.mb-5 { margin-bottom: 3rem; }
+
+@media (max-width: 600px) {
+  .py-5 { padding-top: 1.75rem; padding-bottom: 1.75rem; }
+  .mt-5 { margin-top: 1.75rem; }
+  .mb-5 { margin-bottom: 1.75rem; }
+}
+
+/* =====================================================================
+   CREATE-ROOM FORM — section grouping
+   The form has 19 fields with no visual grouping (one long flat list).
+   These classes break it into clear sections and give the multi-unit-
+   specific fields a native <details> disclosure so a landlord listing
+   one available room (the common case, and already the model's
+   default) sees a short form, not a wall of fields. No JS added -
+   <details>/<summary> is native HTML, and the existing availability
+   JS in create_room.html targets field IDs, which don't move.
+===================================================================== */
+.form-section-title {
+  grid-column: 1 / -1;
+  margin: 18px 0 2px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.form-grid > .form-section-title:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.form-section-details {
+  grid-column: 1 / -1;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 4px 16px;
+  background: #f8fafc;
+}
+
+.form-section-details summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 700;
+  color: #1e293b;
+  list-style: none;
+}
+
+.form-section-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.form-section-details summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.15s ease;
+  color: #2563eb;
+}
+
+.form-section-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.form-section-details .form-grid {
+  padding-bottom: 16px;
+}

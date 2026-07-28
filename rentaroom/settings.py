@@ -18,6 +18,14 @@ except ImportError:
 # DEBUG should be determined early so we can enforce SECRET_KEY requirements
 DEBUG = os.environ.get("DEBUG", "0") == "1"
 
+# Whether flag_overdue_placement_fees actually suspends landlord accounts
+# for unpaid Success Fees (14+ days overdue), or just warns and reports
+# what it WOULD do. Defaults to False on purpose - this is a real
+# consequence for real users and should be a conscious decision, not
+# something that ships silently turned on. Flip to True (or set the
+# PLACEMENT_FEE_AUTO_SUSPEND=1 env var) once you're ready to enforce it.
+PLACEMENT_FEE_AUTO_SUSPEND = os.environ.get("PLACEMENT_FEE_AUTO_SUSPEND", "0") == "1"
+
 # Prefer an explicit SECRET_KEY via env. In development (DEBUG=True) generate
 # a strong ephemeral key if none is provided. In production require the env var.
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -82,6 +90,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
     "listings",
     "services",
+    "placements",
 ]
 
 # Use BigAutoField by default to silence model warnings about AutoField

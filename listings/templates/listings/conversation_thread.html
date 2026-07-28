@@ -1,0 +1,58 @@
+{% extends "listings/base.html" %}
+{% block title %}Conversation | {{ room.title }}{% endblock %}
+{% block content %}
+
+<div style="max-width:640px; margin:0 auto;">
+
+  <a href="{% url 'inbox' %}" class="text-muted" style="display:inline-block; margin-bottom:14px; text-decoration:none;">
+    ← Back to Messages
+  </a>
+
+  <div class="form-card" style="margin-bottom:16px;">
+    <h2 style="margin:0 0 4px; font-size:1.2rem;">
+      {{ other_user.get_full_name|default:other_user.username }}
+    </h2>
+    <p class="text-muted" style="margin:0;">
+      📍 <a href="{% url 'room_detail' room.id %}" style="color:inherit;">{{ room.title }}</a>
+    </p>
+  </div>
+
+  <div class="form-card" style="display:flex; flex-direction:column; gap:12px; max-height:55vh; overflow-y:auto; margin-bottom:16px;">
+    {% for msg in thread %}
+      {% if msg.sender_id == request.user.id %}
+        <div style="align-self:flex-end; max-width:80%; background:#2563eb; color:#fff; padding:10px 14px; border-radius:14px 14px 4px 14px;">
+          <p style="margin:0; word-wrap:break-word;">{{ msg.body }}</p>
+          <small style="opacity:0.75; display:block; margin-top:4px; font-size:0.72rem;">{{ msg.created_at|date:"d M, H:i" }}</small>
+        </div>
+      {% else %}
+        <div style="align-self:flex-start; max-width:80%; background:#f1f5f9; color:#1e293b; padding:10px 14px; border-radius:14px 14px 14px 4px;">
+          <p style="margin:0; word-wrap:break-word;">{{ msg.body }}</p>
+          <small class="text-muted" style="display:block; margin-top:4px; font-size:0.72rem;">{{ msg.created_at|date:"d M, H:i" }}</small>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="text-muted" style="text-align:center; margin:0;">No messages yet - say hello!</p>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="form-card" style="display:flex; gap:10px; align-items:flex-end;">
+    {% csrf_token %}
+    <textarea
+      name="body"
+      class="input"
+      placeholder="Type your message…"
+      required
+      rows="2"
+      style="flex:1; resize:none;"
+    ></textarea>
+    <button type="submit" class="btn-primary">Send</button>
+  </form>
+
+  <p class="text-muted" style="text-align:center; font-size:0.8rem; margin-top:10px;">
+    🔒 Messages stay inside Rooms4You. We never share your number or email
+    with the other person.
+  </p>
+
+</div>
+
+{% endblock %}

@@ -1,4 +1,5 @@
 import re
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
@@ -6,7 +7,7 @@ from datetime import timedelta
 from django.db.models import Count, Q, F, IntegerField, ExpressionWrapper, Avg
 from django.conf import settings
 POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse, Http404
 from django.contrib.auth.views import PasswordResetView
 from django.urls import reverse
 from django.core.cache import cache
@@ -99,6 +100,75 @@ def landlord_rooms(request):
             "paginator": paginator,
         },
     )
+
+
+@login_required
+def toggle_room_vacancy(request, room_id):
+    """
+    A single-click vacancy toggle for the landlord's room list, so
+    marking a room occupied/vacant doesn't require opening the full
+    edit form and finding the right field.
+
+    Always normalizes availability_status to "now": Room.clean() puts
+    extra constraints on "from" (requires available_from, forces
+    available_units=0) and "mixed" (available_units must be strictly
+    between 0 and total_units) - constraints this quick toggle has no
+    way to satisfy without more input from the landlord. "now" has no
+    such constraint, and available_units<=0 already renders as "Fully
+    occupied" regardless of status text (see Room.availability_badge_text/
+    availability_state), so this stays visually correct either way.
+    """
+    room = get_object_or_404(Room, id=room_id, owner=request.user)
+
+    if request.method != "POST":
+        return redirect("landlord_rooms")
+
+    if room.is_available and room.available_units > 0:
+        room.is_available = False
+        room.available_units = 0
+        room.availability_status = "now"
+        messages.success(request, f'"{room.title}" marked as occupied.')
+    else:
+        room.is_available = True
+        room.available_units = max(room.total_units, 1)
+        room.availability_status = "now"
+        messages.success(request, f'"{room.title}" marked as available.')
+
+    room.save()
+    return redirect("landlord_rooms")
+
+
+def landlord_profile(request, user_id):
+    """
+    Public-facing profile page for a landlord - linked from room cards
+    and room_detail so a tenant can see who they'd be renting from
+    without that requiring any direct contact info exchange.
+    """
+    landlord = get_object_or_404(User, id=user_id)
+
+    if not (hasattr(landlord, "profile") and landlord.profile.role == "landlord"):
+        raise Http404("This user does not have a landlord profile.")
+
+    rooms = (
+        Room.objects.filter(owner=landlord, is_available=True)
+        .prefetch_related(
+            Prefetch("images", queryset=RoomImage.objects.only("id", "image", "room_id"))
+        )
+        .annotate(avg_rating_value=Avg("reviews__rating"))
+        .order_by("-created_at")
+    )
+
+    rating_agg = Review.objects.filter(room__owner=landlord).aggregate(
+        avg=Avg("rating"), count=Count("id")
+    )
+
+    return render(request, "listings/landlord_profile.html", {
+        "landlord": landlord,
+        "rooms": rooms,
+        "active_room_count": rooms.count(),
+        "avg_rating": rating_agg["avg"],
+        "review_count": rating_agg["count"] or 0,
+    })
 
 
 @login_required
@@ -1582,15 +1652,34 @@ def add_review(request, room_id):
 
 @login_required
 def track_contact(request, room_id, method):
+    """
+    Previously exposed the landlord's raw phone number (tel:) and email
+    (mailto:) directly to any tenant who clicked these buttons, and the
+    "WhatsApp" button opened a chat straight to the landlord's personal
+    WhatsApp. That's exactly what Rooms4You is meant to prevent - the
+    platform is supposed to be the connection between tenants and
+    landlords, not a directory that hands out personal contact details.
+
+    Now all three buttons do the same underlying thing - start (or
+    continue) the in-app conversation with the landlord, with a message
+    pre-filled to match the intent behind the button the tenant clicked.
+    RoomStat tracking is unchanged (still contact_phone/contact_whatsapp/
+    contact_email), so the ranking system's scoring keeps working exactly
+    as before - only the destination changed, not the analytics.
+    """
     if method not in ["phone", "whatsapp", "email"]:
         return HttpResponseForbidden("Invalid contact method.")
 
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
+    if request.user.id == room.owner_id:
+        messages.error(request, "You can't contact yourself about your own listing.")
+        return redirect("room_detail", pk=room.id)
+
     cache_key = f"contact:{request.user.id}:{room.id}:{method}"
 
     if cache.get(cache_key):
-        return redirect("room_detail", pk=room.id)
+        return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
     cache.set(cache_key, True, 300)
 
@@ -1601,53 +1690,20 @@ def track_contact(request, room_id, method):
     )
     Contact.objects.get_or_create(room=room, user=request.user)
 
-    phone_raw = (room.contact_phone or "").strip()
-    whatsapp_raw = (room.contact_whatsapp or "").strip() or phone_raw
-    phone_digits = re.sub(r"\D", "", whatsapp_raw)
-    landlord_email = (room.contact_email or room.owner.email or "").strip()
+    prefill_messages = {
+        "phone": "Hi, I'd like to arrange a call about this room. What's a good time to reach you?",
+        "whatsapp": "Hi, I'm interested in this room and would like to chat. When are you available?",
+        "email": f"Hi, I'm interested in your room listing ({room.title}) in {room.location}.",
+    }
 
-    if method == "phone":
-        tel = phone_raw.replace(" ", "")
-        if not tel:
-            return redirect("room_detail", pk=room.id)
+    Message.objects.create(
+        room=room,
+        sender=request.user,
+        recipient=room.owner,
+        body=prefill_messages[method],
+    )
 
-        return render(
-            request,
-            "listings/external_link.html",
-            {
-                "title": "Calling landlord…",
-                "link": f"tel:{tel}",
-                "button_text": "Tap to Call",
-                "fallback_text": "If your phone didn’t open the dialer automatically, tap the button below.",
-            },
-        )
-
-    if method == "whatsapp":
-
-        if not phone_digits or len(phone_digits) < 9:
-            return redirect("room_detail", pk=room.id)
-
-        whatsapp_url = f"https://wa.me/{phone_digits}"
-
-        return render(
-            request,
-            "listings/external_link.html",
-            {
-                "title": "Opening WhatsApp…",
-                "link": whatsapp_url,
-                "button_text": "Open WhatsApp",
-                "fallback_text": "If WhatsApp didn’t open automatically, tap the button below.",
-            },
-        )
-
-    if method == "email":
-        if not landlord_email:
-            return redirect("room_detail", pk=room.id)
-
-        subject = quote(f"Rooms4You enquiry: {room.title}")
-        body = quote(f"Hi, I’m interested in your room listing ({room.title}) in {room.location}.")
-        mailto = f"mailto:{landlord_email}?subject={subject}&body={body}"
-
+    try:
         send_template_email(
             subject="New inquiry on your listing",
             to_email=room.owner.email,
@@ -1658,19 +1714,11 @@ def track_contact(request, room_id, method):
                 "year": 2026
             }
         )
+    except Exception:
+        logger.warning("Failed to send new-inquiry notification email for room %s", room.id)
 
-        return render(
-            request,
-            "listings/external_link.html",
-            {
-                "title": "Opening email…",
-                "link": mailto,
-                "button_text": "Open Email",
-                "fallback_text": "If your email app didn’t open automatically, tap the button below.",
-            },
-        )
-
-    return redirect("room_detail", pk=room.id)
+    messages.success(request, "Message sent to the landlord - you'll get their reply right here.")
+    return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
 
 @login_required
@@ -1972,67 +2020,148 @@ def confirm_phone_change(request):
 
 @login_required
 def send_message(request, room_id):
+    """
+    Kept for backward compatibility with any old links/bookmarks pointing
+    here - immediately hands off to the real two-way conversation view.
+    New code should link straight to conversation_thread.
+    """
     room = get_object_or_404(Room, id=room_id)
 
-    if request.method != "POST":
-        return redirect("room_detail", pk=room.id)
+    if request.user.id == room.owner_id:
+        messages.error(request, "Open a specific conversation to reply to a tenant.")
+        return redirect("inbox")
 
-    body = (request.POST.get("body") or "").strip()
-    body = strip_tags(body)
+    if request.method == "POST":
+        return conversation_thread(request, room_id=room.id, other_user_id=room.owner_id)
 
-    if not body:
-        messages.error(request, "Message cannot be empty.")
-        return redirect("room_detail", pk=room.id)
-
-    if len(body) > 2000:
-        messages.error(request, "Message too long.")
-        return redirect("room_detail", pk=room.id)
-
-    if request.user == room.owner:
-        messages.error(request, "You cannot message yourself.")
-        return redirect("room_detail", pk=room.id)
-    
-    profile = request.user.profile
-    if profile.role != "tenant":
-        return HttpResponseForbidden()
-
-    recent_count = Message.objects.filter(
-        sender=request.user,
-        created_at__gte=timezone.now() - timedelta(minutes=1)
-    ).count()
-
-    if recent_count >= 5:
-        messages.error(
-            request,
-            "Too many messages sent. Please wait a minute."
-        )
-        return redirect("room_detail", pk=room.id)
-
-    Message.objects.create(
-        room=room,
-        sender=request.user,
-        recipient=room.owner,
-        body=body,
-    )
-
-    Contact.objects.get_or_create(
-        room=room,
-        user=request.user
-    )
-
-    messages.success(request, "Message sent to landlord.")
-    return redirect("room_detail", pk=room.id)
+    return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
 
 @login_required
-@user_passes_test(is_landlord)
+def conversation_thread(request, room_id, other_user_id):
+    """
+    A single message thread between two specific users about one room.
+    Works identically for both roles:
+      - Tenant's view: other_user_id is always the room's owner.
+      - Landlord's view: other_user_id is whichever tenant they're
+        replying to (a room can have many separate tenant conversations).
+
+    This - not a new model - is what actually fixes "messaging should
+    work between landlord and tenant": the old send_message() only
+    allowed tenant-to-landlord and explicitly forbade the room owner
+    from using it, and inbox() was landlord-only, so a landlord had no
+    way to reply and a tenant had no way to see a reply even if one
+    existed.
+    """
+    room = get_object_or_404(Room, id=room_id)
+    other_user = get_object_or_404(User, id=other_user_id)
+
+    is_owner = request.user.id == room.owner_id
+
+    if is_owner:
+        if other_user.id == room.owner_id:
+            return HttpResponseForbidden("Invalid conversation.")
+    else:
+        # A tenant can only have a thread with this room's owner - not
+        # with some arbitrary other user.
+        if other_user.id != room.owner_id:
+            return HttpResponseForbidden("Invalid conversation.")
+        if request.user.id == room.owner_id:
+            return HttpResponseForbidden()
+
+    if request.method == "POST":
+        body = strip_tags((request.POST.get("body") or "").strip())
+
+        if not body:
+            messages.error(request, "Message cannot be empty.")
+        elif len(body) > 2000:
+            messages.error(request, "Message too long.")
+        else:
+            recent_count = Message.objects.filter(
+                sender=request.user,
+                created_at__gte=timezone.now() - timedelta(minutes=1)
+            ).count()
+
+            if recent_count >= 5:
+                messages.error(request, "Too many messages sent. Please wait a minute.")
+            else:
+                Message.objects.create(
+                    room=room,
+                    sender=request.user,
+                    recipient=other_user,
+                    body=body,
+                )
+                # Contact is always attributed to whichever party isn't
+                # the room owner (i.e. the tenant side of the conversation).
+                Contact.objects.get_or_create(
+                    room=room,
+                    user=request.user if not is_owner else other_user,
+                )
+
+        return redirect("conversation_thread", room_id=room.id, other_user_id=other_user.id)
+
+    thread_qs = (
+        Message.objects.filter(room=room)
+        .filter(
+            (Q(sender=request.user) & Q(recipient=other_user))
+            | (Q(sender=other_user) & Q(recipient=request.user))
+        )
+        .select_related("sender", "recipient")
+        .order_by("created_at")
+    )
+
+    # Mark anything sent TO the current user as read now that they've
+    # opened the thread.
+    Message.objects.filter(
+        room=room, sender=other_user, recipient=request.user, is_read=False
+    ).update(is_read=True)
+
+    return render(request, "listings/conversation_thread.html", {
+        "room": room,
+        "other_user": other_user,
+        "is_owner": is_owner,
+        "thread": thread_qs,
+    })
+
+
+@login_required
 def inbox(request):
-    messages_qs = Message.objects.filter(
-        recipient=request.user
-    ).select_related("sender", "room").order_by("-created_at")
+    """
+    Works for both tenants and landlords now (previously landlord-only).
+    Groups every message the user has sent or received into one row per
+    (room, other person), showing the latest message and an unread count -
+    a normal "conversation list" rather than a flat message log.
+    """
+    msgs = (
+        Message.objects.filter(Q(sender=request.user) | Q(recipient=request.user))
+        .select_related("room", "sender", "recipient")
+        .order_by("-created_at")
+    )
+
+    conversations = {}
+    for m in msgs:
+        other = m.recipient if m.sender_id == request.user.id else m.sender
+        key = (m.room_id, other.id)
+
+        if key not in conversations:
+            conversations[key] = {
+                "room": m.room,
+                "other_user": other,
+                "last_message": m,
+                "unread_count": 0,
+            }
+
+        if m.recipient_id == request.user.id and not m.is_read:
+            conversations[key]["unread_count"] += 1
+
+    conversation_list = sorted(
+        conversations.values(),
+        key=lambda c: c["last_message"].created_at,
+        reverse=True,
+    )
 
     return render(request, "listings/inbox.html", {
-        "messages": messages_qs
+        "conversations": conversation_list,
     })
 
 
@@ -2050,3 +2179,24 @@ def delete_account(request):
         return redirect("room_list")
 
     return render(request, "listings/delete_account.html")
+
+
+def offline_page(request):
+    """Served by the service worker when a navigation request fails
+    while offline and nothing cached matches it."""
+    return render(request, "listings/offline.html")
+
+
+def service_worker_view(request):
+    """
+    Serves the service worker at the site ROOT (e.g. rooms4you.co.za/service-worker.js)
+    rather than from /static/js/. A service worker's default scope is
+    limited to the directory it's served from - if this lived at
+    /static/js/service-worker.js it would only be able to control
+    /static/js/*, not the actual site pages. Serving it via a root-level
+    view sidesteps needing a Service-Worker-Allowed header on WhiteNoise.
+    """
+    sw_path = os.path.join(settings.BASE_DIR, "static", "js", "service-worker.js")
+    with open(sw_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return HttpResponse(content, content_type="application/javascript")

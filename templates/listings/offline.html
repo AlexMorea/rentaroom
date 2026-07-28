@@ -1,0 +1,18 @@
+{% extends "listings/base.html" %}
+{% block title %}You're Offline | Rooms4You{% endblock %}
+{% block content %}
+
+<div class="form-card" style="text-align:center; max-width:480px; margin:60px auto;">
+  <div style="font-size:56px; margin-bottom:14px;">📡</div>
+  <h1 class="page-title" style="font-size:1.6rem;">You're Offline</h1>
+  <p class="text-muted">
+    It looks like you've lost your internet connection. Check your signal
+    and try again - anything you already viewed recently may still be
+    available.
+  </p>
+  <button onclick="window.location.reload()" class="btn-primary" style="margin-top:14px;">
+    Try Again
+  </button>
+</div>
+
+{% endblock %}

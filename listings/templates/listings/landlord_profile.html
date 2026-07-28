@@ -1,0 +1,63 @@
+{% extends "listings/base.html" %}
+{% block title %}{{ landlord.get_full_name|default:landlord.username }} | Rooms4You{% endblock %}
+{% block content %}
+
+<div class="form-card" style="text-align:center; max-width:640px; margin:0 auto 24px;">
+  <div
+    style="
+      width:80px; height:80px; border-radius:50%; margin:0 auto 14px;
+      background:linear-gradient(135deg, #2563eb, #1e40af); color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:2rem; font-weight:800;
+    "
+  >
+    {{ landlord.first_name|default:landlord.username|slice:":1"|upper }}
+  </div>
+
+  <h1 class="page-title" style="font-size:1.5rem; margin-bottom:4px;">
+    {{ landlord.get_full_name|default:landlord.username }}
+  </h1>
+
+  <p class="text-muted" style="margin:0 0 14px;">
+    Member since {{ landlord.date_joined|date:"M Y" }}
+  </p>
+
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+    {% if landlord.profile.is_verified_landlord %}
+      <span class="badge badge-verified">★ Verified Landlord</span>
+    {% endif %}
+    {% if landlord.profile.is_phone_verified %}
+      <span class="badge">✓ Phone Verified</span>
+    {% endif %}
+    {% if landlord.profile.is_email_verified %}
+      <span class="badge">✓ Email Verified</span>
+    {% endif %}
+  </div>
+
+  <div style="display:flex; gap:24px; justify-content:center;">
+    <div>
+      <p style="margin:0; font-size:1.4rem; font-weight:800;">{{ active_room_count }}</p>
+      <p class="text-muted" style="margin:0; font-size:0.82rem;">Active Listings</p>
+    </div>
+    <div>
+      <p style="margin:0; font-size:1.4rem; font-weight:800;">
+        {% if avg_rating %}⭐ {{ avg_rating|floatformat:1 }}{% else %}—{% endif %}
+      </p>
+      <p class="text-muted" style="margin:0; font-size:0.82rem;">{{ review_count }} review{{ review_count|pluralize }}</p>
+    </div>
+  </div>
+</div>
+
+<h2 class="page-title" style="font-size:1.2rem;">Listings from {{ landlord.first_name|default:landlord.username }}</h2>
+
+<div class="room-grid">
+  {% include "listings/_room_cards.html" with rooms=rooms %}
+</div>
+
+{% if not rooms %}
+<div class="form-card" style="text-align:center;">
+  <p class="text-muted">No active listings from this landlord right now.</p>
+</div>
+{% endif %}
+
+{% endblock %}

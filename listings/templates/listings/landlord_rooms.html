@@ -24,12 +24,23 @@
     <div>
       <strong>{{ room.title }}</strong>
       <div style="opacity: 0.75; font-size: 0.9rem">{{ room.location }}</div>
-      <div style="opacity: 0.75; font-size: 0.85rem; margin-top: 4px">
-        {{ room.availability_badge_text }}
+      <div style="margin-top: 6px">
+        <span class="availability-badge {{ room.availability_state }}">
+          {{ room.availability_badge_text }}
+        </span>
       </div>
     </div>
 
-    <div class="room-actions">
+    <div class="room-actions" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form">
+        {% csrf_token %}
+        {% if room.is_available and room.available_units > 0 %}
+          <button type="submit" class="vacancy-toggle-btn mark-occupied">Mark Occupied</button>
+        {% else %}
+          <button type="submit" class="vacancy-toggle-btn mark-available">Mark Available</button>
+        {% endif %}
+      </form>
+
       <a href="{% url 'upload_room_images' room.id %}">Images</a> |
       <a href="{% url 'edit_room' room.id %}">Edit</a> |
       <a

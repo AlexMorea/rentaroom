@@ -132,6 +132,13 @@ class Room(models.Model):
     @property
     def availability_badge_text(self):
         units = f"{self.available_units}/{self.total_units} units"
+
+        if not self.is_available or self.available_units <= 0:
+            # Was previously possible to show "0/1 units - Available now",
+            # which flatly contradicts itself. Zero vacancy always wins,
+            # regardless of what availability_status says.
+            return f"{units} • Fully occupied"
+
         if self.availability_status == "now":
             return f"{units} • Available now"
         if self.availability_status == "from":
@@ -139,6 +146,16 @@ class Room(models.Model):
                 return f"{units} • Available from {self.available_from.strftime('%d %b %Y')}"
             return f"{units} • Available from (date not set)"
         return f"{units} • Some available now"
+
+    @property
+    def availability_state(self):
+        """Used purely for CSS color-coding on room cards/landlord lists -
+        keeps that styling logic out of templates."""
+        if not self.is_available or self.available_units <= 0:
+            return "occupied"
+        if self.availability_status == "from":
+            return "upcoming"
+        return "available"
 
     def __str__(self):
         return f"{self.title} ({self.owner.username})"

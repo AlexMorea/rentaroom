@@ -113,38 +113,43 @@
 
           {% if user.is_authenticated %}
 
-          <div class="landlord-card">
+          <a href="{% url 'landlord_profile' room.owner.id %}" class="landlord-card" style="text-decoration:none; color:inherit;">
             <div class="landlord-avatar">
               {{ room.owner.first_name|default:"L"|slice:":1"|upper }}
             </div>
 
             <div>
               <strong>{{ room.owner.first_name }} {{ room.owner.last_name }}</strong>
-              <div class="landlord-status">Verified landlord</div>
+              <div class="landlord-status">Verified landlord · View profile →</div>
             </div>
-          </div>
+          </a>
 
           <div class="contact-actions">
 
             {% if room.contact_phone %}
-            <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}">📞 Call Landlord</a>
+            <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}">📞 Request a Call</a>
             {% endif %}
 
             {% if room.contact_whatsapp or room.contact_phone %}
             <a class="btn-primary whatsapp-btn" href="{% url 'track_contact' room.id 'whatsapp' %}">
-              <i class="fa-brands fa-whatsapp"></i> WhatsApp Landlord
+              <i class="fa-brands fa-whatsapp"></i> Chat via Rooms4You
             </a>
             {% endif %}
 
             {% if room.owner.email or room.contact_email %}
             <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}">
-              📧 Email Landlord
+              📧 Message Landlord
             </a>
             {% endif %}
 
           </div>
 
-          <form method="post" action="{% url 'send_message' room.id %}" class="message-form">
+          <p class="text-muted" style="font-size:0.85rem; margin: 6px 0 14px;">
+            🔒 For your safety, all communication happens inside Rooms4You -
+            we never share your number or the landlord's number directly.
+          </p>
+
+          <form method="post" action="{% url 'conversation_thread' room.id room.owner.id %}" class="message-form">
             {% csrf_token %}
             <textarea name="body" class="input textarea" placeholder="Hi, I’m interested in this room..." required></textarea>
             <button class="btn-primary">Message Landlord</button>

@@ -100,6 +100,25 @@
             📊 Dashboard
         </a>
 
+        <a href="{% url 'placements:landlord_dashboard' %}">
+            🤝 My Placements
+            <span
+                style="
+                float:right;
+                font-size:.70rem;
+                background:#3b82f6;
+                color:#fff;
+                padding:2px 8px;
+                border-radius:999px;
+                ">
+                NEW
+            </span>
+        </a>
+
+        <a href="{% url 'inbox' %}">
+            💬 Messages
+        </a>
+
         <a href="{% url 'services:bakkie_home' %}">
             🚚 Bakkie4You
         </a>
@@ -124,6 +143,25 @@
     <!-- Tenant -->
 
     {% if user.profile.role == "tenant" %}
+
+        <a href="{% url 'placements:tenant_dashboard' %}">
+            🤝 My Placements
+            <span
+                style="
+                float:right;
+                font-size:.70rem;
+                background:#3b82f6;
+                color:#fff;
+                padding:2px 8px;
+                border-radius:999px;
+                ">
+                NEW
+            </span>
+        </a>
+
+        <a href="{% url 'inbox' %}">
+            💬 Messages
+        </a>
 
         <a href="{% url 'services:bakkie_home' %}">
             🚚 Bakkie4You
