@@ -127,27 +127,26 @@
           <div class="contact-actions">
 
             {% if room.contact_phone %}
-            <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}">📞 Request a Call</a>
+            <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}" target="_blank" rel="noopener noreferrer">📞 Call Landlord</a>
             {% endif %}
 
             {% if room.contact_whatsapp or room.contact_phone %}
-            <a class="btn-primary whatsapp-btn" href="{% url 'track_contact' room.id 'whatsapp' %}">
-              <i class="fa-brands fa-whatsapp"></i> Chat via Rooms4You
+            <a class="btn-primary whatsapp-btn" href="{% url 'track_contact' room.id 'whatsapp' %}" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp Landlord
             </a>
             {% endif %}
 
             {% if room.owner.email or room.contact_email %}
-            <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}">
-              📧 Message Landlord
+            <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}" target="_blank" rel="noopener noreferrer">
+              📧 Email Landlord
             </a>
             {% endif %}
 
           </div>
 
-          <p class="text-muted" style="font-size:0.85rem; margin: 6px 0 14px;">
-            🔒 For your safety, all communication happens inside Rooms4You -
-            we never share your number or the landlord's number directly.
-          </p>
+          <div class="section-header" style="margin-top:18px;">
+            <h3>Or chat right here</h3>
+          </div>
 
           <form method="post" action="{% url 'conversation_thread' room.id room.owner.id %}" class="message-form">
             {% csrf_token %}
