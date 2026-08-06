@@ -2,57 +2,232 @@
 {% block title %}Conversation | {{ room.title }}{% endblock %}
 {% block content %}
 
-<div style="max-width:640px; margin:0 auto;">
+<div class="conversation-wrap">
 
-  <a href="{% url 'inbox' %}" class="text-muted" style="display:inline-block; margin-bottom:14px; text-decoration:none;">
+  <a href="{% url 'inbox' %}" class="text-muted conv-back-link">
     ← Back to Messages
   </a>
 
-  <div class="form-card" style="margin-bottom:16px;">
-    <h2 style="margin:0 0 4px; font-size:1.2rem;">
-      {{ other_user.get_full_name|default:other_user.username }}
-    </h2>
-    <p class="text-muted" style="margin:0;">
-      📍 <a href="{% url 'room_detail' room.id %}" style="color:inherit;">{{ room.title }}</a>
-    </p>
+  <div class="form-card conv-header">
+    <div class="conv-avatar">
+      {{ other_user.first_name|default:other_user.username|slice:":1"|upper }}
+    </div>
+    <div>
+      <h2 class="conv-header-name">
+        {{ other_user.get_full_name|default:other_user.username }}
+      </h2>
+      <p class="text-muted conv-header-room">
+        📍 <a href="{% url 'room_detail' room.id %}" class="conv-header-room-link">{{ room.title }}</a>
+      </p>
+    </div>
   </div>
 
-  <div class="form-card" style="display:flex; flex-direction:column; gap:12px; max-height:55vh; overflow-y:auto; margin-bottom:16px;">
+  <div class="form-card conv-thread" id="convThread">
     {% for msg in thread %}
       {% if msg.sender_id == request.user.id %}
-        <div style="align-self:flex-end; max-width:80%; background:#2563eb; color:#fff; padding:10px 14px; border-radius:14px 14px 4px 14px;">
-          <p style="margin:0; word-wrap:break-word;">{{ msg.body }}</p>
-          <small style="opacity:0.75; display:block; margin-top:4px; font-size:0.72rem;">{{ msg.created_at|date:"d M, H:i" }}</small>
+        <div class="bubble-row bubble-row-out">
+          <div class="bubble bubble-out">
+            <p class="bubble-text">{{ msg.body }}</p>
+            <small class="bubble-time bubble-time-out">{{ msg.created_at|date:"d M, H:i" }}</small>
+          </div>
         </div>
       {% else %}
-        <div style="align-self:flex-start; max-width:80%; background:#f1f5f9; color:#1e293b; padding:10px 14px; border-radius:14px 14px 14px 4px;">
-          <p style="margin:0; word-wrap:break-word;">{{ msg.body }}</p>
-          <small class="text-muted" style="display:block; margin-top:4px; font-size:0.72rem;">{{ msg.created_at|date:"d M, H:i" }}</small>
+        <div class="bubble-row bubble-row-in">
+          <div class="bubble-avatar">{{ other_user.first_name|default:other_user.username|slice:":1"|upper }}</div>
+          <div class="bubble bubble-in">
+            <p class="bubble-text">{{ msg.body }}</p>
+            <small class="text-muted bubble-time">{{ msg.created_at|date:"d M, H:i" }}</small>
+          </div>
         </div>
       {% endif %}
     {% empty %}
-      <p class="text-muted" style="text-align:center; margin:0;">No messages yet - say hello!</p>
+      <p class="text-muted conv-empty">No messages yet - say hello!</p>
     {% endfor %}
   </div>
 
-  <form method="post" class="form-card" style="display:flex; gap:10px; align-items:flex-end;">
+  <form method="post" class="form-card conv-composer" id="convComposer">
     {% csrf_token %}
     <textarea
       name="body"
-      class="input"
+      class="input conv-textarea"
       placeholder="Type your message…"
       required
       rows="2"
-      style="flex:1; resize:none;"
+      id="convTextarea"
     ></textarea>
-    <button type="submit" class="btn-primary">Send</button>
+    <button type="submit" class="btn-primary conv-send-btn">Send</button>
   </form>
 
-  <p class="text-muted" style="text-align:center; font-size:0.8rem; margin-top:10px;">
+  <p class="text-muted conv-privacy-note">
     🔒 Messages stay inside Rooms4You. We never share your number or email
     with the other person.
   </p>
 
 </div>
+
+<style>
+  /* Layout wrapper */
+  .conversation-wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding-bottom: 12px;
+  }
+
+  .conv-back-link {
+    display: inline-block;
+    margin-bottom: 14px;
+    text-decoration: none;
+  }
+
+  /* Header card */
+  .conv-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .conv-avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+  .conv-header-name { margin: 0 0 2px; font-size: 1.15rem; }
+  .conv-header-room { margin: 0; }
+  .conv-header-room-link { color: inherit; text-decoration: none; }
+
+  /* Message thread - deliberately NOT a flex container. Plain block
+     children stack vertically via normal document flow (margin-bottom
+     instead of gap), and flex is used only at the single .bubble-row
+     level below - no nested flex containers. This is simpler and more
+     universally reliable than nesting flex-in-flex, which is exactly
+     the pattern that was ambiguous to verify in testing. */
+  .conv-thread {
+    max-height: 55vh;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    scroll-behavior: smooth;
+  }
+  .conv-empty { text-align: center; margin: 0; }
+
+  .bubble-row {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .bubble-row:last-child { margin-bottom: 0; }
+  .bubble-row-out { justify-content: flex-end; }
+  .bubble-row-in { justify-content: flex-start; }
+
+  .bubble-avatar {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+  }
+
+  .bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 16px;
+  }
+  .bubble-out {
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .bubble-in {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-bottom-left-radius: 4px;
+  }
+  .bubble-text {
+    margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+  }
+  .bubble-time {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.72rem;
+  }
+  .bubble-time-out { opacity: 0.8; }
+
+  /* Composer - this is the fix: textarea is a full-width block element,
+     never a flex/grid item competing for space with the button. That
+     sidesteps the whole "flex item shrinks to near-zero width" bug
+     class entirely, rather than just patching one symptom of it. */
+  .conv-composer {
+    position: sticky;
+    bottom: 12px;
+    display: block;
+    z-index: 5;
+  }
+  .conv-textarea {
+    width: 100%;
+    display: block;
+    resize: none;
+    min-height: 64px;
+  }
+  .conv-send-btn {
+    display: block;
+    margin-top: 10px;
+    margin-left: auto;
+    min-width: 120px;
+  }
+
+  .conv-privacy-note {
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .conv-thread { max-height: 50vh; }
+    .conv-send-btn { width: 100%; }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Auto-scroll to the latest message so the conversation opens
+    // where you left off, not at the very first message.
+    const thread = document.getElementById("convThread");
+    if (thread) {
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    // Enter sends, Shift+Enter makes a new line - desktop convenience,
+    // harmless on mobile where the on-screen keyboard handles this itself.
+    const textarea = document.getElementById("convTextarea");
+    const form = document.getElementById("convComposer");
+    if (textarea && form) {
+      textarea.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          if (textarea.value.trim()) {
+            form.submit();
+          }
+        }
+      });
+    }
+  });
+</script>
 
 {% endblock %}

@@ -1,21 +1,23 @@
 {% load static %} {% load humanize %} {% load profile_extras %} {% for room in rooms %}
 
-<article class="room-card" data-room-id="{{ room.id }}">
+<article class="room-card rc-card" data-room-id="{{ room.id }}">
   <!-- ================= MEDIA ================= -->
-  <div class="room-media">
+  <div class="room-media rc-media">
+   <div class="rc-media-clip">
     <div
-      class="slider-shell"
+      class="slider-shell rc-slider-shell"
       data-slider
       data-room-url="{% url 'room_detail' room.id %}"
     >
       <!-- IMAGE TRACK -->
-      <div class="image-slider" data-slider-track>
+      <div class="image-slider rc-image-slider" data-slider-track>
         {% for img in room.images.all|slice:":10" %}
 
         <img
           src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
           alt="{{ room.title }}"
           loading="lazy"
+          class="rc-img"
         />
 
         {% empty %}
@@ -24,6 +26,7 @@
           src="{% static 'img/placeholder.jpg' %}"
           alt="No image available"
           loading="lazy"
+          class="rc-img"
         />
 
         {% endfor %}
@@ -33,7 +36,7 @@
       {% if room.images.all|length > 1 %}
 
       <button
-        class="slider-btn slider-prev"
+        class="slider-btn slider-prev rc-slider-btn rc-slider-prev"
         data-slider-prev
         type="button"
         aria-label="Previous image"
@@ -42,7 +45,7 @@
       </button>
 
       <button
-        class="slider-btn slider-next"
+        class="slider-btn slider-next rc-slider-btn rc-slider-next"
         data-slider-next
         type="button"
         aria-label="Next image"
@@ -52,13 +55,13 @@
 
       {% endif %}
 
-      <div class="slider-dots" data-slider-dots></div>
+      <div class="slider-dots rc-slider-dots" data-slider-dots></div>
     </div>
 
     <!-- BADGES -->
     <div class="room-badges">
       {% if popular_ids and room.id in popular_ids %}
-        <span class="badge badge-popular"> Popular </span>
+        <span class="badge badge-popular">🔥 Popular</span>
       {% endif %}
 
       {% with owner_profile=room.owner|profile %}
@@ -67,41 +70,299 @@
         {% endif %}
       {% endwith %}
     </div>
+   </div>
   </div>
 
   <!-- ================= INFO ================= -->
   <a
     href="{% url 'room_detail' room.id %}"
-    class="room-link"
+    class="room-link rc-link"
     aria-label="View {{ room.title }}"
   >
-    <div class="room-info">
-      <div class="room-top">
-        <h3 class="room-title">{{ room.title }}</h3>
-
-        <p class="room-price">
-          R{{ room.price|intcomma }}
-          <span>/month</span>
-        </p>
+    <div class="room-info rc-info">
+      <div class="rc-price-chip">
+        <span class="rc-price-amount">R{{ room.price|floatformat:0|intcomma }}</span>
+        <span class="rc-price-period">/month</span>
       </div>
 
-      <p class="room-location">{{ room.location }}</p>
+      <h3 class="room-title rc-title">{{ room.title }}</h3>
 
-      <div class="room-meta-row">
-        <span class="availability-badge {{ room.availability_state }}">
+      <p class="room-location rc-location">📍 {{ room.location }}</p>
+
+      <div class="room-meta-row rc-meta-row">
+        <span class="availability-badge {{ room.availability_state }} rc-status rc-status-{{ room.availability_state }}">
+          <span class="rc-status-dot"></span>
           {{ room.availability_badge_text }}
         </span>
 
         {% if room.avg_rating_value %}
-          <span class="rating"> ⭐ {{ room.avg_rating_value|floatformat:1 }} </span>
+          <span class="rating rc-rating">⭐ {{ room.avg_rating_value|floatformat:1 }}</span>
         {% elif room.avg_rating %}
-          <span class="rating"> ⭐ {{ room.avg_rating|floatformat:1 }} </span>
+          <span class="rating rc-rating">⭐ {{ room.avg_rating|floatformat:1 }}</span>
         {% endif %}
       </div>
 
-      <p class="room-posted">Posted {{ room.created_at|timesince }} ago</p>
+      <p class="room-posted rc-posted">Posted {{ room.created_at|timesince }} ago</p>
     </div>
   </a>
 </article>
 
 {% endfor %}
+
+<style>
+  /* ===================================================================
+     PREMIUM ROOM CARDS
+     Signature element: the price tag overlapping the photo's corner -
+     like a real tag clipped onto the room, instead of price sitting as
+     plain text below the image (the default every listing site uses).
+     All original classes/data-attributes kept alongside these for
+     slider JS and any other existing logic - this only adds a new
+     visual layer, explicit enough to override without needing to know
+     what the old CSS does.
+     =================================================================== */
+
+  .rc-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+  }
+  .rc-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  }
+
+  .rc-media,
+  .room-media.rc-media {
+    position: relative;
+    width: 100%;
+    height: 0 !important;
+    padding-bottom: 75% !important; /* 4:3 ratio via the classic padding trick -
+      works on every browser ever made, unlike aspect-ratio which is
+      newer CSS. Given today's track record of real bugs on real
+      phones, not taking the chance here. */
+    margin: 0 !important;
+    background: #f1f5f9;
+    /* deliberately NO overflow:hidden here - this wrapper needs to let
+       the price tag hang below the photo without being clipped. Only
+       .rc-media-clip (below) clips, and only around the slider. */
+  }
+  .rc-media-clip {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    border-radius: 22px 22px 0 0;
+  }
+  .rc-slider-shell {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .rc-image-slider {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .rc-img {
+    width: 100%;
+    height: 100%;
+    flex: none;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .rc-card:hover .rc-img {
+    transform: scale(1.045);
+  }
+
+  .rc-slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 23, 42, 0.55);
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    flex-shrink: 0;
+  }
+  .rc-slider-prev { left: 10px; }
+  .rc-slider-next { right: 10px; }
+
+  .rc-slider-dots {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    z-index: 3;
+  }
+
+  /* Badges float top-left, on top of the photo */
+  .rc-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .rc-badge {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    backdrop-filter: blur(4px);
+  }
+  .rc-badge-popular {
+    background: rgba(249, 115, 22, 0.92);
+    color: #fff;
+  }
+  .rc-badge-verified {
+    background: rgba(255, 255, 255, 0.92);
+    color: #1e40af;
+  }
+
+  /* ===== Signature: the price chip ===== */
+  /* Sits at the top of the info area, in normal flow - no longer
+     overlapping the photo, since that looked like it was cutting into
+     the room photos rather than reading as an intentional tag. */
+  .rc-price-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 10px;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+    margin-bottom: 10px !important;
+  }
+  .rc-price-amount {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+  .rc-price-period {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+
+  .rc-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .rc-info,
+  .room-info.rc-info {
+    padding: 16px 18px 16px !important;
+    margin: 0 !important;
+  }
+
+  .rc-title {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .rc-location {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  .rc-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .rc-status {
+    flex-shrink: 0;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+  .rc-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .rc-status-available {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .rc-status-available .rc-status-dot { background: #16a34a; }
+
+  .rc-status-upcoming {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .rc-status-upcoming .rc-status-dot { background: #d97706; }
+
+  .rc-status-occupied {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+  .rc-status-occupied .rc-status-dot { background: #94a3b8; }
+
+  .rc-rating {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .rc-posted {
+    margin: 0;
+    font-size: 0.74rem;
+    color: #94a3b8;
+  }
+
+  @media (max-width: 480px) {
+    .rc-info,
+    .room-info.rc-info {
+      padding: 14px 14px 14px !important;
+      margin: 0 !important;
+    }
+    .rc-title { font-size: 1rem; }
+  }
+</style>

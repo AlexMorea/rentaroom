@@ -2,29 +2,25 @@
 {% block title %}{{ landlord.get_full_name|default:landlord.username }} | Rooms4You{% endblock %}
 {% block content %}
 
-<div class="form-card" style="text-align:center; max-width:640px; margin:0 auto 24px;">
-  <div
-    style="
-      width:80px; height:80px; border-radius:50%; margin:0 auto 14px;
-      background:linear-gradient(135deg, #2563eb, #1e40af); color:#fff;
-      display:flex; align-items:center; justify-content:center;
-      font-size:2rem; font-weight:800;
-    "
-  >
+<div class="landlord-hero">
+  <div class="landlord-hero-glow-a"></div>
+  <div class="landlord-hero-glow-b"></div>
+
+  <div class="landlord-avatar-lg">
     {{ landlord.first_name|default:landlord.username|slice:":1"|upper }}
   </div>
 
-  <h1 class="page-title" style="font-size:1.5rem; margin-bottom:4px;">
+  <h1 class="page-title landlord-name">
     {{ landlord.get_full_name|default:landlord.username }}
   </h1>
 
-  <p class="text-muted" style="margin:0 0 14px;">
+  <p class="text-muted landlord-since">
     Member since {{ landlord.date_joined|date:"M Y" }}
   </p>
 
-  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:16px;">
+  <div class="landlord-badges">
     {% if landlord.profile.is_verified_landlord %}
-      <span class="badge badge-verified">★ Verified Landlord</span>
+      <span class="badge badge-verified"> ★ Verified Landlord </span>
     {% endif %}
     {% if landlord.profile.is_phone_verified %}
       <span class="badge">✓ Phone Verified</span>
@@ -34,30 +30,177 @@
     {% endif %}
   </div>
 
-  <div style="display:flex; gap:24px; justify-content:center;">
-    <div>
-      <p style="margin:0; font-size:1.4rem; font-weight:800;">{{ active_room_count }}</p>
-      <p class="text-muted" style="margin:0; font-size:0.82rem;">Active Listings</p>
+  <div class="landlord-stats">
+    <div class="landlord-stat-card">
+      <div class="landlord-stat-icon">🏠</div>
+      <p class="landlord-stat-value">{{ active_room_count }}</p>
+      <p class="text-muted landlord-stat-label">Active Listing{{ active_room_count|pluralize }}</p>
     </div>
-    <div>
-      <p style="margin:0; font-size:1.4rem; font-weight:800;">
-        {% if avg_rating %}⭐ {{ avg_rating|floatformat:1 }}{% else %}—{% endif %}
-      </p>
-      <p class="text-muted" style="margin:0; font-size:0.82rem;">{{ review_count }} review{{ review_count|pluralize }}</p>
+    <div class="landlord-stat-card">
+      <div class="landlord-stat-icon">⭐</div>
+      <p class="landlord-stat-value">{% if avg_rating %}{{ avg_rating|floatformat:1 }}{% else %}—{% endif %}</p>
+      <p class="text-muted landlord-stat-label">{{ review_count }} Review{{ review_count|pluralize }}</p>
     </div>
   </div>
 </div>
 
-<h2 class="page-title" style="font-size:1.2rem;">Listings from {{ landlord.first_name|default:landlord.username }}</h2>
+{% if not landlord.profile.is_verified_landlord and not landlord.profile.is_phone_verified and not landlord.profile.is_email_verified %}
+<div class="form-card landlord-trust-note">
+  <p class="text-muted" style="margin:0;">
+    🔒 As with any online marketplace, view the room in person and confirm details
+    directly with the landlord before making any payment. Read our
+    <a href="{% url 'trust:stay_safe' %}" class="landlord-trust-link">safety tips</a>.
+  </p>
+</div>
+{% endif %}
+
+<div class="landlord-listings-header">
+  <h2 class="page-title landlord-listings-title">
+    Listings from {{ landlord.first_name|default:landlord.username }}
+  </h2>
+</div>
 
 <div class="room-grid">
   {% include "listings/_room_cards.html" with rooms=rooms %}
 </div>
 
 {% if not rooms %}
-<div class="form-card" style="text-align:center;">
-  <p class="text-muted">No active listings from this landlord right now.</p>
+<div class="form-card landlord-empty-state">
+  <p class="text-muted" style="margin:0;">No active listings from this landlord right now.</p>
 </div>
 {% endif %}
+
+<style>
+  .landlord-hero {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 20px;
+    padding: 42px 28px 32px;
+    border-radius: var(--radius);
+    background:
+      radial-gradient(circle at top left, rgba(99,102,241,0.16), transparent 32%),
+      radial-gradient(circle at top right, rgba(249,115,22,0.10), transparent 30%),
+      linear-gradient(135deg, #eef2ff 0%, #ffffff 70%);
+    border: 1px solid rgba(99,102,241,0.15);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.06);
+  }
+  .landlord-hero-glow-a, .landlord-hero-glow-b {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .landlord-hero-glow-a {
+    top: -70px; left: -70px; width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(99,102,241,0.28), transparent 70%);
+  }
+  .landlord-hero-glow-b {
+    bottom: -60px; right: -60px; width: 150px; height: 150px;
+    background: radial-gradient(circle, rgba(249,115,22,0.20), transparent 70%);
+  }
+
+  .landlord-avatar-lg {
+    position: relative;
+    z-index: 2;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.1rem;
+    font-weight: 800;
+    box-shadow: 0 12px 26px rgba(37,99,235,0.3);
+  }
+  .landlord-name {
+    position: relative; z-index: 2;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  .landlord-since {
+    position: relative; z-index: 2;
+    margin: 0 0 16px;
+  }
+  .landlord-badges {
+    position: relative; z-index: 2;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  /* Defensive fix: without this, badges are flex items in a wrapping
+     row and can get compressed narrower than their own text on some
+     mobile browsers - same root cause as the message textbox bug.
+     flex-shrink:0 + white-space:nowrap guarantees each pill always
+     renders at its full natural width, never clipped, regardless of
+     what the global .badge class does or how narrow the screen is. */
+  .landlord-badges .badge {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .landlord-stats {
+    position: relative; z-index: 2;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+  }
+  .landlord-stat-card {
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(99,102,241,0.12);
+    border-radius: 16px;
+    padding: 16px 26px;
+    min-width: 110px;
+  }
+  .landlord-stat-icon { font-size: 1.3rem; margin-bottom: 4px; }
+  .landlord-stat-value {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .landlord-stat-label {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+
+  .landlord-trust-note {
+    max-width: 640px;
+    margin: 0 auto 24px;
+    text-align: center;
+  }
+  .landlord-trust-link {
+    color: var(--blue);
+    font-weight: 600;
+  }
+
+  .landlord-listings-header {
+    margin-bottom: 4px;
+  }
+  .landlord-listings-title {
+    font-size: 1.25rem;
+  }
+
+  .landlord-empty-state {
+    text-align: center;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 480px) {
+    .landlord-hero { padding: 34px 18px 26px; }
+    .landlord-stats { gap: 10px; }
+    .landlord-stat-card { padding: 14px 18px; min-width: 96px; }
+    .landlord-badges .badge {
+      padding: 5px 11px;
+      font-size: 0.72rem;
+    }
+  }
+</style>
 
 {% endblock %}

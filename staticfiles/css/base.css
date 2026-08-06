@@ -5086,3 +5086,57 @@ display: none;
 .form-section-details .form-grid {
   padding-bottom: 16px;
 }
+
+/* =====================================================================
+   AVAILABILITY STATE — color-coded badges so vacant vs occupied is
+   obvious at a glance on room cards and the landlord's room list,
+   instead of relying purely on reading the text.
+===================================================================== */
+.availability-badge.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.availability-badge.occupied {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.availability-badge.upcoming {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Quick vacancy toggle on the landlord's room list */
+.vacancy-toggle-form {
+  display: inline-block;
+}
+
+.vacancy-toggle-btn {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.vacancy-toggle-btn.mark-occupied {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.vacancy-toggle-btn.mark-occupied:hover {
+  background: #fef2f2;
+}
+
+.vacancy-toggle-btn.mark-available {
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.vacancy-toggle-btn.mark-available:hover {
+  background: #f0fdf4;
+}

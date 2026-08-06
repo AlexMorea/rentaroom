@@ -1,88 +1,100 @@
 {% extends "listings/base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
 
-<section class="room-detail-page">
+<section class="room-detail-page rd-page">
 
-  <div class="detail-center-wrap">
-
-    <!-- ================= TITLE ================= -->
-    <div class="detail-header">
-      <div>
-        <h1 class="page-title detail-title">{{ room.title }}</h1>
-        <p class="detail-location">📍 {{ room.location }}</p>
-      </div>
-
-      <div class="detail-price-wrap">
-        <div class="detail-price">R{{ room.price }}</div>
-        <span>/month</span>
-      </div>
-    </div>
+  <div class="detail-center-wrap rd-wrap">
 
     <!-- ================= MAIN CARD ================= -->
-    <div class="room-detail-card room-detail-card--wide">
+    <div class="room-detail-card room-detail-card--wide rd-card">
 
       <!-- ================= MEDIA ================= -->
-      <div class="room-detail-media">
-        <div class="slider-shell slider-shell-detail" data-slider>
-          <div class="image-slider image-slider-detail" data-slider-track>
+      <div class="room-detail-media rd-media">
+       <div class="rd-media-clip">
+        <div class="slider-shell slider-shell-detail rd-slider-shell" data-slider>
+          <div class="image-slider image-slider-detail rd-image-slider" data-slider-track>
 
             {% for img in room.images.all|slice:":10" %}
               <img
                 src="{{ img.image.url|add:'?f_auto,q_auto,w=1200,c_fill' }}"
                 alt="{{ room.title }}"
                 loading="lazy"
+                class="rd-img"
               />
             {% empty %}
               <img
                 src="{% static 'img/placeholder.jpg' %}"
                 alt="No image available"
                 loading="lazy"
+                class="rd-img"
               />
             {% endfor %}
 
           </div>
 
           {% if room.images.all|length > 1 %}
-          <button type="button" class="slider-btn slider-prev" data-slider-prev>‹</button>
-          <button type="button" class="slider-btn slider-next" data-slider-next>›</button>
+          <button type="button" class="slider-btn slider-prev rd-slider-btn rd-slider-prev" data-slider-prev>‹</button>
+          <button type="button" class="slider-btn slider-next rd-slider-btn rd-slider-next" data-slider-next>›</button>
           {% endif %}
 
         </div>
+       </div>
       </div>
 
       <!-- ================= CONTENT ================= -->
-      <div class="detail-content">
+      <div class="detail-content rd-content">
 
-        <!-- META -->
-        <div class="detail-meta-grid">
-          <div class="meta-card">
-            <span class="meta-label">Room Type</span>
-            <strong>{{ room.get_room_type_display }}</strong>
+        <!-- TITLE + PRICE - price chip no longer overlaps the photo,
+             it looked like it was cutting into the room photos -->
+        <div class="rd-header">
+          <div class="rd-price-chip">
+            <span class="rd-price-amount">R{{ room.price|floatformat:0|intcomma }}</span>
+            <span class="rd-price-period">/month</span>
+          </div>
+          <h1 class="page-title rd-title">{{ room.title }}</h1>
+          <p class="rd-location">📍 {{ room.location }}</p>
+        </div>
+
+        <!-- QUICK FACTS -->
+        <div class="detail-meta-grid rd-facts">
+          <div class="meta-card rd-fact">
+            <span class="rd-fact-icon">🛏️</span>
+            <div>
+              <span class="meta-label rd-fact-label">Room Type</span>
+              <strong class="rd-fact-value">{{ room.get_room_type_display }}</strong>
+            </div>
           </div>
 
-          <div class="meta-card">
-            <span class="meta-label">Availability</span>
-            <strong>{{ room.availability_badge_text }}</strong>
+          <div class="meta-card rd-fact">
+            <span class="rd-fact-icon">🟢</span>
+            <div>
+              <span class="meta-label rd-fact-label">Availability</span>
+              <strong class="rd-fact-value">{{ room.availability_badge_text }}</strong>
+            </div>
           </div>
 
-          <div class="meta-card">
-            <span class="meta-label">Posted</span>
-            <strong>{{ room.created_at|timesince }} ago</strong>
+          <div class="meta-card rd-fact">
+            <span class="rd-fact-icon">🕒</span>
+            <div>
+              <span class="meta-label rd-fact-label">Posted</span>
+              <strong class="rd-fact-value">{{ room.created_at|timesince }} ago</strong>
+            </div>
           </div>
         </div>
 
         <!-- DESCRIPTION -->
-        <section class="detail-section">
-          <h3>Description</h3>
-          <div class="detail-description">{{ room.description|linebreaks }}</div>
+        <section class="detail-section rd-section">
+          <h3 class="rd-section-title">Description</h3>
+          <div class="detail-description rd-description">{{ room.description|linebreaks }}</div>
         </section>
 
         <!-- ACTIONS -->
-        <section class="detail-section">
-          <div class="detail-actions">
-            <button type="button" class="btn-secondary" id="shareBtn">
+        <section class="detail-section rd-section">
+          <div class="detail-actions rd-actions">
+            <button type="button" class="btn-secondary rd-btn-secondary" id="shareBtn">
               🔗 Share
             </button>
 
@@ -91,7 +103,7 @@
             <form method="POST" action="{% url 'toggle_favorite' room.id %}">
               {% csrf_token %}
 
-              <button type="submit" class="btn-secondary">
+              <button type="submit" class="btn-secondary rd-btn-secondary">
                 {% if is_saved %}
                   ✅ Saved
                 {% else %}
@@ -105,68 +117,68 @@
         </section>
 
         <!-- CONTACT -->
-        <section class="detail-section">
+        <section class="detail-section rd-section">
 
           <div class="section-header">
-            <h3>Contact landlord</h3>
+            <h3 class="rd-section-title">Contact landlord</h3>
           </div>
 
           {% if user.is_authenticated %}
 
-          <a href="{% url 'landlord_profile' room.owner.id %}" class="landlord-card" style="text-decoration:none; color:inherit;">
-            <div class="landlord-avatar">
+          <a href="{% url 'landlord_profile' room.owner.id %}" class="landlord-card rd-landlord-card">
+            <div class="landlord-avatar rd-landlord-avatar">
               {{ room.owner.first_name|default:"L"|slice:":1"|upper }}
             </div>
 
             <div>
-              <strong>{{ room.owner.first_name }} {{ room.owner.last_name }}</strong>
-              <div class="landlord-status">Verified landlord · View profile →</div>
+              <strong class="rd-landlord-name">{{ room.owner.first_name }} {{ room.owner.last_name }}</strong>
+              <div class="landlord-status rd-landlord-status">Verified landlord · View profile →</div>
             </div>
           </a>
 
-          <div class="contact-actions">
+          <div class="contact-actions rd-contact-actions">
 
             {% if room.contact_phone %}
-            <a class="btn-primary" href="{% url 'track_contact' room.id 'phone' %}" target="_blank" rel="noopener noreferrer">📞 Call Landlord</a>
+            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'phone' %}" target="_blank" rel="noopener noreferrer">📞 Call Landlord</a>
             {% endif %}
 
             {% if room.contact_whatsapp or room.contact_phone %}
-            <a class="btn-primary whatsapp-btn" href="{% url 'track_contact' room.id 'whatsapp' %}" target="_blank" rel="noopener noreferrer">
+            <a class="btn-primary whatsapp-btn rd-contact-btn rd-contact-btn-whatsapp" href="{% url 'track_contact' room.id 'whatsapp' %}" target="_blank" rel="noopener noreferrer">
               <i class="fa-brands fa-whatsapp"></i> WhatsApp Landlord
             </a>
             {% endif %}
 
             {% if room.owner.email or room.contact_email %}
-            <a class="btn-primary" href="{% url 'track_contact' room.id 'email' %}" target="_blank" rel="noopener noreferrer">
+            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'email' %}" target="_blank" rel="noopener noreferrer">
               📧 Email Landlord
             </a>
             {% endif %}
 
           </div>
 
-          <div class="section-header" style="margin-top:18px;">
-            <h3>Or chat right here</h3>
+          <div class="section-header rd-subsection-header">
+            <h3 class="rd-section-title">Or chat right here</h3>
           </div>
 
-          <form method="post" action="{% url 'conversation_thread' room.id room.owner.id %}" class="message-form">
+          <form method="post" action="{% url 'conversation_thread' room.id room.owner.id %}" class="message-form rd-message-form">
             {% csrf_token %}
-            <textarea name="body" class="input textarea" placeholder="Hi, I’m interested in this room..." required></textarea>
-            <button class="btn-primary">Message Landlord</button>
+            <textarea name="body" class="input textarea rd-textarea" placeholder="Hi, I’m interested in this room..." required></textarea>
+            <button class="btn-primary rd-send-btn">Message Landlord</button>
           </form>
 
-          <form method="post" action="{% url 'mark_success' room.id %}" class="success-form">
+          <form method="post" action="{% url 'mark_success' room.id %}" class="success-form rd-success-form">
             {% csrf_token %}
-            <button class="btn-secondary">I successfully moved in</button>
+            <button class="btn-secondary rd-btn-secondary">I successfully moved in</button>
           </form>
 
           {% else %}
 
-          <div class="empty-card">
+          <div class="empty-card rd-empty-card">
             <p>Please login to contact the landlord.</p>
 
             <div class="auth-actions">
-              <a class="btn-primary" href="{% url 'login' %}?next={% url 'room_detail' room.id %}">Login</a>
-              <a class="btn-secondary" href="{% url 'register' %}">Create account</a>
+              <a class="btn-primary rd-contact-btn" href="{% url 'login' %}?next={% url 'room_detail' room.id %}">Login</a>
+              <a class="btn-secondary rd-btn-secondary" href="{% url 'register' %}">Create account</a>
             </div>
           </div>
 
@@ -175,51 +187,54 @@
         </section>
 
         <!-- ================= ⭐ RATING SUMMARY ================= -->
-        <section class="detail-section">
+        <section class="detail-section rd-section">
 
-          <div class="rating-summary">
-            <h3>Ratings & Reviews</h3>
+          <div class="rating-summary rd-rating-summary">
+            <h3 class="rd-section-title">Ratings & Reviews</h3>
 
-            <div class="rating-box">
-              <div class="rating-score">
+            <div class="rating-box rd-rating-box">
+              <div class="rating-score rd-rating-score">
                 ⭐ {{ room.avg_rating|default:"0.0"|floatformat:1 }}
               </div>
 
-              <div class="rating-meta">
+              <div class="rating-meta rd-rating-meta">
                 {{ room.review_count|default:"0" }} reviews
               </div>
             </div>
           </div>
 
-          <div class="review-list">
+          <div class="review-list rd-review-list">
 
             {% for review in room.reviews.all|slice:":3" %}
-              <div class="review-card">
-                <strong>{{ review.user.first_name }}</strong>
-                <div>⭐ {{ review.rating }}</div>
-                <p>{{ review.comment }}</p>
+              <div class="review-card rd-review-card">
+                <div class="rd-review-avatar">{{ review.user.first_name|default:"U"|slice:":1"|upper }}</div>
+                <div class="rd-review-body">
+                  <strong class="rd-review-name">{{ review.user.first_name }}</strong>
+                  <div class="rd-review-stars">⭐ {{ review.rating }}</div>
+                  <p class="rd-review-comment">{{ review.comment }}</p>
+                </div>
               </div>
             {% empty %}
-              <p class="muted-text">No reviews yet.</p>
+              <p class="muted-text rd-muted">No reviews yet.</p>
             {% endfor %}
 
           </div>
 
         </section>
 
-        <!-- ================= ⭐ ADD REVIEW (NEW - SAFE) ================= -->
+        <!-- ================= ⭐ ADD REVIEW ================= -->
         {% if user.is_authenticated and user.profile.role == "tenant" %}
 
-        <section class="detail-section">
+        <section class="detail-section rd-section">
 
-          <h3>Leave a review</h3>
+          <h3 class="rd-section-title">Leave a review</h3>
 
-          <form method="post" action="{% url 'add_review' room.id %}" class="review-form">
+          <form method="post" action="{% url 'add_review' room.id %}" class="review-form rd-review-form">
             {% csrf_token %}
 
-            <div class="form-field">
+            <div class="form-field rd-form-field">
               <label>Rating</label>
-              <select name="rating" class="input" required>
+              <select name="rating" class="input rd-select" required>
                 <option value="">Select rating</option>
                 <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
                 <option value="4">⭐⭐⭐⭐ Good</option>
@@ -229,17 +244,17 @@
               </select>
             </div>
 
-            <div class="form-field">
+            <div class="form-field rd-form-field">
               <label>Comment</label>
               <textarea
                 name="comment"
-                class="input textarea"
+                class="input textarea rd-textarea"
                 placeholder="Share your experience..."
                 required
               ></textarea>
             </div>
 
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-primary rd-send-btn">
               Submit Review
             </button>
 
@@ -251,13 +266,13 @@
 
 
         <!-- REPORT -->
-        <section class="detail-section">
-          <h3>Report listing</h3>
+        <section class="detail-section rd-section rd-report-section">
+          <h3 class="rd-section-title">Report listing</h3>
 
-          <form method="post" action="{% url 'report_room' room.id %}" class="report-form">
+          <form method="post" action="{% url 'report_room' room.id %}" class="report-form rd-report-form">
             {% csrf_token %}
 
-            <select name="reason" class="input" required>
+            <select name="reason" class="input rd-select" required>
               <option value="">Select reason</option>
               <option value="spam">Spam</option>
               <option value="scam">Scam</option>
@@ -265,7 +280,7 @@
               <option value="wrong_info">Wrong information</option>
             </select>
 
-            <button type="submit" class="btn-secondary">🚩 Report</button>
+            <button type="submit" class="btn-secondary rd-btn-secondary">🚩 Report</button>
           </form>
         </section>
 
@@ -273,6 +288,389 @@
     </div>
   </div>
 </section>
+
+<style>
+  /* ===================================================================
+     PREMIUM ROOM DETAIL
+     Same signature price tag as the cards, clipped onto the hero photo
+     corner, for a consistent identity between listing and detail views.
+     All original classes/URLs/form actions kept for compatibility.
+     =================================================================== */
+
+  .rd-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .rd-card {
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+  }
+
+  /* ===== Media / hero ===== */
+  .rd-media,
+  .room-detail-media.rd-media {
+    position: relative;
+    width: 100%;
+    height: 0 !important;
+    padding-bottom: 62% !important; /* classic padding trick, not aspect-ratio -
+      guaranteed cross-browser, no ambiguity */
+    margin: 0 !important;
+    background: #f1f5f9;
+    /* deliberately NO overflow:hidden here - same fix as the cards.
+       This wrapper needs to let the price tag hang below the photo
+       without being clipped. Only .rd-media-clip below clips. */
+  }
+  .rd-media-clip {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    border-radius: 24px 24px 0 0;
+  }
+  .rd-slider-shell {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .rd-image-slider {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .rd-img {
+    width: 100%;
+    height: 100%;
+    flex: none;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    object-fit: cover;
+  }
+  .rd-slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 23, 42, 0.55);
+    color: #fff;
+    font-size: 1.3rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    flex-shrink: 0;
+  }
+  .rd-slider-prev { left: 14px; }
+  .rd-slider-next { right: 14px; }
+
+  /* Signature price chip - sits beside the title now, no longer
+     overlapping the photo (it looked like it was cutting into the
+     room photos rather than reading as an intentional tag) */
+  .rd-price-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 12px;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+    margin-bottom: 8px !important;
+  }
+  .rd-price-amount {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+  .rd-price-period {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+
+  /* ===== Content ===== */
+  .rd-content,
+  .detail-content.rd-content {
+    padding: 8px 26px 26px !important;
+    margin: 0 !important;
+  }
+
+  .rd-header {
+    margin-bottom: 22px;
+  }
+  .rd-title {
+    margin: 0 0 6px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .rd-location {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.95rem;
+  }
+
+  /* Quick facts */
+  .rd-facts {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .rd-fact {
+    flex: 1 1 140px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .rd-fact-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .rd-fact-label {
+    display: block;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .rd-fact-value {
+    display: block;
+    font-size: 0.92rem;
+    color: #0f172a;
+    margin-top: 2px;
+  }
+
+  .rd-section {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .rd-section:last-child,
+  .rd-report-section {
+    border-bottom: none;
+  }
+  .rd-section-title {
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .rd-subsection-header {
+    margin-top: 22px;
+  }
+
+  .rd-description {
+    color: #334155;
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .rd-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .rd-btn-secondary {
+    flex-shrink: 0;
+  }
+
+  /* Landlord card with trust ring */
+  .rd-landlord-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .rd-landlord-avatar {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #16a34a;
+  }
+  .rd-landlord-name {
+    display: block;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+  .rd-landlord-status {
+    font-size: 0.82rem;
+    color: #16a34a;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .rd-contact-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .rd-contact-btn {
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .rd-contact-btn-whatsapp {
+    background: #16a34a;
+  }
+
+  .rd-message-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .rd-textarea {
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+  }
+  .rd-send-btn {
+    align-self: flex-start;
+  }
+  .rd-success-form {
+    margin-top: 14px;
+  }
+
+  .rd-empty-card {
+    text-align: center;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 14px;
+  }
+
+  /* Rating summary */
+  .rd-rating-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .rd-rating-box {
+    text-align: right;
+  }
+  .rd-rating-score {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .rd-rating-meta {
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+
+  .rd-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .rd-review-card {
+    display: flex;
+    gap: 12px;
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .rd-review-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .rd-review-name {
+    color: #0f172a;
+    font-size: 0.9rem;
+  }
+  .rd-review-stars {
+    font-size: 0.8rem;
+    margin: 2px 0 6px;
+  }
+  .rd-review-comment {
+    margin: 0;
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .rd-muted {
+    color: #94a3b8;
+    text-align: center;
+  }
+
+  .rd-form-field {
+    margin-bottom: 14px;
+  }
+  .rd-form-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+  }
+  .rd-select {
+    width: 100%;
+  }
+
+  .rd-report-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .rd-report-form select {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+
+  @media (max-width: 480px) {
+    .rd-content,
+    .detail-content.rd-content {
+      padding: 6px 18px 20px !important;
+      margin: 0 !important;
+    }
+    .rd-title { font-size: 1.3rem; }
+    .rd-facts { gap: 8px; }
+    .rd-fact { flex: 1 1 100%; }
+    .rd-price-amount { font-size: 1.2rem; }
+  }
+</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -301,7 +699,5 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
-
-
 
 {% endblock %}
