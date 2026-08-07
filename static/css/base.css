@@ -4214,6 +4214,8 @@ body.scroll-down .trust-strip {
 }
 
 .room-card {
+  display: block;
+  height: auto;
   background: #fff;
   border-radius: 22px;
   overflow: hidden;
@@ -4239,6 +4241,8 @@ body.scroll-down .trust-strip {
 }
 
 .room-info {
+  display: block;
+  gap: 0;
   padding: 18px;
 }
 

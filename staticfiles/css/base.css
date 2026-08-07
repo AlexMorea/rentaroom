@@ -3430,34 +3430,6 @@ body.scroll-down .trust-strip {
   right: 10px;
 }
 
-/* ===== DOT INDICATORS ===== */
-
-.slider-dots {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-
-  display: flex;
-  gap: 6px;
-}
-
-.slider-dot {
-  width: 6px;
-  height: 6px;
-
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease;
-}
-
-.slider-dot.active {
-  background: #fff;
-  transform: scale(1.3);
-}
 
 .slider-btn {
   pointer-events: auto;
@@ -4214,6 +4186,8 @@ body.scroll-down .trust-strip {
 }
 
 .room-card {
+  display: block;
+  height: auto;
   background: #fff;
   border-radius: 22px;
   overflow: hidden;
@@ -4239,6 +4213,8 @@ body.scroll-down .trust-strip {
 }
 
 .room-info {
+  display: block;
+  gap: 0;
   padding: 18px;
 }
 

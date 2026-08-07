@@ -59,14 +59,14 @@
     </div>
 
     <!-- BADGES -->
-    <div class="room-badges">
+    <div class="room-badges rc-badges">
       {% if popular_ids and room.id in popular_ids %}
-        <span class="badge badge-popular">🔥 Popular</span>
+        <span class="badge badge-popular rc-badge rc-badge-popular">🔥 Popular</span>
       {% endif %}
 
       {% with owner_profile=room.owner|profile %}
         {% if owner_profile and owner_profile.is_verified_landlord %}
-          <span class="badge badge-verified"> ★ Verified Landlord </span>
+          <span class="badge badge-verified rc-badge rc-badge-verified">★ Verified</span>
         {% endif %}
       {% endwith %}
     </div>
@@ -121,7 +121,11 @@
      what the old CSS does.
      =================================================================== */
 
-  .rc-card {
+  .rc-card,
+  .room-card.rc-card {
+    display: block !important;
+    gap: 0 !important;
+    height: auto !important;
     position: relative;
     background: #ffffff;
     border-radius: 22px;
@@ -216,32 +220,42 @@
   }
 
   /* Badges float top-left, on top of the photo */
-  .rc-badges {
-    position: absolute;
-    top: 12px;
-    left: 12px;
+  .rc-badges,
+  .room-badges.rc-badges {
+    position: absolute !important;
+    top: 12px !important;
+    left: 12px !important;
+    right: auto !important;
+    bottom: auto !important;
     z-index: 4;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     gap: 6px;
     align-items: flex-start;
+    width: auto !important;
   }
   .rc-badge {
+    position: static !important; /* base.css's .badge class puts
+      position:absolute + top/left/right directly on each badge span,
+      which escapes .rc-badges' flex layout entirely no matter how the
+      wrapper itself is positioned. This is the actual reason the
+      badge kept "disappearing" - it wasn't invisible, it was
+      positioning itself independently via the old rule. */
     flex-shrink: 0;
     white-space: nowrap;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 0.72rem;
+    padding: 5px 12px !important;
+    border-radius: 999px !important;
+    font-size: 0.72rem !important;
     font-weight: 700;
     backdrop-filter: blur(4px);
   }
   .rc-badge-popular {
-    background: rgba(249, 115, 22, 0.92);
-    color: #fff;
+    background: rgba(249, 115, 22, 0.92) !important;
+    color: #fff !important;
   }
   .rc-badge-verified {
-    background: rgba(255, 255, 255, 0.92);
-    color: #1e40af;
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: #1e40af !important;
   }
 
   /* ===== Signature: the price chip ===== */
@@ -278,6 +292,8 @@
 
   .rc-info,
   .room-info.rc-info {
+    display: block !important;
+    gap: 0 !important;
     padding: 16px 18px 16px !important;
     margin: 0 !important;
   }
@@ -360,6 +376,8 @@
   @media (max-width: 480px) {
     .rc-info,
     .room-info.rc-info {
+      display: block !important;
+      gap: 0 !important;
       padding: 14px 14px 14px !important;
       margin: 0 !important;
     }
