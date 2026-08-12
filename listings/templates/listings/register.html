@@ -1,4 +1,5 @@
 {% extends "listings/base.html" %}
+{% load static %}
 {% block body_class %}auth-page{% endblock %}
 {% block content %}
 
@@ -11,7 +12,13 @@
       <div class="pr-brand-glow-b"></div>
 
       <div class="pr-brand-inner">
-        <div class="pr-logo">🏠 Rooms4You</div>
+        <div class="pr-logo-badge">
+          <img
+            src="{% static 'images/rooms4you-logo.jpeg' %}"
+            alt="Rooms4You"
+            class="pr-logo-img"
+          />
+        </div>
         <h1 class="pr-headline">Connecting Spaces To Faces</h1>
         <p class="pr-subhead">
           South Africa's trusted way to find a room, or find your next tenant.
@@ -122,6 +129,34 @@
               {{ form.password1 }}
               <button class="pr-pw-toggle" type="button" data-toggle="#id_password1" aria-label="Show password">👁</button>
             </div>
+
+            <div class="pr-strength-bar">
+              <div class="pr-strength-fill" id="strengthFill"></div>
+            </div>
+            <div class="pr-strength-label" id="strengthLabel">Choose a password to see its strength</div>
+
+            <ul class="pr-pw-checklist" id="pwChecklist">
+              <li id="chkLength" class="pr-pw-check">
+                <span class="pr-pw-check-icon">○</span>
+                <span>At least 8 characters (12+ is even better)</span>
+              </li>
+              <li id="chkCase" class="pr-pw-check">
+                <span class="pr-pw-check-icon">○</span>
+                <span>Upper and lowercase letters</span>
+              </li>
+              <li id="chkNumber" class="pr-pw-check">
+                <span class="pr-pw-check-icon">○</span>
+                <span>At least one number</span>
+              </li>
+              <li id="chkSymbol" class="pr-pw-check">
+                <span class="pr-pw-check-icon">○</span>
+                <span>At least one symbol (e.g. ! @ # $)</span>
+              </li>
+            </ul>
+            <small class="pr-hint pr-pw-tip">
+              💡 Tip: avoid your name, birthday, or common words - a short unrelated phrase (e.g. "Blue7Taxi!Rain") is both strong and easy to remember.
+            </small>
+
             {{ form.password1.errors }}
           </div>
 
@@ -131,6 +166,7 @@
               {{ form.password2 }}
               <button class="pr-pw-toggle" type="button" data-toggle="#id_password2" aria-label="Show password">👁</button>
             </div>
+            <small class="pr-hint pr-match-hint" id="matchHint"></small>
             {{ form.password2.errors }}
           </div>
 
@@ -173,7 +209,8 @@
 <style>
   /* ===================================================================
      PREMIUM REGISTER - split brand/form panel, visual role selector,
-     explicit next-step + trust messaging.
+     explicit next-step + trust messaging, real logo, password strength
+     guidance.
      =================================================================== */
 
   .pr-shell {
@@ -215,12 +252,25 @@
     position: relative;
     z-index: 2;
   }
-  .pr-logo {
-    color: #fff;
-    font-weight: 800;
-    font-size: 1.2rem;
-    margin-bottom: 30px;
+
+  /* Logo sits in its own white badge - the source file has a light
+     background baked in, not a transparent one, so placed directly on
+     the dark gradient it would look like a rendering mistake. */
+  .pr-logo-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 14px;
+    padding: 9px 14px;
+    margin-bottom: 28px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   }
+  .pr-logo-img {
+    display: block;
+    height: 24px;
+    width: auto;
+  }
+
   .pr-headline {
     color: #fff;
     font-size: 1.7rem;
@@ -394,6 +444,75 @@
     justify-content: center;
   }
 
+  /* Password strength bar + checklist - genuinely helps, not just a
+     color bar with no explanation of what it's actually asking for */
+  .pr-strength-bar {
+    margin-top: 10px;
+    height: 5px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    overflow: hidden;
+  }
+  .pr-strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: #ef4444;
+    transition: width 0.25s ease, background 0.25s ease;
+  }
+  .pr-strength-label {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+  .pr-pw-checklist {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pr-pw-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: #64748b;
+  }
+  .pr-pw-check-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    background: #e2e8f0;
+    color: #94a3b8;
+  }
+  .pr-pw-check.pr-pw-check-met {
+    color: #166534;
+  }
+  .pr-pw-check.pr-pw-check-met .pr-pw-check-icon {
+    background: #16a34a;
+    color: #fff;
+  }
+  .pr-pw-tip {
+    display: block;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .pr-match-hint {
+    font-weight: 700;
+  }
+  .pr-match-hint.pr-match-ok { color: #16a34a; }
+  .pr-match-hint.pr-match-bad { color: #dc2626; }
+
   .pr-consent {
     margin-top: 2px;
   }
@@ -430,32 +549,70 @@
     font-size: 0.9rem;
   }
 
+  /* ===== Mobile ===== */
   @media (max-width: 860px) {
+    .pr-shell {
+      margin: 0;
+      padding: 0;
+    }
     .pr-panel-wrap {
       flex-direction: column;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
     }
     .pr-brand {
       flex: none;
-      padding: 28px 24px;
+      padding: 24px 20px 20px;
+    }
+    .pr-logo-badge {
+      padding: 7px 12px;
+      margin-bottom: 16px;
+    }
+    .pr-logo-img {
+      height: 19px;
     }
     .pr-headline {
-      font-size: 1.35rem;
+      font-size: 1.3rem;
+    }
+    .pr-subhead {
+      font-size: 0.85rem;
+      margin-bottom: 18px;
     }
     .pr-trust-list {
       flex-direction: row;
       flex-wrap: wrap;
-      gap: 10px 18px;
+      gap: 8px 16px;
     }
     .pr-trust-list li {
-      font-size: 0.82rem;
+      font-size: 0.76rem;
     }
     .pr-form-panel {
       max-height: none;
-      padding: 28px 20px;
+      overflow-y: visible;
+      padding: 22px 16px 26px;
     }
     .pr-row {
       flex-direction: column;
       gap: 16px;
+    }
+    .pr-role-cards {
+      gap: 10px;
+    }
+    .pr-role-card {
+      padding: 14px 8px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .pr-brand {
+      padding: 20px 16px 16px;
+    }
+    .pr-form-panel {
+      padding: 20px 12px 22px;
+    }
+    .pr-trust-list li {
+      font-size: 0.7rem;
     }
   }
 </style>
@@ -508,5 +665,87 @@ roleCards.forEach((card) => {
 
 roleSel?.addEventListener("change", toggle);
 toggle();
+</script>
+
+<script>
+// Password strength indicator + explicit requirement checklist - a
+// UX help/advice layer only, does not change what the backend
+// actually requires or validates.
+(function () {
+  const pw1 = document.getElementById("id_password1");
+  const pw2 = document.getElementById("id_password2");
+  const fill = document.getElementById("strengthFill");
+  const label = document.getElementById("strengthLabel");
+  const matchHint = document.getElementById("matchHint");
+  if (!pw1 || !fill) return;
+
+  const checks = {
+    chkLength: (v) => v.length >= 8,
+    chkCase: (v) => /[A-Z]/.test(v) && /[a-z]/.test(v),
+    chkNumber: (v) => /\d/.test(v),
+    chkSymbol: (v) => /[^A-Za-z0-9]/.test(v),
+  };
+
+  function updateChecklist(value) {
+    let metCount = 0;
+    Object.entries(checks).forEach(([id, test]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const met = test(value);
+      if (met) metCount++;
+      el.classList.toggle("pr-pw-check-met", met);
+      const icon = el.querySelector(".pr-pw-check-icon");
+      if (icon) icon.textContent = met ? "✓" : "○";
+    });
+    return metCount;
+  }
+
+  function updateStrength() {
+    const value = pw1.value || "";
+    const metCount = updateChecklist(value);
+
+    if (!value) {
+      fill.style.width = "0%";
+      fill.style.background = "#ef4444";
+      label.textContent = "Choose a password to see its strength";
+      return;
+    }
+
+    const pct = Math.min(100, (metCount / 4) * 100);
+    fill.style.width = pct + "%";
+
+    if (metCount <= 1) {
+      fill.style.background = "#ef4444";
+      label.textContent = "Weak password";
+    } else if (metCount <= 2) {
+      fill.style.background = "#f59e0b";
+      label.textContent = "Okay - a little further to go";
+    } else if (metCount === 3) {
+      fill.style.background = "#f59e0b";
+      label.textContent = "Good password";
+    } else {
+      fill.style.background = "#16a34a";
+      label.textContent = "Strong password";
+    }
+  }
+
+  function updateMatch() {
+    if (!pw2.value) {
+      matchHint.textContent = "";
+      matchHint.className = "pr-hint pr-match-hint";
+      return;
+    }
+    if (pw1.value === pw2.value) {
+      matchHint.textContent = "✓ Passwords match";
+      matchHint.className = "pr-hint pr-match-hint pr-match-ok";
+    } else {
+      matchHint.textContent = "Passwords do not match yet";
+      matchHint.className = "pr-hint pr-match-hint pr-match-bad";
+    }
+  }
+
+  pw1.addEventListener("input", () => { updateStrength(); updateMatch(); });
+  pw2?.addEventListener("input", updateMatch);
+})();
 </script>
 {% endblock %}

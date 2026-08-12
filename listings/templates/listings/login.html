@@ -1,90 +1,277 @@
-{% extends "listings/base.html" %} {% block body_class %}auth-page{% endblock %}
+{% extends "listings/base.html" %}
+{% load static %}
+{% block body_class %}auth-page{% endblock %}
+{% block title %}Log in | Rooms4You{% endblock %}
 {% block content %}
-<div class="auth-shell">
-  <div class="auth-card li-card">
-    <h2 class="auth-title li-title">Login</h2>
 
-    <form method="post" class="auth-form li-form">
-      {% csrf_token %}
+<div class="pr-shell">
+  <div class="pr-panel-grid">
 
-      <div class="field li-field">
-        <label class="auth-label">Email</label>
-        <input
-          class="input"
-          type="email"
-          name="email"
-          placeholder="you@example.com"
-          required
+    <!-- ================= BRAND / TRUST PANEL ================= -->
+    <div class="pr-brand-panel">
+      <div class="pr-brand-glow-a"></div>
+      <div class="pr-brand-glow-b"></div>
+
+      <div class="pr-brand-logo-badge">
+        <img
+          src="{% static 'images/rooms4you-logo.jpeg' %}"
+          alt="Rooms4You"
+          class="pr-brand-logo-img"
         />
       </div>
 
-      <div class="field li-field">
-        <label class="auth-label">Password</label>
-        <div class="pw-wrap li-pw-wrap">
-          <input
-            id="loginPassword"
-            class="input pw-input"
-            type="password"
-            name="password"
-            placeholder="Your password"
-            required
+      <div class="pr-brand-content">
+        <h1 class="pr-brand-headline">
+          Welcome back.
+        </h1>
+
+        <p class="pr-brand-sub">
+          South Africa's trusted way to connect renters and landlords directly.
+        </p>
+
+        <ul class="pr-trust-list">
+          <li>
+            <span class="pr-trust-icon">✓</span>
+            <span>Verified landlords, clearly marked</span>
+          </li>
+          <li>
+            <span class="pr-trust-icon">✓</span>
+            <span>Message directly - no middleman, no hidden fees</span>
+          </li>
+          <li>
+            <span class="pr-trust-icon">✓</span>
+            <span>Your personal information is protected under POPIA</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= FORM PANEL ================= -->
+    <div class="pr-form-panel pr-login-panel">
+
+      <div class="pr-mobile-header">
+        <div class="pr-mobile-logo-badge">
+          <img
+            src="{% static 'images/rooms4you-logo.jpeg' %}"
+            alt="Rooms4You"
+            class="pr-mobile-logo-img"
           />
-          <button
-            class="pw-toggle li-pw-toggle"
-            type="button"
-            aria-label="Show password"
-            data-toggle="#loginPassword"
-          >
-            👁
-          </button>
         </div>
+        <p class="pr-mobile-trust">🔒 Verified landlords · Direct messaging · POPIA protected</p>
       </div>
 
-      <button class="btn-primary auth-btn li-submit-btn" type="submit">Login</button>
-    </form>
+      <h2 class="pr-form-title">Log in to your account</h2>
+      <p class="pr-form-sub">Welcome back - enter your details below.</p>
 
-    <p class="auth-hint li-forgot">
-      <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
-    </p>
+      <form method="post" class="pr-form">
+        {% csrf_token %}
 
-    <p class="auth-hint">
-      Don’t have an account?
-      <a class="auth-link" href="{% url 'register' %}">Sign up</a>
-    </p>
+        {% if form.non_field_errors %}
+        <div class="form-alert form-alert-error">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="pr-field">
+          <label>Email</label>
+          <input
+            class="input"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            required
+          />
+        </div>
+
+        <div class="pr-field">
+          <label>Password</label>
+          <div class="pw-wrap pr-pw-wrap">
+            <input
+              id="loginPassword"
+              class="input pw-input"
+              type="password"
+              name="password"
+              placeholder="Your password"
+              required
+            />
+            <button
+              class="pw-toggle pr-pw-toggle"
+              type="button"
+              aria-label="Show password"
+              data-toggle="#loginPassword"
+            >
+              👁
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-primary pr-submit-btn" type="submit">
+          Log in
+        </button>
+      </form>
+
+      <p class="auth-hint pr-forgot-hint">
+        <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
+      </p>
+
+      <p class="auth-hint pr-login-hint">
+        Don't have an account?
+        <a class="auth-link" href="{% url 'register' %}">Sign up</a>
+      </p>
+
+    </div>
   </div>
 </div>
 
 <style>
-  /* Same fix as register.html - .auth-card has no background/shadow
-     set anywhere in base.css, and .field has zero label styling. Both
-     pages share the same underlying classes so both need this. */
-  .li-card {
-    background: #fff !important;
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+  /* Shares the exact .pr- layout/classes from register.html for visual
+     consistency - each Django template keeps its own copy of the CSS
+     since templates are self-contained files. */
+
+  .pr-shell {
+    max-width: 1000px;
+    margin: 24px auto;
+    padding: 0 16px;
   }
-  .li-title {
-    text-align: center;
+
+  .pr-panel-grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
+    background: #fff;
   }
-  .li-form {
+
+  .pr-brand-panel {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(160deg, #1e40af 0%, #2563eb 55%, #1e3a8a 100%);
+    padding: 44px 36px;
+    display: flex;
+    align-items: center;
+    color: #fff;
+  }
+  .pr-brand-glow-a, .pr-brand-glow-b {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .pr-brand-glow-a {
+    top: -60px; left: -60px; width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(249,115,22,0.35), transparent 70%);
+  }
+  .pr-brand-glow-b {
+    bottom: -80px; right: -40px; width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+  }
+  .pr-brand-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+  }
+
+  /* Logo pinned to the top of the panel, independent of the vertical
+     centering on .pr-brand-content - matches register.html exactly */
+  .pr-brand-logo-badge {
+    position: absolute;
+    top: 32px;
+    left: 36px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 14px;
+    padding: 10px 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+  .pr-brand-logo-img {
+    display: block;
+    height: 28px;
+    width: auto;
+  }
+
+  .pr-brand-headline {
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin: 0 0 12px;
+  }
+  .pr-brand-sub {
+    font-size: 0.95rem;
+    opacity: 0.85;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+  .pr-trust-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-top: 18px;
   }
-  .li-field label {
+  .pr-trust-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .pr-trust-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-top: 1px;
+  }
+
+  .pr-form-panel {
+    padding: 40px 40px 32px;
+  }
+  .pr-login-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .pr-mobile-header {
+    display: none;
+  }
+  .pr-form-title {
+    margin: 0 0 6px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .pr-form-sub {
+    margin: 0 0 24px;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  .pr-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .pr-field label {
     display: block;
     font-weight: 700;
     margin-bottom: 6px;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: #0f172a;
   }
-  .li-pw-wrap {
+
+  .pr-pw-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .li-pw-toggle {
+  .pr-pw-toggle {
     flex-shrink: 0;
     width: 42px;
     height: 42px;
@@ -97,12 +284,75 @@
     align-items: center;
     justify-content: center;
   }
-  .li-submit-btn {
+
+  .pr-submit-btn {
     width: 100%;
     margin-top: 4px;
   }
-  .li-forgot {
+  .pr-forgot-hint {
+    text-align: center;
+    margin-top: 14px;
+  }
+  .pr-login-hint {
+    text-align: center;
     margin-top: 10px;
+  }
+
+  /* ===== Mobile - matches register.html exactly ===== */
+  @media (max-width: 860px) {
+    .pr-shell {
+      margin: 0;
+      padding: 0;
+    }
+    .pr-panel-grid {
+      grid-template-columns: 1fr;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .pr-brand-panel {
+      display: none;
+    }
+    .pr-mobile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: #fff;
+      padding: 20px 20px 18px;
+    }
+    .pr-mobile-logo-badge {
+      display: inline-flex;
+      background: #fff;
+      border-radius: 12px;
+      padding: 7px 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+    }
+    .pr-mobile-logo-img {
+      display: block;
+      height: 20px;
+      width: auto;
+    }
+    .pr-mobile-trust {
+      margin: 0;
+      font-size: 0.74rem;
+      opacity: 0.92;
+      line-height: 1.4;
+      max-width: 300px;
+    }
+    .pr-form-panel {
+      padding: 22px 16px 26px;
+    }
+    .pr-form-title {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .pr-form-panel {
+      padding: 20px 12px 22px;
+    }
   }
 </style>
 
@@ -113,14 +363,10 @@
       const sel = btn.getAttribute("data-toggle");
       const input = document.querySelector(sel);
       if (!input) return;
-
       const isHidden = input.type === "password";
       input.type = isHidden ? "text" : "password";
       btn.textContent = isHidden ? "🙈" : "👁";
-      btn.setAttribute(
-        "aria-label",
-        isHidden ? "Hide password" : "Show password",
-      );
+      btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
     });
   });
 </script>
