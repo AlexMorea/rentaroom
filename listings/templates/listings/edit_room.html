@@ -1,4 +1,4 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %} {% load static %} {% block content %}
 
 <h1 class="page-title">Edit Room</h1>
 
@@ -9,14 +9,14 @@
       <div class="guide-item">
         <div class="guide-label">📍 Location</div>
         <div class="guide-text">
-          Public area tenants see. Example: “Mamelodi East, Pretoria”.
+          Public area tenants see. Example: "Mamelodi East, Pretoria".
         </div>
       </div>
       <div class="guide-item">
         <div class="guide-label">🏠 Full Address</div>
         <div class="guide-text">
-          Required for safety verification. Example: “123 Tsutsuma St, Mamelodi
-          East, Pretoria”.
+          Required for safety verification. Example: "123 Tsutsuma St, Mamelodi
+          East, Pretoria".
         </div>
       </div>
       <div class="guide-item">
@@ -29,14 +29,185 @@
       <div class="guide-item">
         <div class="guide-label">📅 Available from</div>
         <div class="guide-text">
-          Only enabled when status is “Occupied (available from)”.
+          Only enabled when status is "Occupied (available from)".
         </div>
       </div>
     </div>
   </div>
 
   <form method="post" class="form-card">
-    {% csrf_token %} {{ form.as_p }}
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="form-alert form-alert-error">
+      <strong>Fix these issues:</strong>
+      <div>{{ form.non_field_errors }}</div>
+    </div>
+    {% endif %}
+
+    <div class="form-grid">
+      <div class="form-section-title">🏡 Basic Info</div>
+
+      <div class="form-field">
+        <label for="id_title">Title</label>
+        {{ form.title }} {% if form.title.errors %}
+        <div class="field-error">{{ form.title.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_price">Price (ZAR)</label>
+        {{ form.price }} {% if form.price.errors %}
+        <div class="field-error">{{ form.price.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_room_type">Room Type</label>
+        {{ form.room_type }} {% if form.room_type.errors %}
+        <div class="field-error">{{ form.room_type.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-section-title">📍 Location</div>
+
+      <div class="form-field">
+        <label for="id_location">Location</label>
+        {{ form.location }}
+        <small class="field-hint">Public area only. Example: "Mamelodi East, Pretoria".</small>
+        {% if form.location.errors %}
+        <div class="field-error">{{ form.location.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_full_address">Full Address <span class="req-mark">Required</span></label>
+        {{ form.full_address }}
+        <small class="field-hint">
+          Street address for verification. Tenants see only the public location.
+        </small>
+        {% if form.full_address.errors %}
+        <div class="field-error">{{ form.full_address.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label>Suburb</label>
+        {{ form.suburb }}
+      </div>
+
+      <div class="form-field">
+        <label>Town</label>
+        {{ form.town }}
+      </div>
+
+      <div class="form-field">
+        <label>City</label>
+        {{ form.city }}
+      </div>
+
+      <div class="form-field">
+        <label>Province</label>
+        {{ form.province }}
+      </div>
+
+      <div class="form-field">
+        <label for="id_postal_code">Area / Postal Code <span class="req-mark">Required</span></label>
+        {{ form.postal_code }}
+        <small class="field-hint">Example: "0122".</small>
+        {% if form.postal_code.errors %}
+        <div class="field-error">{{ form.postal_code.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-section-title">📞 Contact Details</div>
+
+      <div class="form-field">
+        <label for="id_contact_phone">Call Phone</label>
+        {{ form.contact_phone }} {% if form.contact_phone.errors %}
+        <div class="field-error">{{ form.contact_phone.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_contact_whatsapp">WhatsApp Number</label>
+        {{ form.contact_whatsapp }} {% if form.contact_whatsapp.errors %}
+        <div class="field-error">{{ form.contact_whatsapp.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_contact_email">Email Address</label>
+        {{ form.contact_email }} {% if form.contact_email.errors %}
+        <div class="field-error">{{ form.contact_email.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-section-title">📦 Availability</div>
+
+      <div class="form-field inline">
+        <label for="id_is_available">Available</label>
+        <div class="checkbox-wrap">
+          {{ form.is_available }}
+          <span>Yes, show this room publicly</span>
+        </div>
+        {% if form.is_available.errors %}
+        <div class="field-error">{{ form.is_available.errors }}</div>
+        {% endif %}
+      </div>
+
+      <details class="form-section-details" open>
+        <summary>Multiple identical rooms, or available from a future date?</summary>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="id_total_units">Total Units (Identical rooms)</label>
+            {{ form.total_units }}
+            <small class="field-hint">If you only have one room, leave this as <strong>1</strong>.</small>
+            {% if form.total_units.errors %}
+            <div class="field-error">{{ form.total_units.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-field">
+            <label for="id_available_units">Units Available Now</label>
+            {{ form.available_units }}
+            <small class="field-hint">
+              If you choose <strong>Occupied (available from)</strong>, this
+              auto-sets to <strong>0</strong>.
+            </small>
+            {% if form.available_units.errors %}
+            <div class="field-error">{{ form.available_units.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-field">
+            <label for="id_availability_status">Availability Status</label>
+            {{ form.availability_status }} {% if form.availability_status.errors %}
+            <div class="field-error">{{ form.availability_status.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-field">
+            <label for="id_available_from">Available From (if occupied / next opening)</label>
+            {{ form.available_from }}
+            <small class="field-hint">
+              Only required if you choose <strong>Occupied (available from)</strong>.
+            </small>
+            {% if form.available_from.errors %}
+            <div class="field-error">{{ form.available_from.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </details>
+
+      <div class="form-field full">
+        <label for="id_description">Description</label>
+        {{ form.description }} {% if form.description.errors %}
+        <div class="field-error">{{ form.description.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
 
     <div class="form-actions">
       <a href="{% url 'dashboard' %}" class="btn-secondary">Cancel</a>
@@ -44,6 +215,22 @@
     </div>
   </form>
 </div>
+
+<style>
+  .req-mark {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #dc2626;
+    background: #fef2f2;
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+</style>
 
 {% endblock %} {% block extra_js %}
 <script>

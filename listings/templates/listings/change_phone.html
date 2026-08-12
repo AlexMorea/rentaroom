@@ -1,33 +1,98 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<div class="form-card" style="max-width: 500px; margin: 40px auto">
-  <h2 style="margin-bottom: 10px">Change Phone Number</h2>
-  <p style="opacity: 0.8; margin-bottom: 20px">
-    Enter your new number. We’ll send you a one-time code (OTP) to verify it.
-  </p>
+<div class="sf-shell">
+  <div class="form-card sf-card">
+    <div class="sf-icon">📱</div>
+    <h2 class="sf-title">Change Phone Number</h2>
+    <p class="sf-sub">
+      Enter your new number. We'll send you a one-time code (OTP) to verify it.
+    </p>
 
-  <form method="POST">
-    {% csrf_token %}
-    <label>Country Code</label>
-    <select name="country_code" class="input" required>
-      <option value="+27">+27 🇿🇦</option>
-      <option value="+1">+1 🇺🇸</option>
-      <option value="+44">+44 🇬🇧</option>
-    </select>
+    <form method="POST" class="sf-form">
+      {% csrf_token %}
 
-    <label style="margin-top: 12px">Phone Number</label>
-    <input
-      type="text"
-      name="phone_number"
-      class="input"
-      placeholder="e.g. 712345678"
-      required
-    />
+      <div class="sf-phone-row">
+        <div class="sf-field sf-phone-code-field">
+          <label>Country Code</label>
+          <select name="country_code" class="input" required>
+            <option value="+27">+27 🇿🇦</option>
+            <option value="+1">+1 🇺🇸</option>
+            <option value="+44">+44 🇬🇧</option>
+          </select>
+        </div>
 
-    <button type="submit" class="btn-primary" style="margin-top: 14px">
-      Send OTP
-    </button>
-  </form>
+        <div class="sf-field sf-phone-number-field">
+          <label>Phone Number</label>
+          <input
+            type="text"
+            name="phone_number"
+            class="input"
+            placeholder="e.g. 712345678"
+            required
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary sf-submit">
+        Send OTP
+      </button>
+    </form>
+  </div>
 </div>
+
+<style>
+  .sf-shell {
+    max-width: 460px;
+    margin: 40px auto;
+  }
+  .sf-card {
+    text-align: center;
+  }
+  .sf-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  .sf-title {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .sf-sub {
+    margin: 0 0 22px;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .sf-form {
+    text-align: left;
+  }
+  .sf-field {
+    margin-bottom: 16px;
+  }
+  .sf-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: #0f172a;
+  }
+  .sf-phone-row {
+    display: flex;
+    gap: 10px;
+  }
+  .sf-phone-code-field {
+    width: 120px;
+    flex-shrink: 0;
+  }
+  .sf-phone-number-field {
+    flex: 1;
+    min-width: 0;
+  }
+  .sf-submit {
+    width: 100%;
+    margin-top: 4px;
+  }
+</style>
 
 {% endblock %}

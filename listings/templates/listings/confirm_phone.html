@@ -1,26 +1,83 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<div class="form-card" style="max-width: 500px; margin: 40px auto">
-  <h2 style="margin-bottom: 10px">Verify Phone Number</h2>
-  <p style="opacity: 0.8; margin-bottom: 20px">
-    Enter the OTP code we sent to your email.
-  </p>
+<div class="sf-shell">
+  <div class="form-card sf-card">
+    <div class="sf-icon">🔑</div>
+    <h2 class="sf-title">Verify Phone Number</h2>
+    <p class="sf-sub">
+      Enter the OTP code we sent to your email.
+    </p>
 
-  <form method="POST">
-    {% csrf_token %}
-    <label>OTP Code</label>
-    <input
-      type="text"
-      name="otp"
-      class="input"
-      placeholder="6-digit code"
-      required
-    />
+    <form method="POST" class="sf-form">
+      {% csrf_token %}
+      <div class="sf-field">
+        <label>OTP Code</label>
+        <input
+          type="text"
+          name="otp"
+          class="input sf-otp-input"
+          placeholder="6-digit code"
+          inputmode="numeric"
+          maxlength="6"
+          autocomplete="one-time-code"
+          required
+        />
+      </div>
 
-    <button type="submit" class="btn-primary" style="margin-top: 14px">
-      Verify Phone
-    </button>
-  </form>
+      <button type="submit" class="btn-primary sf-submit">
+        Verify Phone
+      </button>
+    </form>
+  </div>
 </div>
+
+<style>
+  .sf-shell {
+    max-width: 460px;
+    margin: 40px auto;
+  }
+  .sf-card {
+    text-align: center;
+  }
+  .sf-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  .sf-title {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .sf-sub {
+    margin: 0 0 22px;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .sf-form {
+    text-align: left;
+  }
+  .sf-field {
+    margin-bottom: 16px;
+  }
+  .sf-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: #0f172a;
+  }
+  .sf-otp-input {
+    text-align: center;
+    font-size: 1.5rem !important;
+    font-weight: 700;
+    letter-spacing: 8px;
+  }
+  .sf-submit {
+    width: 100%;
+    margin-top: 4px;
+  }
+</style>
 
 {% endblock %}

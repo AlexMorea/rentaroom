@@ -13,22 +13,32 @@
     </div>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="imgmgr-card">
+  <form method="post" enctype="multipart/form-data" class="imgmgr-card" id="imgmgrForm">
     {% csrf_token %}
 
     <!-- Upload area -->
-    <div class="imgmgr-upload">
-      <label class="imgmgr-label">Add new photos</label>
+    <div class="imgmgr-upload im-dropzone" id="imDropzone">
+      <label class="imgmgr-label" for="imFileInput">Add new photos</label>
 
-      <div class="imgmgr-upload-row">
+      <div class="im-dropzone-inner">
+        <div class="im-dropzone-icon">📷</div>
+        <div class="im-dropzone-text">
+          Tap to choose photos, or drag them here
+        </div>
         <input
-          class="imgmgr-file"
+          class="imgmgr-file im-file-input"
+          id="imFileInput"
           type="file"
           name="images"
           multiple
           accept="image/*"
         />
-        <button type="submit" class="btn-primary">Upload</button>
+      </div>
+
+      <div class="im-selected-count" id="imSelectedCount"></div>
+
+      <div class="imgmgr-upload-row im-upload-row">
+        <button type="submit" class="btn-primary im-upload-btn">Upload</button>
       </div>
 
       <small class="imgmgr-hint"
@@ -39,33 +49,246 @@
     <hr class="imgmgr-line" />
 
     <!-- Existing images -->
-    <div class="imgmgr-label" style="margin-bottom: 10px">Current photos</div>
+    <div class="imgmgr-label im-current-label">Current photos</div>
+    <p class="im-reorder-hint">Use the arrows to change the order rooms will see these photos in - the first photo is the cover image.</p>
 
-    <div class="imgmgr-grid">
+    <div class="imgmgr-grid im-grid">
       {% for img in room.images.all|slice:":10" %}
-      <div class="imgmgr-item">
+      <div class="imgmgr-item im-item">
+        {% if forloop.first %}
+          <span class="im-cover-badge">Cover photo</span>
+        {% endif %}
+
         <img
-          class="imgmgr-img"
+          class="imgmgr-img im-img"
           src="{{ img.image.url|add:'?f_auto,q_auto,w=700,c_fill' }}"
           alt="Room photo"
         />
 
-        <label class="imgmgr-del">
-          <input type="checkbox" name="delete" value="{{ img.id }}" />
-          Delete
-        </label>
+        <div class="im-controls">
+          <div class="im-reorder-btns">
+            <button
+              type="submit"
+              form="imReorderForm{{ img.id }}up"
+              class="im-reorder-btn"
+              {% if forloop.first %}disabled{% endif %}
+              aria-label="Move photo earlier"
+            >
+              ↑
+            </button>
+            <button
+              type="submit"
+              form="imReorderForm{{ img.id }}down"
+              class="im-reorder-btn"
+              {% if forloop.last %}disabled{% endif %}
+              aria-label="Move photo later"
+            >
+              ↓
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            name="delete"
+            value="{{ img.id }}"
+            class="im-delete-btn"
+            onclick="return confirm('Delete this photo?');"
+          >
+            🗑 Delete
+          </button>
+        </div>
       </div>
       {% empty %}
       <p class="imgmgr-empty">No photos yet. Upload your first images above.</p>
       {% endfor %}
     </div>
-
-    {% if room.images.all %}
-    <div class="imgmgr-actions">
-      <button type="submit" class="btn-secondary">Save Changes</button>
-    </div>
-    {% endif %}
   </form>
+
+  <!-- Separate tiny forms for reorder buttons, so they submit
+       independently of the upload/delete form above without needing
+       JavaScript to intercept anything. -->
+  {% for img in room.images.all|slice:":10" %}
+  <form method="post" action="{% url 'reorder_room_image' img.id 'up' %}" id="imReorderForm{{ img.id }}up" class="im-hidden-form"></form>
+  <form method="post" action="{% url 'reorder_room_image' img.id 'down' %}" id="imReorderForm{{ img.id }}down" class="im-hidden-form"></form>
+  {% endfor %}
+
 </div>
+
+<style>
+  /* ===================================================================
+     IMAGE MANAGER - reorder, simpler delete, friendlier upload zone.
+     =================================================================== */
+
+  .im-dropzone {
+    border: 2px dashed rgba(37, 99, 235, 0.3);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    background: #f8fafc;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .im-dropzone.im-dragover {
+    border-color: #2563eb;
+    background: #eef2ff;
+  }
+  .im-dropzone-inner {
+    position: relative;
+  }
+  .im-dropzone-icon {
+    font-size: 2rem;
+    margin-bottom: 6px;
+  }
+  .im-dropzone-text {
+    font-size: 0.95rem;
+    color: #475569;
+    margin-bottom: 14px;
+  }
+  .im-file-input {
+    display: block;
+    margin: 0 auto;
+  }
+  .im-selected-count {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2563eb;
+    min-height: 1.2em;
+  }
+  .im-upload-row {
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .im-current-label {
+    margin-top: 18px;
+  }
+  .im-reorder-hint {
+    margin: 0 0 14px;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  .im-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 14px;
+  }
+
+  .im-item {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+  }
+  .im-cover-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+    background: rgba(37, 99, 235, 0.92);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 999px;
+  }
+  .im-img {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .im-controls {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .im-reorder-btns {
+    display: flex;
+    gap: 6px;
+  }
+  .im-reorder-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .im-reorder-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .im-delete-btn {
+    border: none;
+    background: none;
+    color: #dc2626;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 6px;
+    white-space: nowrap;
+  }
+
+  .im-hidden-form {
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .im-grid {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const dropzone = document.getElementById("imDropzone");
+  const fileInput = document.getElementById("imFileInput");
+  const countLabel = document.getElementById("imSelectedCount");
+
+  if (!dropzone || !fileInput) return;
+
+  function updateCount() {
+    const n = fileInput.files ? fileInput.files.length : 0;
+    countLabel.textContent = n > 0 ? `${n} photo${n === 1 ? "" : "s"} selected` : "";
+  }
+
+  fileInput.addEventListener("change", updateCount);
+
+  // Drag-and-drop is a nice-to-have on desktop - the file input above
+  // already works fine on its own on mobile, this just layers extra
+  // convenience on top without it being required.
+  ["dragenter", "dragover"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.add("im-dragover");
+    });
+  });
+  ["dragleave", "drop"].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.remove("im-dragover");
+    });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      updateCount();
+    }
+  });
+});
+</script>
 
 {% endblock %}

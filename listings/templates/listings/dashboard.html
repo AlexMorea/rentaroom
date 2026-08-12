@@ -9,6 +9,8 @@ Dashboard • Rooms4You
 
 {% url 'create_room' as create_room_url %}
 
+<div class="ld-page">
+
 <!-- ================= DASHBOARD HEADER ================= -->
 
 {% include "listings/partials/_dashboard_header.html" with title="Landlord Dashboard" button_url=create_room_url button_text="List Your Room in 2 Minutes" %}
@@ -27,27 +29,30 @@ Dashboard • Rooms4You
 
 <!-- ================= STATS ================= -->
 
-<div class="dashboard-grid">
-  <a href="{% url 'landlord_rooms' %}" class="stat-card stat-link">
-    <div class="stat-number">{{ rooms.count }}</div>
-    <div class="stat-label">Rooms</div>
+<div class="dashboard-grid ld-stats-grid">
+  <a href="{% url 'landlord_rooms' %}" class="stat-card stat-link ld-stat-card">
+    <div class="ld-stat-icon">🏠</div>
+    <div class="stat-number ld-stat-number">{{ rooms.count }}</div>
+    <div class="stat-label ld-stat-label">Rooms</div>
   </a>
 
-  <a href="{% url 'landlord_images_hub' %}" class="stat-card stat-link">
-    <div class="stat-number">{{ image_count }}</div>
-    <div class="stat-label">Images</div>
+  <a href="{% url 'landlord_images_hub' %}" class="stat-card stat-link ld-stat-card">
+    <div class="ld-stat-icon">🖼️</div>
+    <div class="stat-number ld-stat-number">{{ image_count }}</div>
+    <div class="stat-label ld-stat-label">Images</div>
   </a>
 
-  <a href="{% url 'contacts_analytics' %}" class="stat-card stat-link">
-    <div class="stat-number">{{ contact_count }}</div>
-    <div class="stat-label">Contacts</div>
+  <a href="{% url 'contacts_analytics' %}" class="stat-card stat-link ld-stat-card">
+    <div class="ld-stat-icon">💬</div>
+    <div class="stat-number ld-stat-number">{{ contact_count }}</div>
+    <div class="stat-label ld-stat-label">Contacts</div>
   </a>
 </div>
 
 <!-- ================= MEMBERSHIP CTA ================= -->
 
 {% if membership.tier == "starter" and membership.status == "active" %}
-<div class="form-card membership-card">
+<div class="form-card membership-card ld-membership-card">
   <div class="membership-content">
     <div>
       <h3>Upgrade Your Account 🚀</h3>
@@ -65,45 +70,67 @@ Dashboard • Rooms4You
       <small> Use this as your payment reference when making a deposit. </small>
     </div>
 
-    <a href="{% url 'membership' %}" class="btn-primary" style="background: linear-gradient(135deg,#f59e0b,#ea580c); border:none;">
+    <a href="{% url 'membership' %}" class="btn-primary ld-upgrade-btn">
       Upgrade Now
     </a>
   </div>
 </div>
 {% endif %}
 
+<!-- ================= PLACEMENTS & FEES ================= -->
+<!-- Previously nowhere on this dashboard - a landlord could have a
+     success fee sitting unpaid and never see it. -->
+
+<a href="{% url 'placements:landlord_dashboard' %}" class="dashboard-link-card ld-link-card">
+  <div class="form-card ld-placements-card {% if fees_due_count > 0 %}ld-placements-alert{% endif %}">
+    <div class="ld-placements-header">
+      <div>
+        <h3 class="ld-placements-title">🤝 Placements &amp; Fees</h3>
+        <p class="ld-placements-sub">Track tenants through to move-in and your success fee</p>
+      </div>
+      <span class="ld-placements-count">{{ active_placements_count }} active →</span>
+    </div>
+
+    {% if fees_due_count > 0 %}
+      <div class="ld-fees-due-banner">
+        ⚠ {{ fees_due_count }} success fee{{ fees_due_count|pluralize }} due - tap to review
+      </div>
+    {% endif %}
+  </div>
+</a>
+
 <!-- ================= INBOX PREVIEW ================= -->
 
-<a href="{% url 'inbox' %}" class="dashboard-link-card">
-  <div class="form-card inbox-preview-card">
-    <div class="inbox-header">
+<a href="{% url 'inbox' %}" class="dashboard-link-card ld-link-card">
+  <div class="form-card inbox-preview-card ld-inbox-card">
+    <div class="inbox-header ld-inbox-header">
       <div>
         <h3>Inbox</h3>
 
         <p>Tenant enquiries (click to view all)</p>
       </div>
 
-      <span class="inbox-count"> {{ messages_received|length }} recent → </span>
+      <span class="inbox-count ld-inbox-count"> {{ messages_received|length }} recent → </span>
     </div>
 
-    <div class="inbox-preview-list">
+    <div class="inbox-preview-list ld-inbox-list">
       {% for msg in messages_received %}
 
-      <div class="inbox-item">
-        <div class="inbox-avatar">
+      <div class="inbox-item ld-inbox-item">
+        <div class="inbox-avatar ld-inbox-avatar">
           {{ msg.sender.first_name|default:"U"|slice:":1"|upper }}
         </div>
 
-        <div class="inbox-body">
-          <div class="inbox-top">
+        <div class="inbox-body ld-inbox-body">
+          <div class="inbox-top ld-inbox-top">
             <strong> {{ msg.sender.first_name|default:"Unknown" }} </strong>
 
             <small> {{ msg.created_at|timesince }} ago </small>
           </div>
 
-          <div class="inbox-room">{{ msg.room.title }}</div>
+          <div class="inbox-room ld-inbox-room">{{ msg.room.title }}</div>
 
-          <p class="inbox-message">{{ msg.body|truncatechars:90 }}</p>
+          <p class="inbox-message ld-inbox-message">{{ msg.body|truncatechars:90 }}</p>
         </div>
       </div>
 
@@ -119,38 +146,52 @@ Dashboard • Rooms4You
 
 <!-- ================= YOUR ROOMS ================= -->
 
-<div class="dashboard-section">
+<div class="dashboard-section ld-section">
   <div class="section-header">
     <h2>Your Listings</h2>
   </div>
 
-  <div class="dashboard-rooms" id="your-rooms">
+  <div class="dashboard-rooms ld-rooms" id="your-rooms">
     {% for room in rooms %}
 
-    <div class="room-row">
-      <div class="room-row-content">
-        <strong class="room-row-title"> {{ room.title }} </strong>
+    <div class="room-row ld-room-row">
+      <div class="room-row-content ld-room-content">
+        <strong class="room-row-title ld-room-title"> {{ room.title }} </strong>
 
-        <div class="room-row-location">{{ room.location }}</div>
+        <div class="room-row-location ld-room-location">📍 {{ room.location }}</div>
 
-        <div class="room-row-stats">
-          Views: {{ room.view_count }} • Contacts: {{ room.contact_total }} •
-          CTR: {{ room.ctr }}%
+        <div class="ld-room-badge-row">
+          <span class="availability-badge {{ room.availability_state }} ld-availability ld-availability-{{ room.availability_state }}">
+            {{ room.availability_badge_text }}
+          </span>
+        </div>
+
+        <div class="room-row-stats ld-room-stats">
+          👁 {{ room.view_count }} views &nbsp;·&nbsp; 💬 {{ room.contact_total }} contacts &nbsp;·&nbsp; {{ room.ctr }}% CTR
         </div>
       </div>
 
-      <div class="room-actions">
-        <a href="{% url 'upload_room_images' room.id %}"> Images </a>
+      <div class="room-actions ld-room-actions">
+        <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form ld-vacancy-form">
+          {% csrf_token %}
+          {% if room.is_available and room.available_units > 0 %}
+            <button type="submit" class="vacancy-toggle-btn mark-occupied ld-vacancy-btn ld-vacancy-btn-occupied">Mark Occupied</button>
+          {% else %}
+            <button type="submit" class="vacancy-toggle-btn mark-available ld-vacancy-btn ld-vacancy-btn-available">Mark Available</button>
+          {% endif %}
+        </form>
 
-        <a href="{% url 'edit_room' room.id %}"> Edit </a>
-
-        <a
-          href="{% url 'delete_room' room.id %}"
-          onclick="return confirm('Delete this room?');"
-          class="danger-link"
-        >
-          Delete
-        </a>
+        <div class="ld-room-links">
+          <a href="{% url 'upload_room_images' room.id %}" class="ld-action-link"> Images </a>
+          <a href="{% url 'edit_room' room.id %}" class="ld-action-link"> Edit </a>
+          <a
+            href="{% url 'delete_room' room.id %}"
+            onclick="return confirm('Delete this room?');"
+            class="danger-link ld-action-link ld-danger-link"
+          >
+            Delete
+          </a>
+        </div>
       </div>
     </div>
 
@@ -158,5 +199,325 @@ Dashboard • Rooms4You
     {% include "listings/partials/_empty_state.html" with title="No listings yet" message="Start by creating your first room listing and make it visible to tenants." button_url=create_room_url button_text="List Your First Room in 2 Minutes" %} {% endfor %}
   </div>
 </div>
+
+</div><!-- /.ld-page -->
+
+<style>
+  /* ===================================================================
+     LANDLORD DASHBOARD - functional additions + visual pass
+     Same defensive approach validated tonight: new ld- prefixed classes
+     carry the actual styling, old classes kept alongside for anything
+     that depends on them, critical layout properties hardened with
+     !important since base.css has duplicate/conflicting rules for
+     several of these classes (.stat-card, .dashboard-rooms,
+     .dashboard-grid, .room-row all defined more than once).
+     =================================================================== */
+
+  .ld-page {
+    display: block;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* ===== Stats row ===== */
+  .ld-stats-grid {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 14px !important;
+    margin-bottom: 22px;
+  }
+  .ld-stat-card {
+    flex: 1 1 140px;
+    min-width: 0;
+    display: block !important;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 20px 16px;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .ld-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  }
+  .ld-stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: 6px;
+  }
+  .ld-stat-number {
+    font-size: 1.7rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+  }
+  .ld-stat-label {
+    font-size: 0.82rem !important;
+    color: #64748b !important;
+    margin: 2px 0 0 !important;
+  }
+
+  /* ===== Membership card ===== */
+  .ld-membership-card {
+    margin-bottom: 22px;
+  }
+  .ld-upgrade-btn {
+    flex-shrink: 0;
+  }
+
+  /* ===== Link cards (Placements, Inbox) share a base treatment ===== */
+  .ld-link-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 22px;
+  }
+
+  /* Placements card */
+  .ld-placements-card {
+    display: block !important;
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .ld-link-card:hover .ld-placements-card,
+  .ld-link-card:hover .ld-inbox-card {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  }
+  .ld-placements-alert {
+    border: 1px solid #fecaca;
+    background: #fffaf9;
+  }
+  .ld-placements-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ld-placements-title {
+    margin: 0 0 4px !important;
+    font-size: 1.05rem;
+  }
+  .ld-placements-sub {
+    margin: 0 !important;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .ld-placements-count {
+    flex-shrink: 0;
+    font-weight: 700;
+    color: #2563eb;
+    white-space: nowrap;
+  }
+  .ld-fees-due-banner {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    color: #7f1d1d;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  /* Inbox preview */
+  .ld-inbox-card {
+    display: block !important;
+  }
+  .ld-inbox-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .ld-inbox-count {
+    flex-shrink: 0;
+    font-weight: 700;
+    color: #2563eb;
+    white-space: nowrap;
+  }
+  .ld-inbox-list {
+    display: block !important;
+  }
+  .ld-inbox-item {
+    display: flex !important;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-top: 1px solid #f1f5f9;
+  }
+  .ld-inbox-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .ld-inbox-body {
+    display: block !important;
+    min-width: 0;
+    flex: 1;
+  }
+  .ld-inbox-top {
+    display: flex !important;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+  .ld-inbox-top small {
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+  .ld-inbox-room {
+    font-size: 0.8rem;
+    color: #2563eb;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .ld-inbox-message {
+    margin: 4px 0 0 !important;
+    font-size: 0.85rem;
+    color: #475569;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ===== Your Listings section ===== */
+  .ld-section {
+    margin-top: 6px;
+  }
+
+  .ld-rooms {
+    display: block !important;
+  }
+
+  .ld-room-row {
+    display: flex !important;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ld-room-content {
+    display: block !important;
+    min-width: 0;
+    flex: 1 1 240px;
+  }
+  .ld-room-title {
+    display: block;
+    text-transform: none !important;
+    font-weight: 700 !important;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+  .ld-room-location {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .ld-room-badge-row {
+    margin-top: 8px;
+  }
+  .ld-availability {
+    display: inline-flex !important;
+    align-items: center;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 0.74rem !important;
+    font-weight: 700;
+  }
+  .ld-availability-available {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+  }
+  .ld-availability-upcoming {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+  }
+  .ld-availability-occupied {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+  .ld-room-stats {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+
+  .ld-room-actions {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .ld-vacancy-form {
+    margin: 0;
+  }
+  .ld-vacancy-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ld-vacancy-btn-available {
+    background: #16a34a;
+    color: #fff;
+  }
+  .ld-vacancy-btn-occupied {
+    background: #f1f5f9;
+    color: #334155;
+  }
+  .ld-room-links {
+    display: flex;
+    gap: 10px;
+    font-size: 0.82rem;
+  }
+  .ld-action-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .ld-danger-link {
+    color: #dc2626 !important;
+  }
+
+  @media (max-width: 640px) {
+    .ld-room-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .ld-room-content {
+      flex-basis: auto !important;
+    }
+    .ld-room-actions {
+      align-items: stretch;
+    }
+    .ld-vacancy-btn {
+      width: 100%;
+    }
+    .ld-room-links {
+      justify-content: center;
+    }
+  }
+</style>
 
 {% endblock %}

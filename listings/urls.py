@@ -94,6 +94,7 @@ urlpatterns = [
     # images
     path("rooms/<int:pk>/images/", views.edit_room_images, name="edit_room_images"),
     path("rooms/<int:room_id>/upload-images/", views.upload_room_images, name="upload_room_images"),
+    path("images/<int:image_id>/reorder/<str:direction>/", views.reorder_room_image, name="reorder_room_image"),
     path("images/<int:image_id>/delete/", views.delete_room_image, name="delete_room_image"),
 
     # interactions

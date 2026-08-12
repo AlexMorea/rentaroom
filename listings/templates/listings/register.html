@@ -2,160 +2,463 @@
 {% block body_class %}auth-page{% endblock %}
 {% block content %}
 
-<div class="auth-shell">
-  <div class="auth-card">
+<div class="pr-shell">
+  <div class="pr-panel-wrap">
 
-    <h1 class="page-title">Welcome to Rooms4You</h1>
-    <h2 class="auth-title">Create account</h2>
+    <!-- BRAND PANEL -->
+    <div class="pr-brand">
+      <div class="pr-brand-glow-a"></div>
+      <div class="pr-brand-glow-b"></div>
 
-    <form method="post" class="auth-form">
-      {% csrf_token %}
+      <div class="pr-brand-inner">
+        <div class="pr-logo">🏠 Rooms4You</div>
+        <h1 class="pr-headline">Connecting Spaces To Faces</h1>
+        <p class="pr-subhead">
+          South Africa's trusted way to find a room, or find your next tenant.
+        </p>
 
-      {{ form.non_field_errors }}
-
-      <!-- BASIC INFO -->
-      <div class="field">
-        <label>First name</label>
-        {{ form.first_name }}
+        <ul class="pr-trust-list">
+          <li><span class="pr-trust-icon">✓</span> Free to join, no hidden fees</li>
+          <li><span class="pr-trust-icon">✓</span> Verified landlords &amp; real listings</li>
+          <li><span class="pr-trust-icon">✓</span> Your details are never shared publicly</li>
+        </ul>
       </div>
+    </div>
 
-      <div class="field">
-        <label>Last name</label>
-        {{ form.last_name }}
-      </div>
+    <!-- FORM PANEL -->
+    <div class="pr-form-panel">
+      <div class="pr-form-inner">
 
-      <div class="field">
-        <label>Email</label>
-        {{ form.email }}
-        <small style="color:gray">OTP will be sent here</small>
-      </div>
+        <h2 class="pr-form-title">Create your account</h2>
+        <p class="pr-form-sub">Takes less than a minute.</p>
 
-      <div class="field">
-        <label>Account type</label>
-        {{ form.role }}
-      </div>
+        <form method="post" class="pr-form">
+          {% csrf_token %}
 
-      <small style="color:gray">
-      Want to become a driver?
-      <a href="{% url 'services:register_bakkie_driver' %}"
-        style="color:#2563eb;font-weight:600;text-decoration:underline;"
-      >
-      Apply here
-      </a>
-      </small>
+          {{ form.non_field_errors }}
 
-      <!-- PHONE -->
-      <div class="field">
-        <label>Phone Number</label>
-        <div style="display:flex;gap:10px">
-          <div style="width:120px">{{ form.country_code }}</div>
-          <div style="flex:1">{{ form.phone_number }}</div>
-        </div>
-      </div>
+          <!-- ROLE SELECTOR -->
+          <div class="pr-field">
+            <label>I am a...</label>
 
-      <!-- TENANT -->
-      <div id="tenantFields">
-        <div class="field">
-          <label>Persona</label>
-          {{ form.persona }}
-        </div>
-      </div>
+            <div class="pr-role-cards">
+              <button type="button" class="pr-role-card" data-role="tenant">
+                <span class="pr-role-icon">🔍</span>
+                <span class="pr-role-label">Tenant</span>
+                <span class="pr-role-desc">Looking for a room</span>
+              </button>
 
-      <!-- LANDLORD -->
-      <div id="landlordFields" style="display:none">
+              <button type="button" class="pr-role-card" data-role="landlord">
+                <span class="pr-role-icon">🔑</span>
+                <span class="pr-role-label">Landlord</span>
+                <span class="pr-role-desc">Have a room to rent</span>
+              </button>
+            </div>
 
-        <div class="field">
-          <label>Alternative number</label>
-          {{ form.alt_no }}
-        </div>
+            <div class="pr-role-select-wrap">
+              {{ form.role }}
+            </div>
+          </div>
 
-        <div class="field">
-          <label>Home address</label>
-          {{ form.home_address }}
-        </div>
+          <!-- BASIC INFO -->
+          <div class="pr-row">
+            <div class="pr-field">
+              <label>First name</label>
+              {{ form.first_name }}
+            </div>
+            <div class="pr-field">
+              <label>Last name</label>
+              {{ form.last_name }}
+            </div>
+          </div>
 
-        <div class="field">
-          <label>Postal code</label>
-          {{ form.postal_code }}
-        </div>
+          <div class="pr-field">
+            <label>Email</label>
+            {{ form.email }}
+            <small class="pr-hint">📧 We'll send a verification code here</small>
+          </div>
 
-      </div>
+          <small class="pr-driver-note">
+            Want to become a driver?
+            <a href="{% url 'services:register_bakkie_driver' %}" class="pr-inline-link">Apply here</a>
+          </small>
 
-      <!-- PASSWORD -->
-      <div class="field">
-        <label>Password</label>
-        <div class="pw-wrap">
-          {{ form.password1 }}
-          <button
-            class="pw-toggle"
-            type="button"
-            data-toggle="#id_password1"
-            aria-label="Show password"
-          >
-            👁
+          <div class="pr-field">
+            <label>Phone Number</label>
+            <div class="pr-phone-row">
+              <div class="pr-phone-code">{{ form.country_code }}</div>
+              <div class="pr-phone-number">{{ form.phone_number }}</div>
+            </div>
+          </div>
+
+          <!-- TENANT ONLY -->
+          <div id="tenantFields">
+            <div class="pr-field">
+              <label>Persona</label>
+              {{ form.persona }}
+            </div>
+          </div>
+
+          <!-- LANDLORD ONLY -->
+          <div id="landlordFields" class="pr-hidden-fields">
+            <div class="pr-field">
+              <label>Alternative number</label>
+              {{ form.alt_no }}
+            </div>
+            <div class="pr-field">
+              <label>Home address</label>
+              {{ form.home_address }}
+            </div>
+            <div class="pr-field">
+              <label>Postal code</label>
+              {{ form.postal_code }}
+            </div>
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="pr-field">
+            <label>Password</label>
+            <div class="pr-pw-wrap">
+              {{ form.password1 }}
+              <button class="pr-pw-toggle" type="button" data-toggle="#id_password1" aria-label="Show password">👁</button>
+            </div>
+            {{ form.password1.errors }}
+          </div>
+
+          <div class="pr-field">
+            <label>Repeat Password</label>
+            <div class="pr-pw-wrap">
+              {{ form.password2 }}
+              <button class="pr-pw-toggle" type="button" data-toggle="#id_password2" aria-label="Show password">👁</button>
+            </div>
+            {{ form.password2.errors }}
+          </div>
+
+          <!-- CONSENT -->
+          <div class="pr-consent">
+            <label class="pr-consent-label">
+              {{ form.terms_accepted }}
+              <span>
+                I agree to the
+                <a href="{% url 'terms' %}" target="_blank" class="pr-inline-link">Terms of Service</a>
+                and
+                <a href="{% url 'privacy' %}" target="_blank" class="pr-inline-link">Privacy Policy</a>
+                and consent to the processing of my personal information under POPIA.
+              </span>
+            </label>
+            {{ form.terms_accepted.errors }}
+          </div>
+
+          <button class="btn-primary pr-submit-btn" type="submit">
+            Create account
           </button>
-        </div>
-        {{ form.password1.errors }}
-      </div>
 
-      <div class="field">
-        <label>Repeat Password</label>
-        <div class="pw-wrap">
-          {{ form.password2 }}
-          <button
-            class="pw-toggle"
-            type="button"
-            data-toggle="#id_password2"
-            aria-label="Show password"
-          >
-            👁
-          </button>
-        </div>
-        {{ form.password2.errors }}
-      </div>
+          <p class="pr-next-step">
+            🔒 Next: we'll email you a 6-digit code to verify your account.
+          </p>
 
-      <!-- ✅ CONSENT (LINK HIGHLIGHTED + UX IMPROVED) -->
-      <div class="form-group" style="margin-top:20px">
+        </form>
 
-        <label style="display:flex;gap:10px;align-items:flex-start;line-height:1.6">
-
-          {{ form.terms_accepted }}
-
-          <span>
-            I agree to the
-            <a href="{% url 'terms' %}" target="_blank"
-              style="color:#2563eb; font-weight:600; text-decoration:underline;">
-              Terms of Service
-            </a>
-            and
-            <a href="{% url 'privacy' %}" target="_blank"
-              style="color:#2563eb; font-weight:600; text-decoration:underline;">
-              Privacy Policy
-            </a>
-            and consent to the processing of my personal information under POPIA.
-          </span>
-
-        </label>
-
-        {{ form.terms_accepted.errors }}
+        <p class="pr-login-hint">
+          Already have an account?
+          <a class="pr-inline-link" href="{% url 'login' %}">Log in</a>
+        </p>
 
       </div>
-
-  
-      <!-- SUBMIT -->
-      <button class="btn-primary auth-btn" type="submit">
-        Create account
-      </button>
-
-    </form>
-
-    <p class="auth-hint">
-      Already have an account?
-      <a class="auth-link" href="{% url 'login' %}">Log in</a>
-    </p>
+    </div>
 
   </div>
 </div>
+
+<style>
+  /* ===================================================================
+     PREMIUM REGISTER - split brand/form panel, visual role selector,
+     explicit next-step + trust messaging.
+     =================================================================== */
+
+  .pr-shell {
+    display: block;
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 16px;
+  }
+  .pr-panel-wrap {
+    display: flex;
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+  }
+
+  /* Brand panel */
+  .pr-brand {
+    position: relative;
+    flex: 0 0 40%;
+    overflow: hidden;
+    background: linear-gradient(160deg, #0b2a6b 0%, #14349c 35%, #1c5fd6 70%, #1298d6 100%);
+    padding: 40px 32px;
+    display: flex;
+    align-items: center;
+  }
+  .pr-brand-glow-a {
+    position: absolute; top: -100px; left: -100px; width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.45), transparent 70%);
+  }
+  .pr-brand-glow-b {
+    position: absolute; bottom: -80px; right: -80px; width: 260px; height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249,115,22,0.35), transparent 70%);
+  }
+  .pr-brand-inner {
+    position: relative;
+    z-index: 2;
+  }
+  .pr-logo {
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+  }
+  .pr-headline {
+    color: #fff;
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0 0 12px;
+  }
+  .pr-subhead {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0 0 28px;
+  }
+  .pr-trust-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .pr-trust-list li {
+    color: #fff;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pr-trust-icon {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  /* Form panel */
+  .pr-form-panel {
+    flex: 1;
+    min-width: 0;
+    padding: 40px 36px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .pr-form-title {
+    margin: 0 0 4px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .pr-form-sub {
+    margin: 0 0 24px;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  .pr-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .pr-row {
+    display: flex;
+    gap: 14px;
+  }
+  .pr-row .pr-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pr-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: #0f172a;
+  }
+  .pr-hint {
+    display: block;
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+  .pr-driver-note {
+    display: block;
+    margin-top: -8px;
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+  .pr-inline-link {
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
+  /* Role cards */
+  .pr-role-cards {
+    display: flex;
+    gap: 12px;
+  }
+  .pr-role-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 10px;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .pr-role-card.pr-role-active {
+    border-color: #2563eb;
+    background: #eef2ff;
+  }
+  .pr-role-icon {
+    font-size: 1.5rem;
+  }
+  .pr-role-label {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.92rem;
+  }
+  .pr-role-desc {
+    font-size: 0.76rem;
+    color: #64748b;
+  }
+  .pr-role-select-wrap {
+    display: none;
+  }
+
+  .pr-phone-row {
+    display: flex;
+    gap: 10px;
+  }
+  .pr-phone-code {
+    width: 110px;
+    flex-shrink: 0;
+  }
+  .pr-phone-number {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pr-hidden-fields {
+    display: none;
+  }
+
+  .pr-pw-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pr-pw-toggle {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 1.05rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pr-consent {
+    margin-top: 2px;
+  }
+  .pr-consent-label {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    line-height: 1.6;
+    font-size: 0.85rem;
+    color: #334155;
+    cursor: pointer;
+  }
+  .pr-consent-label input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  .pr-submit-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+  .pr-next-step {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 12px 0 0;
+  }
+  .pr-login-hint {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 860px) {
+    .pr-panel-wrap {
+      flex-direction: column;
+    }
+    .pr-brand {
+      flex: none;
+      padding: 28px 24px;
+    }
+    .pr-headline {
+      font-size: 1.35rem;
+    }
+    .pr-trust-list {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+    }
+    .pr-trust-list li {
+      font-size: 0.82rem;
+    }
+    .pr-form-panel {
+      max-height: none;
+      padding: 28px 20px;
+    }
+    .pr-row {
+      flex-direction: column;
+      gap: 16px;
+    }
+  }
+</style>
 
 {% endblock %}
 
@@ -165,10 +468,8 @@ document.querySelectorAll("[data-toggle]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const input = document.querySelector(btn.dataset.toggle);
     if (!input) return;
-
     const isHidden = input.type === "password";
     input.type = isHidden ? "text" : "password";
-
     btn.textContent = isHidden ? "🙈" : "👁";
     btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
   });
@@ -179,6 +480,7 @@ document.querySelectorAll("[data-toggle]").forEach((btn) => {
 const roleSel = document.getElementById("id_role");
 const landlord = document.getElementById("landlordFields");
 const tenant = document.getElementById("tenantFields");
+const roleCards = document.querySelectorAll(".pr-role-card");
 
 function toggle() {
   const role = roleSel?.value;
@@ -190,7 +492,19 @@ function toggle() {
     landlord.style.display = "none";
     tenant.style.display = "block";
   }
+
+  roleCards.forEach((card) => {
+    card.classList.toggle("pr-role-active", card.dataset.role === role);
+  });
 }
+
+roleCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    if (!roleSel) return;
+    roleSel.value = card.dataset.role;
+    roleSel.dispatchEvent(new Event("change"));
+  });
+});
 
 roleSel?.addEventListener("change", toggle);
 toggle();

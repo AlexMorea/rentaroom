@@ -1,71 +1,219 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<div
-  style="
-    display: flex;
+<div class="lr-page">
+
+  <div class="lr-header">
+    <h1 class="page-title lr-title">My Rooms</h1>
+
+    <div class="lr-header-actions">
+      <a href="{% url 'dashboard' %}" class="btn-secondary">← Back</a>
+      <a href="{% url 'create_room' %}" class="btn-primary">+ Add Room</a>
+    </div>
+  </div>
+
+  <div class="dashboard-rooms lr-rooms">
+    {% for room in rooms %}
+    <div class="room-row lr-room-row">
+      <div class="room-row-content lr-room-content">
+        <strong class="room-row-title lr-room-title">{{ room.title }}</strong>
+        <div class="lr-room-location">📍 {{ room.location }}</div>
+        <div class="lr-room-badge-row">
+          <span class="availability-badge {{ room.availability_state }} lr-availability lr-availability-{{ room.availability_state }}">
+            {{ room.availability_badge_text }}
+          </span>
+        </div>
+      </div>
+
+      <div class="room-actions lr-room-actions">
+        <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form lr-vacancy-form">
+          {% csrf_token %}
+          {% if room.is_available and room.available_units > 0 %}
+            <button type="submit" class="vacancy-toggle-btn mark-occupied lr-vacancy-btn lr-vacancy-btn-occupied">Mark Occupied</button>
+          {% else %}
+            <button type="submit" class="vacancy-toggle-btn mark-available lr-vacancy-btn lr-vacancy-btn-available">Mark Available</button>
+          {% endif %}
+        </form>
+
+        <div class="lr-room-links">
+          <a href="{% url 'upload_room_images' room.id %}" class="lr-action-link">Images</a>
+          <a href="{% url 'edit_room' room.id %}" class="lr-action-link">Edit</a>
+          <a
+            href="{% url 'delete_room' room.id %}"
+            onclick="return confirm('Delete this room?');"
+            class="lr-action-link lr-danger-link"
+          >
+            Delete
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="lr-empty-state">
+      <p class="lr-empty-text">You haven't added any rooms yet.</p>
+      <a href="{% url 'create_room' %}" class="btn-primary">+ Add your first room</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<style>
+  /* ===================================================================
+     LANDLORD ROOMS - focused room management page.
+     Reuses the exact same visual language as the dashboard's room
+     rows, so the two pages feel like one product instead of two
+     different eras of design. Same defensive !important hardening on
+     properties base.css has duplicate/conflicting rules for.
+     =================================================================== */
+
+  .lr-page {
+    display: block;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .lr-header {
+    display: flex !important;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
-  "
->
-  <h1 class="page-title" style="margin: 0">My Rooms</h1>
+    margin-bottom: 20px;
+  }
+  .lr-title {
+    margin: 0 !important;
+  }
+  .lr-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
 
-    <div style="display: flex; gap: 10px; flex-wrap: wrap">
-      <a href="{% url 'dashboard' %}" class="btn-secondary">← Back</a>
-      <a href="{% url 'create_room' %}" class="btn-primary">+ Add Room</a>
-    </div>
-</div>
+  .lr-rooms {
+    display: block !important;
+  }
 
-<div class="dashboard-rooms">
-  {% for room in rooms %}
-  <div class="room-row">
-    <div>
-      <strong>{{ room.title }}</strong>
-      <div style="opacity: 0.75; font-size: 0.9rem">{{ room.location }}</div>
-      <div style="margin-top: 6px">
-        <span class="availability-badge {{ room.availability_state }}">
-          {{ room.availability_badge_text }}
-        </span>
-      </div>
-    </div>
+  .lr-room-row {
+    display: flex !important;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .lr-room-content {
+    display: block !important;
+    min-width: 0;
+    flex: 1 1 220px;
+  }
+  .lr-room-title {
+    display: block;
+    text-transform: none !important;
+    font-weight: 700 !important;
+    font-size: 1rem;
+    color: #0f172a;
+  }
+  .lr-room-location {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .lr-room-badge-row {
+    margin-top: 8px;
+  }
+  .lr-availability {
+    display: inline-flex !important;
+    align-items: center;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 0.74rem !important;
+    font-weight: 700;
+  }
+  .lr-availability-available {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+  }
+  .lr-availability-upcoming {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+  }
+  .lr-availability-occupied {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+  }
 
-    <div class="room-actions" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form">
-        {% csrf_token %}
-        {% if room.is_available and room.available_units > 0 %}
-          <button type="submit" class="vacancy-toggle-btn mark-occupied">Mark Occupied</button>
-        {% else %}
-          <button type="submit" class="vacancy-toggle-btn mark-available">Mark Available</button>
-        {% endif %}
-      </form>
+  .lr-room-actions {
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .lr-vacancy-form {
+    margin: 0;
+  }
+  .lr-vacancy-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .lr-vacancy-btn-available {
+    background: #16a34a;
+    color: #fff;
+  }
+  .lr-vacancy-btn-occupied {
+    background: #f1f5f9;
+    color: #334155;
+  }
+  .lr-room-links {
+    display: flex;
+    gap: 10px;
+    font-size: 0.82rem;
+  }
+  .lr-action-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .lr-danger-link {
+    color: #dc2626 !important;
+  }
 
-      <a href="{% url 'upload_room_images' room.id %}">Images</a> |
-      <a href="{% url 'edit_room' room.id %}">Edit</a> |
-      <a
-        href="{% url 'delete_room' room.id %}"
-        onclick="return confirm('Delete this room?');"
-        >Delete</a
-      >
-    </div>
-  </div>
-  {% empty %}
-  <div
-    style="
-      background: white;
-      padding: 18px;
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      text-align: center;
-    "
-  >
-    <p style="margin: 0 0 12px">You haven't added any rooms yet.</p>
-    <a href="{% url 'create_room' %}" class="btn-primary"
-      >+ Add your first room</a
-    >
-  </div>
-  {% endfor %}
-</div>
+  .lr-empty-state {
+    background: #fff;
+    padding: 28px 20px;
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    text-align: center;
+  }
+  .lr-empty-text {
+    margin: 0 0 14px;
+    color: #64748b;
+  }
+
+  @media (max-width: 640px) {
+    .lr-room-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .lr-room-content {
+      flex-basis: auto !important;
+    }
+    .lr-room-actions {
+      align-items: stretch;
+    }
+    .lr-vacancy-btn {
+      width: 100%;
+    }
+    .lr-room-links {
+      justify-content: center;
+    }
+  }
+</style>
 
 {% endblock %}

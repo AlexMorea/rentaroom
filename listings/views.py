@@ -6,6 +6,7 @@ from django.contrib.auth import login, logout, authenticate
 from datetime import timedelta
 from django.db.models import Count, Q, F, IntegerField, ExpressionWrapper, Avg
 from django.conf import settings
+from placements.models import Placement
 POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 from django.http import HttpResponseForbidden, HttpResponse, Http404
 from django.contrib.auth.views import PasswordResetView
@@ -1301,6 +1302,16 @@ def dashboard(request):
         .order_by("-created_at")[:8]
     )
 
+    # Placements summary - previously invisible from the main dashboard,
+    # a landlord could have a success fee sitting unpaid and never see it
+    active_placements_count = Placement.objects.filter(landlord=request.user).exclude(
+        status__in=[Placement.STATUS_PAID, Placement.STATUS_CANCELLED]
+    ).count()
+    fees_due_count = Placement.objects.filter(
+        landlord=request.user,
+        status=Placement.STATUS_SUCCESS_FEE_DUE,
+    ).count()
+
     return render(
         request,
         "listings/dashboard.html",
@@ -1313,6 +1324,10 @@ def dashboard(request):
 
             # CRM inbox
             "messages_received": messages_received,
+
+            # Placements summary
+            "active_placements_count": active_placements_count,
+            "fees_due_count": fees_due_count,
         },
     )
 
@@ -1629,6 +1644,29 @@ def edit_room_images(request, pk):
         "listings/edit_room_images.html",
         {"room": room, "img_count": room.images.count(), "max_images": 10},
     )
+
+
+@login_required
+@user_passes_test(is_landlord)
+@require_POST
+def reorder_room_image(request, image_id, direction):
+    img = get_object_or_404(RoomImage, id=image_id, room__owner=request.user)
+    room = img.room
+    images = list(room.images.all())
+
+    idx = images.index(img)
+
+    if direction == "up" and idx > 0:
+        images[idx], images[idx - 1] = images[idx - 1], images[idx]
+    elif direction == "down" and idx < len(images) - 1:
+        images[idx], images[idx + 1] = images[idx + 1], images[idx]
+
+    for position, image_obj in enumerate(images):
+        if image_obj.order != position:
+            image_obj.order = position
+            image_obj.save(update_fields=["order"])
+
+    return redirect("edit_room_images", pk=room.id)
 
 
 # REVIEWS + CONTACT TRACKING

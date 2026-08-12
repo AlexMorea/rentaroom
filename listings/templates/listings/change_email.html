@@ -1,27 +1,74 @@
 {% extends "listings/base.html" %} {% block content %}
 
-<div class="form-card" style="max-width: 500px; margin: 40px auto">
-  <h2 style="margin-bottom: 10px">Change Email</h2>
-  <p style="opacity: 0.8; margin-bottom: 20px">
-    Enter your new email address. We’ll send you a verification link to confirm
-    the change.
-  </p>
+<div class="sf-shell">
+  <div class="form-card sf-card">
+    <div class="sf-icon">✉️</div>
+    <h2 class="sf-title">Change Email</h2>
+    <p class="sf-sub">
+      Enter your new email address. We'll send you a verification link to confirm the change.
+    </p>
 
-  <form method="POST">
-    {% csrf_token %}
-    <label>New Email Address</label>
-    <input
-      type="email"
-      name="email"
-      class="input"
-      placeholder="you@example.com"
-      required
-    />
+    <form method="POST" class="sf-form">
+      {% csrf_token %}
+      <div class="sf-field">
+        <label>New Email Address</label>
+        <input
+          type="email"
+          name="email"
+          class="input"
+          placeholder="you@example.com"
+          required
+        />
+      </div>
 
-    <button type="submit" class="btn-primary" style="margin-top: 14px">
-      Send Verification Link
-    </button>
-  </form>
+      <button type="submit" class="btn-primary sf-submit">
+        Send Verification Link
+      </button>
+    </form>
+  </div>
 </div>
+
+<style>
+  .sf-shell {
+    max-width: 460px;
+    margin: 40px auto;
+  }
+  .sf-card {
+    text-align: center;
+  }
+  .sf-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  .sf-title {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .sf-sub {
+    margin: 0 0 22px;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .sf-form {
+    text-align: left;
+  }
+  .sf-field {
+    margin-bottom: 16px;
+  }
+  .sf-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: #0f172a;
+  }
+  .sf-submit {
+    width: 100%;
+    margin-top: 4px;
+  }
+</style>
 
 {% endblock %}

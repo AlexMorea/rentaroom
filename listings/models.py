@@ -382,8 +382,10 @@ class RoomImage(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    order = models.PositiveIntegerField(default=0)
+
     class Meta:
-        ordering = ["created_at"]
+        ordering = ["order", "created_at"]
 
     def clean(self):
 

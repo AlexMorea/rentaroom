@@ -1,13 +1,13 @@
 {% extends "listings/base.html" %} {% block body_class %}auth-page{% endblock %}
 {% block content %}
 <div class="auth-shell">
-  <div class="auth-card">
-    <h2 class="auth-title">Login</h2>
+  <div class="auth-card li-card">
+    <h2 class="auth-title li-title">Login</h2>
 
-    <form method="post" class="auth-form">
+    <form method="post" class="auth-form li-form">
       {% csrf_token %}
 
-      <div class="field">
+      <div class="field li-field">
         <label class="auth-label">Email</label>
         <input
           class="input"
@@ -18,9 +18,9 @@
         />
       </div>
 
-      <div class="field">
+      <div class="field li-field">
         <label class="auth-label">Password</label>
-        <div class="pw-wrap">
+        <div class="pw-wrap li-pw-wrap">
           <input
             id="loginPassword"
             class="input pw-input"
@@ -30,7 +30,7 @@
             required
           />
           <button
-            class="pw-toggle"
+            class="pw-toggle li-pw-toggle"
             type="button"
             aria-label="Show password"
             data-toggle="#loginPassword"
@@ -40,13 +40,11 @@
         </div>
       </div>
 
-      <button class="btn-primary auth-btn" type="submit">Login</button>
+      <button class="btn-primary auth-btn li-submit-btn" type="submit">Login</button>
     </form>
 
-    <p class="auth-hint" style="margin-top: 10px">
-      <a class="auth-link" href="{% url 'password_reset' %}"
-        >Forgot password?</a
-      >
+    <p class="auth-hint li-forgot">
+      <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
     </p>
 
     <p class="auth-hint">
@@ -55,6 +53,59 @@
     </p>
   </div>
 </div>
+
+<style>
+  /* Same fix as register.html - .auth-card has no background/shadow
+     set anywhere in base.css, and .field has zero label styling. Both
+     pages share the same underlying classes so both need this. */
+  .li-card {
+    background: #fff !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+  }
+  .li-title {
+    text-align: center;
+  }
+  .li-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 18px;
+  }
+  .li-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #0f172a;
+  }
+  .li-pw-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .li-pw-toggle {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 1.05rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .li-submit-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+  .li-forgot {
+    margin-top: 10px;
+  }
+</style>
+
 {% endblock %} {% block extra_js %}
 <script>
   document.querySelectorAll("[data-toggle]").forEach((btn) => {
