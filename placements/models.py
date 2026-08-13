@@ -46,17 +46,17 @@ class Placement(models.Model):
 
     tenant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="placements_as_tenant",
     )
     landlord = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="placements_as_landlord",
     )
     room = models.ForeignKey(
         Room,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="placements",
     )
 

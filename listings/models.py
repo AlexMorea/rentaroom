@@ -353,8 +353,13 @@ class RoomStat(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=["room"]),
-            models.Index(fields=["stat_type"]),
+            # NOTE: no separate index on "room" alone - Django already
+            # creates one automatically for every ForeignKey field.
+            models.Index(fields=["stat_type"]),  # used standalone for
+                # sitewide totals (e.g. total contacts across all rooms)
+            models.Index(fields=["room", "stat_type"], name="roomstat_room_type_idx"),
+                # the dominant real pattern - virtually every per-room
+                # analytics query filters on both together
         ]
 
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
