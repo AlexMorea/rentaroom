@@ -554,12 +554,19 @@
     .pr-shell {
       margin: 0;
       padding: 0;
+      /* Defensive, matches login.html - register's content already
+         overflows the viewport in every realistic case, so this has
+         no visible effect today, but keeps both pages consistently
+         protected if content ever gets shorter (e.g. only the tenant
+         fields showing) or on an unusually tall phone. */
+      min-height: 100dvh;
     }
     .pr-panel-wrap {
       flex-direction: column;
       border-radius: 0;
       box-shadow: none;
       border: none;
+      min-height: 100dvh;
     }
     .pr-brand {
       flex: none;

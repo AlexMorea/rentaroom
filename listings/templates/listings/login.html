@@ -5,201 +5,183 @@
 {% block content %}
 
 <div class="pr-shell">
-  <div class="pr-panel-grid">
+  <div class="pr-panel-wrap">
 
-    <!-- ================= BRAND / TRUST PANEL ================= -->
-    <div class="pr-brand-panel">
+    <!-- BRAND PANEL -->
+    <div class="pr-brand">
       <div class="pr-brand-glow-a"></div>
       <div class="pr-brand-glow-b"></div>
 
-      <div class="pr-brand-logo-badge">
-        <img
-          src="{% static 'images/rooms4you-logo.jpeg' %}"
-          alt="Rooms4You"
-          class="pr-brand-logo-img"
-        />
-      </div>
-
-      <div class="pr-brand-content">
-        <h1 class="pr-brand-headline">
-          Welcome back.
-        </h1>
-
-        <p class="pr-brand-sub">
-          South Africa's trusted way to connect renters and landlords directly.
+      <div class="pr-brand-inner">
+        <div class="pr-logo-badge">
+          <img
+            src="{% static 'images/rooms4you-logo.jpeg' %}"
+            alt="Rooms4You"
+            class="pr-logo-img"
+          />
+        </div>
+        <h1 class="pr-headline">Welcome back.</h1>
+        <p class="pr-subhead">
+          South Africa's trusted way to find a room, or find your next tenant.
         </p>
 
         <ul class="pr-trust-list">
-          <li>
-            <span class="pr-trust-icon">✓</span>
-            <span>Verified landlords, clearly marked</span>
-          </li>
-          <li>
-            <span class="pr-trust-icon">✓</span>
-            <span>Message directly - no middleman, no hidden fees</span>
-          </li>
-          <li>
-            <span class="pr-trust-icon">✓</span>
-            <span>Your personal information is protected under POPIA</span>
-          </li>
+          <li><span class="pr-trust-icon">✓</span> Free to join, no hidden fees</li>
+          <li><span class="pr-trust-icon">✓</span> Verified landlords &amp; real listings</li>
+          <li><span class="pr-trust-icon">✓</span> Your details are never shared publicly</li>
         </ul>
       </div>
     </div>
 
-    <!-- ================= FORM PANEL ================= -->
-    <div class="pr-form-panel pr-login-panel">
+    <!-- FORM PANEL -->
+    <div class="pr-form-panel pr-login-form-panel">
+      <div class="pr-form-inner">
 
-      <div class="pr-mobile-header">
-        <div class="pr-mobile-logo-badge">
-          <img
-            src="{% static 'images/rooms4you-logo.jpeg' %}"
-            alt="Rooms4You"
-            class="pr-mobile-logo-img"
-          />
-        </div>
-        <p class="pr-mobile-trust">🔒 Verified landlords · Direct messaging · POPIA protected</p>
-      </div>
+        <h2 class="pr-form-title">Log in to your account</h2>
+        <p class="pr-form-sub">Welcome back - enter your details below.</p>
 
-      <h2 class="pr-form-title">Log in to your account</h2>
-      <p class="pr-form-sub">Welcome back - enter your details below.</p>
+        <form method="post" class="pr-form">
+          {% csrf_token %}
 
-      <form method="post" class="pr-form">
-        {% csrf_token %}
+          {{ form.non_field_errors }}
 
-        {% if form.non_field_errors %}
-        <div class="form-alert form-alert-error">{{ form.non_field_errors }}</div>
-        {% endif %}
-
-        <div class="pr-field">
-          <label>Email</label>
-          <input
-            class="input"
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            required
-          />
-        </div>
-
-        <div class="pr-field">
-          <label>Password</label>
-          <div class="pw-wrap pr-pw-wrap">
+          <div class="pr-field">
+            <label>Email</label>
             <input
-              id="loginPassword"
-              class="input pw-input"
-              type="password"
-              name="password"
-              placeholder="Your password"
+              class="input"
+              type="email"
+              name="email"
+              placeholder="you@example.com"
               required
             />
-            <button
-              class="pw-toggle pr-pw-toggle"
-              type="button"
-              aria-label="Show password"
-              data-toggle="#loginPassword"
-            >
-              👁
-            </button>
           </div>
-        </div>
 
-        <button class="btn-primary pr-submit-btn" type="submit">
-          Log in
-        </button>
-      </form>
+          <div class="pr-field">
+            <label>Password</label>
+            <div class="pr-pw-wrap">
+              <input
+                id="loginPassword"
+                class="input"
+                type="password"
+                name="password"
+                placeholder="Your password"
+                required
+              />
+              <button
+                class="pr-pw-toggle"
+                type="button"
+                data-toggle="#loginPassword"
+                aria-label="Show password"
+              >
+                👁
+              </button>
+            </div>
+          </div>
 
-      <p class="auth-hint pr-forgot-hint">
-        <a class="auth-link" href="{% url 'password_reset' %}">Forgot password?</a>
-      </p>
+          <button class="btn-primary pr-submit-btn" type="submit">
+            Log in
+          </button>
 
-      <p class="auth-hint pr-login-hint">
-        Don't have an account?
-        <a class="auth-link" href="{% url 'register' %}">Sign up</a>
-      </p>
+        </form>
 
+        <p class="pr-forgot-hint">
+          <a class="pr-inline-link" href="{% url 'password_reset' %}">Forgot password?</a>
+        </p>
+
+        <p class="pr-login-hint">
+          Don't have an account?
+          <a class="pr-inline-link" href="{% url 'register' %}">Sign up</a>
+        </p>
+
+      </div>
     </div>
+
   </div>
 </div>
 
 <style>
-  /* Shares the exact .pr- layout/classes from register.html for visual
-     consistency - each Django template keeps its own copy of the CSS
-     since templates are self-contained files. */
+  /* ===================================================================
+     LOGIN - matches register.html's exact structure and class names
+     (.pr-panel-wrap / .pr-brand / .pr-brand-inner, not the older
+     .pr-panel-grid naming a previous iteration used) so the two pages
+     are genuinely consistent, not just visually similar.
+
+     MOBILE FIX: login's content (2 fields + a button) is much shorter
+     than register's (a dozen fields), so simply reusing register's
+     mobile layout left a large dead gray gap below the form on short
+     pages - confirmed by rendering at real device heights (375x667
+     etc), not assumed. Fixed by giving .pr-shell a min-height on
+     mobile and vertically centering the whole stack within it, so
+     short content reads as "intentionally compact", not "unfinished".
+     =================================================================== */
 
   .pr-shell {
+    display: block;
     max-width: 1000px;
-    margin: 24px auto;
+    margin: 30px auto;
     padding: 0 16px;
   }
-
-  .pr-panel-grid {
-    display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
+  .pr-panel-wrap {
+    display: flex;
+    background: #fff;
     border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
-    background: #fff;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(15, 23, 42, 0.06);
   }
 
-  .pr-brand-panel {
+  /* Brand panel */
+  .pr-brand {
     position: relative;
+    flex: 0 0 40%;
     overflow: hidden;
-    background: linear-gradient(160deg, #1e40af 0%, #2563eb 55%, #1e3a8a 100%);
-    padding: 44px 36px;
+    background: linear-gradient(160deg, #0b2a6b 0%, #14349c 35%, #1c5fd6 70%, #1298d6 100%);
+    padding: 40px 32px;
     display: flex;
     align-items: center;
-    color: #fff;
-  }
-  .pr-brand-glow-a, .pr-brand-glow-b {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
   }
   .pr-brand-glow-a {
-    top: -60px; left: -60px; width: 220px; height: 220px;
-    background: radial-gradient(circle, rgba(249,115,22,0.35), transparent 70%);
+    position: absolute; top: -100px; left: -100px; width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.45), transparent 70%);
   }
   .pr-brand-glow-b {
-    bottom: -80px; right: -40px; width: 260px; height: 260px;
-    background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+    position: absolute; bottom: -80px; right: -80px; width: 260px; height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249,115,22,0.35), transparent 70%);
   }
-  .pr-brand-content {
+  .pr-brand-inner {
     position: relative;
     z-index: 2;
-    width: 100%;
   }
 
-  /* Logo pinned to the top of the panel, independent of the vertical
-     centering on .pr-brand-content - matches register.html exactly */
-  .pr-brand-logo-badge {
-    position: absolute;
-    top: 32px;
-    left: 36px;
-    z-index: 3;
+  .pr-logo-badge {
     display: inline-flex;
     align-items: center;
     background: #fff;
     border-radius: 14px;
-    padding: 10px 16px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    padding: 9px 14px;
+    margin-bottom: 28px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
   }
-  .pr-brand-logo-img {
+  .pr-logo-img {
     display: block;
-    height: 28px;
+    height: 24px;
     width: auto;
   }
 
-  .pr-brand-headline {
+  .pr-headline {
+    color: #fff;
     font-size: 1.7rem;
     font-weight: 800;
-    line-height: 1.3;
+    line-height: 1.25;
     margin: 0 0 12px;
   }
-  .pr-brand-sub {
+  .pr-subhead {
+    color: rgba(255,255,255,0.85);
     font-size: 0.95rem;
-    opacity: 0.85;
-    margin: 0 0 28px;
     line-height: 1.5;
+    margin: 0 0 28px;
   }
   .pr-trust-list {
     list-style: none;
@@ -207,42 +189,41 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
   .pr-trust-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    color: #fff;
     font-size: 0.9rem;
-    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
   .pr-trust-icon {
-    flex-shrink: 0;
     width: 22px;
     height: 22px;
+    min-width: 22px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255,255,255,0.18);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     font-weight: 800;
-    margin-top: 1px;
   }
 
+  /* Form panel */
   .pr-form-panel {
-    padding: 40px 40px 32px;
+    flex: 1;
+    min-width: 0;
+    padding: 40px 36px;
   }
-  .pr-login-panel {
+  .pr-login-form-panel {
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
-  .pr-mobile-header {
-    display: none;
-  }
   .pr-form-title {
-    margin: 0 0 6px;
+    margin: 0 0 4px;
     font-size: 1.4rem;
     font-weight: 800;
     color: #0f172a;
@@ -252,7 +233,6 @@
     color: #64748b;
     font-size: 0.9rem;
   }
-
   .pr-form {
     display: flex;
     flex-direction: column;
@@ -264,6 +244,11 @@
     margin-bottom: 6px;
     font-size: 0.88rem;
     color: #0f172a;
+  }
+  .pr-inline-link {
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: underline;
   }
 
   .pr-pw-wrap {
@@ -291,67 +276,84 @@
   }
   .pr-forgot-hint {
     text-align: center;
-    margin-top: 14px;
+    font-size: 0.85rem;
+    margin: 14px 0 0;
   }
   .pr-login-hint {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 14px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.9rem;
   }
 
-  /* ===== Mobile - matches register.html exactly ===== */
+  /* ===== Mobile - matches register.html's stacked-brand-panel
+     approach, plus the min-height fix for login's shorter content ===== */
   @media (max-width: 860px) {
     .pr-shell {
       margin: 0;
       padding: 0;
+      /* dvh accounts for mobile browser toolbars better than vh -
+         this is the actual fix for the dead-space gap */
+      min-height: 100dvh;
+      display: flex;
+      align-items: stretch;
     }
-    .pr-panel-grid {
-      grid-template-columns: 1fr;
+    .pr-panel-wrap {
+      flex-direction: column;
       border-radius: 0;
       box-shadow: none;
+      border: none;
+      width: 100%;
+      min-height: 100dvh;
     }
-    .pr-brand-panel {
-      display: none;
+    .pr-brand {
+      flex: none;
+      padding: 24px 20px 20px;
     }
-    .pr-mobile-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: #fff;
-      padding: 20px 20px 18px;
-    }
-    .pr-mobile-logo-badge {
-      display: inline-flex;
-      background: #fff;
-      border-radius: 12px;
+    .pr-logo-badge {
       padding: 7px 12px;
-      margin-bottom: 10px;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+      margin-bottom: 16px;
     }
-    .pr-mobile-logo-img {
-      display: block;
-      height: 20px;
-      width: auto;
+    .pr-logo-img {
+      height: 19px;
     }
-    .pr-mobile-trust {
-      margin: 0;
-      font-size: 0.74rem;
-      opacity: 0.92;
-      line-height: 1.4;
-      max-width: 300px;
+    .pr-headline {
+      font-size: 1.3rem;
+    }
+    .pr-subhead {
+      font-size: 0.85rem;
+      margin-bottom: 18px;
+    }
+    .pr-trust-list {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+    .pr-trust-list li {
+      font-size: 0.76rem;
     }
     .pr-form-panel {
-      padding: 22px 16px 26px;
+      padding: 32px 20px;
     }
-    .pr-form-title {
-      font-size: 1.25rem;
+    .pr-login-form-panel {
+      /* the actual fix: this panel grows to fill whatever space is
+         left after the brand panel, then centers its (short) content
+         within that space, instead of top-aligning with a gap below */
+      flex: 1;
     }
   }
 
   @media (max-width: 360px) {
+    .pr-brand {
+      padding: 20px 16px 16px;
+    }
     .pr-form-panel {
-      padding: 20px 12px 22px;
+      padding: 24px 14px;
+    }
+    .pr-trust-list li {
+      font-size: 0.7rem;
     }
   }
 </style>
