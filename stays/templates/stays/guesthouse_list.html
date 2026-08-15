@@ -1,0 +1,151 @@
+{% extends "listings/base.html" %} {% load static %} {% load humanize %}
+{% block title %}Guest Houses & BnBs | Rooms4You{% endblock %}
+{% block meta_description %}Find guest houses and BnBs in your area. Book directly with local hosts, no hidden fees.{% endblock %}
+{% block content %}
+
+<div class="gh-list-header">
+  <h1 class="page-title">Guest Houses &amp; BnBs</h1>
+  <p class="gh-list-sub">Stay with local hosts across South Africa's townships and beyond.</p>
+
+  <form method="get" class="gh-search-form">
+    <input type="text" name="q" class="input" placeholder="Search by name" value="{{ q }}">
+    <input type="text" name="location" class="input" placeholder="Location (e.g. Soshanguve)" value="{{ location }}">
+    <button type="submit" class="btn-primary">Search</button>
+  </form>
+</div>
+
+<div class="gh-grid">
+  {% for guesthouse in page_obj %}
+  <a href="{% url 'stays:guesthouse_detail' guesthouse.id %}" class="gh-card">
+    <div class="gh-card-media">
+      {% with first_image=guesthouse.images.first %}
+        {% if first_image %}
+          <img src="{{ first_image.image.url }}" alt="{{ guesthouse.name }}" loading="lazy">
+        {% else %}
+          <div class="gh-card-media-placeholder">🏡</div>
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div class="gh-card-body">
+      <div class="gh-card-price">R{{ guesthouse.price_per_night|floatformat:0|intcomma }}<span>/night</span></div>
+      <h3 class="gh-card-title">{{ guesthouse.name }}</h3>
+      <p class="gh-card-location">📍 {{ guesthouse.location }}</p>
+      <p class="gh-card-guests">👤 Sleeps {{ guesthouse.max_guests }}</p>
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-card">
+    <p>No guest houses found yet. Be the first to list one!</p>
+    <a href="{% url 'stays:create_guesthouse' %}" class="btn-primary">List your place</a>
+  </div>
+  {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+<div class="pagination-wrap">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&location={{ location }}" class="pagination-btn pagination-back">← Prev</a>
+  {% endif %}
+  <span class="page-indicator">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&location={{ location }}" class="pagination-btn pagination-next">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+
+<style>
+  .gh-list-header {
+    max-width: 700px;
+    margin: 0 auto 24px;
+    text-align: center;
+  }
+  .gh-list-sub {
+    color: #64748b;
+    margin: 6px 0 18px;
+  }
+  .gh-search-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .gh-search-form .input {
+    flex: 1;
+    min-width: 160px;
+    max-width: 260px;
+  }
+
+  .gh-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .gh-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .gh-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+  }
+  .gh-card-media {
+    height: 170px;
+    background: #f1f5f9;
+  }
+  .gh-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .gh-card-media-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    opacity: 0.4;
+  }
+  .gh-card-body {
+    padding: 14px 16px 18px;
+  }
+  .gh-card-price {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+  }
+  .gh-card-price span {
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+  .gh-card-title {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .gh-card-location, .gh-card-guests {
+    margin: 2px 0;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+</style>
+
+{% endblock %}

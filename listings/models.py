@@ -59,6 +59,17 @@ class Room(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
+    # null/blank = no deposit required. A value = the deposit amount in
+    # Rand. Deliberately a single nullable field rather than a separate
+    # boolean + amount pair, so there's no way for the two to
+    # contradict each other (e.g. "no deposit" flag set but an amount
+    # still saved).
+    deposit_amount = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Leave blank if no deposit is required."
+    )
+
+
     location = models.CharField(max_length=200)
     suburb = models.CharField(max_length=120)
     town = models.CharField(max_length=120)

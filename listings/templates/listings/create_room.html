@@ -1,4 +1,4 @@
-{% extends "listings/base.html" %} {% load static %} {% block content %}
+{% extends "listings/base.html" %} {% load static %} {% block title %}Add New Room | Rooms4You{% endblock %} {% block content %}
 
 <h1 class="page-title">Add New Room</h1>
 
@@ -182,6 +182,15 @@
         <label for="id_price">Price (ZAR)</label>
         {{ form.price }} {% if form.price.errors %}
         <div class="field-error">{{ form.price.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_deposit_amount">Deposit (ZAR)</label>
+        {{ form.deposit_amount }}
+        <small class="field-hint">Leave blank if this room has no deposit.</small>
+        {% if form.deposit_amount.errors %}
+        <div class="field-error">{{ form.deposit_amount.errors }}</div>
         {% endif %}
       </div>
 

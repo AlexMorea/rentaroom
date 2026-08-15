@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-Dashboard • Rooms4You
+Dashboard | Rooms4You
 {% endblock %}
 
 {% block content %}
@@ -14,6 +14,26 @@ Dashboard • Rooms4You
 <!-- ================= DASHBOARD HEADER ================= -->
 
 {% include "listings/partials/_dashboard_header.html" with title="Landlord Dashboard" button_url=create_room_url button_text="List Your Room in 2 Minutes" %}
+
+<!-- ================= TWO WAYS TO EARN ================= -->
+<div class="ld-choice-section">
+  <h2 class="ld-choice-title">Two ways to earn on Rooms4You</h2>
+  <div class="ld-choice-grid">
+    <div class="ld-choice-card">
+      <span class="ld-choice-icon">🏠</span>
+      <h3 class="ld-choice-card-title">List a Room</h3>
+      <p class="ld-choice-card-desc">Monthly rentals - tenants find and message you directly.</p>
+      <a href="{% url 'create_room' %}" class="btn-primary ld-choice-btn">List a Room</a>
+    </div>
+    <div class="ld-choice-card">
+      <span class="ld-choice-icon">🏡</span>
+      <h3 class="ld-choice-card-title">List a Guest House or BnB</h3>
+      <p class="ld-choice-card-desc">Nightly stays - guests request dates, you accept or decline.</p>
+      <a href="{% url 'stays:create_guesthouse' %}" class="btn-primary ld-choice-btn">List a Guest House</a>
+    </div>
+  </div>
+</div>
+
 <!-- ================= PROFILE WARNING ================= -->
 
 {% if show_profile_warning %}
@@ -217,6 +237,51 @@ Dashboard • Rooms4You
     display: block;
     max-width: 900px;
     margin: 0 auto;
+  }
+
+  /* ===== Two ways to earn ===== */
+  .ld-choice-section {
+    margin: 20px 0 28px;
+  }
+  .ld-choice-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 12px;
+  }
+  .ld-choice-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .ld-choice-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  }
+  .ld-choice-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .ld-choice-card-title {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .ld-choice-card-desc {
+    margin: 0 0 14px;
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.5;
+  }
+  .ld-choice-btn {
+    display: inline-block;
+    width: 100%;
   }
 
   /* ===== Stats row ===== */

@@ -52,13 +52,13 @@
               <button type="button" class="pr-role-card" data-role="tenant">
                 <span class="pr-role-icon">🔍</span>
                 <span class="pr-role-label">Tenant</span>
-                <span class="pr-role-desc">Looking for a room</span>
+                <span class="pr-role-desc">Looking for a room, or a place to stay</span>
               </button>
 
               <button type="button" class="pr-role-card" data-role="landlord">
                 <span class="pr-role-icon">🔑</span>
                 <span class="pr-role-label">Landlord</span>
-                <span class="pr-role-desc">Have a room to rent</span>
+                <span class="pr-role-desc">Have a room to rent, or a place to host guests</span>
               </button>
             </div>
 
@@ -207,12 +207,6 @@
 </div>
 
 <style>
-  /* ===================================================================
-     PREMIUM REGISTER - split brand/form panel, visual role selector,
-     explicit next-step + trust messaging, real logo, password strength
-     guidance.
-     =================================================================== */
-
   .pr-shell {
     display: block;
     max-width: 1000px;
@@ -228,7 +222,6 @@
     border: 1px solid rgba(15, 23, 42, 0.06);
   }
 
-  /* Brand panel */
   .pr-brand {
     position: relative;
     flex: 0 0 40%;
@@ -253,9 +246,6 @@
     z-index: 2;
   }
 
-  /* Logo sits in its own white badge - the source file has a light
-     background baked in, not a transparent one, so placed directly on
-     the dark gradient it would look like a rendering mistake. */
   .pr-logo-badge {
     display: inline-flex;
     align-items: center;
@@ -312,7 +302,6 @@
     font-weight: 800;
   }
 
-  /* Form panel */
   .pr-form-panel {
     flex: 1;
     min-width: 0;
@@ -370,7 +359,6 @@
     text-decoration: underline;
   }
 
-  /* Role cards */
   .pr-role-cards {
     display: flex;
     gap: 12px;
@@ -444,8 +432,6 @@
     justify-content: center;
   }
 
-  /* Password strength bar + checklist - genuinely helps, not just a
-     color bar with no explanation of what it's actually asking for */
   .pr-strength-bar {
     margin-top: 10px;
     height: 5px;
@@ -549,16 +535,10 @@
     font-size: 0.9rem;
   }
 
-  /* ===== Mobile ===== */
   @media (max-width: 860px) {
     .pr-shell {
       margin: 0;
       padding: 0;
-      /* Defensive, matches login.html - register's content already
-         overflows the viewport in every realistic case, so this has
-         no visible effect today, but keeps both pages consistently
-         protected if content ever gets shorter (e.g. only the tenant
-         fields showing) or on an unusually tall phone. */
       min-height: 100dvh;
     }
     .pr-panel-wrap {
@@ -570,34 +550,35 @@
     }
     .pr-brand {
       flex: none;
-      padding: 24px 20px 20px;
+      padding: 14px 20px 12px;
     }
     .pr-logo-badge {
-      padding: 7px 12px;
-      margin-bottom: 16px;
+      padding: 6px 11px;
+      margin-bottom: 8px;
     }
     .pr-logo-img {
-      height: 19px;
+      height: 17px;
     }
     .pr-headline {
-      font-size: 1.3rem;
+      font-size: 1.05rem;
+      margin: 0 0 5px;
     }
     .pr-subhead {
-      font-size: 0.85rem;
-      margin-bottom: 18px;
+      font-size: 0.76rem;
+      margin-bottom: 9px;
     }
     .pr-trust-list {
       flex-direction: row;
       flex-wrap: wrap;
-      gap: 8px 16px;
+      gap: 6px 14px;
     }
     .pr-trust-list li {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
     }
     .pr-form-panel {
       max-height: none;
       overflow-y: visible;
-      padding: 22px 16px 26px;
+      padding: 18px 16px 26px;
     }
     .pr-row {
       flex-direction: column;
@@ -613,13 +594,13 @@
 
   @media (max-width: 360px) {
     .pr-brand {
-      padding: 20px 16px 16px;
+      padding: 12px 16px 10px;
     }
     .pr-form-panel {
-      padding: 20px 12px 22px;
+      padding: 14px 12px 22px;
     }
     .pr-trust-list li {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
     }
   }
 </style>
@@ -675,9 +656,6 @@ toggle();
 </script>
 
 <script>
-// Password strength indicator + explicit requirement checklist - a
-// UX help/advice layer only, does not change what the backend
-// actually requires or validates.
 (function () {
   const pw1 = document.getElementById("id_password1");
   const pw2 = document.getElementById("id_password2");

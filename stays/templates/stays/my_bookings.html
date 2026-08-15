@@ -1,0 +1,57 @@
+{% extends "listings/base.html" %} {% load static %} {% load humanize %}
+{% block title %}My Bookings | Rooms4You{% endblock %}
+{% block content %}
+
+<h1 class="page-title">My Bookings</h1>
+
+<div class="mb-list">
+  {% for booking in bookings %}
+  <a href="{% url 'stays:booking_detail' booking.id %}" class="room-row mb-row">
+    <div class="room-row-content mb-row-content">
+      <strong class="room-row-title mb-row-title">{{ booking.guesthouse.name }}</strong>
+      <div class="mb-row-dates">{{ booking.check_in|date:"M j" }} - {{ booking.check_out|date:"M j, Y" }} · {{ booking.nights }} night{{ booking.nights|pluralize }}</div>
+      <div class="mb-row-location">📍 {{ booking.guesthouse.location }}</div>
+    </div>
+    <div class="mb-row-status">
+      {% if booking.status == "requested" %}
+        <span class="availability-badge upcoming">Awaiting host response</span>
+      {% elif booking.status == "confirmed" %}
+        <span class="availability-badge available">Confirmed</span>
+      {% elif booking.status == "declined" %}
+        <span class="availability-badge occupied">Declined</span>
+      {% elif booking.status == "cancelled" %}
+        <span class="availability-badge occupied">Cancelled</span>
+      {% else %}
+        <span class="availability-badge occupied">Completed</span>
+      {% endif %}
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-card">
+    <p>No bookings yet.</p>
+    <a href="{% url 'stays:guesthouse_list' %}" class="btn-primary">Browse guest houses</a>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .mb-list { display: flex; flex-direction: column; gap: 14px; }
+  .mb-row {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    text-decoration: none;
+    color: inherit;
+  }
+  .mb-row-content { display: block !important; }
+  .mb-row-title { display: block; text-transform: none !important; font-weight: 700 !important; }
+  .mb-row-dates, .mb-row-location {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+</style>
+
+{% endblock %}

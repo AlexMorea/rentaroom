@@ -100,21 +100,6 @@
 </div>
 
 <style>
-  /* ===================================================================
-     LOGIN - matches register.html's exact structure and class names
-     (.pr-panel-wrap / .pr-brand / .pr-brand-inner, not the older
-     .pr-panel-grid naming a previous iteration used) so the two pages
-     are genuinely consistent, not just visually similar.
-
-     MOBILE FIX: login's content (2 fields + a button) is much shorter
-     than register's (a dozen fields), so simply reusing register's
-     mobile layout left a large dead gray gap below the form on short
-     pages - confirmed by rendering at real device heights (375x667
-     etc), not assumed. Fixed by giving .pr-shell a min-height on
-     mobile and vertically centering the whole stack within it, so
-     short content reads as "intentionally compact", not "unfinished".
-     =================================================================== */
-
   .pr-shell {
     display: block;
     max-width: 1000px;
@@ -130,7 +115,6 @@
     border: 1px solid rgba(15, 23, 42, 0.06);
   }
 
-  /* Brand panel */
   .pr-brand {
     position: relative;
     flex: 0 0 40%;
@@ -211,7 +195,6 @@
     font-weight: 800;
   }
 
-  /* Form panel */
   .pr-form-panel {
     flex: 1;
     min-width: 0;
@@ -288,14 +271,10 @@
     font-size: 0.9rem;
   }
 
-  /* ===== Mobile - matches register.html's stacked-brand-panel
-     approach, plus the min-height fix for login's shorter content ===== */
   @media (max-width: 860px) {
     .pr-shell {
       margin: 0;
       padding: 0;
-      /* dvh accounts for mobile browser toolbars better than vh -
-         this is the actual fix for the dead-space gap */
       min-height: 100dvh;
       display: flex;
       align-items: stretch;
@@ -310,50 +289,49 @@
     }
     .pr-brand {
       flex: none;
-      padding: 24px 20px 20px;
+      padding: 14px 20px 12px;
     }
     .pr-logo-badge {
-      padding: 7px 12px;
-      margin-bottom: 16px;
+      padding: 6px 11px;
+      margin-bottom: 8px;
     }
     .pr-logo-img {
-      height: 19px;
+      height: 17px;
     }
     .pr-headline {
-      font-size: 1.3rem;
+      font-size: 1.05rem;
+      margin: 0 0 5px;
     }
     .pr-subhead {
-      font-size: 0.85rem;
-      margin-bottom: 18px;
+      font-size: 0.76rem;
+      margin-bottom: 9px;
     }
     .pr-trust-list {
       flex-direction: row;
       flex-wrap: wrap;
-      gap: 8px 16px;
+      gap: 6px 14px;
     }
     .pr-trust-list li {
-      font-size: 0.76rem;
+      font-size: 0.72rem;
     }
     .pr-form-panel {
-      padding: 32px 20px;
+      padding: 20px 20px 28px;
     }
     .pr-login-form-panel {
-      /* the actual fix: this panel grows to fill whatever space is
-         left after the brand panel, then centers its (short) content
-         within that space, instead of top-aligning with a gap below */
       flex: 1;
+      justify-content: flex-start;
     }
   }
 
   @media (max-width: 360px) {
     .pr-brand {
-      padding: 20px 16px 16px;
+      padding: 12px 16px 10px;
     }
     .pr-form-panel {
-      padding: 24px 14px;
+      padding: 16px 14px 24px;
     }
     .pr-trust-list li {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
     }
   }
 </style>

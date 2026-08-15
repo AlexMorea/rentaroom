@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "listings",
     "services",
     "placements",
+    "stays",
 ]
 
 # Use BigAutoField by default to silence model warnings about AutoField
@@ -222,7 +223,7 @@ DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 
 # ================= AUTH =================
-LOGIN_URL = "accounts/login/"
+LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/rooms/"
 

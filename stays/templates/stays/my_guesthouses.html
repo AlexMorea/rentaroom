@@ -1,0 +1,141 @@
+{% extends "listings/base.html" %} {% load static %} {% load humanize %}
+{% block title %}My Guest Houses | Rooms4You{% endblock %}
+{% block content %}
+
+<div class="mgh-header">
+  <h1 class="page-title mgh-title">My Guest Houses</h1>
+  <div class="mgh-header-actions">
+    {% if pending_count %}
+      <a href="{% url 'stays:host_bookings' %}" class="btn-secondary mgh-pending-link">
+        🔔 {{ pending_count }} pending request{{ pending_count|pluralize }}
+      </a>
+    {% endif %}
+    <a href="{% url 'stays:create_guesthouse' %}" class="btn-primary">+ Add Listing</a>
+  </div>
+</div>
+
+<div class="mgh-list">
+  {% for guesthouse in guesthouses %}
+  <div class="room-row mgh-row">
+    <div class="mgh-row-media">
+      {% with img=guesthouse.images.first %}
+        {% if img %}
+          <img src="{{ img.image.url }}" alt="{{ guesthouse.name }}">
+        {% else %}
+          <div class="mgh-row-media-placeholder">🏡</div>
+        {% endif %}
+      {% endwith %}
+    </div>
+    <div class="room-row-content mgh-row-content">
+      <strong class="room-row-title mgh-row-title">{{ guesthouse.name }}</strong>
+      <div class="mgh-row-location">📍 {{ guesthouse.location }}</div>
+      <div class="mgh-row-price">R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night</div>
+      {% if guesthouse.is_active %}
+        <span class="availability-badge available mgh-status">Visible to guests</span>
+      {% else %}
+        <span class="availability-badge occupied mgh-status">Hidden</span>
+      {% endif %}
+    </div>
+    <div class="room-actions mgh-row-links">
+      <a href="{% url 'stays:guesthouse_detail' guesthouse.id %}" class="mgh-action-link">View</a>
+      <a href="{% url 'stays:upload_guesthouse_images' guesthouse.id %}" class="mgh-action-link">Photos</a>
+      <a href="{% url 'stays:edit_guesthouse' guesthouse.id %}" class="mgh-action-link">Edit</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-card">
+    <p>You haven't listed a guest house yet.</p>
+    <a href="{% url 'stays:create_guesthouse' %}" class="btn-primary">List your first place</a>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .mgh-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .mgh-title { margin: 0; }
+  .mgh-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mgh-pending-link { color: #dc2626 !important; }
+
+  .mgh-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .mgh-row {
+    display: flex !important;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .mgh-row-media {
+    width: 90px;
+    height: 70px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f1f5f9;
+  }
+  .mgh-row-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mgh-row-media-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    opacity: 0.4;
+  }
+  .mgh-row-content {
+    display: block !important;
+    flex: 1;
+    min-width: 180px;
+  }
+  .mgh-row-title {
+    display: block;
+    text-transform: none !important;
+    font-weight: 700 !important;
+  }
+  .mgh-row-location, .mgh-row-price {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .mgh-status {
+    display: inline-block;
+    margin-top: 8px;
+  }
+  .mgh-row-links {
+    display: flex !important;
+    gap: 12px;
+    font-size: 0.85rem;
+  }
+  .mgh-action-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .mgh-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .mgh-row-media {
+      width: 100%;
+      height: 140px;
+    }
+    .mgh-row-links {
+      justify-content: center;
+    }
+  }
+</style>
+
+{% endblock %}

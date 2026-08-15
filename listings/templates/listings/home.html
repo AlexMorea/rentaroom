@@ -1,11 +1,15 @@
 {% extends "listings/base.html" %}
 {% load static %}
 
+{% block title %}Home | Rooms4You{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/home.css' %}?v=1" />
 {% endblock %}
 
 {% block content %}
+
+
 
 <div class="landing-page">
 
@@ -140,8 +144,15 @@
       >
         Find a Room
       </a>
-
+      <a    
+        href="{% url 'stays:guesthouse_list' %}"
+        class="btn-primary"
+        style="background: #ea580c"
+      >
+        Browse Guest Houses & BnBs
+      </a>
       <a
+      
         href="{% url 'register' %}"
         class="btn-primary"
         style="background: #16a34a"

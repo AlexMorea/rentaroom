@@ -83,6 +83,12 @@
         <span class="rc-price-period">/month</span>
       </div>
 
+      {% if room.deposit_amount %}
+        <p class="rc-deposit-line">💰 R{{ room.deposit_amount|intcomma }} deposit</p>
+      {% else %}
+        <p class="rc-deposit-line rc-deposit-none">✓ No deposit required</p>
+      {% endif %}
+
       <h3 class="room-title rc-title">{{ room.title }}</h3>
 
       <p class="room-location rc-location">📍 {{ room.location }}</p>
@@ -278,6 +284,16 @@
     font-size: 0.72rem;
     font-weight: 500;
     opacity: 0.85;
+  }
+
+  .rc-deposit-line {
+    margin: -4px 0 10px;
+    font-size: 0.76rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .rc-deposit-none {
+    color: #16a34a;
   }
 
   .rc-link {

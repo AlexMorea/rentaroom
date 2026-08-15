@@ -1,6 +1,5 @@
 {% extends "listings/base.html" %} {% load static %} 
-{% block title %}Browse Rooms to Rent in South Africa | Rooms4You{% endblock %}
-{% block meta_description %}Browse verified rooms to rent across South Africa. Filter by price, location, and room type. Message landlords directly, no hidden fees.{% endblock %}
+{% block title %}Browse Rooms | Rooms4You{% endblock %}
 {% block content %}
 
 <h1 class="page-title">Browse Rooms</h1>
@@ -413,6 +412,7 @@
     <li>✓ Increase your maximum budget</li>
     <li>✓ Search nearby areas</li>
     <li>✓ Remove some filters</li>
+    <li>✓ Try a <a href="{% url 'stays:guesthouse_list' %}" style="color:#2563eb;font-weight:700;">guest house or BnB</a> instead</li>
   </ul>
 
   <a
@@ -450,14 +450,15 @@
   data-page="{{ page_obj.number }}"
   data-pages="{{ paginator.num_pages }}"
 >
+  {% if page_obj.has_previous %}
   <a
     href="#"
     class="pagination-btn pagination-back"
     id="btnBack"
-    style="{% if not page_obj.has_previous %}display:none{% endif %}"
   >
     ← Back
   </a>
+  {% endif %}
 
   <div class="page-indicator" id="pageIndicator">
     Page {{ page_obj.number }} of {{ paginator.num_pages }}

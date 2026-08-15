@@ -1,0 +1,167 @@
+{% extends "listings/base.html" %} {% load static %}
+{% block title %}List Your Guest House | Rooms4You{% endblock %}
+{% block content %}
+
+<h1 class="page-title">List Your Guest House or BnB</h1>
+
+<div class="form-shell">
+  <form method="post" class="form-card">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="form-alert form-alert-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-grid">
+      <div class="form-section-title">🏡 Basic Info</div>
+
+      <div class="form-field full">
+        <label for="id_name">Name</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="field-error">{{ form.name.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-field full">
+        <label for="id_description">Description</label>
+        {{ form.description }}
+        <small class="field-hint">What makes your place worth staying at?</small>
+        {% if form.description.errors %}<div class="field-error">{{ form.description.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_price_per_night">Price per night (ZAR)</label>
+        {{ form.price_per_night }}
+        {% if form.price_per_night.errors %}<div class="field-error">{{ form.price_per_night.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_max_guests">Max guests</label>
+        {{ form.max_guests }}
+        {% if form.max_guests.errors %}<div class="field-error">{{ form.max_guests.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_min_nights">Minimum nights</label>
+        {{ form.min_nights }}
+        {% if form.min_nights.errors %}<div class="field-error">{{ form.min_nights.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-section-title">📍 Location</div>
+
+      <div class="form-field">
+        <label for="id_location">Location</label>
+        {{ form.location }}
+        <small class="field-hint">Public area guests will see - e.g. "Soshanguve, Pretoria".</small>
+        {% if form.location.errors %}<div class="field-error">{{ form.location.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_full_address">Full Address <span class="req-mark">Required</span></label>
+        {{ form.full_address }}
+        <small class="field-hint">Street address for verification. Not shown publicly.</small>
+        {% if form.full_address.errors %}<div class="field-error">{{ form.full_address.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-field">
+        <label for="id_suburb">Suburb</label>
+        {{ form.suburb }}
+      </div>
+      <div class="form-field">
+        <label for="id_town">Town</label>
+        {{ form.town }}
+      </div>
+      <div class="form-field">
+        <label for="id_city">City</label>
+        {{ form.city }}
+      </div>
+      <div class="form-field">
+        <label for="id_province">Province</label>
+        {{ form.province }}
+      </div>
+      <div class="form-field">
+        <label for="id_postal_code">Postal Code</label>
+        {{ form.postal_code }}
+      </div>
+
+      <div class="form-section-title">🕒 Check-in / Check-out</div>
+
+      <div class="form-field">
+        <label for="id_check_in_time">Check-in time</label>
+        {{ form.check_in_time }}
+      </div>
+      <div class="form-field">
+        <label for="id_check_out_time">Check-out time</label>
+        {{ form.check_out_time }}
+      </div>
+      <div class="form-field full">
+        <label for="id_house_rules">House rules (optional)</label>
+        {{ form.house_rules }}
+      </div>
+
+      <div class="form-section-title">✨ Amenities</div>
+
+      <div class="form-field full gh-amenity-checks">
+        <label class="checkbox-wrap">{{ form.has_wifi }} <span>WiFi</span></label>
+        <label class="checkbox-wrap">{{ form.has_parking }} <span>Parking</span></label>
+        <label class="checkbox-wrap">{{ form.has_breakfast }} <span>Breakfast included</span></label>
+        <label class="checkbox-wrap">{{ form.has_pool }} <span>Pool</span></label>
+        <label class="checkbox-wrap">{{ form.has_aircon }} <span>Air conditioning</span></label>
+        <label class="checkbox-wrap">{{ form.has_tv }} <span>TV</span></label>
+      </div>
+
+      <div class="form-section-title">📞 Contact Details</div>
+
+      <div class="form-field">
+        <label for="id_contact_phone">Phone</label>
+        {{ form.contact_phone }}
+        {% if form.contact_phone.errors %}<div class="field-error">{{ form.contact_phone.errors }}</div>{% endif %}
+      </div>
+      <div class="form-field">
+        <label for="id_contact_whatsapp">WhatsApp (optional)</label>
+        {{ form.contact_whatsapp }}
+      </div>
+      <div class="form-field">
+        <label for="id_contact_email">Email (optional)</label>
+        {{ form.contact_email }}
+      </div>
+
+      <div class="form-field inline">
+        <label for="id_is_active">Visible to guests</label>
+        <div class="checkbox-wrap">
+          {{ form.is_active }}
+          <span>Yes, show this listing publicly</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'stays:guesthouse_list' %}" class="btn-secondary">Cancel</a>
+      <button type="submit" class="btn-primary">Create Listing</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  .req-mark {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #dc2626;
+    background: #fef2f2;
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+    text-transform: uppercase;
+  }
+  .gh-amenity-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .gh-amenity-checks .checkbox-wrap {
+    width: auto;
+  }
+</style>
+
+{% endblock %}

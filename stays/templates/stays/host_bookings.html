@@ -1,0 +1,112 @@
+{% extends "listings/base.html" %} {% load static %} {% load humanize %}
+{% block title %}Booking Requests | Rooms4You{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Booking Requests</h1>
+
+<div class="hb-list">
+  {% for booking in bookings %}
+  <div class="room-row hb-row">
+    <div class="room-row-content hb-row-content">
+      <strong class="room-row-title hb-row-title">{{ booking.guesthouse.name }}</strong>
+      <div class="hb-row-guest">👤 {{ booking.guest.get_full_name|default:booking.guest.username }}</div>
+      <div class="hb-row-dates">{{ booking.check_in|date:"M j" }} - {{ booking.check_out|date:"M j, Y" }} · {{ booking.nights }} night{{ booking.nights|pluralize }} · {{ booking.num_guests }} guest{{ booking.num_guests|pluralize }}</div>
+      {% if booking.message %}
+        <div class="hb-row-message">"{{ booking.message }}"</div>
+      {% endif %}
+    </div>
+
+    <div class="hb-row-actions">
+      {% if booking.status == "requested" %}
+        <form method="post" action="{% url 'stays:accept_booking' booking.id %}" class="hb-inline-form">
+          {% csrf_token %}
+          <button type="submit" class="hb-accept-btn">Accept</button>
+        </form>
+        <form method="post" action="{% url 'stays:decline_booking' booking.id %}" class="hb-inline-form">
+          {% csrf_token %}
+          <button type="submit" class="hb-decline-btn">Decline</button>
+        </form>
+      {% elif booking.status == "confirmed" %}
+        <span class="availability-badge available">Confirmed</span>
+        {% if booking.invoice %}
+          <div class="hb-fee-due">Success fee: R{{ booking.invoice.amount|floatformat:0 }} ({{ booking.invoice.get_status_display }})</div>
+        {% endif %}
+      {% elif booking.status == "declined" %}
+        <span class="availability-badge occupied">Declined</span>
+      {% elif booking.status == "cancelled" %}
+        <span class="availability-badge occupied">Cancelled</span>
+      {% else %}
+        <span class="availability-badge occupied">Completed</span>
+      {% endif %}
+      <a href="{% url 'stays:booking_detail' booking.id %}" class="hb-detail-link">View details</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-card">
+    <p>No booking requests yet.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+  .hb-list { display: flex; flex-direction: column; gap: 14px; }
+  .hb-row {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .hb-row-content { display: block !important; flex: 1; min-width: 220px; }
+  .hb-row-title { display: block; text-transform: none !important; font-weight: 700 !important; }
+  .hb-row-guest, .hb-row-dates {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .hb-row-message {
+    font-size: 0.83rem;
+    color: #475569;
+    font-style: italic;
+    margin-top: 6px;
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+  .hb-row-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .hb-inline-form { margin: 0; display: inline-block; }
+  .hb-accept-btn, .hb-decline-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hb-accept-btn { background: #16a34a; color: #fff; margin-right: 6px; }
+  .hb-decline-btn { background: #fef2f2; color: #dc2626; }
+  .hb-detail-link {
+    font-size: 0.8rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .hb-fee-due {
+    font-size: 0.78rem;
+    color: #92400e;
+    background: #fef3c7;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+  
+</style>
+
+{% endblock %}

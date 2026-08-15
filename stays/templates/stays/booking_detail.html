@@ -1,0 +1,197 @@
+{% extends "listings/base.html" %} {% load static %} {% load humanize %}
+{% block title %}Booking Details | Rooms4You{% endblock %}
+{% block content %}
+
+<div class="bd-shell">
+  <h1 class="page-title bd-title">{{ booking.guesthouse.name }}</h1>
+
+  <div class="form-card bd-card">
+    <div class="bd-status-row">
+      {% if booking.status == "requested" %}
+        <span class="availability-badge upcoming">Awaiting host response</span>
+      {% elif booking.status == "confirmed" %}
+        <span class="availability-badge available">Confirmed</span>
+      {% elif booking.status == "declined" %}
+        <span class="availability-badge occupied">Declined</span>
+      {% elif booking.status == "cancelled" %}
+        <span class="availability-badge occupied">Cancelled</span>
+      {% else %}
+        <span class="availability-badge occupied">Completed</span>
+      {% endif %}
+    </div>
+
+    <div class="bd-facts">
+      <div class="meta-card">
+        <span class="meta-label">Check-in</span>
+        <strong>{{ booking.check_in|date:"D, M j, Y" }}</strong>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Check-out</span>
+        <strong>{{ booking.check_out|date:"D, M j, Y" }}</strong>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Nights</span>
+        <strong>{{ booking.nights }}</strong>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Guests</span>
+        <strong>{{ booking.num_guests }}</strong>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Estimated total</span>
+        <strong>R{{ booking.total_estimate|floatformat:0|intcomma }}</strong>
+      </div>
+    </div>
+    <p class="bd-estimate-note">This is an estimate only - the host will confirm the final amount, and payment happens directly between you.</p>
+
+    {% if booking.message %}
+    <div class="bd-message">
+      <span class="meta-label">Message</span>
+      <p>"{{ booking.message }}"</p>
+    </div>
+    {% endif %}
+
+    {% if booking.status == "declined" and booking.decline_reason %}
+    <div class="bd-decline-reason">
+      <span class="meta-label">Reason</span>
+      <p>{{ booking.decline_reason }}</p>
+    </div>
+    {% endif %}
+
+    {% if show_contact %}
+    <div class="bd-contact-reveal">
+      <h3 class="bd-contact-title">✓ Contact details</h3>
+      {% if is_host %}
+        <p><strong>Guest:</strong> {{ booking.guest.get_full_name|default:booking.guest.username }}</p>
+        <p><strong>Email:</strong> {{ booking.guest.email }}</p>
+      {% else %}
+        <p><strong>Host:</strong> {{ booking.guesthouse.host.get_full_name|default:booking.guesthouse.host.username }}</p>
+        <p><strong>Phone:</strong> {{ booking.guesthouse.contact_phone }}</p>
+        {% if booking.guesthouse.contact_whatsapp %}
+          <p><strong>WhatsApp:</strong> {{ booking.guesthouse.contact_whatsapp }}</p>
+        {% endif %}
+        {% if booking.guesthouse.contact_email %}
+          <p><strong>Email:</strong> {{ booking.guesthouse.contact_email }}</p>
+        {% endif %}
+      {% endif %}
+      <p class="bd-contact-hint">Reach out directly to sort out payment and check-in.</p>
+    </div>
+    {% if is_host and booking.invoice %}
+    <div class="bd-fee-notice">
+      <strong>Rooms4You success fee: R{{ booking.invoice.amount|floatformat:0 }}</strong>
+      <span>({{ booking.invoice.get_status_display }})</span>
+      <p>This booking came through Rooms4You, so a success fee applies. We'll be in touch about payment.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div class="bd-actions">
+      {% if is_host and booking.status == "requested" %}
+        <form method="post" action="{% url 'stays:accept_booking' booking.id %}" class="bd-inline-form">
+          {% csrf_token %}
+          <button type="submit" class="btn-primary">Accept Booking</button>
+        </form>
+        <form method="post" action="{% url 'stays:decline_booking' booking.id %}" class="bd-inline-form">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary bd-decline-btn">Decline</button>
+        </form>
+      {% endif %}
+
+      {% if booking.status == "requested" or booking.status == "confirmed" %}
+        <form method="post" action="{% url 'stays:cancel_booking' booking.id %}" class="bd-inline-form"
+              onsubmit="return confirm('Cancel this booking?');">
+          {% csrf_token %}
+          <button type="submit" class="bd-cancel-btn">Cancel Booking</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .bd-shell { max-width: 600px; margin: 0 auto; }
+  .bd-title { text-align: left; }
+  .bd-card { }
+  .bd-status-row { margin-bottom: 16px; }
+  .bd-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .bd-estimate-note {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin: 0 0 16px;
+  }
+  .bd-message, .bd-decline-reason {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  .bd-message p, .bd-decline-reason p {
+    margin: 4px 0 0;
+    font-style: italic;
+    color: #475569;
+  }
+  .bd-contact-reveal {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .bd-contact-title {
+    margin: 0 0 10px;
+    color: #166534;
+    font-size: 1rem;
+  }
+  .bd-contact-reveal p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+  }
+  .bd-contact-hint {
+    margin-top: 10px !important;
+    font-size: 0.78rem !important;
+    color: #64748b !important;
+  }
+
+  .bd-fee-notice {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+    color: #92400e;
+  }
+  .bd-fee-notice span {
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+  .bd-fee-notice p {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: #78350f;
+  }
+
+  .bd-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .bd-inline-form { margin: 0; }
+  .bd-decline-btn { color: #dc2626 !important; }
+  .bd-cancel-btn {
+    border: none;
+    background: none;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>
+
+{% endblock %}

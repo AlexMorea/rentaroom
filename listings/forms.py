@@ -282,6 +282,7 @@ class RoomForm(forms.ModelForm):
             "title",
             "description",
             "price",
+            "deposit_amount",
 
             "suburb",
             "town",
@@ -315,6 +316,11 @@ class RoomForm(forms.ModelForm):
             "price": forms.NumberInput(attrs={
                 "class": "input",
                 "placeholder": "e.g. 2500"
+            }),
+
+            "deposit_amount": forms.NumberInput(attrs={
+                "class": "input",
+                "placeholder": "Leave blank if no deposit"
             }),
 
             "suburb": forms.TextInput(attrs={

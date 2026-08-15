@@ -1,0 +1,273 @@
+{% extends "listings/base.html" %} {% load static %} {% load humanize %}
+{% block title %}{{ guesthouse.name }} - R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night in {{ guesthouse.location }} | Rooms4You{% endblock %}
+{% block meta_description %}{{ guesthouse.name }} in {{ guesthouse.location }}. R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night, sleeps {{ guesthouse.max_guests }}.{% endblock %}
+{% block og_title %}{{ guesthouse.name }} - R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night{% endblock %}
+{% block og_image %}{% with img=guesthouse.images.first %}{% if img %}{{ img.image.url }}{% else %}https://rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endif %}{% endwith %}{% endblock %}
+
+{% block content %}
+
+<div class="gh-detail">
+
+  <div class="gh-detail-gallery">
+    {% if guesthouse.images.all %}
+      {% for image in guesthouse.images.all|slice:":5" %}
+        <img src="{{ image.image.url }}" alt="{{ guesthouse.name }}" class="gh-gallery-img {% if forloop.first %}gh-gallery-main{% endif %}" loading="lazy">
+      {% endfor %}
+    {% else %}
+      <div class="gh-gallery-placeholder">🏡</div>
+    {% endif %}
+  </div>
+
+  <div class="gh-detail-body">
+    <div class="gh-detail-main">
+      <h1 class="gh-detail-title">{{ guesthouse.name }}</h1>
+      <p class="gh-detail-location">📍 {{ guesthouse.location }}</p>
+
+      <div class="gh-quick-facts">
+        <div class="meta-card">
+          <span class="meta-label">Price</span>
+          <strong>R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night</strong>
+        </div>
+        <div class="meta-card">
+          <span class="meta-label">Sleeps</span>
+          <strong>{{ guesthouse.max_guests }} guests</strong>
+        </div>
+        <div class="meta-card">
+          <span class="meta-label">Min. stay</span>
+          <strong>{{ guesthouse.min_nights }} night{{ guesthouse.min_nights|pluralize }}</strong>
+        </div>
+        <div class="meta-card">
+          <span class="meta-label">Check-in / out</span>
+          <strong>{{ guesthouse.check_in_time|time:"H:i" }} / {{ guesthouse.check_out_time|time:"H:i" }}</strong>
+        </div>
+      </div>
+
+      <h2 class="gh-section-title">About this place</h2>
+      <p class="gh-description">{{ guesthouse.description|linebreaks }}</p>
+
+      {% if guesthouse.has_wifi or guesthouse.has_parking or guesthouse.has_breakfast or guesthouse.has_pool or guesthouse.has_aircon or guesthouse.has_tv %}
+      <h2 class="gh-section-title">Amenities</h2>
+      <ul class="gh-amenities">
+        {% if guesthouse.has_wifi %}<li>📶 WiFi</li>{% endif %}
+        {% if guesthouse.has_parking %}<li>🚗 Parking</li>{% endif %}
+        {% if guesthouse.has_breakfast %}<li>🍳 Breakfast included</li>{% endif %}
+        {% if guesthouse.has_pool %}<li>🏊 Pool</li>{% endif %}
+        {% if guesthouse.has_aircon %}<li>❄️ Air conditioning</li>{% endif %}
+        {% if guesthouse.has_tv %}<li>📺 TV</li>{% endif %}
+      </ul>
+      {% endif %}
+
+      {% if guesthouse.house_rules %}
+      <h2 class="gh-section-title">House rules</h2>
+      <p class="gh-description">{{ guesthouse.house_rules|linebreaks }}</p>
+      {% endif %}
+
+      {% if unavailable_ranges %}
+      <h2 class="gh-section-title">Already booked</h2>
+      <ul class="gh-unavailable-list">
+        {% for start, end in unavailable_ranges %}
+          <li>{{ start|date:"M j" }} - {{ end|date:"M j, Y" }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+
+    <div class="gh-detail-sidebar">
+      {% if is_host %}
+        <div class="gh-host-notice">
+          <p>This is your own listing.</p>
+          <a href="{% url 'stays:edit_guesthouse' guesthouse.id %}" class="btn-secondary">Edit listing</a>
+        </div>
+      {% elif form %}
+        <form method="post" action="{% url 'stays:request_booking' guesthouse.id %}" class="gh-booking-form">
+          {% csrf_token %}
+          <h3 class="gh-booking-title">Request to book</h3>
+
+          <div class="form-field">
+            <label>Check-in</label>
+            {{ form.check_in }}
+          </div>
+          <div class="form-field">
+            <label>Check-out</label>
+            {{ form.check_out }}
+          </div>
+          <div class="form-field">
+            <label>Guests</label>
+            {{ form.num_guests }}
+          </div>
+          <div class="form-field">
+            <label>Message to host (optional)</label>
+            {{ form.message }}
+          </div>
+
+          <button type="submit" class="btn-primary gh-booking-submit">Request to Book</button>
+          <p class="gh-booking-note">You won't be charged - the host will confirm, then you'll arrange payment directly.</p>
+        </form>
+      {% else %}
+        <div class="gh-host-notice">
+          <p>Log in to request a booking.</p>
+          <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary">Log in</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .gh-detail {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .gh-detail-gallery {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-auto-rows: 130px;
+    gap: 8px;
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .gh-gallery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    grid-row: span 2;
+  }
+  .gh-gallery-img:not(.gh-gallery-main) {
+    grid-row: span 1;
+  }
+  .gh-gallery-placeholder {
+    grid-column: 1 / -1;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: #f1f5f9;
+    opacity: 0.5;
+  }
+
+  .gh-detail-body {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+  }
+
+  .gh-detail-title {
+    margin: 0 0 4px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .gh-detail-location {
+    color: #64748b;
+    margin: 0 0 18px;
+  }
+
+  .gh-quick-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .gh-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 24px 0 8px;
+  }
+  .gh-description {
+    color: #334155;
+    line-height: 1.6;
+  }
+  .gh-amenities {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .gh-amenities li {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+  .gh-unavailable-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .gh-unavailable-list li {
+    background: #fef2f2;
+    color: #991b1b;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .gh-detail-sidebar {
+    align-self: start;
+  }
+  .gh-booking-form {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    position: sticky;
+    top: 20px;
+  }
+  .gh-booking-title {
+    margin: 0 0 14px;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+  .gh-booking-submit {
+    width: 100%;
+    margin-top: 6px;
+  }
+  .gh-booking-note {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin: 10px 0 0;
+    text-align: center;
+  }
+  .gh-host-notice {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 20px;
+    text-align: center;
+  }
+  .gh-host-notice p {
+    margin: 0 0 12px;
+    color: #64748b;
+  }
+
+  @media (max-width: 800px) {
+    .gh-detail-body {
+      grid-template-columns: 1fr;
+    }
+    .gh-detail-gallery {
+      grid-template-columns: 1fr;
+      grid-auto-rows: 200px;
+    }
+    .gh-gallery-img {
+      grid-row: span 1 !important;
+    }
+    .gh-gallery-img:not(.gh-gallery-main) {
+      display: none;
+    }
+  }
+</style>
+
+{% endblock %}

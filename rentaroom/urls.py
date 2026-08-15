@@ -21,6 +21,7 @@ urlpatterns = [
     path("services/", include("services.urls")),
     path("trust/", include("trust.urls")),
     path("placements/", include("placements.urls")),
+    path("stays/", include("stays.urls")),
 ]
 
 if settings.DEBUG:
