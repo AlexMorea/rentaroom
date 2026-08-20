@@ -1,11 +1,11 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django.utils import timezone
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404
+
 from listings.models import Profile
 
 from .models import Membership
@@ -164,7 +164,7 @@ def admin_membership_dashboard(request):
 @staff_member_required
 @require_POST
 def approve_membership(request, pk):
-    membership = Membership.objects.get(id=pk)
+    membership = get_object_or_404(Membership, id=pk)
 
     tier = request.POST.get(
         "tier",

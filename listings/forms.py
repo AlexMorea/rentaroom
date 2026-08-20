@@ -1,11 +1,15 @@
-from django import forms
 import re
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.contrib.auth.password_validation import validate_password
-from django.utils import timezone
 from datetime import timedelta
+from typing import ClassVar
+
+from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 from accounts.models import Membership
+
 from .models import Profile, Room, RoomImage
 from .utils import normalize_sa_phone
 
@@ -207,8 +211,8 @@ class UserRegisterForm(forms.Form):
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["first_name", "last_name"]
-        widgets = {
+        fields = ("first_name", "last_name")
+        widgets: ClassVar[dict] = {
             "first_name": forms.TextInput(attrs={"class": "input"}),
             "last_name": forms.TextInput(attrs={"class": "input"}),
         }
@@ -223,11 +227,11 @@ class UserUpdateForm(forms.ModelForm):
 
 
 class ProfileUpdateForm(forms.ModelForm):
-    COUNTRY_CHOICES = [
+    COUNTRY_CHOICES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("+27", "+27 🇿🇦"),
         ("+1", "+1 🇺🇸"),
         ("+44", "+44 🇬🇧"),
-    ]
+    )
 
     country_code = forms.ChoiceField(
         choices=COUNTRY_CHOICES,
@@ -241,15 +245,15 @@ class ProfileUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = [
+        fields = (
             "persona",
             "country_code",
             "phone_number",
             "alt_no",
             "home_address",
             "postal_code",
-        ]
-        widgets = {
+        )
+        widgets: ClassVar[dict] = {
             "persona": forms.Select(attrs={"class": "input"}),
             "alt_no": forms.TextInput(attrs={"class": "input", "inputmode": "tel", "autocomplete": "tel"}),
             "home_address": forms.TextInput(attrs={"class": "input", "autocomplete": "street-address"}),
@@ -264,11 +268,9 @@ class ProfileUpdateForm(forms.ModelForm):
 
         phone = re.sub(r"[^\d]", "", phone)
 
-        if phone.startswith("27"):
-            phone = phone[2:]
+        phone = phone.removeprefix("27")
 
-        if phone.startswith("0"):
-            phone = phone[1:]
+        phone = phone.removeprefix("0")
 
         if len(phone) != 9:
             raise forms.ValidationError("Enter valid SA number. Example: 841234567")
@@ -278,7 +280,7 @@ class ProfileUpdateForm(forms.ModelForm):
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room
-        fields = [
+        fields: ClassVar[list[str]] = [
             "title",
             "description",
             "price",
@@ -307,7 +309,7 @@ class RoomForm(forms.ModelForm):
             "is_available",
         ]
 
-        widgets = {
+        widgets: ClassVar[dict] = {
             "title": forms.TextInput(attrs={
                 "class": "input",
                 "placeholder": "e.g. Spacious single room near TUT"
@@ -431,7 +433,7 @@ class RoomForm(forms.ModelForm):
         # Client-side helper: mark contact fields required in the widget
         try:
             role = getattr(self.user, "profile", None) and self.user.profile.role
-        except Exception:
+        except AttributeError:
             role = None
 
         if role == "landlord":
@@ -472,19 +474,23 @@ class RoomForm(forms.ModelForm):
         cleaned["location"] = location
 
         # PHONE NORMALIZER
-        cleaned["contact_phone"] = normalize_sa_phone(
-            cleaned.get("contact_phone")
-        )
+        phone = normalize_sa_phone(cleaned.get("contact_phone"))
+        if phone:
+            cleaned["contact_phone"] = phone
+        else:
+            cleaned["contact_phone"] = ""
 
         if cleaned.get("contact_whatsapp"):
-            cleaned["contact_whatsapp"] = normalize_sa_phone(
-                cleaned.get("contact_whatsapp")
-            )
+            whatsapp = normalize_sa_phone(cleaned.get("contact_whatsapp"))
+            if whatsapp:
+                cleaned["contact_whatsapp"] = whatsapp
+            else:
+                cleaned["contact_whatsapp"] = ""
 
         # Landlord must provide both contact phone and WhatsApp for listings
         try:
             role = getattr(self.user, "profile", None) and self.user.profile.role
-        except Exception:
+        except AttributeError:
             role = None
 
         if role == "landlord":
@@ -516,19 +522,19 @@ class RoomForm(forms.ModelForm):
                 "Available units cannot exceed total units."
             )
 
-        if status == "from":
-            if not available_from:
-                self.add_error(
-                    "available_from",
-                    "Choose available date."
-                )
+        if status == "from" and not available_from:
+            self.add_error(
+                "available_from",
+                "Choose available date."
+            )
 
-        if status == "mixed":
-            if available_units == 0 or available_units == total_units:
-                self.add_error(
-                    "available_units",
-                    "Must be between 1 and total_units-1."
-                )
+        if status == "mixed" and (
+            available_units == 0 or available_units == total_units
+        ):
+            self.add_error(
+                "available_units",
+                "Must be between 1 and total_units-1."
+            )
 
         # duplicate protection
         if title and location and room_type and price:
@@ -560,10 +566,10 @@ class RoomForm(forms.ModelForm):
 class RoomImageForm(forms.ModelForm):
     class Meta:
         model = RoomImage
-        fields = ["image"]
+        fields = ("image",)
 
 
 class ListingForm(forms.ModelForm):
     class Meta:
         model = Room
-        exclude = ["owner", "created_at"]
+        exclude = ("owner", "created_at")

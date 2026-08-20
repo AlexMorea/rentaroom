@@ -1,0 +1,19 @@
+{
+  "[html]": {
+    "editor.formatOnSave": false
+  },
+  "[django-html]": {
+    "editor.formatOnSave": false
+  },
+  "[jinja]": {
+    "editor.formatOnSave": false
+  },
+  "[jinja2]": {
+    "editor.formatOnSave": false
+  },
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python",
+    "editor.formatOnSave": true
+  }
+}

@@ -1,29 +1,41 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Count, Q, F, IntegerField, ExpressionWrapper, Avg, Case, When
-from django.conf import settings
-from django.core.cache import cache
-from django.contrib import messages
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.template.loader import render_to_string
-from django.db import IntegrityError, transaction
-from django.db.models.deletion import ProtectedError
-from django.core.exceptions import ValidationError
-from django.views.decorators.http import require_POST
-from difflib import get_close_matches
-from utils.email import send_template_email
-from accounts.utils import require_active_membership
-from django.db.models import Prefetch
-from django.db import DatabaseError
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
-from ..forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
-POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 import logging
+from difflib import get_close_matches
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.db import DatabaseError, IntegrityError, transaction
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Prefetch,
+    Q,
+    When,
+)
+from django.db.models.deletion import ProtectedError
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_POST
+
+from accounts.utils import require_active_membership
+from utils.email import send_template_email
+
+from ..forms import RoomForm
+from ..models import Favorite, Room, RoomImage, RoomStat
+from .helpers import get_or_create_membership, is_landlord
+
+POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 
 logger = logging.getLogger(__name__)
 
-from .helpers import get_or_create_membership, is_landlord
 
 def room_list(request):
 
@@ -474,10 +486,10 @@ def room_detail(request, pk):
             # If Celery is configured prefer using a task (fast path). We import
             # lazily to avoid hard dependency during tests.
             try:
-                from .tasks import create_room_view_stat_task
+                from listings.tasks import create_room_view_stat_task
 
                 create_room_view_stat_task.delay(room.id, request.user.id if request.user.is_authenticated else None)
-            except Exception:
+            except (ImportError, ConnectionError, TimeoutError, OSError):
                 # Fallback to background thread if Celery import fails
                 import threading
 
@@ -488,7 +500,7 @@ def room_detail(request, pk):
                             user_id=uid,
                             stat_type="view",
                         )
-                    except Exception:
+                    except DatabaseError:
                         logger.exception("Failed to write RoomStat in background")
 
                 threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
@@ -503,11 +515,11 @@ def room_detail(request, pk):
                         user_id=uid,
                         stat_type="view",
                     )
-                except Exception:
+                except DatabaseError:
                     logger.exception("Failed to write RoomStat in background")
 
             threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
-    except Exception as e:
+    except (ConnectionError, DatabaseError, RuntimeError, TimeoutError, OSError) as e:
         logger.warning("Failed to schedule background RoomStat write: %s", str(e))
 
     # increment denormalized hit counter (fast, uses F() to avoid race)
@@ -599,6 +611,18 @@ def create_room(request):
         else:
             messages.success(request, "Room created successfully.")
 
+        # Clear room list cache after room creation
+        cache_keys_to_delete = [
+            f"room_list:{request.user.id}*",
+            "room_list_ids:*",
+        ]
+        for pattern in cache_keys_to_delete:
+            try:
+                cache.delete_pattern(pattern)
+            except (AttributeError, TypeError):
+                # delete_pattern not available on all cache backends; use delete for individual keys
+                pass
+
         # EMAIL AFTER COMMIT
         transaction.on_commit(lambda: send_template_email(
             subject="Your listing is now live 🎉",
@@ -631,9 +655,7 @@ def edit_room(request, pk):
         user=request.user
     )
 
-    if request.method == "POST":
-
-        if form.is_valid():
+    if request.method == "POST" and form.is_valid():
 
             try:
 
@@ -643,6 +665,17 @@ def edit_room(request, pk):
                     updated_room.owner = request.user
                     updated_room.full_clean()
                     updated_room.save()
+
+                # Clear room list cache after room edit
+                cache_keys_to_delete = [
+                    f"room_list:{request.user.id}*",
+                    "room_list_ids:*",
+                ]
+                for pattern in cache_keys_to_delete:
+                    try:
+                        cache.delete_pattern(pattern)
+                    except (AttributeError, TypeError):
+                        pass
 
                 messages.success(
                     request,

@@ -65,8 +65,8 @@
   <body
     class="{% block body_class %}{% endblock %}"
     data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
-    data-role="{% if user.is_authenticated %}{{ user.profile.role|default:'guest' }}{% else %}guest{% endif %}"
-    data-persona="{% if user.is_authenticated and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
+    data-role="{% if user.is_authenticated and user.profile %}{{ user.profile.role|default:'guest' }}{% else %}guest{% endif %}"
+    data-persona="{% if user.is_authenticated and user.profile and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
   >
     <!-- GLOBAL LOGOUT FORM -->
     <form
