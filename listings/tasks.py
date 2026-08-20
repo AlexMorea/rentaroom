@@ -1,6 +1,13 @@
-from celery import shared_task
+import importlib
+
 from django.core.management import call_command
+from django.db import DatabaseError
+
 from .models import RoomStat
+
+# Load Celery dynamically so static analyzers do not require the optional
+# worker dependency to be installed in the current environment.
+shared_task = importlib.import_module("celery").shared_task
 
 
 @shared_task
@@ -12,9 +19,9 @@ def create_room_view_stat_task(room_id, user_id=None):
             user_id=user_id,
             stat_type="view",
         )
-    except Exception:
+    except DatabaseError:
         # Be resilient — do not raise inside periodic/background tasks
-        return None
+        pass
 
 @shared_task
 def compute_scores_task(force=False):

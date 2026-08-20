@@ -1,18 +1,20 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Count, Q, F, IntegerField, ExpressionWrapper, Avg
-from placements.models import Placement
-from django.http import HttpResponseForbidden, HttpResponse, Http404
-from django.core.paginator import Paginator
-from ..models import Message
-from django.contrib.auth.models import User
-from django.db.models import Prefetch
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 import logging
+
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator
+from django.db.models import Avg, Count, Prefetch, Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404, render
+
+from placements.models import Placement
+
+from ..models import Message, Review, Room, RoomImage, RoomStat
 
 logger = logging.getLogger(__name__)
 
 from .helpers import get_or_create_membership, is_landlord
+
 
 @login_required
 def landlord_rooms(request):

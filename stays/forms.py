@@ -1,12 +1,14 @@
+from typing import ClassVar
+
 from django import forms
 
-from .models import GuestHouse, Booking
+from .models import Booking, GuestHouse
 
 
 class GuestHouseForm(forms.ModelForm):
     class Meta:
         model = GuestHouse
-        fields = [
+        fields = (
             "name",
             "description",
             "price_per_night",
@@ -38,9 +40,9 @@ class GuestHouseForm(forms.ModelForm):
             "contact_email",
 
             "is_active",
-        ]
+        )
 
-        widgets = {
+        widgets: ClassVar[dict] = {
             "name": forms.TextInput(attrs={
                 "class": "input",
                 "placeholder": "e.g. Mama Thandi's Guest House"
@@ -143,9 +145,9 @@ class GuestHouseForm(forms.ModelForm):
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
-        fields = ["check_in", "check_out", "num_guests", "message"]
+        fields = ("check_in", "check_out", "num_guests", "message")
 
-        widgets = {
+        widgets: ClassVar[dict] = {
             "check_in": forms.DateInput(attrs={
                 "class": "input",
                 "type": "date",

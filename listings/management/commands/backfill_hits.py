@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
- 
 from django.db.models import Count
-from listings.models import Room, RoomStat, Favorite, Review
+
+from listings.models import Favorite, Review, Room, RoomStat
 
 
 class Command(BaseCommand):

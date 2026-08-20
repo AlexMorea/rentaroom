@@ -1,12 +1,13 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Prefetch
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Prefetch
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from .models import GuestHouse, GuestHouseImage, Booking
-from .forms import GuestHouseForm, BookingForm
-from .availability import get_unavailable_ranges, confirm_booking
+
+from .availability import confirm_booking, get_unavailable_ranges
+from .forms import BookingForm, GuestHouseForm
+from .models import Booking, GuestHouse, GuestHouseImage
 
 
 def guesthouse_list(request):
@@ -153,7 +154,7 @@ def request_booking(request, pk):
         )
         return redirect("stays:my_bookings")
 
-    for field, errors in form.errors.items():
+    for errors in form.errors.values():
         for error in errors:
             messages.error(request, error)
     return redirect("stays:guesthouse_detail", pk=pk)

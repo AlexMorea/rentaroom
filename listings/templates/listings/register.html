@@ -1,11 +1,11 @@
 {% extends "listings/base.html" %}
 {% load static %}
+{% block title %}Create your account | Rooms4You{% endblock %}
 {% block body_class %}auth-page{% endblock %}
 {% block content %}
 
 <div class="pr-shell">
   <div class="pr-panel-wrap">
-
     <!-- BRAND PANEL -->
     <div class="pr-brand">
       <div class="pr-brand-glow-a"></div>
@@ -25,9 +25,17 @@
         </p>
 
         <ul class="pr-trust-list">
-          <li><span class="pr-trust-icon">✓</span> Free to join, no hidden fees</li>
-          <li><span class="pr-trust-icon">✓</span> Verified landlords &amp; real listings</li>
-          <li><span class="pr-trust-icon">✓</span> Your details are never shared publicly</li>
+          <li>
+            <span class="pr-trust-icon">✓</span> Free to join, no hidden fees
+          </li>
+          <li>
+            <span class="pr-trust-icon">✓</span> Verified landlords &amp; real
+            listings
+          </li>
+          <li>
+            <span class="pr-trust-icon">✓</span> Your details are never shared
+            publicly
+          </li>
         </ul>
       </div>
     </div>
@@ -35,14 +43,11 @@
     <!-- FORM PANEL -->
     <div class="pr-form-panel">
       <div class="pr-form-inner">
-
         <h2 class="pr-form-title">Create your account</h2>
         <p class="pr-form-sub">Takes less than a minute.</p>
 
         <form method="post" class="pr-form">
-          {% csrf_token %}
-
-          {{ form.non_field_errors }}
+          {% csrf_token %} {{ form.non_field_errors }}
 
           <!-- ROLE SELECTOR -->
           <div class="pr-field">
@@ -52,19 +57,21 @@
               <button type="button" class="pr-role-card" data-role="tenant">
                 <span class="pr-role-icon">🔍</span>
                 <span class="pr-role-label">Tenant</span>
-                <span class="pr-role-desc">Looking for a room, or a place to stay</span>
+                <span class="pr-role-desc"
+                  >Looking for a room, or a place to stay</span
+                >
               </button>
 
               <button type="button" class="pr-role-card" data-role="landlord">
                 <span class="pr-role-icon">🔑</span>
                 <span class="pr-role-label">Landlord</span>
-                <span class="pr-role-desc">Have a room to rent, or a place to host guests</span>
+                <span class="pr-role-desc"
+                  >Have a room to rent, or a place to host guests</span
+                >
               </button>
             </div>
 
-            <div class="pr-role-select-wrap">
-              {{ form.role }}
-            </div>
+            <div class="pr-role-select-wrap">{{ form.role }}</div>
           </div>
 
           <!-- BASIC INFO -->
@@ -82,12 +89,18 @@
           <div class="pr-field">
             <label>Email</label>
             {{ form.email }}
-            <small class="pr-hint">📧 We'll send a verification code here</small>
+            <small class="pr-hint"
+              >📧 We'll send a verification code here</small
+            >
           </div>
 
           <small class="pr-driver-note">
             Want to become a driver?
-            <a href="{% url 'services:register_bakkie_driver' %}" class="pr-inline-link">Apply here</a>
+            <a
+              href="{% url 'services:register_bakkie_driver' %}"
+              class="pr-inline-link"
+              >Apply here</a
+            >
           </small>
 
           <div class="pr-field">
@@ -127,13 +140,22 @@
             <label>Password</label>
             <div class="pr-pw-wrap">
               {{ form.password1 }}
-              <button class="pr-pw-toggle" type="button" data-toggle="#id_password1" aria-label="Show password">👁</button>
+              <button
+                class="pr-pw-toggle"
+                type="button"
+                data-toggle="#id_password1"
+                aria-label="Show password"
+              >
+                👁
+              </button>
             </div>
 
             <div class="pr-strength-bar">
               <div class="pr-strength-fill" id="strengthFill"></div>
             </div>
-            <div class="pr-strength-label" id="strengthLabel">Choose a password to see its strength</div>
+            <div class="pr-strength-label" id="strengthLabel">
+              Choose a password to see its strength
+            </div>
 
             <ul class="pr-pw-checklist" id="pwChecklist">
               <li id="chkLength" class="pr-pw-check">
@@ -154,7 +176,9 @@
               </li>
             </ul>
             <small class="pr-hint pr-pw-tip">
-              💡 Tip: avoid your name, birthday, or common words - a short unrelated phrase (e.g. "Blue7Taxi!Rain") is both strong and easy to remember.
+              💡 Tip: avoid your name, birthday, or common words - a short
+              unrelated phrase (e.g. "Blue7Taxi!Rain") is both strong and easy
+              to remember.
             </small>
 
             {{ form.password1.errors }}
@@ -164,7 +188,14 @@
             <label>Repeat Password</label>
             <div class="pr-pw-wrap">
               {{ form.password2 }}
-              <button class="pr-pw-toggle" type="button" data-toggle="#id_password2" aria-label="Show password">👁</button>
+              <button
+                class="pr-pw-toggle"
+                type="button"
+                data-toggle="#id_password2"
+                aria-label="Show password"
+              >
+                👁
+              </button>
             </div>
             <small class="pr-hint pr-match-hint" id="matchHint"></small>
             {{ form.password2.errors }}
@@ -176,10 +207,21 @@
               {{ form.terms_accepted }}
               <span>
                 I agree to the
-                <a href="{% url 'terms' %}" target="_blank" class="pr-inline-link">Terms of Service</a>
+                <a
+                  href="{% url 'terms' %}"
+                  target="_blank"
+                  class="pr-inline-link"
+                  >Terms of Service</a
+                >
                 and
-                <a href="{% url 'privacy' %}" target="_blank" class="pr-inline-link">Privacy Policy</a>
-                and consent to the processing of my personal information under POPIA.
+                <a
+                  href="{% url 'privacy' %}"
+                  target="_blank"
+                  class="pr-inline-link"
+                  >Privacy Policy</a
+                >
+                and consent to the processing of my personal information under
+                POPIA.
               </span>
             </label>
             {{ form.terms_accepted.errors }}
@@ -192,17 +234,14 @@
           <p class="pr-next-step">
             🔒 Next: we'll email you a 6-digit code to verify your account.
           </p>
-
         </form>
 
         <p class="pr-login-hint">
           Already have an account?
           <a class="pr-inline-link" href="{% url 'login' %}">Log in</a>
         </p>
-
       </div>
     </div>
-
   </div>
 </div>
 
@@ -226,20 +265,42 @@
     position: relative;
     flex: 0 0 40%;
     overflow: hidden;
-    background: linear-gradient(160deg, #0b2a6b 0%, #14349c 35%, #1c5fd6 70%, #1298d6 100%);
+    background: linear-gradient(
+      160deg,
+      #0b2a6b 0%,
+      #14349c 35%,
+      #1c5fd6 70%,
+      #1298d6 100%
+    );
     padding: 40px 32px;
     display: flex;
     align-items: center;
   }
   .pr-brand-glow-a {
-    position: absolute; top: -100px; left: -100px; width: 300px; height: 300px;
+    position: absolute;
+    top: -100px;
+    left: -100px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(56,189,248,0.45), transparent 70%);
+    background: radial-gradient(
+      circle,
+      rgba(56, 189, 248, 0.45),
+      transparent 70%
+    );
   }
   .pr-brand-glow-b {
-    position: absolute; bottom: -80px; right: -80px; width: 260px; height: 260px;
+    position: absolute;
+    bottom: -80px;
+    right: -80px;
+    width: 260px;
+    height: 260px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(249,115,22,0.35), transparent 70%);
+    background: radial-gradient(
+      circle,
+      rgba(249, 115, 22, 0.35),
+      transparent 70%
+    );
   }
   .pr-brand-inner {
     position: relative;
@@ -269,7 +330,7 @@
     margin: 0 0 12px;
   }
   .pr-subhead {
-    color: rgba(255,255,255,0.85);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.95rem;
     line-height: 1.5;
     margin: 0 0 28px;
@@ -294,7 +355,7 @@
     height: 22px;
     min-width: 22px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.18);
+    background: rgba(255, 255, 255, 0.18);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -374,7 +435,9 @@
     border: 2px solid #e2e8f0;
     background: #f8fafc;
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease;
   }
   .pr-role-card.pr-role-active {
     border-color: #2563eb;
@@ -444,7 +507,9 @@
     width: 0%;
     border-radius: 999px;
     background: #ef4444;
-    transition: width 0.25s ease, background 0.25s ease;
+    transition:
+      width 0.25s ease,
+      background 0.25s ease;
   }
   .pr-strength-label {
     margin-top: 6px;
@@ -496,8 +561,12 @@
   .pr-match-hint {
     font-weight: 700;
   }
-  .pr-match-hint.pr-match-ok { color: #16a34a; }
-  .pr-match-hint.pr-match-bad { color: #dc2626; }
+  .pr-match-hint.pr-match-ok {
+    color: #16a34a;
+  }
+  .pr-match-hint.pr-match-bad {
+    color: #dc2626;
+  }
 
   .pr-consent {
     margin-top: 2px;
@@ -605,132 +674,136 @@
   }
 </style>
 
-{% endblock %}
-
-{% block extra_js %}
+{% endblock %} {% block extra_js %}
 <script>
-document.querySelectorAll("[data-toggle]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const input = document.querySelector(btn.dataset.toggle);
-    if (!input) return;
-    const isHidden = input.type === "password";
-    input.type = isHidden ? "text" : "password";
-    btn.textContent = isHidden ? "🙈" : "👁";
-    btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+  document.querySelectorAll("[data-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.querySelector(btn.dataset.toggle);
+      if (!input) return;
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      btn.textContent = isHidden ? "🙈" : "👁";
+      btn.setAttribute(
+        "aria-label",
+        isHidden ? "Hide password" : "Show password",
+      );
+    });
   });
-});
 </script>
 
 <script>
-const roleSel = document.getElementById("id_role");
-const landlord = document.getElementById("landlordFields");
-const tenant = document.getElementById("tenantFields");
-const roleCards = document.querySelectorAll(".pr-role-card");
+  const roleSel = document.getElementById("id_role");
+  const landlord = document.getElementById("landlordFields");
+  const tenant = document.getElementById("tenantFields");
+  const roleCards = document.querySelectorAll(".pr-role-card");
 
-function toggle() {
-  const role = roleSel?.value;
+  function toggle() {
+    const role = roleSel?.value;
 
-  if (role === "landlord") {
-    landlord.style.display = "block";
-    tenant.style.display = "none";
-  } else {
-    landlord.style.display = "none";
-    tenant.style.display = "block";
+    if (role === "landlord") {
+      landlord.style.display = "block";
+      tenant.style.display = "none";
+    } else {
+      landlord.style.display = "none";
+      tenant.style.display = "block";
+    }
+
+    roleCards.forEach((card) => {
+      card.classList.toggle("pr-role-active", card.dataset.role === role);
+    });
   }
 
   roleCards.forEach((card) => {
-    card.classList.toggle("pr-role-active", card.dataset.role === role);
+    card.addEventListener("click", () => {
+      if (!roleSel) return;
+      roleSel.value = card.dataset.role;
+      roleSel.dispatchEvent(new Event("change"));
+    });
   });
-}
 
-roleCards.forEach((card) => {
-  card.addEventListener("click", () => {
-    if (!roleSel) return;
-    roleSel.value = card.dataset.role;
-    roleSel.dispatchEvent(new Event("change"));
-  });
-});
-
-roleSel?.addEventListener("change", toggle);
-toggle();
+  roleSel?.addEventListener("change", toggle);
+  toggle();
 </script>
 
 <script>
-(function () {
-  const pw1 = document.getElementById("id_password1");
-  const pw2 = document.getElementById("id_password2");
-  const fill = document.getElementById("strengthFill");
-  const label = document.getElementById("strengthLabel");
-  const matchHint = document.getElementById("matchHint");
-  if (!pw1 || !fill) return;
+  (function () {
+    const pw1 = document.getElementById("id_password1");
+    const pw2 = document.getElementById("id_password2");
+    const fill = document.getElementById("strengthFill");
+    const label = document.getElementById("strengthLabel");
+    const matchHint = document.getElementById("matchHint");
+    if (!pw1 || !fill) return;
 
-  const checks = {
-    chkLength: (v) => v.length >= 8,
-    chkCase: (v) => /[A-Z]/.test(v) && /[a-z]/.test(v),
-    chkNumber: (v) => /\d/.test(v),
-    chkSymbol: (v) => /[^A-Za-z0-9]/.test(v),
-  };
+    const checks = {
+      chkLength: (v) => v.length >= 8,
+      chkCase: (v) => /[A-Z]/.test(v) && /[a-z]/.test(v),
+      chkNumber: (v) => /\d/.test(v),
+      chkSymbol: (v) => /[^A-Za-z0-9]/.test(v),
+    };
 
-  function updateChecklist(value) {
-    let metCount = 0;
-    Object.entries(checks).forEach(([id, test]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const met = test(value);
-      if (met) metCount++;
-      el.classList.toggle("pr-pw-check-met", met);
-      const icon = el.querySelector(".pr-pw-check-icon");
-      if (icon) icon.textContent = met ? "✓" : "○";
+    function updateChecklist(value) {
+      let metCount = 0;
+      Object.entries(checks).forEach(([id, test]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const met = test(value);
+        if (met) metCount++;
+        el.classList.toggle("pr-pw-check-met", met);
+        const icon = el.querySelector(".pr-pw-check-icon");
+        if (icon) icon.textContent = met ? "✓" : "○";
+      });
+      return metCount;
+    }
+
+    function updateStrength() {
+      const value = pw1.value || "";
+      const metCount = updateChecklist(value);
+
+      if (!value) {
+        fill.style.width = "0%";
+        fill.style.background = "#ef4444";
+        label.textContent = "Choose a password to see its strength";
+        return;
+      }
+
+      const pct = Math.min(100, (metCount / 4) * 100);
+      fill.style.width = pct + "%";
+
+      if (metCount <= 1) {
+        fill.style.background = "#ef4444";
+        label.textContent = "Weak password";
+      } else if (metCount <= 2) {
+        fill.style.background = "#f59e0b";
+        label.textContent = "Okay - a little further to go";
+      } else if (metCount === 3) {
+        fill.style.background = "#f59e0b";
+        label.textContent = "Good password";
+      } else {
+        fill.style.background = "#16a34a";
+        label.textContent = "Strong password";
+      }
+    }
+
+    function updateMatch() {
+      if (!pw2.value) {
+        matchHint.textContent = "";
+        matchHint.className = "pr-hint pr-match-hint";
+        return;
+      }
+      if (pw1.value === pw2.value) {
+        matchHint.textContent = "✓ Passwords match";
+        matchHint.className = "pr-hint pr-match-hint pr-match-bad";
+      } else {
+        matchHint.textContent = "Passwords do not match yet";
+        matchHint.className = "pr-hint pr-match-hint pr-match-bad";
+      }
+    }
+
+    pw1.addEventListener("input", () => {
+      updateStrength();
+      updateMatch();
     });
-    return metCount;
-  }
-
-  function updateStrength() {
-    const value = pw1.value || "";
-    const metCount = updateChecklist(value);
-
-    if (!value) {
-      fill.style.width = "0%";
-      fill.style.background = "#ef4444";
-      label.textContent = "Choose a password to see its strength";
-      return;
-    }
-
-    const pct = Math.min(100, (metCount / 4) * 100);
-    fill.style.width = pct + "%";
-
-    if (metCount <= 1) {
-      fill.style.background = "#ef4444";
-      label.textContent = "Weak password";
-    } else if (metCount <= 2) {
-      fill.style.background = "#f59e0b";
-      label.textContent = "Okay - a little further to go";
-    } else if (metCount === 3) {
-      fill.style.background = "#f59e0b";
-      label.textContent = "Good password";
-    } else {
-      fill.style.background = "#16a34a";
-      label.textContent = "Strong password";
-    }
-  }
-
-  function updateMatch() {
-    if (!pw2.value) {
-      matchHint.textContent = "";
-      matchHint.className = "pr-hint pr-match-hint";
-      return;
-    }
-    if (pw1.value === pw2.value) {
-      matchHint.textContent = "✓ Passwords match";
-      matchHint.className = "pr-hint pr-match-hint pr-match-ok";
-    } else {
-      matchHint.textContent = "Passwords do not match yet";
-      matchHint.className = "pr-hint pr-match-hint pr-match-bad";
-    }
-  }
-
-  pw1.addEventListener("input", () => { updateStrength(); updateMatch(); });
-  pw2?.addEventListener("input", updateMatch);
-})();
+    pw2?.addEventListener("input", updateMatch);
+  })();
 </script>
 {% endblock %}

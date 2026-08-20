@@ -1,36 +1,36 @@
+import logging
 import re
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import login, logout, authenticate
 from datetime import timedelta
+from secrets import compare_digest
+
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetView
 from django.core.cache import cache
-from django.contrib import messages
+from django.db import transaction
 from django.http import JsonResponse
-from django.db import IntegrityError, transaction
-from django.views.decorators.http import require_POST
-from django.views.decorators.cache import never_cache
-from django.contrib.auth.models import User
-from ..models import PhoneOTP
-from ..utils import generate_otp, send_otp_email, send_welcome_email
-from accounts.state_engine import get_user_state
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from secrets import compare_digest
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
-from ..forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
-import logging
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
+
+from accounts.state_engine import get_user_state
+
+from ..forms import UserRegisterForm
+from ..models import PhoneOTP, Profile
+from ..utils import generate_otp, send_otp_email, send_welcome_email
+from .helpers import get_display_name, get_or_create_membership
 
 logger = logging.getLogger(__name__)
 
-from .helpers import get_display_name, get_or_create_membership
 OTP_RESEND_SECONDS = 90
 
 def register(request):
     form = UserRegisterForm(request.POST or None)
 
-    if request.method == "POST":
-
-        if form.is_valid():
+    if request.method == "POST" and form.is_valid():
 
             user = form.save()   # <-- fixed
 
@@ -114,7 +114,7 @@ def verify_account(request):
             try:
                 send_welcome_email(user)
             except Exception:
-                pass
+                logger.exception("Failed to send welcome email for user %s", user.pk)
 
             login(request, user)
 

@@ -1,11 +1,13 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.urls import reverse
-from django.contrib import messages
-from django.db import IntegrityError, transaction
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
-from ..forms import UserRegisterForm, RoomForm, UserUpdateForm, ProfileUpdateForm
 import logging
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
+from ..forms import ProfileUpdateForm, UserUpdateForm
+from ..models import Favorite, Room, RoomImage, RoomStat
 
 logger = logging.getLogger(__name__)
 

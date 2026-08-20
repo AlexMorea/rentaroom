@@ -1,5 +1,7 @@
 from functools import wraps
+
 from django.shortcuts import redirect
+
 from accounts.state_engine import evaluate_user_state
 
 

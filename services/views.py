@@ -1,29 +1,27 @@
 import json
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from smtplib import SMTPException
+
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.core.mail import BadHeaderError, send_mail
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.crypto import get_random_string
-from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.conf import settings
-from .forms import BakkieDriverForm, MoveBookingForm
-from django.db import transaction
-from .models import MoveBooking, ServiceAnalyticsEvent
+from django.views.decorators.http import require_POST
 
-
-
+from .forms import BakkieDriverForm, GuardianSessionForm, MoveBookingForm
 from .models import (
-    GuardianSession,
+    BakkieDriver,
     GuardianLocationPing,
+    GuardianSession,
+    MoveBooking,
     PanicAlert,
-    BakkieDriver
+    ServiceAnalyticsEvent,
 )
-
-from .forms import GuardianSessionForm
-
 
 
 # GUARDIAN HOME
@@ -210,8 +208,7 @@ def register_bakkie_driver(request):
             phone = form.cleaned_data["phone_number"].replace(" ", "")
             email = form.cleaned_data["email"].lower().strip()
 
-            if phone.startswith("0"):
-                phone = phone[1:]
+            phone = phone.removeprefix("0")
 
             phone = f"+27{phone}"
             username = email
@@ -273,7 +270,7 @@ def register_bakkie_driver(request):
                     fail_silently=False,
                 )
 
-            except Exception as e:
+            except (BadHeaderError, SMTPException) as e:
                 print("EMAIL ERROR:", e)
                 messages.warning(
                     request,

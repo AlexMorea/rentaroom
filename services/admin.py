@@ -1,12 +1,12 @@
 from django.contrib import admin
-from django.utils import timezone
-from .models import MoveBooking, EmergencyEvent, ServiceAnalyticsEvent
 
 from .models import (
-    GuardianSession,
+    EmergencyEvent,
     GuardianLocationPing,
+    GuardianSession,
+    MoveBooking,
     PanicAlert,
-    BakkieDriver,
+    ServiceAnalyticsEvent,
 )
 
 

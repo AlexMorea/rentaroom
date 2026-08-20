@@ -1,7 +1,7 @@
-from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.urls import reverse
+from django.test import Client, TestCase
+
 from listings.models import PhoneOTP, Profile
 
 

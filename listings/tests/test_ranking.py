@@ -1,9 +1,10 @@
-from django.test import TestCase, override_settings, Client
 from django.contrib.auth.models import User
-from django.urls import reverse
-from django.core.management import call_command
-from listings.models import Room, RoomStat, Favorite, Review
 from django.core.cache import cache
+from django.core.management import call_command
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
+
+from listings.models import Favorite, Review, Room, RoomStat
 
 
 def make_room(owner, title="R1", price=1000, **kwargs):

@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Membership
 from django.utils.html import format_html
+
+from .models import Membership
 
 
 @admin.register(Membership)
@@ -68,10 +69,10 @@ class MembershipAdmin(admin.ModelAdmin):
         }),
     )
 
-    actions = [
+    actions = (
         "approve_memberships",
         "reject_memberships",
-    ]
+    )
 
     # ✅ APPROVE (ONE CLICK)
     def approve_memberships(self, request, queryset):

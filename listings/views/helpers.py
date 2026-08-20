@@ -1,8 +1,10 @@
-from datetime import timedelta
-from accounts.helpers import generate_membership_id
-from django.utils import timezone
-from accounts.models import Membership
 import logging
+from datetime import timedelta
+
+from django.utils import timezone
+
+from accounts.helpers import generate_membership_id
+from accounts.models import Membership
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +14,7 @@ def get_display_name(user):
 
 
 def get_or_create_membership(user):
-    membership, created = Membership.objects.get_or_create(
+    membership, _ = Membership.objects.get_or_create(
         user=user,
         defaults={
             "tier": "starter",

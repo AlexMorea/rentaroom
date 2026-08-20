@@ -1,20 +1,23 @@
-from django.db import models
-from django.conf import settings
-from django.utils import timezone
-from django.contrib.auth.models import User
-from accounts.helpers import generate_membership_id
+from typing import ClassVar
+
 from cloudinary.models import CloudinaryField
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils import timezone
+
+from accounts.helpers import generate_membership_id
 
 
 class Membership(models.Model):
-    TIER_CHOICES = [
+    TIER_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ('starter', 'Starter4You'),
         ('bronze', 'Bronze4You'),
         ('silver', 'Silver4You'),
         ('gold', 'Gold4You'),
     ]
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("active", "Active"),
         ("pending", "Pending Payment"),
         ("suspended", "Suspended"),

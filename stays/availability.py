@@ -17,10 +17,9 @@ duplicate the conflict-checking query elsewhere.
 
 from datetime import timedelta
 
-from django.db.models import Q
 from django.utils import timezone
 
-from .models import Booking, BlockedDate, BookingInvoice
+from .models import BlockedDate, Booking, BookingInvoice
 
 
 def get_conflicting_bookings(guesthouse, check_in, check_out, exclude_booking_id=None):

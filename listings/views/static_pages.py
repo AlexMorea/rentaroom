@@ -1,10 +1,12 @@
-import os
-from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
-from django.http import HttpResponseForbidden, HttpResponse, Http404
-from django.urls import reverse
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 import logging
+import os
+
+from django.conf import settings
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
+from ..models import Contact, Profile, Review, Room, RoomStat
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +150,7 @@ def robots_txt(request):
         "Disallow: /rooms/*/images/",
         "Disallow: /rooms/new/",
         "",
-        f"Sitemap: https://rooms4you.co.za{reverse('sitemap')}",
+        f"Sitemap: https://www.rooms4you.co.za{reverse('sitemap')}",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
 

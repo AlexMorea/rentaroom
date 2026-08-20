@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django import forms
 
 from .models import Placement
@@ -35,8 +37,8 @@ class PlacementUpdateForm(forms.ModelForm):
 
     class Meta:
         model = Placement
-        fields = ["status", "viewing_date", "move_in_date"]
-        widgets = {
+        fields = ("status", "viewing_date", "move_in_date")
+        widgets: ClassVar = {
             "viewing_date": forms.DateTimeInput(
                 attrs={"type": "datetime-local", "class": "input"},
                 format="%Y-%m-%dT%H:%M",

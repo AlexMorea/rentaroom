@@ -1,18 +1,21 @@
+from typing import ClassVar
+
 from django import forms
-from .models import GuardianSession, BakkieDriver, MoveBooking
+
+from .models import BakkieDriver, GuardianSession, MoveBooking
 
 
 class GuardianSessionForm(forms.ModelForm):
     class Meta:
         model = GuardianSession
 
-        fields = [
+        fields: ClassVar[list[str]] = [
             "destination",
             "emergency_contact_name",
             "emergency_contact_phone",
         ]
 
-        widgets = {
+        widgets: ClassVar[dict[str, forms.Widget]] = {
             "destination": forms.TextInput(attrs={
                 "class": "input",
                 "placeholder": "Where are you going?"
@@ -43,7 +46,7 @@ class BakkieDriverForm(forms.ModelForm):
     class Meta:
         model = BakkieDriver
 
-        fields = [
+        fields: ClassVar[list[str]] = [
             "full_name",
             "email",
             "phone_number",
@@ -58,7 +61,7 @@ class BakkieDriverForm(forms.ModelForm):
             "licence_image",
         ]
 
-        widgets = {
+        widgets: ClassVar[dict[str, forms.Widget]] = {
             "full_name": forms.TextInput(attrs={"class": "input"}),
             "email": forms.EmailInput(attrs={"class": "input"}),
             "phone_number": forms.TextInput(attrs={"class": "input"}),
@@ -75,14 +78,14 @@ class MoveBookingForm(forms.ModelForm):
 
         model = MoveBooking
 
-        fields = [
+        fields: ClassVar[list[str]] = [
             "pickup_location",
             "dropoff_location",
             "scheduled_time",
             "notes",
         ]
 
-        widgets = {
+        widgets: ClassVar[dict[str, forms.Widget]] = {
 
             "pickup_location": forms.TextInput(
                 attrs={

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import ClassVar
 
 from django.conf import settings
 from django.db import models
@@ -27,7 +28,7 @@ class Placement(models.Model):
     STATUS_VERIFICATION_REQUIRED = "verification_required"
     STATUS_CANCELLED = "cancelled"
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
         (STATUS_INTERESTED, "Interested"),
         (STATUS_VIEWING_SCHEDULED, "Viewing Scheduled"),
         (STATUS_VIEWING_COMPLETED, "Viewing Completed"),
@@ -42,7 +43,7 @@ class Placement(models.Model):
     # Statuses a staff member/landlord can still freely move between in the
     # normal flow. Cancelled/Paid are treated as terminal in the UI (though
     # staff can still override anything via the admin - see admin.py).
-    TERMINAL_STATUSES = {STATUS_PAID, STATUS_CANCELLED}
+    TERMINAL_STATUSES: ClassVar[set[str]] = {STATUS_PAID, STATUS_CANCELLED}
 
     tenant = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -84,14 +85,14 @@ class Placement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
-        constraints = [
+        ordering: ClassVar[list[str]] = ["-created_at"]
+        constraints: ClassVar[list[models.BaseConstraint]] = [
             models.UniqueConstraint(
                 fields=["tenant", "room"],
                 name="uniq_placement_tenant_room",
             )
         ]
-        indexes = [
+        indexes: ClassVar[list[models.Index]] = [
             models.Index(fields=["status"]),
             models.Index(fields=["landlord", "status"]),
             models.Index(fields=["tenant", "status"]),
@@ -119,14 +120,14 @@ class Placement(models.Model):
         """
         rent = Decimal(monthly_rent)
 
-        if rent <= Decimal("1500"):
-            return Decimal("100")
-        elif rent <= Decimal("2500"):
-            return Decimal("150")
-        elif rent <= Decimal("4000"):
-            return Decimal("250")
+        if rent <= 1500:
+            return Decimal(100)
+        elif rent <= 2500:
+            return Decimal(150)
+        elif rent <= 4000:
+            return 250
         else:
-            return Decimal("350")
+            return 350
 
     @property
     def expected_success_fee(self) -> Decimal:
@@ -180,8 +181,6 @@ class Placement(models.Model):
             self.save()
 
     def mark_success_fee_due(self):
-        from .models import PlacementInvoice  # local import avoids circularity concerns if this file grows
-
         self.status = self.STATUS_SUCCESS_FEE_DUE
         self.save()
 
@@ -216,7 +215,7 @@ class PlacementStatusHistory(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["created_at"]
+        ordering = ("created_at",)
         verbose_name_plural = "Placement status history"
 
     def __str__(self):
@@ -235,7 +234,7 @@ class PlacementInvoice(models.Model):
     STATUS_PAID = "paid"
     STATUS_WAIVED = "waived"
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
         (STATUS_PENDING, "Pending"),
         (STATUS_PAID, "Paid"),
         (STATUS_WAIVED, "Waived"),
@@ -264,7 +263,7 @@ class PlacementInvoice(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering: ClassVar[list[str]] = ["-created_at"]
 
     def __str__(self):
         return f"Invoice R{self.amount} for placement #{self.placement_id} ({self.status})"

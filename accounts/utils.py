@@ -1,7 +1,9 @@
-from django.utils import timezone
 from datetime import timedelta
-from .models import Membership
+
+from django.utils import timezone
+
 from .helpers import generate_membership_id
+from .models import Membership
 
 
 def get_or_create_membership(user):
@@ -9,7 +11,7 @@ def get_or_create_membership(user):
     if user.profile.role != "landlord":
         return None
 
-    membership, created = Membership.objects.get_or_create(
+    membership, _ = Membership.objects.get_or_create(
         user=user,
         defaults={
             "tier": "starter",
@@ -29,7 +31,8 @@ def get_or_create_membership(user):
 def require_active_membership(user):
     membership = get_or_create_membership(user)
 
-    if membership.is_trial and membership.trial_end and timezone.now() > membership.trial_end:
-        return False
-
-    return True
+    return not (
+        membership.is_trial
+        and membership.trial_end
+        and timezone.now() > membership.trial_end
+    )

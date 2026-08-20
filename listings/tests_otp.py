@@ -1,8 +1,6 @@
-from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.urls import reverse
-from django.utils import timezone
+from django.test import Client, TestCase
 
 
 class ResendOTPTests(TestCase):
@@ -15,7 +13,7 @@ class ResendOTPTests(TestCase):
             is_active=False,
         )
         # ensure profile exists
-        self.user.profile
+        self.profile = self.user.profile
         # place pending id in session
         session = self.client.session
         session["pending_user_id"] = self.user.id

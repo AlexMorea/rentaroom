@@ -13,7 +13,7 @@
       name="description"
       content="{% block meta_description %}South Africa's trusted way to find a room to rent, or find your next tenant. Verified landlords, direct messaging, no hidden fees.{% endblock %}"
     />
-    <link rel="canonical" href="{% block canonical_url %}https://rooms4you.co.za{{ request.path }}{% endblock %}" />
+    <link rel="canonical" href="{% block canonical_url %}https://www.rooms4you.co.za{{ request.path }}{% endblock %}" />
 
     <!-- Open Graph - controls how links look when shared on WhatsApp,
          Facebook, etc. Individual pages (like room_detail) override
@@ -22,14 +22,14 @@
     <meta property="og:site_name" content="Rooms4You" />
     <meta property="og:title" content="{% block og_title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}" />
     <meta property="og:description" content="{% block og_description %}South Africa's trusted way to find a room to rent, or find your next tenant. Verified landlords, direct messaging, no hidden fees.{% endblock %}" />
-    <meta property="og:image" content="{% block og_image %}https://rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endblock %}" />
-    <meta property="og:url" content="{% block og_url %}https://rooms4you.co.za{{ request.path }}{% endblock %}" />
+    <meta property="og:image" content="{% block og_image %}https://www.rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endblock %}" />
+    <meta property="og:url" content="{% block og_url %}https://www.rooms4you.co.za{{ request.path }}{% endblock %}" />
 
     <!-- Twitter/X Card - same idea, different platform -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{% block twitter_title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}" />
     <meta name="twitter:description" content="{% block twitter_description %}South Africa's trusted way to find a room to rent, or find your next tenant.{% endblock %}" />
-    <meta name="twitter:image" content="{% block twitter_image %}https://rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endblock %}" />
+    <meta name="twitter:image" content="{% block twitter_image %}https://www.rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endblock %}" />
 
     <!-- PWA -->
     <link rel="manifest" href="{% static 'manifest.json' %}" />

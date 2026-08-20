@@ -1,10 +1,12 @@
+from typing import ClassVar
+
 from django.contrib import admin, messages
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Q, Sum
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.html import format_html
 
-from .models import Placement, PlacementStatusHistory, PlacementInvoice
+from .models import Placement, PlacementInvoice, PlacementStatusHistory
 
 
 class PlacementStatusHistoryInline(admin.TabularInline):
@@ -49,15 +51,15 @@ class PlacementAdmin(admin.ModelAdmin):
         "tenant_confirmed_at", "landlord_confirmed_at",
         "move_in_check_sent_at",
     )
-    inlines = [PlacementStatusHistoryInline, PlacementInvoiceInline]
+    inlines: ClassVar[list] = [PlacementStatusHistoryInline, PlacementInvoiceInline]
 
-    actions = [
+    actions: ClassVar[tuple[str, ...]] = (
         "override_to_viewing_scheduled",
         "override_to_approved",
         "override_to_cancelled",
         "resolve_dispute_as_successful",
         "resolve_dispute_as_cancelled",
-    ]
+    )
 
     # ------------------------------------------------------------------
     # Display helpers
@@ -180,7 +182,7 @@ class PlacementInvoiceAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("placement__tenant__username", "placement__room__title", "payment_reference")
     readonly_fields = ("created_at", "updated_at")
-    actions = ["mark_selected_paid"]
+    actions: ClassVar[list[str]] = ["mark_selected_paid"]
 
     @admin.action(description="Mark selected invoices as Paid")
     def mark_selected_paid(self, request, queryset):
@@ -196,7 +198,9 @@ class PlacementStatusHistoryAdmin(admin.ModelAdmin):
     """Read-only audit log browser - staff can inspect but not tamper with history."""
     list_display = ("placement", "from_status", "to_status", "changed_by", "created_at")
     list_filter = ("to_status", "created_at")
-    readonly_fields = [f.name for f in PlacementStatusHistory._meta.fields]
+    readonly_fields: ClassVar[list[str]] = [
+        f.name for f in PlacementStatusHistory._meta.fields
+    ]
 
     def has_add_permission(self, request):
         return False

@@ -1,11 +1,14 @@
+import re
 import secrets
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from services.models import BakkieDriver
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+
+from services.models import BakkieDriver
 from utils.email import send_template_email
-import re
+
 
 def send_html_email(subject, to_email, template_name, context):
     html_content = render_to_string(template_name, context)

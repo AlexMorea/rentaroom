@@ -1,9 +1,11 @@
+from django.db import IntegrityError, OperationalError
+
 from .models import Membership
 
 try:
     # import lazily to avoid circular imports during project setup
     from listings.models import Profile
-except Exception:
+except ImportError:
     Profile = None
 
 
@@ -19,7 +21,7 @@ class MembershipMiddleware:
             if Profile is not None:
                 try:
                     Profile.objects.get_or_create(user=request.user)
-                except Exception:
+                except (IntegrityError, OperationalError):
                     # best-effort only; don't block request on DB errors
                     pass
 

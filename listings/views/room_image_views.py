@@ -1,16 +1,20 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages
-from django.db import IntegrityError, transaction
-from django.views.decorators.http import require_POST
-from accounts.utils import require_active_membership
-from PIL import Image
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
 import logging
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+from PIL import Image, UnidentifiedImageError
+
+from accounts.utils import require_active_membership
+
+from ..models import Room, RoomImage
 
 logger = logging.getLogger(__name__)
 
 from .helpers import is_landlord
+
 MAX_IMAGES_PER_ROOM = 10
 
 @login_required
@@ -65,7 +69,12 @@ def upload_room_images(request, room_id):
                     Image.open(img).verify()
                     img.seek(0)
 
-                except Exception:
+                except (UnidentifiedImageError, OSError) as exc:
+                    logger.warning(
+                        "Invalid image upload %s: %s",
+                        img.name,
+                        exc,
+                    )
                     continue
 
                 # Large file protection (10MB)

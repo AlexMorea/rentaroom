@@ -1,9 +1,11 @@
 from decimal import Decimal
-from django.db import models
+from typing import ClassVar
+
+from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils import timezone
-from cloudinary.models import CloudinaryField
 
 
 class GuestHouse(models.Model):
@@ -14,7 +16,7 @@ class GuestHouse(models.Model):
     both models worse."""
 
     class Meta:
-        indexes = [
+        indexes: ClassVar = [
             models.Index(fields=["is_active"]),
             models.Index(fields=["location"]),
             models.Index(fields=["price_per_night"]),
@@ -89,7 +91,7 @@ class GuestHouseImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["order", "created_at"]
+        ordering = ("order", "created_at")
 
     def clean(self):
         if self.guesthouse.images.exclude(pk=self.pk).count() >= 15:
@@ -111,16 +113,16 @@ class Booking(models.Model):
     STATUS_CANCELLED = "cancelled"
     STATUS_COMPLETED = "completed"
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES = (
         (STATUS_REQUESTED, "Requested"),
         (STATUS_CONFIRMED, "Confirmed"),
         (STATUS_DECLINED, "Declined"),
         (STATUS_CANCELLED, "Cancelled"),
         (STATUS_COMPLETED, "Completed"),
-    ]
+    )
 
     class Meta:
-        indexes = [
+        indexes: ClassVar = [
             models.Index(fields=["guesthouse", "status"]),
             models.Index(fields=["guest"]),
             models.Index(fields=["check_in", "check_out"]),
@@ -163,7 +165,7 @@ class Booking(models.Model):
         return f"{self.guesthouse.name}: {self.check_in} to {self.check_out} ({self.get_status_display()})"
 
     SUCCESS_FEE_RATE = Decimal("0.08")
-    SUCCESS_FEE_MINIMUM = Decimal("50")
+    SUCCESS_FEE_MINIMUM = 50
 
     @property
     def expected_success_fee(self):
@@ -173,7 +175,7 @@ class Booking(models.Model):
         just percentage-based rather than tiered, since guest house
         bookings vary far more widely in total value (a single night
         vs a two-week stay) than monthly room rent does."""
-        fee = (self.total_estimate * self.SUCCESS_FEE_RATE).quantize(Decimal("1"))
+        fee = (self.total_estimate * self.SUCCESS_FEE_RATE).quantize(1)
         return max(fee, self.SUCCESS_FEE_MINIMUM)
 
 
@@ -183,9 +185,9 @@ class BlockedDate(models.Model):
     toward availability conflicts exactly like a confirmed Booking does."""
 
     class Meta:
-        indexes = [
+        indexes = (
             models.Index(fields=["guesthouse", "start_date", "end_date"]),
-        ]
+        )
 
     guesthouse = models.ForeignKey(GuestHouse, on_delete=models.CASCADE, related_name="blocked_dates")
     start_date = models.DateField()
@@ -214,7 +216,7 @@ class BookingInvoice(models.Model):
     STATUS_PAID = "paid"
     STATUS_WAIVED = "waived"
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
         (STATUS_PENDING, "Pending"),
         (STATUS_PAID, "Paid"),
         (STATUS_WAIVED, "Waived"),
@@ -243,7 +245,7 @@ class BookingInvoice(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ("-created_at",)
 
     def __str__(self):
         return f"Invoice R{self.amount} for booking #{self.booking_id} ({self.status})"

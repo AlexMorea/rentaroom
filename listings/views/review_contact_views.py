@@ -1,29 +1,34 @@
+import logging
 import re
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+from smtplib import SMTPException
+from urllib.parse import quote
+
 from django.conf import settings
-from django.http import HttpResponseForbidden, HttpResponse, Http404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.cache import cache
-from urllib.parse import quote
-from django.contrib import messages
 from django.views.decorators.http import require_POST
-from ..models import Message
+
 from utils.email import send_template_email
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
+
+from ..models import Contact, Message, Review, Room, RoomStat
+
 try:
+    from twilio.base.exceptions import TwilioException
     from twilio.rest import Client as TwilioClient
     from twilio.twiml.voice_response import VoiceResponse
-except Exception:
+except ImportError:
     # twilio is in requirements.txt, but guarded the same defensive way
     # as this project's existing Celery imports (see tasks.py) - a
     # missing/failed twilio install shouldn't crash the whole app, it
     # should just make call_landlord() fall back to in-app messaging.
     TwilioClient = None
+    TwilioException = RuntimeError
     VoiceResponse = None
-import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -189,7 +194,7 @@ def track_contact(request, room_id, method):
                     "year": 2026
                 }
             )
-        except Exception:
+        except (SMTPException, OSError):
             logger.warning("Failed to send new-inquiry notification email for room %s", room.id)
 
         return render(
@@ -287,7 +292,7 @@ def call_landlord(request, room_id):
             request,
             "Calling you now - stay on the line and we'll connect you to the landlord.",
         )
-    except Exception:
+    except (TwilioException, OSError, ValueError):
         logger.exception("Failed to place masked call for room %s", room.id)
         Message.objects.create(
             room=room,

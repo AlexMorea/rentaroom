@@ -1,8 +1,8 @@
 import json
-import os
-import urllib.request
-import urllib.error
 import logging
+import os
+import urllib.error
+import urllib.request
 from email.utils import parseaddr
 
 from django.core.mail.backends.base import BaseEmailBackend
@@ -111,8 +111,8 @@ class BrevoEmailBackend(BaseEmailBackend):
                 if not self.fail_silently:
                     raise
 
-            except Exception as e:
-                logger.exception("Brevo send failed: %s", e)
+            except Exception:
+                logger.exception("Brevo send failed")
                 if not self.fail_silently:
                     raise
 

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Room, Review, RoomImage, Profile
+
+from .models import Profile, Review, Room, RoomImage
 
 
 class RoomImageInline(admin.TabularInline):
@@ -9,7 +10,7 @@ class RoomImageInline(admin.TabularInline):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    inlines = [RoomImageInline]
+    inlines = (RoomImageInline,)
 
     list_display = (
         "title",
@@ -69,3 +70,4 @@ class ReviewAdmin(admin.ModelAdmin):
         "rating",
         "created_at",
     )
+    

@@ -8,7 +8,7 @@ when available.
 
 try:
 	from .celery import app as celery_app
-except Exception:
+except ImportError:
 	celery_app = None
 
 # re-export when available

@@ -1,7 +1,7 @@
+from cloudinary.models import CloudinaryField
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from cloudinary.models import CloudinaryField
 
 
 class GuardianSession(models.Model):

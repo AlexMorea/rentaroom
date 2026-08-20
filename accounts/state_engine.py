@@ -28,10 +28,7 @@ def get_user_state(user):
 
         state["driver"] = driver
 
-        if not driver:
-            state["next_route"] = "services:bakkie_home"
-
-        elif not driver.is_verified:
+        if not driver or not driver.is_verified:
             state["next_route"] = "services:bakkie_home"
 
         else:
@@ -60,7 +57,4 @@ def profile_is_complete(user):
             and p.home_address
         )
 
-    if p.role == "driver":
-        return True
-
-    return False
+    return p.role == "driver"

@@ -1,9 +1,9 @@
+from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
-from django.core.cache import cache
-from django.contrib.auth.models import User
 
-from .models import Room, Favorite, Profile
+from .models import Favorite, Profile, Room
 
 
 class AjaxCacheTests(TestCase):

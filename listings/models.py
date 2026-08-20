@@ -1,22 +1,27 @@
-from django.db import models
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from cloudinary.models import CloudinaryField
-from cloudinary import uploader
-from django.db.models.functions import Lower
+import logging
 import re
-from django.utils import timezone
 from datetime import timedelta
-from django.core.validators import MinValueValidator, MaxValueValidator
+from typing import ClassVar
+
+from cloudinary import uploader
+from cloudinary.models import CloudinaryField
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.db.models import Avg
+from django.db.models.functions import Lower
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 class Room(models.Model):
     class Meta:
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 Lower("title"),
                 Lower("location"),
@@ -27,7 +32,7 @@ class Room(models.Model):
             )
         ]
 
-        indexes = [
+        indexes: ClassVar[list[models.Index]] = [
             models.Index(fields=["is_available"]),
             models.Index(fields=["location"]),
             models.Index(fields=["price"]),
@@ -37,7 +42,7 @@ class Room(models.Model):
             models.Index(fields=["is_available", "score", "created_at"], name="room_avail_score_created_idx"),
         ]
         
-    ROOM_TYPES = [
+    ROOM_TYPES: ClassVar[list[tuple[str, str]]] = [
         ("Single Room", "Single Room"),
         ("Shared Room", "Shared Room"),
         ("Bachelor", "Bachelor"),
@@ -48,7 +53,7 @@ class Room(models.Model):
         ("Apartment", "Apartment")
     ]
 
-    AVAILABILITY_CHOICES = [
+    AVAILABILITY_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("now", "Available now"),
         ("from", "Occupied (available from)"),
         ("mixed", "Some available now"),
@@ -124,11 +129,11 @@ class Room(models.Model):
                     "available_units": "Set available units to 0 for occupied listings."
                 })
 
-        if self.availability_status == "mixed":
-            if self.available_units == 0 or self.available_units == self.total_units:
-                raise ValidationError({
-                    "available_units": "Must be between 1 and total_units-1."
-                })
+        if (self.availability_status == "mixed" and
+                (self.available_units == 0 or self.available_units == self.total_units)):
+            raise ValidationError({
+                "available_units": "Must be between 1 and total_units-1."
+            })
         
     def save(self, *args, **kwargs):
         if self.availability_status == "from":
@@ -191,12 +196,12 @@ class Room(models.Model):
 class Review(models.Model):
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=["room", "user"],
                 name="uniq_review_room_user"
-            )
-        ]
+            ),
+        )
 
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="reviews")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -211,12 +216,12 @@ class Review(models.Model):
 
 
 class Profile(models.Model):
-    ROLE_CHOICES = [
+    ROLE_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("tenant", "Tenant"),
         ("landlord", "Landlord"),    
     ]
 
-    PERSONA_CHOICES = [
+    PERSONA_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("student", "Student"),
         ("worker", "Worker"),
         ("family", "Family"),
@@ -289,12 +294,10 @@ class Profile(models.Model):
         phone = re.sub(r"[^\d]", "", phone)
 
         # remove country if duplicated
-        if phone.startswith("27"):
-            phone = phone[2:]
+        phone = phone.removeprefix("27")
 
         # remove leading zero
-        if phone.startswith("0"):
-            phone = phone[1:]
+        phone = phone.removeprefix("0")
 
         return f"{self.country_code.strip()}{phone}"
         
@@ -313,13 +316,14 @@ class Contact(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="contacts")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=["room", "user"],
                 name="uniq_contact_room_user"
-            )
-        ]
+            ),
+        )
 
     def __str__(self):
         return f"{self.user} → {self.room.title}"
@@ -327,11 +331,11 @@ class Contact(models.Model):
 class Message(models.Model):
 
     class Meta:
-        ordering = ["-created_at"]
-        indexes = [
+        ordering = ("-created_at",)
+        indexes = (
             models.Index(fields=["recipient"]),
             models.Index(fields=["sender"]),
-        ]
+        )
 
     room = models.ForeignKey(
         Room,
@@ -363,7 +367,7 @@ class Message(models.Model):
 class RoomStat(models.Model):
 
     class Meta:
-        indexes = [
+        indexes: ClassVar[list[models.Index]] = [
             # NOTE: no separate index on "room" alone - Django already
             # creates one automatically for every ForeignKey field.
             models.Index(fields=["stat_type"]),  # used standalone for
@@ -401,7 +405,7 @@ class RoomImage(models.Model):
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ["order", "created_at"]
+        ordering = ("order", "created_at")
 
     def clean(self):
 
@@ -422,35 +426,31 @@ class RoomImage(models.Model):
 def delete_room_image(sender, instance, **kwargs):
     # Safely remove the stored image. CloudinaryField may provide a FieldFile
     # with a .delete() method or a CloudinaryResource without it. Handle both.
-    try:
-        if not instance.image:
+    if not instance.image:
+        return
+
+    # Prefer built-in delete when available (FileField/FieldFile)
+    if hasattr(instance.image, "delete"):
+        try:
+            instance.image.delete(save=False)
             return
+        except (AttributeError, OSError, TypeError, ValueError) as exc:
+            # fallback to uploader below
+            logger.warning("Unable to delete room image through its field: %s", exc)
 
-        # Prefer built-in delete when available (FileField/FieldFile)
-        if hasattr(instance.image, "delete"):
-            try:
-                instance.image.delete(save=False)
-                return
-            except Exception:
-                # fallback to uploader below
-                pass
+    # Try to obtain a public_id or name for CloudinaryResource/string
+    public_id = None
+    if hasattr(instance.image, "public_id") and instance.image.public_id:
+        public_id = instance.image.public_id
+    elif hasattr(instance.image, "name") and instance.image.name:
+        public_id = instance.image.name
 
-        # Try to obtain a public_id or name for CloudinaryResource/string
-        public_id = None
-        if hasattr(instance.image, "public_id") and instance.image.public_id:
-            public_id = instance.image.public_id
-        elif hasattr(instance.image, "name") and instance.image.name:
-            public_id = instance.image.name
-
-        if public_id:
-            try:
-                uploader.destroy(public_id, invalidate=True, resource_type="image")
-            except Exception:
-                # best-effort; don't raise during post_delete signal
-                pass
-    except Exception:
-        # Swallow any unexpected errors in the signal handler
-        pass
+    if public_id:
+        try:
+            uploader.destroy(public_id, invalidate=True, resource_type="image")
+        except (AttributeError, OSError, TypeError, ValueError) as exc:
+            # best-effort; don't raise during post_delete signal
+            logger.warning("Unable to delete room image from Cloudinary: %s", exc)
 
 class Favorite(models.Model):
     # tenant saves (favoured) rooms
@@ -459,14 +459,14 @@ class Favorite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["user", "room"],
                 name="uniq_favorite_user_room"
             )
         ]
 
-        indexes = [
+        indexes: ClassVar[list[models.Index]] = [
             models.Index(fields=["user"]),
             models.Index(fields=["room"]),
         ]
@@ -476,7 +476,7 @@ class Favorite(models.Model):
 
 class PhoneOTP(models.Model):
     class Meta:
-        indexes = [
+        indexes: ClassVar[list[models.Index]] = [
             models.Index(fields=["user"]),
             models.Index(fields=["phone_number"]),
         ]

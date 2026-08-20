@@ -1,17 +1,16 @@
-import re
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+import logging
 from datetime import timedelta
-from django.db.models import Count, Q, F, IntegerField, ExpressionWrapper, Avg
-from django.http import HttpResponseForbidden, HttpResponse, Http404
-from django.urls import reverse
+
 from django.contrib import messages
-from ..models import Message
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Q
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.html import strip_tags
-from ..models import Room, Review, Contact, RoomStat, RoomImage, Profile, Favorite
-import logging
+
+from ..models import Contact, Message, Room
 
 logger = logging.getLogger(__name__)
 

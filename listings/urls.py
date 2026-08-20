@@ -1,8 +1,10 @@
-from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.urls import path
+
+from accounts.views import membership_view
+
 from . import views
 from .views import RateLimitedPasswordResetView
-from accounts.views import membership_view
 
 urlpatterns = [
 
