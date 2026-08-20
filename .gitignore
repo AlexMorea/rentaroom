@@ -1,0 +1,25 @@
+# Secrets / environment
+.env
+.env.*
+!.env.example
+
+# Database
+db.sqlite3
+db.sqlite3-journal
+backup_render/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+env/
+.venv/
+
+# Django build artifacts
+staticfiles/
+
+# Editors / OS
+.vscode/
+.DS_Store
+Thumbs.db
