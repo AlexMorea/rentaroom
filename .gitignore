@@ -16,9 +16,6 @@ venv/
 env/
 .venv/
 
-# Django build artifacts
-staticfiles/
-
 # Editors / OS
 .vscode/
 .DS_Store

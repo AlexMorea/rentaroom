@@ -1,0 +1,1034 @@
+/* ===============================
+   ROOMS4YOU PREMIUM HOME
+================================= */
+
+:root {
+  --brand: #2563eb;
+  --brand-dark: #1e40af;
+  --accent: #06b6d4;
+  --gold: #f59e0b;
+  --dark: #0f172a;
+  --muted: #64748b;
+  --glass: rgba(255, 255, 255, 0.14);
+  --border: rgba(255, 255, 255, 0.22);
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+/* page width */
+main.container {
+  max-width: 1400px;
+  padding: 0;
+}
+
+/* ================= HERO */
+.home-hero {
+  min-height: 88vh;
+  position: relative;
+  overflow: hidden;
+  padding: 80px 32px;
+  display: flex;
+  align-items: center;
+
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(6, 182, 212, 0.9)),
+    url("/static/images/hero-bg.jpg") center/cover no-repeat;
+}
+
+/* blur circles */
+.home-hero::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  filter: blur(120px);
+  top: -120px;
+  right: -80px;
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  filter: blur(100px);
+  bottom: -100px;
+  left: -50px;
+}
+
+.home-hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1300px;
+  margin: auto;
+
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 60px;
+  align-items: center;
+}
+
+/* LEFT */
+.hero-badge {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-weight: 700;
+  backdrop-filter: blur(12px);
+  margin-bottom: 24px;
+}
+
+.home-title {
+  color: white;
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 1.05;
+  font-weight: 900;
+  max-width: 700px;
+  margin-bottom: 24px;
+  text-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.home-subtitle {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.3rem;
+  max-width: 620px;
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+/* buttons */
+.home-actions {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+
+/* trust strip */
+.trust-strip {
+  color: white;
+  font-weight: 600;
+  opacity: 0.95;
+  font-size: 1rem;
+}
+
+/* ================= SEARCH CARD */
+.home-hero-card {
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 30px;
+  padding: 36px;
+  box-shadow: var(--shadow);
+  color: white;
+}
+
+.home-card-title {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.home-card-sub {
+  opacity: 0.9;
+  margin-bottom: 24px;
+}
+
+.home-search {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.home-search input,
+.home-search select {
+  height: 60px;
+  border: none;
+  border-radius: 16px;
+  padding: 0 20px;
+  font-size: 1rem;
+}
+
+.home-search button {
+  height: 60px;
+  border: none;
+  border-radius: 16px;
+  background: white;
+  color: var(--brand);
+  font-weight: 800;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.home-search button:hover {
+  transform: scale(1.03);
+}
+
+/* personas */
+.persona-grid {
+  margin-top: 26px;
+  display: grid;
+  gap: 14px;
+}
+
+.persona-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  transition: 0.25s;
+}
+
+.persona-card:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateX(4px);
+}
+
+.persona-emoji {
+  font-size: 2rem;
+}
+
+.home-note {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ================= STATS */
+.stat-grid {
+  max-width: 1200px;
+  margin: -60px auto 100px;
+  position: relative;
+  z-index: 10;
+
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 24px;
+  padding: 38px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+.stat-number {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--brand);
+}
+
+.stat-label {
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+/* ================= HOW */
+.how-it-works {
+  padding: 100px 20px;
+  background: #f8fafc;
+}
+
+.how-title {
+  text-align: center;
+  font-size: 3rem;
+  margin-bottom: 60px;
+}
+
+.how-grid {
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.how-card {
+  background: white;
+  padding: 42px;
+  border-radius: 28px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+  transition: 0.3s;
+}
+
+.how-card:hover {
+  transform: translateY(-10px);
+}
+
+.how-badge {
+  width: 70px;
+  height: 70px;
+  margin: auto;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--accent));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 20px;
+}
+
+/* ================= CTA */
+.final-cta {
+  padding: 120px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--dark), var(--brand-dark));
+  color: white;
+}
+
+.final-cta h2 {
+  font-size: 3rem;
+  margin-bottom: 30px;
+}
+
+/* mobile */
+@media (max-width: 980px) {
+  .home-hero-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+    margin-top: -40px;
+  }
+
+  .how-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-title {
+    font-size: 3rem;
+  }
+}
+
+.hero-pill-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 28px 0;
+}
+
+.hero-pill-row span {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: white;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+}
+
+.marketplace-section {
+  padding: 100px 20px;
+  text-align: center;
+}
+
+.marketplace-section h2 {
+  font-size: 3rem;
+  margin-bottom: 50px;
+}
+
+.market-grid {
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.market-card {
+  background: white;
+  padding: 50px 30px;
+  border-radius: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+  transition: 0.3s;
+}
+
+.market-card:hover {
+  transform: translateY(-10px);
+}
+
+.market-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+/* ===================================
+   SECTIONS
+=================================== */
+
+.section-header{
+  text-align:center;
+  margin-bottom:40px;
+}
+
+.section-badge{
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#4338ca;
+  font-size:.8rem;
+  font-weight:700;
+  margin-bottom:12px;
+}
+
+/* ===================================
+   SERVICES
+=================================== */
+
+.services-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:24px;
+}
+
+.service-showcase-card{
+  background:white;
+  border-radius:24px;
+  padding:30px;
+  text-align:center;
+  border:1px solid #e5e7eb;
+  transition:.25s ease;
+}
+
+.service-showcase-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 16px 35px rgba(0,0,0,.08);
+}
+
+.service-icon{
+  font-size:3rem;
+  margin-bottom:16px;
+}
+
+/* ===================================
+   TRUST
+=================================== */
+
+.trust-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+}
+
+.trust-card{
+  background:#f8fafc;
+  padding:24px;
+  border-radius:20px;
+  border:1px solid #e2e8f0;
+}
+
+.trust-card h3{
+  margin-bottom:12px;
+}
+
+/* ===================================
+   MISSION
+=================================== */
+
+.mission-section{
+  text-align:center;
+}
+
+.mission-section p{
+  max-width:800px;
+  margin:0 auto 16px;
+  line-height:1.8;
+}
+
+/* ===================================
+   PREMIUM HOVER
+=================================== */
+
+.services-showcase,
+.trust-section,
+.mission-section{
+  margin-top:40px;
+}
+
+.quick-search-card{
+    margin-bottom:40px;
+}
+
+.home-search-form{
+    display:grid;
+    grid-template-columns:
+        2fr
+        1fr
+        1fr
+        auto;
+    gap:16px;
+}
+
+.home-search-form input,
+.home-search-form select{
+    height:56px;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:0 16px;
+    font-size:.95rem;
+}
+
+.home-search-form button{
+    border:none;
+    border-radius:14px;
+    background:#2563eb;
+    color:white;
+    font-weight:700;
+    padding:0 24px;
+    cursor:pointer;
+}
+
+.home-search-form button:hover{
+    opacity:.95;
+}
+
+@media(max-width:768px){
+
+    .home-search-form{
+        grid-template-columns:1fr;
+    }
+
+    .home-search-form button{
+        height:56px;
+    }
+
+}
+
+@media(max-width:768px){
+
+    .page-title{
+        font-size:1.9rem !important;
+    }
+
+    .dashboard-grid{
+        grid-template-columns:1fr;
+    }
+
+    .services-grid{
+        grid-template-columns:1fr;
+    }
+
+    .trust-grid{
+        grid-template-columns:1fr;
+    }
+
+    .feature-strip{
+        justify-content:flex-start;
+        overflow-x:auto;
+        flex-wrap:nowrap;
+        padding-bottom:8px;
+    }
+
+    .feature-pill{
+        white-space:nowrap;
+    }
+
+}
+
+@keyframes r4uGlow {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    50% {
+      transform: scale(1.18);
+      opacity: 0.9;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+  }
+
+  .r4u-glow {
+    animation: r4uGlow 6s ease-in-out infinite;
+  }
+
+  .premium-card {
+    transition: all 0.28s ease;
+  }
+
+  .premium-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
+  }
+/* =====================================================================
+   ADDITIONAL LANDING-PAGE SECTIONS
+   These classes are used by the rebuilt home.html (Problem / Solution /
+   Who We Serve / Vision & Mission / Why Us / Founder / Status / Contact)
+   but weren't defined yet in this file. Mobile-first, using the same
+   --brand / --brand-dark / --accent / --gold / --dark / --muted design
+   tokens already declared at the top of this file. All grids use
+   auto-fit + minmax so they never leave a lone card stranded in an
+   uneven row, regardless of how many cards are in them.
+===================================================================== */
+
+.landing-page {
+  padding: 20px 20px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-section {
+  margin-bottom: 28px;
+}
+
+.section-subtitle {
+  color: var(--muted);
+  max-width: 620px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ---- The Problem ---- */
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.problem-card {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 18px;
+  padding: 22px;
+  text-align: center;
+}
+
+.problem-icon {
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.problem-card p {
+  margin: 0;
+  color: #7f1d1d;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+/* ---- Our Solution ---- */
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.solution-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 18px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.solution-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.solution-card h4 {
+  margin: 0 0 8px;
+  color: #14532d;
+}
+
+.solution-card p {
+  margin: 0;
+  color: #166534;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+/* ---- Who We Serve ---- */
+.audience-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.audience-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 26px 22px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.audience-card h3 {
+  margin: 0 0 14px;
+}
+
+.audience-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  text-align: left;
+  flex-grow: 1;
+}
+
+.audience-card ul li {
+  padding: 6px 0 6px 22px;
+  position: relative;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.audience-card ul li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.audience-card .btn-primary,
+.audience-card .btn-secondary {
+  align-self: center;
+  padding: 12px 22px;
+  font-size: 0.92rem;
+  box-shadow: none;
+}
+
+/* audience-card sits on a light page background, so btn-secondary
+   (designed for the dark hero) needs dark text/border here instead
+   of white-on-white */
+.audience-card .btn-secondary {
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.audience-card .btn-secondary:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* ---- Vision & Mission ---- */
+.vision-mission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.vm-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 28px;
+}
+
+.vm-card h3 {
+  margin: 10px 0;
+}
+
+.vm-card p {
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ---- Why Rooms4You ---- */
+.why-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.why-chip {
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ---- Core Values ---- */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.value-chip {
+  display: block;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 12px;
+  text-align: center;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* ---- Meet the Founder ---- */
+.founder-card {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  text-align: left;
+  margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+  .founder-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.founder-avatar {
+  width: 110px;
+  height: 110px;
+  min-width: 110px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.1rem;
+  font-weight: 800;
+}
+
+.founder-name {
+  margin: 0 0 2px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.founder-role {
+  margin: 0 0 10px;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.founder-bio {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ---- Current Status (Public Beta) ---- */
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 20px;
+  padding: 22px 26px;
+}
+
+@media (max-width: 600px) {
+  .status-banner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.18);
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .status-dot {
+    margin-top: 0;
+  }
+}
+
+.status-banner h3 {
+  margin: 0 0 6px;
+  color: #047857;
+}
+
+.status-banner p {
+  margin: 0;
+  color: #065f46;
+  line-height: 1.6;
+}
+
+/* ---- Contact section ---- */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.contact-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.contact-card a {
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.contact-social-row {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.contact-social-row a {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark);
+  text-decoration: none;
+  font-size: 1.15rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.contact-social-row a:hover {
+  background: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+/* ---- How It Works step numbers (used inside the existing
+   .dashboard-grid layout, kept from the original home.html) ---- */
+.step-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+
+/* ---- mobile tightening for all the new grids above ---- */
+@media (max-width: 768px) {
+  .problem-grid,
+  .solution-grid,
+  .audience-grid,
+  .vision-mission-grid,
+  .values-grid,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .founder-avatar {
+    width: 90px;
+    height: 90px;
+    min-width: 90px;
+    font-size: 1.8rem;
+  }
+}
+
+/* =====================================================================
+   FOOTER — professional multi-column layout (Company / Platform /
+   Legal / Support / Contact), replacing the old single-row link lists.
+===================================================================== */
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  margin: 30px auto;
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .footer-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-columns {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+.footer-col h4 {
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.footer-col a,
+.footer-col .footer-soon {
+  display: block;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  margin-bottom: 11px;
+  transition: opacity 0.2s ease;
+}
+
+.footer-col a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.footer-col .footer-soon {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.footer-divider {
+  max-width: 1100px;
+  margin: 10px auto 20px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
