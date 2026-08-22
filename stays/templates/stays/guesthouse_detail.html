@@ -2,7 +2,7 @@
 {% block title %}{{ guesthouse.name }} - R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night in {{ guesthouse.location }} | Rooms4You{% endblock %}
 {% block meta_description %}{{ guesthouse.name }} in {{ guesthouse.location }}. R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night, sleeps {{ guesthouse.max_guests }}.{% endblock %}
 {% block og_title %}{{ guesthouse.name }} - R{{ guesthouse.price_per_night|floatformat:0|intcomma }}/night{% endblock %}
-{% block og_image %}{% with img=guesthouse.images.first %}{% if img %}{{ img.image.url }}{% else %}https://rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endif %}{% endwith %}{% endblock %}
+{% block og_image %}{% with img=guesthouse.images.first %}{% if img %}{{ img.image.url }}{% else %}https://rooms4you.co.za{% static 'images/logo-social.png' %}{% endif %}{% endwith %}{% endblock %}
 
 {% block content %}
 

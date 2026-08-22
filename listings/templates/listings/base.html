@@ -22,26 +22,27 @@
     <meta property="og:site_name" content="Rooms4You" />
     <meta property="og:title" content="{% block og_title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}" />
     <meta property="og:description" content="{% block og_description %}South Africa's trusted way to find a room to rent, or find your next tenant. Verified landlords, direct messaging, no hidden fees.{% endblock %}" />
-    <meta property="og:image" content="{% block og_image %}https://www.rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endblock %}" />
+    <meta property="og:image" content="{% block og_image %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endblock %}" />
     <meta property="og:url" content="{% block og_url %}https://www.rooms4you.co.za{{ request.path }}{% endblock %}" />
 
     <!-- Twitter/X Card - same idea, different platform -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{% block twitter_title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}" />
     <meta name="twitter:description" content="{% block twitter_description %}South Africa's trusted way to find a room to rent, or find your next tenant.{% endblock %}" />
-    <meta name="twitter:image" content="{% block twitter_image %}https://www.rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endblock %}" />
+    <meta name="twitter:image" content="{% block twitter_image %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endblock %}" />
 
     <!-- PWA -->
     <link rel="manifest" href="{% static 'manifest.json' %}" />
-    <meta name="theme-color" content="#2563eb" />
-    <link rel="apple-touch-icon" href="{% static 'images/icon-192.png' %}" />
+    <meta name="theme-color" content="#0B6FBF" />
+    <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}" />
 
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
 
-    <link rel="icon" href="{% static 'images/favicon.jpeg' %}" />
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}" />
 
     <link
       rel="stylesheet"

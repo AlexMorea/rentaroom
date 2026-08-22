@@ -12,11 +12,11 @@
 {% block og_type %}product{% endblock %}
 {% block og_title %}{{ room.title }} - R{{ room.price|floatformat:0|intcomma }}/month{% endblock %}
 {% block og_description %}{{ room.location }} · {{ room.get_room_type_display }} · {{ room.description|striptags|truncatechars:120 }}{% endblock %}
-{% block og_image %}{% if room.images.first %}{{ room.images.first.image.url }}{% else %}https://www.rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endif %}{% endblock %}
+{% block og_image %}{% if room.images.first %}{{ room.images.first.image.url }}{% else %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endif %}{% endblock %}
 
 {% block twitter_title %}{{ room.title }} - R{{ room.price|floatformat:0|intcomma }}/month{% endblock %}
 {% block twitter_description %}{{ room.location }} · {{ room.get_room_type_display }}{% endblock %}
-{% block twitter_image %}{% if room.images.first %}{{ room.images.first.image.url }}{% else %}https://www.rooms4you.co.za{% static 'images/rooms4you-logo.jpeg' %}{% endif %}{% endblock %}
+{% block twitter_image %}{% if room.images.first %}{{ room.images.first.image.url }}{% else %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endif %}{% endblock %}
 
 {% block content %}
 
