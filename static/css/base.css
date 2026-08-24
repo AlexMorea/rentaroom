@@ -538,6 +538,9 @@ body.nav-open {
 .badge-verified {
   right: 10px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
+  /* white-on-green measured ~2.3:1 (worse against the darker gradient
+     stop); near-black passes ~5.4:1 against that same stop. */
+  color: #0f172a;
 }
 
 .room-info {
@@ -1775,6 +1778,9 @@ body.nav-open {
 .badge-verified {
   right: 10px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
+  /* white-on-green measured ~2.3:1 (worse against the darker gradient
+     stop); near-black passes ~5.4:1 against that same stop. */
+  color: #0f172a;
 }
 
 .room-info {

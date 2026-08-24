@@ -259,8 +259,14 @@
   </div>
 
   <!-- =========================
-       VALUE STATS (existing)
+       VALUE STATS
+       Gated behind a threshold - single-digit counts read as "nobody
+       uses this" rather than "growing", which undercuts trust right
+       at launch more than showing nothing at all. This block turns
+       itself on automatically once the platform has real numbers to
+       show, no template change needed later.
   ========================== -->
+  {% if room_count >= 20 %}
   <div class="dashboard-grid landing-section" style="margin-bottom: 0;">
     <div
       class="form-card premium-card"
@@ -310,6 +316,7 @@
       <p class="text-muted">Reviews</p>
     </div>
   </div>
+  {% endif %}
 
   <!-- =========================
        SERVICES ECOSYSTEM (existing)
@@ -380,38 +387,13 @@
     <div class="trust-grid">
 
       <div class="trust-card">
-        <h3>✓ Email Verification</h3>
-        <p>Every account confirms a real, working email address before it can list or message.</p>
+        <h3>✓ Email &amp; Phone Verification</h3>
+        <p>Every account confirms a real email address and OTP-verified phone number before it can list or message.</p>
       </div>
 
       <div class="trust-card">
-        <h3>✓ Phone Verification</h3>
-        <p>Phone numbers are verified via OTP, adding a second layer of accountability.</p>
-      </div>
-
-      <div class="trust-card">
-        <h3>✓ Reporting System</h3>
-        <p>Flag a suspicious listing or user in a couple of taps — no digging through menus.</p>
-      </div>
-
-      <div class="trust-card">
-        <h3>✓ Safety Tips</h3>
-        <p>Practical guidance on viewings, deposits, and spotting common scam patterns.</p>
-      </div>
-
-      <div class="trust-card">
-        <h3>✓ Community Reporting</h3>
-        <p>Every user can help keep the platform clean by flagging bad actors.</p>
-      </div>
-
-      <div class="trust-card">
-        <h3>✓ Platform Moderation</h3>
-        <p>Reports are reviewed by our team, not left to sit unaddressed.</p>
-      </div>
-
-      <div class="trust-card">
-        <h3>✓ Verified Listings</h3>
-        <p>We are building a safer marketplace where genuine opportunities stand out.</p>
+        <h3>✓ Reporting &amp; Moderation</h3>
+        <p>Flag a suspicious listing or user in a couple of taps — reports are reviewed by our team, not left unaddressed.</p>
       </div>
 
       <div class="trust-card">
@@ -424,11 +406,10 @@
         <p>Connect directly with property owners and reduce unnecessary middlemen.</p>
       </div>
 
-      <div class="trust-card">
-        <h3>✓ Community Reviews</h3>
-        <p>Transparency helps tenants and landlords make better decisions.</p>
-      </div>
+    </div>
 
+    <div style="text-align: center; margin-top: 18px;">
+      <a href="{% url 'trust:home' %}" class="btn-secondary">See the Full Trust Centre</a>
     </div>
 
   </div>
@@ -543,90 +524,24 @@
   </div>
 
   <!-- =========================
-       8. ABOUT 4YOU (PTY) LTD
+       8. ABOUT THE COMPANY (short teaser)
+       Full company story, founder bio, vision & mission live on the
+       About page - repeating them here just made the home page long
+       without adding anything a first-time visitor needs before they
+       find a room. This keeps the credibility signal (real founder,
+       real company) without the duplication.
   ========================== -->
-  <div class="form-card premium-card mission-section landing-section">
+  <div class="form-card premium-card landing-section" style="text-align: center;">
     <span class="section-badge">ABOUT THE COMPANY</span>
-    <h2 class="page-title">About 4You (Pty) Ltd</h2>
+    <h2 class="page-title">Built by 4You (Pty) Ltd</h2>
 
-    <p>
-      4You (Pty) Ltd is a South African technology company founded to build
-      trusted digital solutions that solve everyday challenges through
-      innovative, user-focused platforms.
+    <p class="section-subtitle">
+      Rooms4You is 4You (Pty) Ltd's first product - founded by Alex
+      Thabiso Morea to bring trust and transparency to South Africa's
+      informal rental economy.
     </p>
 
-    <p>
-      Our first flagship product is Rooms4You, a digital marketplace
-      dedicated to making affordable accommodation easier and safer to
-      access across South Africa.
-    </p>
-  </div>
-
-  <!-- =========================
-       9. MEET THE FOUNDER
-  ========================== -->
-  <div class="form-card premium-card landing-section">
-    <span class="section-badge">THE TEAM</span>
-    <h2 class="page-title">Meet the Founder</h2>
-
-    <div class="founder-card">
-      <!-- Placeholder avatar. To use a real photo instead: add the load
-           static tag to the top of this file, save the image at
-           static/images/founder.jpg, then replace the div below with an
-           img tag pointing at that static path via the static template
-           tag (not written literally here on purpose - Django would try
-           to resolve it immediately, and this project's Manifest static
-           storage errors on missing files at render time, not just at
-           collectstatic time). -->
-      <div class="founder-avatar">AM</div>
-
-      <div>
-        <p class="founder-name">Alex Thabiso Morea</p>
-        <p class="founder-role">Founder & CEO</p>
-        <p class="founder-bio">
-          Rooms4You was built out of a simple belief: finding a safe,
-          affordable place to stay shouldn't be this hard. What started as
-          a way to solve a everyday South African problem has grown into a
-          platform built to bring trust and transparency to the rental
-          market — for tenants, landlords, and everyone in between.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- =========================
-       10 & 11. VISION & MISSION
-  ========================== -->
-  <div class="landing-section">
-    <div class="vision-mission-grid">
-
-      <div class="vm-card" id="vision">
-        <h3>Our Vision</h3>
-        <p>
-          To become South Africa's most trusted digital marketplace for
-          affordable accommodation, while improving access, transparency,
-          and safety for both tenants and landlords.
-        </p>
-      </div>
-
-      <div class="vm-card" id="mission">
-        <h3>Our Mission</h3>
-        <p>
-          To simplify the rental journey by connecting people through
-          trusted technology that makes finding and listing affordable
-          accommodation easier, safer, and more accessible.
-        </p>
-        <p style="margin-top: 10px;">
-          Renting a room should not involve scams, unsafe meetings, fake
-          listings, or unnecessary stress. Our mission is to bring
-          <strong>trust, technology, and convenience</strong> to South
-          Africa's informal rental economy — making affordable housing
-          and room discovery safer, faster, and more transparent for
-          everyone.
-        </p>
-      </div>
-
-    </div>
+    <a href="{% url 'about' %}" class="btn-secondary">Learn More About Us</a>
   </div>
 
   <!-- =========================
@@ -693,53 +608,19 @@
   </div>
 
   <!-- =========================
-       14. CONTACT
+       14. CONTACT (short teaser)
+       Full contact details already live in the footer on every page
+       and on the dedicated Contact page - repeating the email/social
+       grid here was pure duplication.
   ========================== -->
-  <div class="form-card premium-card landing-section">
-    <div class="section-header">
-      <span class="section-badge">GET IN TOUCH</span>
-      <h2 class="page-title">Contact Us</h2>
-      <p class="section-subtitle">
-        Have a question, a partnership idea, or found something that
-        doesn't look right? We'd love to hear from you.
-      </p>
-    </div>
-
-    <div class="contact-grid">
-      <div class="contact-card">
-        <p style="margin: 0 0 6px; font-weight: 700;">General</p>
-        <a href="mailto:hello@rooms4you.co.za">hello@rooms4you.co.za</a>
-      </div>
-
-      <div class="contact-card">
-        <p style="margin: 0 0 6px; font-weight: 700;">Support</p>
-        <a href="mailto:support@rooms4you.co.za">support@rooms4you.co.za</a>
-      </div>
-
-      <div class="contact-card">
-        <p style="margin: 0 0 6px; font-weight: 700;">Website</p>
-        <a href="{% url 'home' %}">rooms4you.co.za</a>
-      </div>
-    </div>
-
-    <div style="text-align: center;">
-      <a href="{% url 'contact' %}" class="btn-primary">Go To Contact Form</a>
-    </div>
-
-    <div class="contact-social-row">
-      <a href="https://instagram.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-        <i class="fab fa-instagram"></i>
-      </a>
-      <a href="https://facebook.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-        <i class="fab fa-facebook"></i>
-      </a>
-      <a href="https://x.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="X">
-        <i class="fab fa-x-twitter"></i>
-      </a>
-      <a href="https://tiktok.com/@rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-        <i class="fab fa-tiktok"></i>
-      </a>
-    </div>
+  <div class="form-card premium-card landing-section" style="text-align: center;">
+    <span class="section-badge">GET IN TOUCH</span>
+    <h2 class="page-title">Questions? We're Listening.</h2>
+    <p class="section-subtitle">
+      Have a question, a partnership idea, or found something that
+      doesn't look right? We'd love to hear from you.
+    </p>
+    <a href="{% url 'contact' %}" class="btn-primary">Go To Contact Form</a>
   </div>
 
 </div>
