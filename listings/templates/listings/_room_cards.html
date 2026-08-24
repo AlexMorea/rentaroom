@@ -253,7 +253,8 @@
   }
   .rc-badge-popular {
     background: rgba(255, 128, 0, 0.92) !important;
-    color: #fff !important;
+    /* white-on-orange fails WCAG contrast (~2.5:1); navy passes (~7:1) */
+    color: #002A5C !important;
   }
   .rc-badge-verified {
     background: rgba(255, 255, 255, 0.92) !important;
