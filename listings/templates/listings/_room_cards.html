@@ -198,8 +198,11 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
+    /* 30px read as fiddly to tap accurately on a real phone - a
+       photo-carousel arrow that's easy to miss just means an
+       accidental tap on the card underneath instead. */
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: none;
     background: rgba(15, 23, 42, 0.55);
