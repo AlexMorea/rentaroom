@@ -6,12 +6,18 @@ function openMenu() {
   nav?.classList.add("show");
   backdrop?.classList.add("show");
   document.body.classList.add("nav-open");
+  burger?.classList.add("active");
+  burger?.setAttribute("aria-expanded", "true");
+  burger?.setAttribute("aria-label", "Close menu");
 }
 
 function closeMenu() {
   nav?.classList.remove("show");
   backdrop?.classList.remove("show");
   document.body.classList.remove("nav-open");
+  burger?.classList.remove("active");
+  burger?.setAttribute("aria-expanded", "false");
+  burger?.setAttribute("aria-label", "Open menu");
 }
 
 burger?.addEventListener("click", (e) => {

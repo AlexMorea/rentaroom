@@ -115,15 +115,65 @@ a {
 
 .burger {
   display: none;
+  position: relative;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  min-height: 48px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
   background: none;
   border: none;
-  font-size: 1.8rem;
+  border-radius: 8px;
+  color: #0f172a;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.18s ease;
+}
+
+.burger:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.burger-bar {
+  position: absolute;
+  left: 50%;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: translateX(-50%);
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease,
+    top 0.25s ease;
+}
+
+.burger-bar:nth-child(1) {
+  top: 14px;
+}
+
+.burger-bar:nth-child(2) {
+  top: 19px;
+}
+
+.burger-bar:nth-child(3) {
+  top: 24px;
+}
+
+.burger.active .burger-bar:nth-child(1) {
+  top: 19px;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.burger.active .burger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.burger.active .burger-bar:nth-child(3) {
+  top: 19px;
+  transform: translateX(-50%) rotate(-45deg);
 }
 
 /* ✅ TRUST STRIP (shrinks header cleanly, no thick empty space) */
@@ -1315,15 +1365,65 @@ a {
 
 .burger {
   display: none;
+  position: relative;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  min-height: 48px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
   background: none;
   border: none;
-  font-size: 1.8rem;
+  border-radius: 8px;
+  color: #0f172a;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.18s ease;
+}
+
+.burger:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.burger-bar {
+  position: absolute;
+  left: 50%;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: translateX(-50%);
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease,
+    top 0.25s ease;
+}
+
+.burger-bar:nth-child(1) {
+  top: 14px;
+}
+
+.burger-bar:nth-child(2) {
+  top: 19px;
+}
+
+.burger-bar:nth-child(3) {
+  top: 24px;
+}
+
+.burger.active .burger-bar:nth-child(1) {
+  top: 19px;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.burger.active .burger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.burger.active .burger-bar:nth-child(3) {
+  top: 19px;
+  transform: translateX(-50%) rotate(-45deg);
 }
 
 /* ✅ TRUST STRIP (shrinks header cleanly, no thick empty space) */

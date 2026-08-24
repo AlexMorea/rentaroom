@@ -10,7 +10,7 @@
 //   what rooms are actually still available.
 //
 // Bump CACHE_NAME whenever this file changes, so old caches get cleared.
-const CACHE_NAME = "rooms4you-v1";
+const CACHE_NAME = "rooms4you-v2";
 const OFFLINE_URL = "/offline/";
 
 const PRECACHE_URLS = [
