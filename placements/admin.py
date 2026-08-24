@@ -68,7 +68,7 @@ class PlacementAdmin(admin.ModelAdmin):
     def status_badge(self, obj):
         colors = {
             Placement.STATUS_INTERESTED: "#64748b",
-            Placement.STATUS_VIEWING_SCHEDULED: "#2563eb",
+            Placement.STATUS_VIEWING_SCHEDULED: "#0B6FBF",
             Placement.STATUS_VIEWING_COMPLETED: "#0891b2",
             Placement.STATUS_APPROVED: "#16a34a",
             Placement.STATUS_MOVED_IN: "#15803d",

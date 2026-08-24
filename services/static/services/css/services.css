@@ -883,7 +883,7 @@ color:#0f172a;
 
 .status-completed{
   background:#dbeafe;
-  color:#1d4ed8;
+  color:#002A5C;
 }
 
 .status-cancelled{
@@ -933,7 +933,7 @@ input[type="file"]{
 .dashboard-grid .form-card h2{
     font-size:2.2rem;
     font-weight:800;
-    color:#1e40af;
+    color:#002A5C;
 }
 
 .dashboard-grid .form-card p{
@@ -946,8 +946,8 @@ input[type="file"]{
     border-radius:50%;
     background:linear-gradient(
       135deg,
-      #2563eb,
-      #3b82f6
+      #0B6FBF,
+      #1FA6F0
     );
     color:white;
     display:flex;
