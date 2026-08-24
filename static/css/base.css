@@ -4320,7 +4320,14 @@ body.scroll-down .trust-strip {
 /*-----NEW ROOM CARD-----*/
 
 .image-slider {
-  touch-action: none;
+  /* pan-x pan-y (not `none`) so the browser can tell a horizontal
+     swipe (advance the carousel) from a vertical one (scroll the
+     page) apart, instead of blocking all touch panning on the image
+     outright - `none` was why touching an image made the page
+     unscrollable from that point. slider.js also sets this inline
+     once it initializes, but the base CSS value matters too: it's
+     what applies before JS runs, and what's left if JS fails to. */
+  touch-action: pan-x pan-y;
   -webkit-user-select: none;
   user-select: none;
 }

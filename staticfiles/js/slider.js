@@ -47,8 +47,13 @@
       img.style.objectFit = "cover";
     });
 
-    // mobile behaviour (optional but safe)
-    track.style.touchAction = "pan-x";
+    // Allow both axes so the browser can tell per-gesture whether a
+    // touch starting on the image is a horizontal swipe (advance the
+    // carousel) or a vertical one (scroll the page). `pan-x` alone
+    // told the browser to only ever handle horizontal touches here,
+    // which silently ate every attempt to scroll the page from a
+    // touch that started on a card image.
+    track.style.touchAction = "pan-x pan-y";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
