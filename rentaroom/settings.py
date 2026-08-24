@@ -208,7 +208,6 @@ SECURE_REFERRER_POLICY = "same-origin"
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -221,7 +220,21 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET", "").strip(),
 }
 
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+# Django 5.1 dropped the shim that auto-translated the legacy
+# STATICFILES_STORAGE/DEFAULT_FILE_STORAGE settings into this dict, so
+# setting only the old names (as this project did) silently does
+# nothing - both fell back to Django's plain, non-hashing defaults.
+# That meant WhiteNoise's manifest/compression pipeline was never
+# actually running, and static asset changes needed a manually
+# hand-bumped `?v=N` query string to reach anyone with a cached copy.
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 
 # ================= AUTH =================

@@ -29,9 +29,7 @@ main.container {
   display: flex;
   align-items: center;
 
-  background:
-    linear-gradient(135deg, rgba(11, 111, 191, 0.95), rgba(31, 166, 240, 0.9)),
-    url("/static/images/hero-bg.jpg") center/cover no-repeat;
+  background: linear-gradient(135deg, rgba(11, 111, 191, 0.95), rgba(31, 166, 240, 0.9));
 }
 
 /* blur circles */
