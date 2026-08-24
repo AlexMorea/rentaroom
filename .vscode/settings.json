@@ -15,5 +15,6 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.python",
     "editor.formatOnSave": true
-  }
+  },
+  "python.analysis.typeCheckingMode": "basic"
 }
