@@ -72,6 +72,43 @@ class RankingTests(TestCase):
 
         self.assertTrue(r1.score >= r2.score)
 
+    def test_score_weights_review_quality_not_just_count(self):
+        # Same room shape, same number of reviews - only the ratings differ.
+        # Good reviews should outscore bad ones, not tie (regression for a
+        # bug where compute_scores counted reviews without looking at rating).
+        r_good = make_room(self.user, title="Good", price=100)
+        r_bad = make_room(self.user, title="Bad", price=100)
+
+        reviewers = [
+            User.objects.create_user(username=f"reviewer{i}", password="p")
+            for i in range(3)
+        ]
+
+        for reviewer in reviewers:
+            Review.objects.create(room=r_good, user=reviewer, rating=5)
+            Review.objects.create(room=r_bad, user=reviewer, rating=1)
+
+        call_command("compute_scores", "--force")
+
+        r_good.refresh_from_db()
+        r_bad.refresh_from_db()
+
+        self.assertGreater(r_good.score, r_bad.score)
+
+    def test_score_never_goes_negative(self):
+        # score is a PositiveIntegerField - a room with only bad reviews and
+        # no other engagement must clamp to 0, not raise or store negative.
+        room = make_room(self.user, title="OnlyBadReviews", price=100)
+
+        for i in range(3):
+            reviewer = User.objects.create_user(username=f"badreviewer{i}", password="p")
+            Review.objects.create(room=room, user=reviewer, rating=1)
+
+        call_command("compute_scores", "--force")
+
+        room.refresh_from_db()
+        self.assertEqual(room.score, 0)
+
     @override_settings(POPULAR_SCORE_THRESHOLD=1, USE_MATERIALIZED_SCORE=True)
     def test_room_list_popular_and_ordering(self):
         # create rooms with different scores

@@ -95,6 +95,75 @@
     text-align: center;
   }
 }
+
+/* ================= ACTIVE FILTER CHIPS =================
+   Custom pills - the shared .badge class is position:absolute with no
+   background by default (meant for photo-overlay badges), so a bare
+   .badge here would render invisible/mispositioned. */
+.rl-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.rl-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #eef4fb;
+  color: #0B6FBF;
+  border: 1px solid rgba(11, 111, 191, 0.16);
+}
+
+.rl-suggestion {
+  max-width: 1000px;
+  margin: 0 auto 20px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-weight: 700;
+}
+
+/* ================= EMPTY STATE ================= */
+.rl-empty {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 40px;
+  text-align: center;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+.rl-empty-icon {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+}
+.rl-empty-title {
+  margin: 0 0 10px;
+}
+.rl-empty-text {
+  color: #64748b;
+  margin: 0 0 12px;
+}
+.rl-empty-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #64748b;
+}
+.rl-empty-link {
+  color: #0B6FBF;
+  font-weight: 700;
+}
+.rl-empty-cta {
+  margin-top: 20px;
+}
 </style>
 
   <!-- Search Row -->
@@ -337,46 +406,31 @@
   </div>
 
 {% if values.q or values.location or values.type or values.min_price or values.max_price %}
-<div style="
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:18px;
-">
+<div class="rl-chips">
   {% if values.q %}
-  <span class="badge">🔍 {{ values.q }}</span>
+  <span class="rl-chip">🔍 {{ values.q }}</span>
   {% endif %}
 
   {% if values.location %}
-  <span class="badge">📍 {{ values.location }}</span>
+  <span class="rl-chip">📍 {{ values.location }}</span>
   {% endif %}
 
   {% if values.type %}
-  <span class="badge">{{ values.type }}</span>
+  <span class="rl-chip">{{ values.type }}</span>
   {% endif %}
 
   {% if values.min_price %}
-  <span class="badge">Min R{{ values.min_price }}</span>
+  <span class="rl-chip">Min R{{ values.min_price }}</span>
   {% endif %}
 
   {% if values.max_price %}
-  <span class="badge">Max R{{ values.max_price }}</span>
+  <span class="rl-chip">Max R{{ values.max_price }}</span>
   {% endif %}
 </div>
 {% endif %}
 
 {% if show_location_suggestion %}
-<div
-  style="
-    max-width: 1000px;
-    margin: 0 auto 20px;
-    padding: 14px;
-    border-radius: 14px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    font-weight: 700;
-  "
->
+<div class="rl-suggestion">
   Showing results for <strong>{{ suggested_location }}</strong>
   instead of "{{ searched_location }}"
 </div>
@@ -384,50 +438,22 @@
 
 <!-- EMPTY STATE -->
 {% if not rooms %}
-<div
-  style="
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 40px;
-    text-align: center;
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  "
->
-  <h2 style="margin-bottom: 10px">No rooms found</h2>
+<div class="rl-empty">
+  <div class="rl-empty-icon">🔍</div>
+  <h2 class="rl-empty-title">No rooms found</h2>
 
-  <p style="color:#64748b;margin-bottom:12px;">
+  <p class="rl-empty-text">
     No rooms match your current filters.
   </p>
 
-  <ul
-    style="
-      list-style:none;
-      padding:0;
-      margin:0;
-      color:#64748b;
-    "
-  >
+  <ul class="rl-empty-tips">
     <li>✓ Increase your maximum budget</li>
     <li>✓ Search nearby areas</li>
     <li>✓ Remove some filters</li>
-    <li>✓ Try a <a href="{% url 'stays:guesthouse_list' %}" style="color:#0B6FBF;font-weight:700;">guest house or BnB</a> instead</li>
+    <li>✓ Try a <a href="{% url 'stays:guesthouse_list' %}" class="rl-empty-link">guest house or BnB</a> instead</li>
   </ul>
 
-  <a
-    href="{% url 'room_list' %}"
-    style="
-      display: inline-block;
-      margin-top: 20px;
-      padding: 14px 24px;
-      border-radius: 12px;
-      background: #0B6FBF;
-      color: white;
-      text-decoration: none;
-      font-weight: 700;
-    "
-  >
+  <a href="{% url 'room_list' %}" class="btn-primary rl-empty-cta">
     Clear Filters
   </a>
 </div>

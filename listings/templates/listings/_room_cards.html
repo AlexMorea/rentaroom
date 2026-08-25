@@ -100,9 +100,9 @@
         </span>
 
         {% if room.avg_rating_value %}
-          <span class="rating rc-rating">⭐ {{ room.avg_rating_value|floatformat:1 }}</span>
+          <span class="rating rc-rating">⭐ {{ room.avg_rating_value|floatformat:1 }} <span class="rc-rating-count">({{ room.reviews_count|default:room.review_count }})</span></span>
         {% elif room.avg_rating %}
-          <span class="rating rc-rating">⭐ {{ room.avg_rating|floatformat:1 }}</span>
+          <span class="rating rc-rating">⭐ {{ room.avg_rating|floatformat:1 }} <span class="rc-rating-count">({{ room.review_count }})</span></span>
         {% endif %}
       </div>
 
@@ -381,6 +381,10 @@
     font-size: 0.8rem;
     font-weight: 700;
     color: #0f172a;
+  }
+  .rc-rating-count {
+    font-weight: 500;
+    color: #94a3b8;
   }
 
   .rc-posted {

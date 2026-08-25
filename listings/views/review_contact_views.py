@@ -42,18 +42,33 @@ def add_review(request, room_id):
         messages.warning(request, "Only tenants are allowed to review rooms.")
         return redirect("room_detail", pk=room.id)
 
+    # Only tenants who've actually reached out about this room can review
+    # it - otherwise anyone could review any room sight unseen, and since
+    # reviews now feed the ranking score, that'd be an easy way to game it.
+    if not Contact.objects.filter(room=room, user=request.user).exists():
+        messages.warning(
+            request,
+            "You can review a room after contacting the landlord about it."
+        )
+        return redirect("room_detail", pk=room.id)
+
     rating = request.POST.get("rating")
     comment = request.POST.get("comment", "")
 
-    if not rating:
-        messages.error(request, "Please provide a rating before submitting your review.")
+    try:
+        rating = int(rating)
+    except (TypeError, ValueError):
+        rating = None
+
+    if rating is None or not (1 <= rating <= 5):
+        messages.error(request, "Please provide a rating between 1 and 5 stars.")
         return redirect("room_detail", pk=room.id)
 
     Review.objects.update_or_create(
         room=room,
         user=request.user,
         defaults={
-            "rating": int(rating),
+            "rating": rating,
             "comment": comment
         }
     )

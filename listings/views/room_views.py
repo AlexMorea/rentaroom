@@ -107,7 +107,10 @@ def room_list(request):
                     queryset=RoomImage.objects.only("id", "image", "room_id")
                 )
             )
-            .annotate(avg_rating_value=Avg("reviews__rating"))
+            .annotate(
+                avg_rating_value=Avg("reviews__rating"),
+                reviews_count=Count("reviews"),
+            )
             .order_by(preserved_order)
         )
 
@@ -196,7 +199,10 @@ def room_list(request):
         # annotate average rating to avoid per-object aggregates in templates
         # use a different name than the `avg_rating` property to avoid
         # AttributeError when Django tries to set the annotated value.
-        .annotate(avg_rating_value=Avg("reviews__rating"))
+        .annotate(
+            avg_rating_value=Avg("reviews__rating"),
+            reviews_count=Count("reviews"),
+        )
     )
 
     suggested_location = ""

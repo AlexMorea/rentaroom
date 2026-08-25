@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
-from django.db.models import Count
+from django.db.models import Count, Q, Sum
 
-from listings.models import Room, RoomStat
+from listings.models import Room
 
 
 class Command(BaseCommand):
@@ -31,14 +31,15 @@ class Command(BaseCommand):
             .annotate(
                 views_count=Count(
                     "roomstat",
-                    filter=RoomStat.objects.filter(stat_type="view").query,
+                    filter=Q(roomstat__stat_type="view"),
                 ),
                 contacts_count=Count(
                     "roomstat",
-                    filter=RoomStat.objects.filter(stat_type__startswith="contact").query,
+                    filter=Q(roomstat__stat_type__startswith="contact"),
                 ),
                 favorites_count=Count("favorited_by"),
                 reviews_count=Count("reviews"),
+                reviews_rating_sum=Sum("reviews__rating"),
             )
         )
 
@@ -46,13 +47,26 @@ class Command(BaseCommand):
         processed = 0
 
         for room in qs.iterator():
+            # Rating-weighted, not just a raw review count - a room's reviews
+            # only used to count toward score regardless of whether they were
+            # good or bad, which meant a string of 1-star reviews boosted
+            # ranking exactly like 5-star ones. Centered on 3 (neutral) so
+            # above-average reviews add score and below-average ones
+            # subtract from it - the review system actually has to mean
+            # something to the ranking.
+            review_quality = (room.reviews_rating_sum or 0) - (room.reviews_count * 3)
+
             score = (
                 (room.hits or 0) * 3
                 + (room.views_count or 0) * 1
                 + (room.contacts_count or 0) * 8
                 + (room.favorites_count or 0) * 2
-                + (room.reviews_count or 0) * 2
+                + review_quality * 3
             )
+            # score is a PositiveIntegerField - a room with mostly poor
+            # reviews and little other engagement could otherwise compute
+            # negative here.
+            score = max(0, score)
 
             if room.score != score:
                 to_update.append((room.id, score))
