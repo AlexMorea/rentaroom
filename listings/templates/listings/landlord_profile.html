@@ -1,5 +1,6 @@
 {% extends "listings/base.html" %}
 {% block title %}{{ landlord.get_full_name|default:landlord.username }} | Rooms4You{% endblock %}
+{% block meta_description %}View {{ landlord.get_full_name|default:landlord.username }}'s verified landlord profile and available room listings on Rooms4You.{% endblock %}
 {% block content %}
 
 <div class="landlord-hero">

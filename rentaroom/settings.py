@@ -132,6 +132,7 @@ TEMPLATES = [
 
                 # GOOGLE MAPS KEY
                 "listings.context_processors.google_maps_key",
+                "listings.context_processors.seo_settings",
             ],
         },
     },
@@ -245,6 +246,14 @@ LOGOUT_REDIRECT_URL = "/rooms/"
 
 # ================= GOOGLE MAPS =================
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+
+
+# ================= SEO / ANALYTICS =================
+# Both blank by default - the site works fine without them. Set these env
+# vars once Search Console / GA4 properties exist and the base template
+# picks them up automatically, no further deploy needed.
+GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION", "")
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "")
 
 
 # ================= EMAIL =================

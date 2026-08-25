@@ -18,6 +18,11 @@
 {% block twitter_description %}{{ room.location }} · {{ room.get_room_type_display }}{% endblock %}
 {% block twitter_image %}{% if room.images.first %}{{ room.images.first.image.url }}{% else %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endif %}{% endblock %}
 
+{% block structured_data %}
+<script type="application/ld+json">{{ product_ld_json }}</script>
+<script type="application/ld+json">{{ breadcrumb_ld_json }}</script>
+{% endblock %}
+
 {% block content %}
 
 <section class="room-detail-page rd-page">

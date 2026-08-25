@@ -23,6 +23,9 @@ from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.templatetags.static import static
+from django.urls import reverse
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
 from accounts.utils import require_active_membership
@@ -30,6 +33,7 @@ from utils.email import send_template_email
 
 from ..forms import RoomForm
 from ..models import Favorite, Room, RoomImage, RoomStat
+from ..seo import ld_json
 from .helpers import get_or_create_membership, is_landlord
 
 POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
@@ -550,12 +554,75 @@ def room_detail(request, pk):
             room_id=room.id
         ).exists()
 
+    canonical_url = f"https://www.rooms4you.co.za{reverse('room_detail', args=[room.id])}"
+    image_urls = [img.image.url for img in room.images.all()] or [
+        f"https://www.rooms4you.co.za{static('images/logo-social.png')}"
+    ]
+
+    offer = {
+        "@type": "Offer",
+        "url": canonical_url,
+        "priceCurrency": "ZAR",
+        "price": str(room.price),
+        "availability": (
+            "https://schema.org/InStock"
+            if room.available_units > 0
+            else "https://schema.org/OutOfStock"
+        ),
+        "availableAtOrFrom": {
+            "@type": "Place",
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": room.town or room.suburb,
+                "addressRegion": room.province,
+                "postalCode": room.postal_code,
+                "addressCountry": "ZA",
+            },
+        },
+    }
+
+    if room.latitude is not None and room.longitude is not None:
+        offer["availableAtOrFrom"]["geo"] = {
+            "@type": "GeoCoordinates",
+            "latitude": room.latitude,
+            "longitude": room.longitude,
+        }
+
+    product_data = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": room.title,
+        "description": strip_tags(room.description)[:500],
+        "image": image_urls,
+        "brand": {"@type": "Brand", "name": "Rooms4You"},
+        "offers": offer,
+    }
+
+    if room.review_count > 0:
+        product_data["aggregateRating"] = {
+            "@type": "AggregateRating",
+            "ratingValue": room.avg_rating,
+            "reviewCount": room.review_count,
+        }
+
+    breadcrumb_data = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.rooms4you.co.za/"},
+            {"@type": "ListItem", "position": 2, "name": "Rooms", "item": "https://www.rooms4you.co.za/rooms/"},
+            {"@type": "ListItem", "position": 3, "name": room.title, "item": canonical_url},
+        ],
+    }
+
     return render(
         request,
         "listings/room_detail.html",
         {
             "room": room,
             "is_saved": is_saved,
+            "product_ld_json": ld_json(product_data),
+            "breadcrumb_ld_json": ld_json(breadcrumb_data),
         },
     )
 
