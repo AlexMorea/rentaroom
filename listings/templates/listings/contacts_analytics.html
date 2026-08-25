@@ -1,69 +1,197 @@
 {% extends "listings/base.html" %}
-{% block title %}Contacts Analytics{% endblock %}
+{% block title %}Contacts Analytics | Rooms4You{% endblock %}
 {% block content %}
 
-
-<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-  <h1 class="page-title" style="margin:0;">Contacts Analytics</h1>
+<div class="ca-header">
+  <div>
+    <h1 class="page-title ca-title">Contacts Analytics</h1>
+    <p class="text-muted ca-subtitle">See how tenants are finding and reaching out about your rooms.</p>
+  </div>
   <a href="{% url 'dashboard' %}" class="btn-secondary">← Back to Dashboard</a>
 </div>
 
-<div class="dashboard-grid" style="margin-bottom:16px;">
+<div class="dashboard-grid ca-stats">
   <div class="stat-card">
     <div class="stat-number">{{ totals.views }}</div>
-    <div class="stat-label">Total Views</div>
+    <div class="stat-label">👁️ Total Views</div>
   </div>
   <div class="stat-card">
     <div class="stat-number">{{ totals.contacts }}</div>
-    <div class="stat-label">Total Contacts</div>
+    <div class="stat-label">💬 Total Contacts</div>
   </div>
   <div class="stat-card">
     <div class="stat-number">{{ totals.success }}</div>
-    <div class="stat-label">Success Clicks</div>
+    <div class="stat-label">✅ Success Clicks</div>
   </div>
 </div>
 
-<div class="form-shell">
-  <div class="form-card" style="overflow:auto;">
-    <h3 style="margin:0 0 12px;">Per-room clickthrough</h3>
+<div class="form-card ca-card">
+  <h3 class="ca-card-title">Per-room clickthrough</h3>
 
-    <table style="width:100%;border-collapse:collapse;min-width:820px;">
+  {% if rooms %}
+  <div class="ca-table-wrap">
+    <table class="ca-table">
       <thead>
-        <tr style="text-align:left;border-bottom:1px solid #e5e7eb;">
-          <th style="padding:10px 8px;">Room</th>
-          <th style="padding:10px 8px;">Views</th>
-          <th style="padding:10px 8px;">Contacts</th>
-          <th style="padding:10px 8px;">CTR</th>
-          <th style="padding:10px 8px;">Phone</th>
-          <th style="padding:10px 8px;">WhatsApp</th>
-          <th style="padding:10px 8px;">Email</th>
-          <th style="padding:10px 8px;">Success</th>
+        <tr>
+          <th>Room</th>
+          <th>Views</th>
+          <th>Contacts</th>
+          <th>CTR</th>
+          <th>📞 Phone</th>
+          <th>💬 WhatsApp</th>
+          <th>✉️ Email</th>
+          <th>✅ Success</th>
         </tr>
       </thead>
       <tbody>
         {% for r in rooms %}
-        <tr style="border-bottom:1px solid #f1f5f9;">
-          <td style="padding:10px 8px;">
-            <strong>{{ r.title }}</strong>
-            <div style="opacity:.75;font-size:.9rem;">{{ r.location }}</div>
-          </td>
-          <td style="padding:10px 8px;">{{ r.view_count }}</td>
-          <td style="padding:10px 8px;">{{ r.contact_total }}</td>
-          <td style="padding:10px 8px;">{{ r.ctr }}%</td>
-          <td style="padding:10px 8px;">{{ r.phone_count }}</td>
-          <td style="padding:10px 8px;">{{ r.whatsapp_count }}</td>
-          <td style="padding:10px 8px;">{{ r.email_count }}</td>
-          <td style="padding:10px 8px;">{{ r.success_count }}</td>
-        </tr>
-        {% empty %}
         <tr>
-          <td style="padding:12px 8px;" colspan="8">No rooms yet. Add a room to start tracking contacts.</td>
+          <td>
+            <strong class="ca-room-title">{{ r.title }}</strong>
+            <div class="ca-room-location">📍 {{ r.location }}</div>
+          </td>
+          <td class="ca-num">{{ r.view_count }}</td>
+          <td class="ca-num">{{ r.contact_total }}</td>
+          <td>
+            <span class="ca-ctr-chip {% if r.ctr >= 15 %}ca-ctr-good{% elif r.ctr >= 5 %}ca-ctr-ok{% else %}ca-ctr-low{% endif %}">
+              {{ r.ctr }}%
+            </span>
+          </td>
+          <td class="ca-num">{{ r.phone_count }}</td>
+          <td class="ca-num">{{ r.whatsapp_count }}</td>
+          <td class="ca-num">{{ r.email_count }}</td>
+          <td class="ca-num">{{ r.success_count }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-
   </div>
+  {% else %}
+  <div class="ca-empty">
+    <div class="ca-empty-icon">📊</div>
+    <p class="ca-empty-text">No rooms yet.</p>
+    <a href="{% url 'create_room' %}" class="ca-empty-cta">Add a room to start tracking contacts →</a>
+  </div>
+  {% endif %}
 </div>
+
+<style>
+  .ca-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .ca-title {
+    text-align: left;
+    margin: 0;
+  }
+  .ca-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.92rem;
+  }
+
+  .ca-stats {
+    margin-bottom: 20px;
+  }
+
+  .ca-card-title {
+    margin: 0 0 14px;
+    font-weight: 900;
+    font-size: 1.05rem;
+  }
+
+  .ca-table-wrap {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+  }
+  .ca-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 820px;
+  }
+  .ca-table thead th {
+    text-align: left;
+    padding: 12px 14px;
+    background: #f8fafc;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+  .ca-table tbody tr {
+    transition: background 0.15s ease;
+  }
+  .ca-table tbody tr:nth-child(even) {
+    background: #fafbfc;
+  }
+  .ca-table tbody tr:hover {
+    background: #eef4fb;
+  }
+  .ca-table tbody tr:not(:last-child) td {
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .ca-table td {
+    padding: 12px 14px;
+    font-size: 0.92rem;
+  }
+  .ca-num {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ca-room-title {
+    display: block;
+    color: #0f172a;
+  }
+  .ca-room-location {
+    opacity: 0.7;
+    font-size: 0.82rem;
+    margin-top: 2px;
+  }
+
+  .ca-ctr-chip {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .ca-ctr-good {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .ca-ctr-ok {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .ca-ctr-low {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .ca-empty {
+    text-align: center;
+    padding: 36px 16px;
+  }
+  .ca-empty-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+  }
+  .ca-empty-text {
+    margin: 0 0 10px;
+    opacity: 0.7;
+  }
+  .ca-empty-cta {
+    color: var(--blue);
+    font-weight: 700;
+  }
+</style>
 
 {% endblock %}
