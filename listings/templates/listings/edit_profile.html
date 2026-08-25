@@ -1,9 +1,19 @@
-{% extends "listings/base.html" %} {% block content %}
+{% extends "listings/base.html" %}
+{% block title %}Edit Profile | Rooms4You{% endblock %}
+{% block content %}
 
 <div class="form-shell">
   <div class="ep-header">
-    <h1 class="page-title ep-title">Edit Profile</h1>
-    <a class="btn-secondary" href="{% url 'profile' %}">Back</a>
+    <div class="ep-header-info">
+      <div class="ep-avatar">
+        {{ user.first_name|default:user.username|slice:":1"|upper }}
+      </div>
+      <div>
+        <h1 class="page-title ep-title">Edit Profile</h1>
+        <p class="text-muted ep-subtitle">Keep your account details up to date.</p>
+      </div>
+    </div>
+    <a class="btn-secondary" href="{% url 'profile' %}">← Back</a>
   </div>
 
   <div class="form-card ep-card">
@@ -16,16 +26,18 @@
       </div>
       {% endif %}
 
-      <div class="ep-section-title">Basic</div>
+      <div class="ep-section-title">👤 Basic</div>
 
-      <div class="ep-field">
-        <label>First name</label>
-        {{ u_form.first_name }} {{ u_form.first_name.errors }}
-      </div>
+      <div class="ep-grid-2">
+        <div class="ep-field">
+          <label>First name</label>
+          {{ u_form.first_name }} {{ u_form.first_name.errors }}
+        </div>
 
-      <div class="ep-field">
-        <label>Last name</label>
-        {{ u_form.last_name }} {{ u_form.last_name.errors }}
+        <div class="ep-field">
+          <label>Last name</label>
+          {{ u_form.last_name }} {{ u_form.last_name.errors }}
+        </div>
       </div>
 
       <div class="ep-input-group">
@@ -39,18 +51,20 @@
       <hr class="ep-divider" />
 
       {% if user.profile.role == "tenant" %}
-      <div class="ep-section-title">Tenant details</div>
+      <div class="ep-section-title">🔍 Tenant details</div>
 
-      <div class="ep-field">
-        <label>Country code</label>
-        {{ p_form.country_code }} {{ p_form.country_code.errors }}
-      </div>
+      <div class="ep-grid-2">
+        <div class="ep-field">
+          <label>Country code</label>
+          {{ p_form.country_code }} {{ p_form.country_code.errors }}
+        </div>
 
-      <div class="ep-input-group">
-        <label>Cell Number</label>
-        <div class="ep-locked-row">
-          <div class="input ep-locked-input ep-locked-display">{{ p.full_phone }}</div>
-          <a href="{% url 'change_phone' %}" class="ep-change-link">Change</a>
+        <div class="ep-input-group">
+          <label>Cell Number</label>
+          <div class="ep-locked-row">
+            <div class="input ep-locked-input ep-locked-display">{{ p.full_phone }}</div>
+            <a href="{% url 'change_phone' %}" class="ep-change-link">Change</a>
+          </div>
         </div>
       </div>
 
@@ -59,19 +73,21 @@
         {{ p_form.persona }} {{ p_form.persona.errors }}
       </div>
 
-      {% else %}
-      <div class="ep-section-title">Landlord verification details</div>
+      {% elif user.profile.role == "landlord" %}
+      <div class="ep-section-title">🔑 Landlord verification details</div>
 
-      <div class="ep-field">
-        <label>Country code</label>
-        {{ p_form.country_code }} {{ p_form.country_code.errors }}
-      </div>
+      <div class="ep-grid-2">
+        <div class="ep-field">
+          <label>Country code</label>
+          {{ p_form.country_code }} {{ p_form.country_code.errors }}
+        </div>
 
-      <div class="ep-input-group">
-        <label>Cell Number</label>
-        <div class="ep-locked-row">
-          <div class="input ep-locked-input ep-locked-display">{{ p.full_phone }}</div>
-          <a href="{% url 'change_phone' %}" class="ep-change-link">Change</a>
+        <div class="ep-input-group">
+          <label>Cell Number</label>
+          <div class="ep-locked-row">
+            <div class="input ep-locked-input ep-locked-display">{{ p.full_phone }}</div>
+            <a href="{% url 'change_phone' %}" class="ep-change-link">Change</a>
+          </div>
         </div>
       </div>
 
@@ -113,7 +129,26 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  .ep-header-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ep-avatar {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    box-shadow: 0 10px 20px rgba(11, 111, 191, 0.28);
   }
   .ep-header .btn-secondary {
     width: auto !important;
@@ -122,6 +157,10 @@
   .ep-title {
     text-align: left;
     margin: 0;
+  }
+  .ep-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
   }
 
   .ep-form {
@@ -132,6 +171,13 @@
     font-size: 1rem;
     color: #0f172a;
     margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .ep-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
   }
   .ep-field {
     margin-bottom: 16px;
@@ -199,6 +245,12 @@
     border-radius: 12px;
     padding: 10px 18px;
     font-size: 0.9rem;
+  }
+
+  @media (max-width: 640px) {
+    .ep-grid-2 {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 480px) {

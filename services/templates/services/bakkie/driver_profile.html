@@ -1,114 +1,240 @@
 {% extends "services/shared/services_base.html" %}
 
+{% block title %}{{ driver.full_name }} | Bakkie4You{% endblock %}
+
 {% block services_content %}
 
-<div class="service-card">
+<div class="dp-hero">
+  <div class="dp-hero-glow-a"></div>
+  <div class="dp-hero-glow-b"></div>
 
-    {% if driver.vehicle_image %}
-        <img
-            src="{{ driver.vehicle_image.url }}"
-            class="dashboard-vehicle-image"
-        >
+  <div class="dp-avatar">
+    {{ driver.full_name|slice:":1"|upper }}
+  </div>
+
+  <h1 class="dp-name">{{ driver.full_name }}</h1>
+
+  <p class="dp-location">📍 {{ driver.city }}, {{ driver.province }}</p>
+
+  <div class="dp-badges">
+    {% if driver.is_verified %}
+    <span class="verified-badge dp-badge">✓ Verified Driver</span>
     {% endif %}
+    {% if driver.is_online %}
+    <span class="online-badge dp-badge">🟢 Available Now</span>
+    {% endif %}
+  </div>
 
-    <div class="driver-dashboard-header">
-
-        <div>
-
-            <h1>{{ driver.full_name }}</h1>
-
-            <p>
-                {{ driver.city }},
-                {{ driver.province }}
-            </p>
-
-        </div>
-
-        <div>
-
-            {% if driver.is_verified %}
-                <span class="verified-badge">
-                    ✓ Verified Driver
-                </span>
-            {% endif %}
-
-            {% if driver.is_online %}
-                <span class="online-badge">
-                    🟢 Available
-                </span>
-            {% endif %}
-
-        </div>
-
+  <div class="dp-stats">
+    <div class="dp-stat-card">
+      <div class="dp-stat-icon">⭐</div>
+      <p class="dp-stat-value">{{ driver.rating }}</p>
+      <p class="dp-stat-label">Rating</p>
     </div>
-
-</div>
-
-<div class="driver-profile-grid">
-
-    <div class="driver-profile-item">
-        <span>Vehicle</span>
-        <strong>
-            {{ driver.get_vehicle_type_display }}
-        </strong>
+    <div class="dp-stat-card">
+      <div class="dp-stat-icon">📦</div>
+      <p class="dp-stat-value">{{ driver.completed_jobs }}</p>
+      <p class="dp-stat-label">Completed Jobs</p>
     </div>
-
-    <div class="driver-profile-item">
-        <span>Rating</span>
-        <strong>
-            ⭐ {{ driver.rating }}
-        </strong>
+    <div class="dp-stat-card">
+      <div class="dp-stat-icon">⚡</div>
+      <p class="dp-stat-value">{{ driver.response_rate }}%</p>
+      <p class="dp-stat-label">Response Rate</p>
     </div>
-
-    <div class="driver-profile-item">
-        <span>Completed Jobs</span>
-        <strong>
-            {{ driver.completed_jobs }}
-        </strong>
-    </div>
-
-    <div class="driver-profile-item">
-        <span>Response Rate</span>
-        <strong>
-            {{ driver.response_rate }}%
-        </strong>
-    </div>
-
+  </div>
 </div>
 
 <div class="service-card">
+  <h2>Vehicle</h2>
 
-    <h2>About This Driver</h2>
+  {% if driver.vehicle_image %}
+  <img
+    src="{{ driver.vehicle_image.url }}"
+    alt="{{ driver.full_name }}'s vehicle"
+    class="dashboard-vehicle-image"
+  >
+  {% endif %}
 
-    <p>
-
-        This verified Bakkie4You driver is available to assist with:
-
-    </p>
-
-    <ul>
-
-        <li>Room Moves</li>
-
-        <li>Furniture Transport</li>
-
-        <li>Student Relocations</li>
-
-        <li>Local Deliveries</li>
-
-    </ul>
-
+  <div class="driver-profile-grid">
+    <div class="driver-profile-item">
+      <span>Vehicle Type</span>
+      <strong>{{ driver.get_vehicle_type_display }}</strong>
+    </div>
+    <div class="driver-profile-item">
+      <span>Registration</span>
+      <strong>{{ driver.vehicle_registration }}</strong>
+    </div>
+  </div>
 </div>
 
 <div class="service-card">
+  <h2>About This Driver</h2>
+  <p>This verified Bakkie4You driver is available to assist with:</p>
 
-    <a
-        href="{% url 'services:create_booking' driver.id %}"
-        class="btn-primary"
-    >
-        Request Transport
-    </a>
-
+  <div class="dp-service-chips">
+    <span class="dp-chip">🏠 Room Moves</span>
+    <span class="dp-chip">🛋️ Furniture Transport</span>
+    <span class="dp-chip">🎓 Student Relocations</span>
+    <span class="dp-chip">📦 Local Deliveries</span>
+  </div>
 </div>
+
+<div class="service-card dp-cta-card">
+  <a
+    href="{% url 'services:create_booking' driver.id %}"
+    class="btn-primary dp-cta-btn"
+  >
+    🚚 Request Transport
+  </a>
+</div>
+
+<style>
+  .dp-hero {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 24px;
+    padding: 42px 28px 32px;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top left, rgba(22, 163, 74, 0.16), transparent 32%),
+      radial-gradient(circle at top right, rgba(15, 23, 42, 0.08), transparent 30%),
+      linear-gradient(135deg, #f0fdf4 0%, #ffffff 70%);
+    border: 1px solid rgba(22, 163, 74, 0.16);
+    box-shadow: var(--shadow-lg);
+  }
+  .dp-hero-glow-a,
+  .dp-hero-glow-b {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .dp-hero-glow-a {
+    top: -70px;
+    left: -70px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.26), transparent 70%);
+  }
+  .dp-hero-glow-b {
+    bottom: -60px;
+    right: -60px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(15, 23, 42, 0.14), transparent 70%);
+  }
+
+  .dp-avatar {
+    position: relative;
+    z-index: 2;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.1rem;
+    font-weight: 800;
+    box-shadow: 0 12px 26px rgba(22, 163, 74, 0.32);
+  }
+  .dp-name {
+    position: relative;
+    z-index: 2;
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+  }
+  .dp-location {
+    position: relative;
+    z-index: 2;
+    margin: 0 0 16px;
+    color: var(--muted);
+  }
+
+  .dp-badges {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .dp-badge {
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin-top: 0;
+  }
+
+  .dp-stats {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .dp-stat-card {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(22, 163, 74, 0.14);
+    border-radius: 16px;
+    padding: 16px 22px;
+    min-width: 100px;
+  }
+  .dp-stat-icon {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+  }
+  .dp-stat-value {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--dark);
+  }
+  .dp-stat-label {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .dp-service-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .dp-chip {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 8px 14px;
+    border-radius: 999px;
+  }
+
+  .dp-cta-card {
+    text-align: center;
+  }
+  .dp-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  @media (max-width: 480px) {
+    .dp-hero {
+      padding: 34px 18px 26px;
+    }
+    .dp-stats {
+      gap: 10px;
+    }
+    .dp-stat-card {
+      padding: 14px 16px;
+      min-width: 88px;
+    }
+  }
+</style>
 
 {% endblock %}

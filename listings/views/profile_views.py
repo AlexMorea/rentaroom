@@ -95,7 +95,7 @@ def profile(request):
         "Verified"
         if (
             p.role == "landlord"
-            and getattr(p, "is_verified", False)
+            and getattr(p, "is_verified_landlord", False)
         )
         else ""
     )
@@ -223,8 +223,13 @@ def edit_profile(request):
             p_form.fields.pop(field, None)
 
     # hide tenant-only field for landlords
-    if profile.role == "landlord":
+    elif profile.role == "landlord":
         p_form.fields.pop("persona", None)
+
+    # neither tenant nor landlord role-specific fields apply (e.g. driver)
+    else:
+        for field in ["persona", "alt_no", "home_address", "postal_code"]:
+            p_form.fields.pop(field, None)
 
     if request.method == "POST":
 

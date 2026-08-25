@@ -1,117 +1,266 @@
-{% extends "listings/base.html" %} 
+{% extends "listings/base.html" %}
 {% block title %}My Profile | Rooms4You{% endblock %}
 {% block content %}
 
-<div
-  style="
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
-  "
->
-  <div>
-    <h1 class="page-title" style="text-align: left; margin: 0">My Profile</h1>
+<!-- ================= HERO ================= -->
+<div class="mp-hero">
+  <div class="mp-hero-glow-a"></div>
+  <div class="mp-hero-glow-b"></div>
 
-    <p style="margin: 6px 0 0; opacity: 0.8">
-      <span
-        class="badge"
-        style="
-          position: static;
-          display: inline-flex;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-        "
-      >
-        {{ badge_text }}
-      </span>
+  <div class="mp-hero-row">
+    <div class="mp-avatar">
+      {{ user.first_name|default:user.username|slice:":1"|upper }}
+    </div>
 
-      {{ verified_badge }}
-    </p>
+    <div class="mp-hero-info">
+      <h1 class="page-title mp-name">
+        {% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}
+      </h1>
+
+      <p class="text-muted mp-since">Member since {{ user.date_joined|date:"M Y" }}</p>
+
+      <div class="mp-badges">
+        <span class="badge mp-badge">{{ badge_text }}</span>
+        {% if verified_badge %}
+        <span class="badge badge-verified mp-badge">★ {{ verified_badge }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <a href="{% url 'edit_profile' %}" class="btn-primary mp-edit-btn">✎ Edit profile</a>
   </div>
-
-  <a href="{% url 'edit_profile' %}" class="btn-primary">Edit profile</a>
 </div>
 
 <!-- ================= STATS ================= -->
-<div class="dashboard-grid">
+{% if stat_cards or stat_links %}
+<div class="dashboard-grid mp-stats">
   {% for s in stat_cards %}
-  <div class="stat-card">
+  <div class="stat-card mp-stat-card">
     <div class="stat-number">{{ s.number }}</div>
     <div class="stat-label">{{ s.label }}</div>
   </div>
   {% endfor %} {% for s in stat_links %}
-  <a href="{{ s.href }}" class="stat-card stat-link">
+  <a href="{{ s.href }}" class="stat-card stat-link mp-stat-card">
     <div class="stat-number">{{ s.number }}</div>
     <div class="stat-label">{{ s.label }}</div>
   </a>
   {% endfor %}
 </div>
+{% endif %}
 
 <!-- ================= DETAILS ================= -->
-<div class="form-card" style="margin-bottom: 16px">
-  <h3 style="margin: 0 0 10px; font-weight: 900">My details</h3>
+<div class="form-card mp-card">
+  <h3 class="mp-card-title">My details</h3>
 
-  <div style="display: grid; gap: 10px">
+  <div class="mp-detail-rows">
     {% for row in detail_rows %}
-    <div
-      style="
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 10px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-      "
-    >
-      <div style="font-weight: 800; opacity: 0.85">{{ row.label }}</div>
-      <div style="font-weight: 800; text-align: right">{{ row.value }}</div>
+    <div class="mp-detail-row">
+      <span class="mp-detail-label">{{ row.label }}</span>
+      <span class="mp-detail-value">{{ row.value }}</span>
     </div>
     {% endfor %}
   </div>
 </div>
 
-<!-- ================= TENANT LISTS (renders nothing for landlord because list is empty) ================= -->
-<div
-  style="
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-    gap:16px;
-  "
->
-  {% for section in tenant_sections %}
-  <div class="form-card">
-    <h3 style="margin: 0 0 10px; font-weight: 900">{{ section.title }}</h3>
+<!-- ================= TENANT SECTIONS (renders nothing for landlord/driver because list is empty) ================= -->
+{% for section in tenant_sections %}
+<div class="mp-card mp-section">
+  <h3 class="mp-card-title">{{ section.title }}</h3>
 
-    {% for r in section.rooms %}
-    <div
-      class="room-row"
-      style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        gap:12px;
-        padding:12px;
-        border:1px solid #e5e7eb;
-        border-radius:12px;
-        margin-bottom:10px;
-        flex-wrap:wrap;
-      "
-    >
-      <div style="flex:1;min-width:0;">
-        <strong>{{ r.title }}</strong>
-        <div style="opacity: 0.75; font-size: 0.9rem">{{ r.location }}</div>
-      </div>
-      <div class="room-actions">
-        <a href="{% url 'room_detail' r.id %}">Open</a>
-      </div>
-    </div>
-    {% empty %}
-    <p style="opacity: 0.7; margin: 0">Nothing here yet.</p>
-    {% endfor %}
+  {% if section.rooms %}
+  <div class="room-grid mp-room-grid">
+    {% include "listings/_room_cards.html" with rooms=section.rooms %}
   </div>
-  {% endfor %}
+  {% else %}
+  <div class="mp-empty">
+    <div class="mp-empty-icon">📭</div>
+    <p class="mp-empty-text">Nothing here yet.</p>
+    <a href="{% url 'room_list' %}" class="mp-empty-cta">Browse rooms →</a>
+  </div>
+  {% endif %}
 </div>
+{% endfor %}
+
+<style>
+  /* ================= HERO ================= */
+  .mp-hero {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    padding: 32px 28px;
+    border-radius: var(--radius);
+    background:
+      radial-gradient(circle at top left, rgba(11, 111, 191, 0.14), transparent 32%),
+      radial-gradient(circle at top right, rgba(255, 128, 0, 0.1), transparent 30%),
+      linear-gradient(135deg, #eef4fb 0%, #ffffff 70%);
+    border: 1px solid rgba(11, 111, 191, 0.14);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+  }
+  .mp-hero-glow-a,
+  .mp-hero-glow-b {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .mp-hero-glow-a {
+    top: -70px;
+    left: -70px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(11, 111, 191, 0.22), transparent 70%);
+  }
+  .mp-hero-glow-b {
+    bottom: -60px;
+    right: -60px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(255, 128, 0, 0.18), transparent 70%);
+  }
+
+  .mp-hero-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .mp-avatar {
+    flex-shrink: 0;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    font-weight: 800;
+    box-shadow: 0 12px 26px rgba(11, 111, 191, 0.3);
+  }
+
+  .mp-hero-info {
+    flex: 1;
+    min-width: 200px;
+  }
+  .mp-name {
+    text-align: left;
+    margin: 0 0 2px;
+    font-size: 1.4rem;
+  }
+  .mp-since {
+    margin: 0 0 10px;
+  }
+
+  .mp-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .mp-badge {
+    position: static;
+    display: inline-flex;
+    flex-shrink: 0;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+  }
+  .mp-badge.badge-verified {
+    background: linear-gradient(135deg, var(--orange), #cc6600);
+  }
+
+  .mp-edit-btn {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 560px) {
+    .mp-hero {
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .mp-hero-row {
+      justify-content: center;
+    }
+    .mp-hero-info {
+      min-width: 100%;
+      text-align: center;
+    }
+    .mp-name {
+      text-align: center;
+    }
+    .mp-badges {
+      justify-content: center;
+    }
+    .mp-edit-btn {
+      width: 100%;
+    }
+  }
+
+  /* ================= STATS ================= */
+  .mp-stats {
+    margin-bottom: 20px;
+  }
+
+  /* ================= CARDS ================= */
+  .mp-card {
+    margin-bottom: 16px;
+  }
+  .mp-card-title {
+    margin: 0 0 14px;
+    font-weight: 900;
+    font-size: 1.05rem;
+  }
+
+  .mp-detail-rows {
+    display: grid;
+    gap: 10px;
+  }
+  .mp-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .mp-detail-row:hover {
+    border-color: rgba(11, 111, 191, 0.3);
+    background: #f8fafc;
+  }
+  .mp-detail-label {
+    font-weight: 700;
+    opacity: 0.75;
+    font-size: 0.92rem;
+  }
+  .mp-detail-value {
+    font-weight: 800;
+    text-align: right;
+  }
+
+  /* ================= TENANT SECTIONS ================= */
+  .mp-room-grid {
+    margin-top: 4px;
+  }
+
+  .mp-empty {
+    text-align: center;
+    padding: 28px 16px;
+  }
+  .mp-empty-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+  .mp-empty-text {
+    margin: 0 0 10px;
+    opacity: 0.7;
+  }
+  .mp-empty-cta {
+    color: var(--blue);
+    font-weight: 700;
+  }
+</style>
 
 {% endblock %}
