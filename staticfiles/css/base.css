@@ -318,7 +318,14 @@ body.nav-open {
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
   min-width: 220px;
+}.room-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
+  margin-top:20px;
 }
+
 
 @media (max-width: 1100px) {
   .room-grid {
@@ -610,7 +617,13 @@ body.nav-open {
   margin: 10px auto 0;
   opacity: 0.85;
   line-height: 1.5;
+}.nav-links a:hover {
+  opacity: 1;
+  color: var(--orange);
+  color: #0B6FBF;
+  transform: translateY(-1px);
 }
+
 
 /* ================= MOBILE NAV (PERFECT CLICKABLE) ================= */
 
@@ -780,7 +793,29 @@ body.nav-open .nav-links * {
   transition: opacity 0.2s ease;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}.nav-links a {
+  font-weight: 600;
+  opacity: 0.9;
+  transition:
+    color 0.18s ease,
+    opacity 0.18s ease;
+  position: relative;
+  transition: all .2s ease;
 }
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e5e7eb;
+  isolation: isolate;
+  z-index: 1000;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px);
+}
+
 
 /* Mobile: force proper click stacking order */
 @media (max-width: 860px) {
@@ -1771,7 +1806,18 @@ body.scroll-down .trust-strip {
   border-radius: 14px;
   border: 1px dashed rgba(0, 0, 0, 0.18);
   background: rgba(248, 250, 252, 0.8);
+}.img-preview-grid{
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fill,minmax(140px,1fr));
+  gap:12px;
+  margin-top:15px;
 }
+
 
 @media (max-width: 900px) {
   .img-preview-grid {
@@ -1789,7 +1835,49 @@ body.scroll-down .trust-strip {
 
 .slider-shell:hover .slider-btn {
   opacity: 1;
+}/* ================= ARROWS ================= */
+
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  z-index: 50;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(15, 23, 42, 0.45);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 900;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+  backdrop-filter: blur(8px);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+  z-index: 100;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
 }
+
 
 /* mobile devices always show */
 
@@ -1915,7 +2003,16 @@ body.scroll-down .trust-strip {
 /* Hover effect */
 .navbar-logo:hover img {
   transform: scale(1.05);
+}.navbar-logo img {
+  height: 80%;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+  height: 60px;
+  height: 52px;
 }
+
 
 /* Mobile */
 @media (max-width: 768px) {
@@ -2346,50 +2443,6 @@ body.scroll-down .trust-strip {
   object-fit: cover;
   display: block;
 }
-
-/* ================= ARROWS ================= */
-
-.slider-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  z-index: 50;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(15, 23, 42, 0.45);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 900;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
-  backdrop-filter: blur(8px);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.55);
-  font-size: 22px;
-  line-height: 1;
-  display: flex;
-  transition: opacity 0.2s ease;
-  pointer-events: auto;
-  z-index: 100;
-  z-index: 5;
-  width: 42px;
-  height: 42px;
-  font-size: 20px;
-}
-
 .slider-prev {
   left: 12px;
   left: 10px;
@@ -2404,7 +2457,17 @@ body.scroll-down .trust-strip {
   background: rgba(15, 23, 42, 0.65);
   transform: translateY(-50%) scale(1.06);
   background: rgba(0, 0, 0, 0.75);
+}.slider-shell {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  z-index: 2;
+  height: 320px;
+  border-radius: 12px;
+  aspect-ratio: 4 / 3;
+  background: #f1f5f9;
 }
+
 
 /* ================= MOBILE SAFETY ================= */
 
@@ -2668,18 +2731,6 @@ body.scroll-down .trust-strip {
   background: #f1f5f9;
   overflow: hidden;
 }
-
-.slider-shell {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  z-index: 2;
-  height: 320px;
-  border-radius: 12px;
-  aspect-ratio: 4 / 3;
-  background: #f1f5f9;
-}
-
 .image-slider {
   display: flex;
   overflow-x: auto;
@@ -3075,19 +3126,6 @@ body.scroll-down .trust-strip {
   }
 
 }
-
-.img-preview-grid{
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fill,minmax(140px,1fr));
-  gap:12px;
-  margin-top:15px;
-}
-
 .img-preview-item{
   border-radius: 14px;
   overflow: hidden;
@@ -3126,36 +3164,11 @@ body.scroll-down .trust-strip {
     margin-bottom:10px;
     font-size:14px;
 }
-
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 2000;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e5e7eb;
-  isolation: isolate;
-  z-index: 1000;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(12px);
-}
-
 .brand {
 display: flex;
 align-items: center;
 gap: 12px;
 }
-
-.navbar-logo img {
-  height: 80%;
-  width: auto;
-  display: block;
-  object-fit: contain;
-  transition: transform 0.2s ease;
-  height: 60px;
-  height: 52px;
-}
-
 .trust-pill {
   font-weight: 800;
   font-size: 0.78rem;
@@ -3170,26 +3183,7 @@ gap: 12px;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
-}
-
-.nav-links a {
-  font-weight: 600;
-  opacity: 0.9;
-  transition:
-    color 0.18s ease,
-    opacity 0.18s ease;
-  position: relative;
-  transition: all .2s ease;
-}
-
-.nav-links a:hover {
-  opacity: 1;
-  color: var(--orange);
-  color: #0B6FBF;
-  transform: translateY(-1px);
-}
-
-.nav-links a::after {
+}.nav-links a::after {
 content: "";
 
 position: absolute;
@@ -3268,7 +3262,23 @@ display: none;
 
     margin-bottom: 0;
 
+}.search-toolbar-wrapper{
+    position:sticky;
+    top:70px;              /* adjust to your navbar height */
+    z-index:1000;
+
+    background:#ffffff;
+
+    padding:12px 0;
+
+    border-bottom:1px solid #e5e7eb;
+
+    box-shadow:0 4px 18px rgba(0,0,0,.06);
+    transform: translateY(0);
+    transition: transform 0.25s ease, box-shadow 0.2s ease, padding 0.2s ease;
+    will-change: transform;
 }
+
 
 @media (max-width:768px){
 
@@ -3286,34 +3296,7 @@ display: none;
 
 }
 
-}
-
-.room-grid{
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
-  align-items: stretch;
-  margin-top:20px;
-}
-
-.search-toolbar-wrapper{
-    position:sticky;
-    top:70px;              /* adjust to your navbar height */
-    z-index:1000;
-
-    background:#ffffff;
-
-    padding:12px 0;
-
-    border-bottom:1px solid #e5e7eb;
-
-    box-shadow:0 4px 18px rgba(0,0,0,.06);
-    transform: translateY(0);
-    transition: transform 0.25s ease, box-shadow 0.2s ease, padding 0.2s ease;
-    will-change: transform;
-}
-
-/* Hidden while scrolling down (mobile-app style, like Booking.com/Airbnb) —
+}/* Hidden while scrolling down (mobile-app style, like Booking.com/Airbnb) —
    slides fully out of view above the sticky header, and slides back in
    the instant the user scrolls up or reaches the top of the page.
    Direction detection lives in room_list.html's scroll listener. */
