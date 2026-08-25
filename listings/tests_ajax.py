@@ -54,11 +54,13 @@ class PermissionEdgeTests(TestCase):
     def setUp(self):
         # landlord owner and their profile
         self.owner = User.objects.create_user(username="landlord", email="landlord@example.com", password="pass")
-        Profile.objects.get_or_create(user=self.owner, defaults={"role": "landlord"})
+        self.owner.profile.role = "landlord"
+        self.owner.profile.save()
 
         # tenant user (to compare behavior)
         self.tenant = User.objects.create_user(username="tenant", email="tenant@example.com", password="pass")
-        Profile.objects.get_or_create(user=self.tenant, defaults={"role": "tenant"})
+        self.tenant.profile.role = "tenant"
+        self.tenant.profile.save()
 
         # create a room owned by owner
         self.room = Room.objects.create(

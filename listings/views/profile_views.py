@@ -82,11 +82,14 @@ def profile(request):
         else "Not set"
     )
 
-    badge_text = (
-        persona_text
-        if p.role == "tenant"
-        else "Landlord"
-    )
+    if p.role == "tenant":
+        badge_text = persona_text
+    elif p.role == "landlord":
+        badge_text = "Landlord"
+    elif p.role == "driver":
+        badge_text = "Driver"
+    else:
+        badge_text = p.role.capitalize()
 
     verified_badge = (
         "Verified"
@@ -112,7 +115,7 @@ def profile(request):
                 "label": "Viewed rooms"
             },
         ]
-    else:
+    elif p.role == "landlord":
         stat_links = [
             {
                 "href": reverse("landlord_rooms"),
@@ -153,7 +156,7 @@ def profile(request):
             "value": persona_text
         })
 
-    else:
+    elif p.role == "landlord":
         detail_rows.extend([
             {
                 "label": "Alt",

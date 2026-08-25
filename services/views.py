@@ -335,7 +335,7 @@ def driver_dashboard(request):
         ).count(),
     }
 
-    return render(request, "services/driver_dashboard.html", context
+    return render(request, "services/bakkie/driver_dashboard.html", context
     )
 
     

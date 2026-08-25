@@ -1,4 +1,29 @@
+from dataclasses import dataclass
+
 from services.models import BakkieDriver
+
+
+@dataclass
+class UserState:
+    blocked: bool
+    next_route: str
+
+
+def evaluate_user_state(user):
+    """
+    Thin wrapper around get_user_state() for the require_state decorator:
+    gates access for unauthenticated or unverified users, otherwise lets
+    the request through and reports where get_user_state() would route them.
+    """
+    if not user.is_authenticated:
+        return UserState(blocked=True, next_route="login")
+
+    state = get_user_state(user)
+
+    if not state["verified"]:
+        return UserState(blocked=True, next_route="verify_account")
+
+    return UserState(blocked=False, next_route=state["next_route"])
 
 
 def get_user_state(user):

@@ -47,16 +47,24 @@ def register(request):
                 otp=otp
             )
 
-            send_otp_email(user, otp)
+            try:
+                send_otp_email(user, otp)
+            except Exception:
+                logger.exception("Failed to send signup OTP email for user %s", user.pk)
+                messages.warning(
+                    request,
+                    "Account created, but we couldn't send the OTP email. "
+                    "Use the resend button on the next page to try again."
+                )
+            else:
+                set_otp_cooldown(user.id)
 
-            set_otp_cooldown(user.id)
+                messages.success(
+                    request,
+                    "Account created. Enter the OTP sent to your email."
+                )
 
             request.session["pending_user_id"] = user.id
-
-            messages.success(
-                request,
-                "Account created. Enter the OTP sent to your email."
-            )
 
             return redirect("verify_account")
 
@@ -208,9 +216,6 @@ def user_login(request):
     if getattr(profile, "must_change_password", False):
         return redirect("change_password")
 
-    if profile.role == "driver":
-        return redirect("services:bakkie/driver_dashboard")
-
     state = get_user_state(user)
     return redirect(state["next_route"])
 
@@ -256,7 +261,14 @@ def resend_account_otp(request):
         otp=otp
     )
 
-    send_otp_email(user, otp)
+    try:
+        send_otp_email(user, otp)
+    except Exception:
+        logger.exception("Failed to send resend OTP email for user %s", user.pk)
+        return JsonResponse({
+            "level": "error",
+            "message": "Couldn't send the OTP email. Please try again shortly."
+        }, status=502)
 
     set_otp_cooldown(user.id)
 

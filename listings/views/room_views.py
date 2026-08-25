@@ -330,8 +330,8 @@ def room_list(request):
     )
 
     # cache popular ids to avoid running the aggregate query on every request
-    cache_key = f"popular_ids_v1:{'mat' if USE_MATERIALIZED_SCORE else 'calc'}:{POPULAR_SCORE_THRESHOLD}"
-    popular_ids = cache.get(cache_key)
+    cache_key_popular = f"popular_ids_v1:{'mat' if USE_MATERIALIZED_SCORE else 'calc'}:{POPULAR_SCORE_THRESHOLD}"
+    popular_ids = cache.get(cache_key_popular)
 
     if popular_ids is None:
         if USE_MATERIALIZED_SCORE:
@@ -374,7 +374,7 @@ def room_list(request):
 
             popular_ids = list(annotated.values_list("id", flat=True)[:20])
 
-        cache.set(cache_key, popular_ids, 300)
+        cache.set(cache_key_popular, popular_ids, 300)
 
     # ================= AJAX RESPONSE =================
     if is_ajax:

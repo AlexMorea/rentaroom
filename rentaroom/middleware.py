@@ -37,8 +37,9 @@ class WWWRedirectMiddleware:
         if host == self.canonical_domain or host == self.canonical_domain + ":443":
             return self.get_response(request)
         
-        # Don't redirect non-production domains (localhost, 127.0.0.1, *.onrender.com in non-www form)
-        if host in ["127.0.0.1", "localhost"] or "onrender.com" in host:
+        # Don't redirect non-production domains (localhost, 127.0.0.1, *.onrender.com in non-www form,
+        # testserver is Django's default test-client host)
+        if host in ["127.0.0.1", "localhost", "testserver"] or "onrender.com" in host:
             return self.get_response(request)
         
         # Redirect to www version with HTTPS
