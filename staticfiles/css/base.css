@@ -2020,8 +2020,12 @@ body.scroll-down .trust-strip {
     height: 60px;
   }
 
+  /* Fixed px, not a percentage: .navbar-logo img's real ancestor in the
+     header markup is .brand, which has no explicit height, so a
+     percentage here resolves to nothing and the image renders at its
+     native intrinsic size instead - the "logo fills the page" bug. */
   .navbar-logo img {
-    height: 75%;
+    height: 44px;
   }
 }
 
