@@ -17,6 +17,15 @@
 </div>
 
 <style>
+  /* The [hidden] override below matters: .pwa-install-banner's own
+     "display: flex" ties in specificity with the browser's built-in
+     "[hidden] { display: none }" rule, and author CSS wins ties over
+     the UA stylesheet - so without this, "display: flex" always won
+     and the banner showed on every page load regardless of the hidden
+     attribute or what the JS set it to. */
+  .pwa-install-banner[hidden] {
+    display: none;
+  }
   .pwa-install-banner {
     position: fixed;
     left: 16px;
