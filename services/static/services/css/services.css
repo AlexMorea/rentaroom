@@ -541,30 +541,6 @@
    FORMS
 ====================================================== */
 
-.service-card input,
-.service-card select,
-.service-card textarea{
-
-  width:100%;
-
-  padding:14px 16px;
-
-  border-radius:14px;
-
-  border:1px solid var(--border);
-
-  margin-top:6px;
-
-  margin-bottom:18px;
-
-}
-
-.service-card label{
-
-  font-weight:600;
-
-}
-
 /* ======================================================
    MOBILE
 ====================================================== */
@@ -854,6 +830,8 @@ color:#0f172a;
   border-radius:14px;
   border:1px solid var(--border);
   background:white;
+  margin-top:6px;
+  margin-bottom:18px;
 }
 
 .service-card input:focus,
