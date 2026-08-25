@@ -1,13 +1,17 @@
 {
+  "id": "/",
   "name": "Rooms4You",
   "short_name": "Rooms4You",
   "description": "Find verified rooms and connect with trusted landlords across South Africa.",
+  "lang": "en-ZA",
+  "dir": "ltr",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f8fafc",
   "theme_color": "#0B6FBF",
+  "categories": ["lifestyle", "utilities"],
   "icons": [
     {
       "src": "/static/images/icon-192.png",
@@ -26,6 +30,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Rooms",
+      "short_name": "Browse",
+      "description": "Search available rooms to rent",
+      "url": "/rooms/?source=shortcut",
+      "icons": [{ "src": "/static/images/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "List a Room",
+      "short_name": "List",
+      "description": "Add a room for tenants to find",
+      "url": "/rooms/new/?source=shortcut",
+      "icons": [{ "src": "/static/images/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

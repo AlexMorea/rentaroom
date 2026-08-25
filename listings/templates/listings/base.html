@@ -8,6 +8,10 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    {% if GOOGLE_SITE_VERIFICATION %}
+    <meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION }}" />
+    {% endif %}
+
     <!-- ================= SEO ================= -->
     <meta
       name="description"
@@ -36,6 +40,12 @@
     <meta name="theme-color" content="#0B6FBF" />
     <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}" />
 
+    <!-- Warm up connections to third-party origins used below, so the
+         actual stylesheet/script requests don't pay the DNS+TLS cost
+         cold - a small, safe Core Web Vitals win. -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
@@ -52,7 +62,7 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}?v=13" />
 
     <link rel="stylesheet" href="{% static 'css/trust.css' %}?v=1" />
-      
+
 
     {% block extra_css %}
     {% endblock %}
@@ -61,6 +71,46 @@
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       defer
     ></script>
+
+    {% if GA_MEASUREMENT_ID %}
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA_MEASUREMENT_ID }}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{ GA_MEASUREMENT_ID }}');
+    </script>
+    {% endif %}
+
+    <!-- Structured data (JSON-LD) - sitewide entity so Google can build
+         a knowledge panel / associate rich results with the brand.
+         Page-specific markup (e.g. Product schema on room_detail) is
+         added via the structured_data block below, not by overriding
+         this, so both always render together. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Rooms4You",
+      "url": "https://www.rooms4you.co.za/",
+      "logo": "https://www.rooms4you.co.za{% static 'images/logo-social.png' %}"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Rooms4You",
+      "url": "https://www.rooms4you.co.za/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.rooms4you.co.za/rooms/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    {% block structured_data %}{% endblock %}
   </head>
 
   <body
@@ -97,8 +147,11 @@
     {% include "listings/partials/_footer.html" %}
 
     <!-- MODALS -->
-    {% include "listings/partials/_auth_modal.html" %} 
+    {% include "listings/partials/_auth_modal.html" %}
     {% include "listings/partials/_idle_modal.html" %}
+
+    <!-- PWA install prompt -->
+    {% include "listings/partials/_pwa_install_banner.html" %}
 
     <!-- GLOBAL DATA -->
     <script>
@@ -113,6 +166,7 @@
     <script src="{% static 'js/idle.js' %}?v=1" defer></script>
     <script src="{% static 'js/slider.js' %}?v=1" defer></script>
     <script src="{% static 'js/form-submit-state.js' %}?v=1" defer></script>
+    <script src="{% static 'js/pwa-install.js' %}?v=1" defer></script>
 
     <!-- PWA: service worker registration -->
     <script>

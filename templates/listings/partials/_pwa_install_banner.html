@@ -1,0 +1,82 @@
+{% load static %}
+
+<!-- Custom "Install app" prompt. Hidden by default; pwa-install.js only
+     reveals it once the browser actually fires beforeinstallprompt
+     (meaning it's genuinely installable), so it never shows on browsers
+     that don't support installation (e.g. iOS Safari) or once already
+     installed. Positioned bottom-left, opposite the WhatsApp FAB
+     bottom-right, so the two never overlap. -->
+<div id="pwaInstallBanner" class="pwa-install-banner" hidden>
+  <span class="pwa-install-icon">📲</span>
+  <div class="pwa-install-text">
+    <strong>Install Rooms4You</strong>
+    <span>Quick access from your home screen</span>
+  </div>
+  <button type="button" id="pwaInstallBtn" class="pwa-install-btn">Install</button>
+  <button type="button" id="pwaInstallDismiss" class="pwa-install-dismiss" aria-label="Dismiss">✕</button>
+</div>
+
+<style>
+  .pwa-install-banner {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 320px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 12px 12px 12px 14px;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.18);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+  }
+  .pwa-install-icon {
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .pwa-install-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .pwa-install-text strong {
+    font-size: 0.88rem;
+    color: #0f172a;
+  }
+  .pwa-install-text span {
+    font-size: 0.76rem;
+    color: #64748b;
+  }
+  .pwa-install-btn {
+    flex-shrink: 0;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #0b6fbf, #002a5c);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 10px;
+  }
+  .pwa-install-dismiss {
+    flex-shrink: 0;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 1rem;
+    padding: 4px;
+    line-height: 1;
+  }
+  @media (max-width: 480px) {
+    .pwa-install-banner {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      max-width: none;
+    }
+  }
+</style>
