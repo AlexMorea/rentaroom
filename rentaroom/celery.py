@@ -1,10 +1,13 @@
 import os
 
-from celery import Celery
+# celery is a deliberately optional dependency (see CELERY_BROKER_URL in
+# settings.py) - only installed where a worker process actually runs this
+# module, not in every environment that analyzes this codebase.
+from celery import Celery  # pyright: ignore[reportMissingImports]
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rentaroom.settings")
 
-app = Celery("rentaroom")
+app = Celery("rentaroom")  # pyright: ignore[reportCallIssue]
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 

@@ -128,10 +128,12 @@ class RankingTests(TestCase):
         # view context contains popular_ids
         popular_ids = resp.context.get("popular_ids")
         self.assertIsNotNone(popular_ids)
+        assert popular_ids is not None  # narrows for the type checker below
         self.assertIn(r1.id, popular_ids)
         self.assertNotIn(r2.id, popular_ids)
 
         # ordering: first room should be r1 (highest score)
         rooms = resp.context.get("rooms")
+        assert rooms is not None
         self.assertTrue(len(rooms) > 0)
         self.assertEqual(rooms[0].id, r1.id)

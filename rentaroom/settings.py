@@ -306,7 +306,7 @@ CELERY_BEAT_SCHEDULE = {}
 # Default periodic task: compute materialized room scores once per hour.
 # Only add the schedule if Celery is installed and `crontab` is available.
 try:
-    from celery.schedules import crontab
+    from celery.schedules import crontab  # pyright: ignore[reportMissingImports]
 
     CELERY_BEAT_SCHEDULE.update({
         "compute-scores-hourly": {

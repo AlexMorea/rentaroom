@@ -431,10 +431,7 @@ class RoomForm(forms.ModelForm):
         self.fields["available_units"].label = "Units available now"
 
         # Client-side helper: mark contact fields required in the widget
-        try:
-            role = getattr(self.user, "profile", None) and self.user.profile.role
-        except AttributeError:
-            role = None
+        role = getattr(getattr(self.user, "profile", None), "role", None)
 
         if role == "landlord":
             for fld in ("contact_phone", "contact_whatsapp"):

@@ -294,6 +294,10 @@ def call_landlord(request, room_id):
         return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
     try:
+        # can_place_call above already required TwilioClient is not None -
+        # this just makes that provable rather than tracked only through
+        # the boolean variable.
+        assert TwilioClient is not None
         client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         callback_url = request.build_absolute_uri(
             reverse("voice_bridge_twiml", args=[room.id])
@@ -335,6 +339,12 @@ def voice_bridge_twiml(request, room_id):
     Must stay unauthenticated and CSRF-exempt - Twilio's servers call
     this directly, not a logged-in browser session.
     """
+    if VoiceResponse is None:
+        # twilio isn't installed in this environment - Twilio's servers
+        # shouldn't be calling this webhook if the feature isn't
+        # configured, but fail safely rather than crashing if they do.
+        return HttpResponse(status=503)
+
     room = get_object_or_404(Room, id=room_id)
     landlord_phone = (room.contact_phone or "").strip()
 

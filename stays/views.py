@@ -156,7 +156,7 @@ def request_booking(request, pk):
 
     for errors in form.errors.values():
         for error in errors:
-            messages.error(request, error)
+            messages.error(request, str(error))
     return redirect("stays:guesthouse_detail", pk=pk)
 
 
