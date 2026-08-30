@@ -194,7 +194,7 @@ class BakkieDriver(models.Model):
     rating = models.DecimalField(
         max_digits=3,
         decimal_places=2,
-        default=5.0
+        default=5.0  # pyright: ignore[reportArgumentType] - Django accepts a plain float/int default here; stub is stricter than DecimalField actually requires
     )
 
     # ================= CONSENT =================
@@ -258,7 +258,7 @@ class MoveBooking(models.Model):
     quoted_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0  # pyright: ignore[reportArgumentType] - Django accepts a plain float/int default here; stub is stricter than DecimalField actually requires
     )
 
     notes = models.TextField(blank=True)

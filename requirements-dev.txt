@@ -5,3 +5,8 @@
 # Static type stubs for Django so Pylance/Pyright can resolve model fields,
 # querysets, request.user, etc. instead of reporting them as unknown.
 django-types
+
+# celery.py/settings.py import Celery only inside try/except ImportError
+# (see their comments) - it's optional at runtime. Installed here only so
+# Pylance/Pyright can resolve those imports instead of flagging them.
+celery

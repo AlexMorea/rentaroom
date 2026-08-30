@@ -432,7 +432,7 @@ class RoomForm(forms.ModelForm):
 
         # Client-side helper: mark contact fields required in the widget
         try:
-            role = getattr(self.user, "profile", None) and self.user.profile.role
+            role = getattr(self.user, "profile", None) and self.user.profile.role  # pyright: ignore[reportOptionalMemberAccess] - guarded by the getattr(...) and short-circuit above
         except AttributeError:
             role = None
 
