@@ -491,44 +491,45 @@ def room_detail(request, pk):
 
     # lightweight analytics write
     # Create view stat asynchronously so the detail page responds quickly.
+    def _spawn_stat_thread(rid, uid):
+        import threading
+
+        def _async_stat():
+            try:
+                RoomStat.objects.create(
+                    room_id=rid,
+                    user_id=uid,
+                    stat_type="view",
+                )
+            except DatabaseError:
+                logger.exception("Failed to write RoomStat in background")
+
+        threading.Thread(target=_async_stat, daemon=True).start()
+
     try:
+        stat_uid = request.user.id if request.user.is_authenticated else None
+
         if settings.CELERY_BROKER_URL:
             # If Celery is configured prefer using a task (fast path). We import
             # lazily to avoid hard dependency during tests.
             try:
                 from listings.tasks import create_room_view_stat_task
 
-                create_room_view_stat_task.delay(room.id, request.user.id if request.user.is_authenticated else None)
+                create_room_view_stat_task.delay(room.id, stat_uid)
             except (ImportError, ConnectionError, TimeoutError, OSError):
-                # Fallback to background thread if Celery import fails
-                import threading
-
-                def _async_stat(rid, uid):
-                    try:
-                        RoomStat.objects.create(
-                            room_id=rid,
-                            user_id=uid,
-                            stat_type="view",
-                        )
-                    except DatabaseError:
-                        logger.exception("Failed to write RoomStat in background")
-
-                threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
+                # Fallback to background thread if Celery import fails.
+                # Deferred with on_commit: the thread's own DB connection
+                # can't see this request's writes (like the room itself)
+                # until they're actually committed - starting it eagerly
+                # inside an open transaction (e.g. TestCase's per-test
+                # atomic block) races the commit and can deadlock/"database
+                # is locked" against the still-open one. on_commit() runs
+                # immediately when there's no open transaction (the normal
+                # request case), so this stays just as async in production.
+                transaction.on_commit(lambda: _spawn_stat_thread(room.id, stat_uid))
         else:
             # No Celery broker configured — do a lightweight background thread
-            import threading
-
-            def _async_stat(rid, uid):
-                try:
-                    RoomStat.objects.create(
-                        room_id=rid,
-                        user_id=uid,
-                        stat_type="view",
-                    )
-                except DatabaseError:
-                    logger.exception("Failed to write RoomStat in background")
-
-            threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
+            transaction.on_commit(lambda: _spawn_stat_thread(room.id, stat_uid))
     except (ConnectionError, DatabaseError, RuntimeError, TimeoutError, OSError) as e:
         logger.warning("Failed to schedule background RoomStat write: %s", str(e))
 

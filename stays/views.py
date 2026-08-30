@@ -156,7 +156,7 @@ def request_booking(request, pk):
 
     for errors in form.errors.values():
         for error in errors:
-            messages.error(request, error)
+            messages.error(request, str(error))
     return redirect("stays:guesthouse_detail", pk=pk)
 
 
@@ -209,6 +209,7 @@ def accept_booking(request, pk):
     if success:
         messages.success(request, "Booking confirmed. Contact details are now visible to both of you.")
     else:
+        assert error is not None  # confirm_booking() only omits error when success is True
         messages.error(request, error)
 
     return redirect("stays:booking_detail", pk=pk)

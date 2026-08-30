@@ -294,6 +294,9 @@ def call_landlord(request, room_id):
         return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
     try:
+        # can_place_call above already confirmed TwilioClient is not None;
+        # the assert just gives the type checker the same guarantee.
+        assert TwilioClient is not None
         client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         callback_url = request.build_absolute_uri(
             reverse("voice_bridge_twiml", args=[room.id])
@@ -337,6 +340,14 @@ def voice_bridge_twiml(request, room_id):
     """
     room = get_object_or_404(Room, id=room_id)
     landlord_phone = (room.contact_phone or "").strip()
+
+    if VoiceResponse is None:
+        # Twilio isn't installed/importable. Shouldn't be reachable in
+        # practice - call_landlord() already refuses to place a Twilio call
+        # when the SDK failed to import, so Twilio never gets a callback_url
+        # pointing here - but guard it so a stray hit returns a clean 503
+        # instead of crashing on VoiceResponse() being None.
+        return HttpResponse(status=503)
 
     response = VoiceResponse()
     if landlord_phone:

@@ -31,6 +31,9 @@ def get_or_create_membership(user):
 def require_active_membership(user):
     membership = get_or_create_membership(user)
 
+    if membership is None:
+        return False
+
     return not (
         membership.is_trial
         and membership.trial_end

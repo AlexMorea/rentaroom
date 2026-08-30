@@ -1,6 +1,7 @@
 import os
 import re
 import secrets
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -185,7 +186,14 @@ else:
     }
 
 # ================= SECURITY =================
-if not DEBUG:
+# `manage.py test` always runs with the Django test client, which talks
+# plain HTTP over an in-memory "testserver" host - never HTTPS. Forcing
+# SECURE_SSL_REDIRECT there makes django.middleware.security.SecurityMiddleware
+# 301-redirect every single test request before it reaches the view, which
+# looks like unrelated view/test breakage but is really just this flag.
+RUNNING_TESTS = "test" in sys.argv
+
+if not DEBUG and not RUNNING_TESTS:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

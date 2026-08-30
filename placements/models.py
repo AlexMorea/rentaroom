@@ -125,9 +125,9 @@ class Placement(models.Model):
         elif rent <= 2500:
             return Decimal(150)
         elif rent <= 4000:
-            return 250
+            return Decimal(250)
         else:
-            return 350
+            return Decimal(350)
 
     @property
     def expected_success_fee(self) -> Decimal:
