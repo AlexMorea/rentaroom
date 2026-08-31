@@ -192,6 +192,11 @@ class UserRegisterForm(forms.Form):
 
         profile.save()
 
+        # The post_save signal on User already cached an (empty) Profile on
+        # `user.profile` before we populated this one - refresh that cache so
+        # callers (OTP dispatch, routing) see the real phone number.
+        user.profile = profile
+
         # CREATE MEMBERSHIP ONLY FOR LANDLORDS
         if profile.role == "landlord":
             Membership.objects.get_or_create(

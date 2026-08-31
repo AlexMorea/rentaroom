@@ -209,7 +209,7 @@ def accept_booking(request, pk):
     if success:
         messages.success(request, "Booking confirmed. Contact details are now visible to both of you.")
     else:
-        messages.error(request, error)
+        messages.error(request, error or "Unable to confirm this booking.")
 
     return redirect("stays:booking_detail", pk=pk)
 

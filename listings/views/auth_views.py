@@ -20,12 +20,96 @@ from accounts.state_engine import get_user_state
 
 from ..forms import UserRegisterForm
 from ..models import PhoneOTP, Profile
+from ..services.sms import (
+    SMSNotConfigured,
+    SMSSendError,
+    check_verification,
+    sms_enabled,
+    start_verification,
+)
 from ..utils import generate_otp, send_otp_email, send_welcome_email
 from .helpers import get_display_name, get_or_create_membership
 
 logger = logging.getLogger(__name__)
 
 OTP_RESEND_SECONDS = 90
+
+
+def _mask_phone(phone):
+    p = (phone or "").strip()
+    if len(p) < 5:
+        return p or "your phone"
+    return f"{p[:3]}•••{p[-2:]}"
+
+
+def _pending_e164(country_code, phone):
+    """Build an E.164 number from the raw country_code + local number a
+    user typed on the change-phone form."""
+    cc = (country_code or "+27").strip()
+    digits = re.sub(r"[^\d]", "", phone or "")
+    digits = digits.removeprefix(cc.lstrip("+"))
+    digits = digits.lstrip("0")
+    return f"{cc}{digits}"
+
+
+def _send_account_otp(user):
+    """
+    Send a signup / login verification code to ``user``. Prefers SMS via
+    Twilio Verify and falls back to email OTP when SMS is unconfigured or
+    fails. Returns the channel actually used: ``"sms"``, ``"email"`` or
+    ``None`` if nothing could be sent.
+    """
+    profile = user.profile
+    phone = profile.full_phone() if hasattr(profile, "full_phone") else ""
+
+    if sms_enabled() and phone:
+        try:
+            start_verification(phone)
+            return "sms"
+        except (SMSNotConfigured, SMSSendError):
+            logger.warning(
+                "SMS OTP unavailable for user %s - falling back to email", user.pk
+            )
+
+    otp = generate_otp()
+    PhoneOTP.objects.filter(user=user).delete()
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number=phone or "email_verification",
+        otp=otp,
+    )
+    try:
+        send_otp_email(user, otp)
+    except Exception:
+        logger.exception("Failed to send OTP email for user %s", user.pk)
+        return None
+    return "email"
+
+
+def _verify_account_otp(user, channel, otp_input):
+    """Return True when ``otp_input`` is the valid code for ``user`` on
+    the given ``channel``."""
+    if channel == "sms":
+        try:
+            return check_verification(user.profile.full_phone(), otp_input)
+        except SMSNotConfigured:
+            return False
+
+    record = (
+        PhoneOTP.objects.filter(
+            user=user,
+            is_verified=False,
+            created_at__gte=timezone.now() - timedelta(minutes=15),
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if record and compare_digest(record.otp, otp_input):
+        record.is_verified = True
+        record.save()
+        return True
+    return False
+
 
 def register(request):
     form = UserRegisterForm(request.POST or None)
@@ -37,41 +121,37 @@ def register(request):
             user.is_active = True
             user.save()
 
-            otp = generate_otp()
+            request.session["pending_user_id"] = user.id
 
-            PhoneOTP.objects.filter(user=user).delete()
+            channel = _send_account_otp(user)
+            request.session["otp_channel"] = channel or "email"
 
-            PhoneOTP.objects.create(
-                user=user,
-                phone_number=user.profile.phone_number,
-                otp=otp
-            )
-
-            try:
-                send_otp_email(user, otp)
-            except Exception:
-                logger.exception("Failed to send signup OTP email for user %s", user.pk)
-                messages.warning(
-                    request,
-                    "Account created, but we couldn't send the OTP email. "
-                    "Use the resend button on the next page to try again."
-                )
-            else:
+            if channel == "sms":
                 set_otp_cooldown(user.id)
-
+                messages.success(
+                    request,
+                    "Account created. Enter the code we texted to "
+                    f"{_mask_phone(user.profile.full_phone())}."
+                )
+            elif channel == "email":
+                set_otp_cooldown(user.id)
                 messages.success(
                     request,
                     "Account created. Enter the OTP sent to your email."
                 )
-
-            request.session["pending_user_id"] = user.id
+            else:
+                messages.warning(
+                    request,
+                    "Account created, but we couldn't send your verification "
+                    "code. Use the resend button on the next page to try again."
+                )
 
             return redirect("verify_account")
 
     return render(
         request,
         "listings/register.html",
-        {"form": form}
+        {"form": form, "sms_otp_enabled": sms_enabled()}
     )
 
 
@@ -83,31 +163,25 @@ def verify_account(request):
 
     user = get_object_or_404(User, id=user_id)
 
+    channel = request.session.get("otp_channel", "email")
+    ctx = {"otp_channel": channel}
+
     if request.method == "POST":
 
-        otp_input = request.POST.get("otp")
+        otp_input = (request.POST.get("otp") or "").strip()
 
         attempt_key = f"otp_attempts_{user.id}"
         attempts = cache.get(attempt_key, 0)
 
         if attempts >= 5:
             messages.error(request, "Too many attempts. Try again later.")
-            return render(request, "listings/verify_account.html")
+            return render(request, "listings/verify_account.html", ctx)
 
         if not otp_input:
             messages.error(request, "Enter OTP.")
-            return render(request, "listings/verify_account.html")
+            return render(request, "listings/verify_account.html", ctx)
 
-        record = PhoneOTP.objects.filter(
-            user=user,
-            is_verified=False,
-            created_at__gte=timezone.now() - timedelta(minutes=15)
-        ).order_by("-created_at").first()
-
-        if record and compare_digest(record.otp, otp_input):
-
-            record.is_verified = True
-            record.save()
+        if _verify_account_otp(user, channel, otp_input):
 
             profile, _ = Profile.objects.get_or_create(user=user)
             profile.is_email_verified = True
@@ -127,6 +201,7 @@ def verify_account(request):
             login(request, user)
 
             request.session.pop("pending_user_id", None)
+            request.session.pop("otp_channel", None)
 
             messages.success(
                 request,
@@ -142,7 +217,7 @@ def verify_account(request):
 
         cache.set(attempt_key, attempts + 1, timeout=900)
 
-    return render(request, "listings/verify_account.html")
+    return render(request, "listings/verify_account.html", ctx)
 
 
 @never_cache
@@ -201,6 +276,13 @@ def user_login(request):
     # OTP CHECK (ONLY ONE SYSTEM: verify_account)
     if not profile.is_phone_verified:
         request.session["pending_user_id"] = user.id
+        # Send a fresh code, but not more often than the resend cooldown
+        # (keeps a login-retry loop from burning SMS credit).
+        if not cache.get(f"otp_resend_{user.id}"):
+            channel = _send_account_otp(user)
+            request.session["otp_channel"] = channel or "email"
+            if channel:
+                set_otp_cooldown(user.id)
         logger.info(f"OTP BLOCK: user {user.id}")
         return redirect("verify_account")
 
@@ -251,30 +333,23 @@ def resend_account_otp(request):
     # reset failed attempts safely
     cache.delete(f"otp_attempts_{user.id}")
 
-    otp = generate_otp()
+    channel = _send_account_otp(user)
 
-    PhoneOTP.objects.filter(user=user).delete()
-
-    PhoneOTP.objects.create(
-        user=user,
-        phone_number="email_verification",
-        otp=otp
-    )
-
-    try:
-        send_otp_email(user, otp)
-    except Exception:
-        logger.exception("Failed to send resend OTP email for user %s", user.pk)
+    if not channel:
         return JsonResponse({
             "level": "error",
-            "message": "Couldn't send the OTP email. Please try again shortly."
+            "message": "Couldn't send the code. Please try again shortly."
         }, status=502)
 
+    request.session["otp_channel"] = channel
     set_otp_cooldown(user.id)
 
     return JsonResponse({
         "level": "success",
-        "message": "OTP sent successfully.",
+        "message": (
+            "Code sent by SMS." if channel == "sms"
+            else "OTP sent to your email."
+        ),
         "cooldown": OTP_RESEND_SECONDS
     })
 
@@ -403,26 +478,35 @@ def change_phone(request):
             return redirect("change_phone")
 
         user = request.user
+        e164 = _pending_e164(country_code, phone)
 
-        otp = generate_otp()
+        channel = "email"
+        if sms_enabled():
+            try:
+                start_verification(e164)
+                channel = "sms"
+            except (SMSNotConfigured, SMSSendError):
+                logger.warning(
+                    "SMS OTP unavailable for phone change (user %s) - using email",
+                    user.pk,
+                )
 
-        # DELETE OLD OTPs
-        PhoneOTP.objects.filter(user=user).delete()
+        if channel == "email":
+            otp = generate_otp()
+            PhoneOTP.objects.filter(user=user).delete()
+            PhoneOTP.objects.create(user=user, phone_number=phone, otp=otp)
+            send_otp_email(user, otp)
 
-        # STORE CLEAN NUMBER ONLY
-        PhoneOTP.objects.create(
-            user=user,
-            phone_number=phone,
-            otp=otp
-        )
-
-        send_otp_email(user, otp)
-
-        # Store BOTH for confirmation step
+        # Store everything the confirm step needs
         request.session["pending_phone"] = phone
         request.session["pending_country_code"] = country_code
+        request.session["pending_phone_e164"] = e164
+        request.session["pending_phone_channel"] = channel
 
-        messages.success(request, "OTP sent to your email.")
+        messages.success(
+            request,
+            "Code sent by SMS." if channel == "sms" else "OTP sent to your email."
+        )
         return redirect("confirm_phone_change")
 
     return render(request, "listings/change_phone.html")
@@ -432,21 +516,29 @@ def change_phone(request):
 def confirm_phone_change(request):
     if request.method == "POST":
 
-        otp = request.POST.get("otp")
+        otp = (request.POST.get("otp") or "").strip()
         pending_phone = request.session.get("pending_phone")
         pending_country_code = request.session.get("pending_country_code")
+        pending_e164 = request.session.get("pending_phone_e164")
+        channel = request.session.get("pending_phone_channel", "email")
 
         if not pending_phone:
             return redirect("profile")
 
-        record = PhoneOTP.objects.filter(
-            user=request.user,
-            phone_number=pending_phone,
-            otp=otp,
-            created_at__gte=timezone.now() - timedelta(minutes=15)
-        ).last()
+        if channel == "sms":
+            try:
+                ok = check_verification(pending_e164, otp)
+            except SMSNotConfigured:
+                ok = False
+        else:
+            ok = PhoneOTP.objects.filter(
+                user=request.user,
+                phone_number=pending_phone,
+                otp=otp,
+                created_at__gte=timezone.now() - timedelta(minutes=15)
+            ).exists()
 
-        if record:
+        if ok:
             profile = request.user.profile
 
             profile.phone_number = pending_phone
@@ -456,8 +548,13 @@ def confirm_phone_change(request):
 
             PhoneOTP.objects.filter(user=request.user).delete()
 
-            request.session.pop("pending_phone", None)
-            request.session.pop("pending_country_code", None)
+            for key in (
+                "pending_phone",
+                "pending_country_code",
+                "pending_phone_e164",
+                "pending_phone_channel",
+            ):
+                request.session.pop(key, None)
 
             messages.success(
                 request,
@@ -468,7 +565,11 @@ def confirm_phone_change(request):
 
         messages.error(request, "Invalid OTP.")
 
-    return render(request, "listings/confirm_phone.html")
+    return render(
+        request,
+        "listings/confirm_phone.html",
+        {"otp_channel": request.session.get("pending_phone_channel", "email")},
+    )
 
 
 @login_required
