@@ -337,12 +337,32 @@ POPULAR_SCORE_THRESHOLD = int(os.environ.get("POPULAR_SCORE_THRESHOLD", "100"))
 # for ordering and badge decisions. Default enabled but override with env var.
 USE_MATERIALIZED_SCORE = env_bool("USE_MATERIALIZED_SCORE", "True")
 
+# ----------------- Listing Freshness -----------------
+# A room the landlord hasn't confirmed in this many days gets a "please
+# confirm" nudge (email + push) - see flag_stale_listings. Chosen as two
+# weeks: frequent enough that "available" stays meaningfully true, not so
+# frequent that landlords tune the nudge out.
+LISTING_STALE_DAYS = int(os.environ.get("LISTING_STALE_DAYS", "14"))
+
+# A room still unconfirmed after this many days gets auto-hidden
+# (is_available=False) rather than sitting there indefinitely looking
+# live. Landlord gets a notification with a one-click reactivate link -
+# this is a soft hide, not a delete.
+LISTING_AUTO_HIDE_DAYS = int(os.environ.get("LISTING_AUTO_HIDE_DAYS", "30"))
+
 # ----------------- Celery Defaults -----------------
 # Broker URL for Celery (empty by default — Celery disabled until configured).
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")
 
 # Celery beat schedule dictionary placeholder. Populate in production
 # settings or via an environment-specific settings module.
+#
+# NOTE: every scheduled task below ships with force=False (report-only,
+# same convention as compute_scores/backfill_hits/flag_overdue_placement_fees) -
+# a scheduled job that emails landlords, auto-hides listings, or changes
+# a materialized score should be a conscious "yes, turn this on for
+# real" decision in a production settings override, not something that
+# starts happening silently the moment Celery beat is wired up.
 CELERY_BEAT_SCHEDULE = {}
 
 # Default periodic task: compute materialized room scores once per hour.
@@ -355,7 +375,22 @@ try:
             "task": "listings.tasks.compute_scores_task",
             "schedule": crontab(minute=0, hour="*/1"),
             "args": (False,),
-        }
+        },
+        # Once a day is enough - staleness is measured in days, not hours,
+        # and this is the job that actually sends emails/push, so it
+        # shouldn't run more often than the nudges it's gating on.
+        "flag-stale-listings-daily": {
+            "task": "listings.tasks.flag_stale_listings_task",
+            "schedule": crontab(minute=0, hour=6),
+            "args": (False,),
+        },
+        # Monday morning - matches how the digest itself is framed
+        # ("your week on Rooms4You").
+        "landlord-weekly-digest": {
+            "task": "listings.tasks.send_landlord_digest_task",
+            "schedule": crontab(minute=0, hour=8, day_of_week=1),
+            "args": (False,),
+        },
     })
 except Exception:
     # Celery not installed in this environment; leave schedule empty.

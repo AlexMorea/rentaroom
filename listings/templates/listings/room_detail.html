@@ -105,6 +105,14 @@
               <strong class="rd-fact-value">{{ room.created_at|timesince }} ago</strong>
             </div>
           </div>
+
+          <div class="meta-card rd-fact">
+            <span class="rd-fact-icon">{% if room.is_stale %}⏳{% else %}🔄{% endif %}</span>
+            <div>
+              <span class="meta-label rd-fact-label">Last confirmed</span>
+              <strong class="rd-fact-value">{{ room.freshness_label }}</strong>
+            </div>
+          </div>
         </div>
 
         <!-- DESCRIPTION -->

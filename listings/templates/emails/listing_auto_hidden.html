@@ -1,0 +1,34 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>We've paused "{{ room.title }}"</h1>
+
+<p>
+Hello {{ room.owner.first_name|default:"there" }},
+</p>
+
+<p>
+We hadn't heard back after a few reminders, so we've temporarily hidden this
+listing from search — nobody likes turning up to a room that's already gone.
+This protects both your reputation with tenants and theirs' with you.
+</p>
+
+<div class="info-card">
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p><strong>Location:</strong> {{ room.location }}</p>
+  <p><strong>Last confirmed:</strong> {{ days }} days ago</p>
+</div>
+
+<p>Still available? One click brings it straight back:</p>
+
+<a href="{{ reactivate_url }}" class="btn">
+  ✅ Yes, it's still available — reactivate
+</a>
+
+<p style="margin-top: 24px;">
+Nothing else about your listing was changed — your photos, description and
+price are exactly as you left them.
+</p>
+
+{% endblock %}

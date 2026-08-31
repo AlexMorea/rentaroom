@@ -32,3 +32,23 @@ def compute_scores_task(force=False):
     if force:
         args.append("--force")
     call_command("compute_scores", *args)
+
+
+@shared_task
+def flag_stale_listings_task(force=False):
+    """Nudge landlords about unconfirmed listings, auto-hide the ones
+    that never respond. Set force=True to actually send/apply."""
+    args = []
+    if force:
+        args.append("--force")
+    call_command("flag_stale_listings", *args)
+
+
+@shared_task
+def send_landlord_digest_task(force=False):
+    """Weekly per-landlord performance + tips email/push. Set force=True
+    to actually send."""
+    args = []
+    if force:
+        args.append("--force")
+    call_command("send_landlord_digest", *args)
