@@ -313,6 +313,11 @@ else:
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "thabisomorea@gmail.com")
 DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 
+# Where new fraud reports get emailed for staff triage - see
+# trust/signals.py. Defaults to the address already shown across the
+# Trust Centre/Report Fraud pages.
+SAFETY_TEAM_EMAIL = os.environ.get("SAFETY_TEAM_EMAIL", "safety@rooms4you.co.za")
+
 
 # ================= LOGGING =================
 LOGGING = {
@@ -389,6 +394,11 @@ try:
         "landlord-weekly-digest": {
             "task": "listings.tasks.send_landlord_digest_task",
             "schedule": crontab(minute=0, hour=8, day_of_week=1),
+            "args": (False,),
+        },
+        "compute-response-stats-daily": {
+            "task": "listings.tasks.compute_response_stats_task",
+            "schedule": crontab(minute=30, hour=6),
             "args": (False,),
         },
     })

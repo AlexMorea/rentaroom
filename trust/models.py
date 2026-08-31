@@ -127,6 +127,30 @@ class FraudReport(models.Model):
         # "we acknowledge receipt" needs something concrete to point at.
         return f"R4Y-{self.pk:06d}"
 
+    @property
+    def related_open_reports(self):
+        """Other still-open reports against the same room or the same
+        reported user - what actually makes a fresh report worth
+        escalating ahead of the queue, not just its own category."""
+        if not self.pk or not (self.room_id or self.reported_user_id):
+            return FraudReport.objects.none()
+
+        condition = models.Q()
+        if self.room_id:
+            condition |= models.Q(room_id=self.room_id)
+        if self.reported_user_id:
+            condition |= models.Q(reported_user_id=self.reported_user_id)
+
+        return (
+            FraudReport.objects.exclude(pk=self.pk)
+            .filter(condition)
+            .filter(status__in=(self.STATUS_NEW, self.STATUS_INVESTIGATING))
+        )
+
+    @property
+    def is_repeat_offender(self) -> bool:
+        return self.related_open_reports.exists()
+
     def mark_status(self, status: str, *, staff_user=None, note: str = ""):
         self.status = status
         if note:

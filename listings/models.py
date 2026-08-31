@@ -322,8 +322,18 @@ class Profile(models.Model):
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tenant")
 
-    pending_email = models.EmailField(blank=True, null=True) 
-    email_change_token = models.UUIDField(null=True, blank=True) 
+    pending_email = models.EmailField(blank=True, null=True)
+    email_change_token = models.UUIDField(null=True, blank=True)
+    # NOTE: despite the name, this is set from the same email-delivered
+    # OTP as is_email_verified (see listings/views/auth_views.py -
+    # verify_account/confirm_phone_change) - there is no SMS/WhatsApp
+    # channel wired up yet (Twilio in this codebase is voice-call-masking
+    # only, and isn't funded/configured). Functionally it's real: it
+    # means "completed onboarding's OTP step" and correctly gates
+    # get_user_state()/evaluate_user_state(). Just don't surface it to
+    # users as a distinct "phone verified" trust signal anywhere - it
+    # isn't one yet. trust:verification.html already lists real phone
+    # verification as "Coming Soon" for exactly this reason.
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
 
@@ -374,6 +384,47 @@ class Profile(models.Model):
         ],
         default="self"
     )
+
+    # ----------------- Response time (landlords) -----------------
+    # Materialized by compute_response_stats, same pattern as Room.score -
+    # computed from real Message threads (median time from a tenant's
+    # first message to the landlord's first reply), not self-reported.
+    # Null/0 means "not enough measured threads yet", handled by
+    # response_time_label below rather than showing a misleading claim
+    # off one data point.
+    avg_response_minutes = models.PositiveIntegerField(null=True, blank=True)
+    response_rate_percent = models.PositiveSmallIntegerField(null=True, blank=True)
+    responses_measured = models.PositiveIntegerField(default=0)
+
+    # Below this many measured threads, there isn't enough signal to
+    # claim a response-time pattern - one lucky (or unlucky) reply
+    # shouldn't earn or cost a landlord a public label.
+    MIN_THREADS_FOR_RESPONSE_LABEL: ClassVar[int] = 3
+
+    @property
+    def response_time_label(self) -> str | None:
+        if self.responses_measured < self.MIN_THREADS_FOR_RESPONSE_LABEL or self.avg_response_minutes is None:
+            return None
+
+        minutes = self.avg_response_minutes
+        if minutes <= 60:
+            return "Usually responds within an hour"
+        if minutes <= 60 * 4:
+            return "Usually responds within a few hours"
+        if minutes <= 60 * 24:
+            return "Usually responds within a day"
+        if minutes <= 60 * 24 * 3:
+            return "Usually responds within a few days"
+        return "Response time varies"
+
+    @property
+    def is_fast_responder(self) -> bool:
+        return (
+            self.responses_measured >= self.MIN_THREADS_FOR_RESPONSE_LABEL
+            and self.avg_response_minutes is not None
+            and self.avg_response_minutes <= 240
+            and (self.response_rate_percent or 0) >= 70
+        )
 
     def full_phone(self):
         phone = (self.phone_number or "").strip()

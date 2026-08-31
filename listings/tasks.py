@@ -52,3 +52,13 @@ def send_landlord_digest_task(force=False):
     if force:
         args.append("--force")
     call_command("send_landlord_digest", *args)
+
+
+@shared_task
+def compute_response_stats_task(force=False):
+    """Recompute each landlord's response-time trust signal from recent
+    Message threads. Set force=True to apply updates."""
+    args = []
+    if force:
+        args.append("--force")
+    call_command("compute_response_stats", *args)
