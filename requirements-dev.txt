@@ -10,3 +10,6 @@ django-types
 # (see their comments) - it's optional at runtime. Installed here only so
 # Pylance/Pyright can resolve those imports instead of flagging them.
 celery
+
+# Type stubs for psycopg2, same reasoning as django-types above.
+types-psycopg2

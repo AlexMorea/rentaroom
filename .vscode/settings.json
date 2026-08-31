@@ -16,5 +16,23 @@
     "editor.defaultFormatter": "ms-python.python",
     "editor.formatOnSave": true
   },
-  "python.analysis.typeCheckingMode": "basic"
+  "python.analysis.typeCheckingMode": "basic",
+  // Django's ORM adds attributes dynamically at the metaclass level
+  // (implicit `id`, `<fk>_id` accessors, reverse relations via
+  // related_name, get_<field>_display() for choices fields, etc.).
+  // django-types (see requirements.txt) covers the common case
+  // (Model.objects, QuerySet/Manager generics) but can't synthesize
+  // per-model fields without the full django-stubs mypy plugin, which
+  // Pylance doesn't support. Same story for reportIncompatibleVariableOverride
+  // on ModelAdmin.actions/inlines/readonly_fields - a completely
+  // standard, correct override pattern the stubs type too narrowly.
+  // Downgraded to warning rather than fully hidden so they're still
+  // visible if you go looking, without drowning out real errors in
+  // the Problems panel. Anything NOT covered by this pattern is a
+  // targeted inline `# pyright: ignore[...]` instead - see e.g.
+  // rentaroom/celery.py, services/models.py.
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportAttributeAccessIssue": "warning",
+    "reportIncompatibleVariableOverride": "warning"
+  }
 }

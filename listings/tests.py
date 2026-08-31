@@ -16,8 +16,9 @@ class LandlordRoomsViewTests(TestCase):
 		)
 
 		# ensure profile exists and mark as landlord
-		self.user.profile.role = "landlord"
-		self.user.profile.save()
+		profile = getattr(self.user, "profile")
+		profile.role = "landlord"
+		profile.save()
 
 		# create 15 rooms so we have 2 pages (page size 10)
 		for i in range(15):

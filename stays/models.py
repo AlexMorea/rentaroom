@@ -43,8 +43,8 @@ class GuestHouse(models.Model):
     max_guests = models.PositiveIntegerField(default=2)
     min_nights = models.PositiveIntegerField(default=1)
 
-    check_in_time = models.TimeField(default="14:00")  # pyright: ignore[reportArgumentType] - Django parses this string default via to_python() at save time
-    check_out_time = models.TimeField(default="10:00")  # pyright: ignore[reportArgumentType] - Django parses this string default via to_python() at save time
+    check_in_time = models.TimeField(default="14:00")  # pyright: ignore[reportArgumentType] - Django parses this fine; kept a plain string to match the migration's frozen default and avoid model/migration drift
+    check_out_time = models.TimeField(default="10:00")  # pyright: ignore[reportArgumentType] - Django parses this fine; kept a plain string to match the migration's frozen default and avoid model/migration drift
     house_rules = models.TextField(blank=True, default="")
 
     has_wifi = models.BooleanField(default=False)

@@ -319,6 +319,25 @@ DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 SAFETY_TEAM_EMAIL = os.environ.get("SAFETY_TEAM_EMAIL", "safety@rooms4you.co.za")
 
 
+# ================= SMS / TWILIO (OTP) =================
+# Phone verification is delivered by SMS through Twilio's Verify API when
+# all three credentials are present. Twilio generates, sends, expires and
+# rate-limits the code itself - we only ask it to "start" and "check".
+# When these are blank (local dev, or a Twilio outage) the OTP flow falls
+# back to email automatically, so nothing is ever hard-blocked on Twilio.
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
+TWILIO_VERIFY_SERVICE_SID = os.environ.get("TWILIO_VERIFY_SERVICE_SID", "").strip()
+
+# Master switch. Defaults on, but only actually engages when the three
+# credentials above are also set. Set SMS_OTP_ENABLED=0 to force email OTP
+# even with Twilio configured (useful for a quick rollback without
+# unsetting the credentials).
+SMS_OTP_ENABLED = env_bool("SMS_OTP_ENABLED", "True") and bool(
+    TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_VERIFY_SERVICE_SID
+)
+
+
 # ================= LOGGING =================
 LOGGING = {
     "version": 1,
@@ -328,6 +347,7 @@ LOGGING = {
         "django": {"handlers": ["console"], "level": "INFO"},
         "django.request": {"handlers": ["console"], "level": "ERROR"},
         "rooms4you_email": {"handlers": ["console"], "level": "INFO"},
+        "rooms4you_sms": {"handlers": ["console"], "level": "INFO"},
     },
 }
 
@@ -373,7 +393,7 @@ CELERY_BEAT_SCHEDULE = {}
 # Default periodic task: compute materialized room scores once per hour.
 # Only add the schedule if Celery is installed and `crontab` is available.
 try:
-    from celery.schedules import crontab
+    from celery.schedules import crontab  # pyright: ignore[reportMissingImports]
 
     CELERY_BEAT_SCHEDULE.update({
         "compute-scores-hourly": {

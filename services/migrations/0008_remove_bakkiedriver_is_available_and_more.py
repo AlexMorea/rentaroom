@@ -196,7 +196,7 @@ class Migration(migrations.Migration):
                 ("scheduled_time", models.DateTimeField()),
                 (
                     "quoted_price",
-                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),  # pyright: ignore[reportArgumentType]
                 ),
                 ("notes", models.TextField(blank=True)),
                 (
