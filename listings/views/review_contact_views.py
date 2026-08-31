@@ -15,6 +15,8 @@ from django.views.decorators.http import require_POST
 
 from utils.email import send_template_email
 
+from trust.models import FraudReport
+
 from ..models import Contact, Message, Review, Room, RoomStat
 
 try:
@@ -77,6 +79,9 @@ def add_review(request, room_id):
     return redirect("room_detail", pk=room.id)
 
 
+VALID_REPORT_REASONS = {choice for choice, _label in FraudReport.CATEGORY_CHOICES}
+
+
 @login_required
 @require_POST
 def report_room(request, pk):
@@ -107,9 +112,23 @@ def report_room(request, pk):
         f"reason={reason} | detail={detail}"
     )
 
+    # Persist the report so the Trust & Safety team can actually see and
+    # action it, instead of it only ever existing as a log line nobody
+    # queries. The room-detail form's reason values (spam/scam/abuse/
+    # wrong_info) are a subset of FraudReport's categories, so they map
+    # straight across.
+    report = FraudReport.objects.create(
+        reporter=request.user if request.user.is_authenticated else None,
+        room=room,
+        reported_user=room.owner,
+        category=reason if reason in VALID_REPORT_REASONS else FraudReport.CATEGORY_OTHER,
+        detail=detail,
+    )
+
     messages.success(
         request,
-        "Thanks! Your report was received ✅ We’ll review this listing."
+        f"Thanks! Your report was received ✅ (ref {report.reference_code}). "
+        "Our Trust & Safety team will review this listing."
     )
 
     return redirect("room_detail", pk=room.id)

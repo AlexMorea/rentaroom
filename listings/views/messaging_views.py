@@ -7,8 +7,11 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
+
+from accounts.push import notify_user
 
 from ..models import Contact, Message, Room
 
@@ -93,6 +96,12 @@ def conversation_thread(request, room_id, other_user_id):
                 Contact.objects.get_or_create(
                     room=room,
                     user=request.user if not is_owner else other_user,
+                )
+                notify_user(
+                    other_user,
+                    title=f"New message from {request.user.first_name or request.user.username}",
+                    body=body[:120],
+                    url=reverse("conversation_thread", args=[room.id, request.user.id]),
                 )
 
         return redirect("conversation_thread", room_id=room.id, other_user_id=other_user.id)

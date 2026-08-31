@@ -172,3 +172,36 @@ class Membership(models.Model):
             delta = self.trial_end - timezone.now()
             return max(delta.days, 0)
         return 0
+
+
+class PushSubscription(models.Model):
+    """
+    One browser/device's Web Push subscription for one user. A user can
+    have several (phone + laptop, or after reinstalling the PWA), which
+    is why this isn't a OneToOneField - accounts.push.notify_user() just
+    sends to all of them.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions",
+    )
+
+    # The PushSubscription object's fields, straight from the browser's
+    # pushManager.subscribe() call - endpoint is unique per
+    # browser+device+site, so it doubles as a natural dedupe key.
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+
+    user_agent = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["user"]),
+        ]
+
+    def __str__(self):
+        return f"Push subscription for {self.user} ({self.endpoint[:40]}...)"

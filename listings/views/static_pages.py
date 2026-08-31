@@ -2,7 +2,7 @@ import logging
 import os
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -153,4 +153,31 @@ def robots_txt(request):
         f"Sitemap: https://www.rooms4you.co.za{reverse('sitemap')}",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def assetlinks_json(request):
+    """
+    Digital Asset Links file Android's Trusted Web Activity uses to
+    verify the Play Store app is allowed to open rooms4you.co.za links
+    without the browser chrome/URL bar. Package name and cert
+    fingerprints come from env vars (settings.TWA_PACKAGE_NAME /
+    TWA_SHA256_FINGERPRINTS) instead of being hardcoded here, because
+    they don't exist until someone actually generates the Android
+    signing keystore (see mobile/android/README.md) - until then this
+    correctly serves an empty array rather than 500ing or lying about a
+    package that isn't published yet.
+    """
+    if not (settings.TWA_PACKAGE_NAME and settings.TWA_SHA256_FINGERPRINTS):
+        return JsonResponse([], safe=False)
+
+    return JsonResponse([
+        {
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": settings.TWA_PACKAGE_NAME,
+                "sha256_cert_fingerprints": settings.TWA_SHA256_FINGERPRINTS,
+            },
+        }
+    ], safe=False)
 

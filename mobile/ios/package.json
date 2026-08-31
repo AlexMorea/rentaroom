@@ -1,0 +1,15 @@
+{
+  "name": "rooms4you-ios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rooms4You iOS app shell (Capacitor, wrapping the live rooms4you.co.za site)",
+  "scripts": {
+    "sync": "cap sync ios",
+    "open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
+  }
+}
