@@ -1,0 +1,33 @@
+{% load static %}
+
+<!-- "Enable notifications" opt-in. Deliberately NOT auto-prompted on
+     page load - browsers throttle/block sites that ask for Notification
+     permission unprompted, and it reads as spammy. push-notify.js only
+     reveals this once we know push is actually supported, the user is
+     logged in, and they haven't already subscribed or dismissed it. -->
+<div id="pushNotifyBanner" class="pwa-install-banner push-notify-banner" hidden>
+  <span class="pwa-install-icon">🔔</span>
+  <div class="pwa-install-text">
+    <strong>Get notified instantly</strong>
+    <span>New messages and report updates, even when the app's closed</span>
+  </div>
+  <button type="button" id="pushNotifyBtn" class="pwa-install-btn">Enable</button>
+  <button type="button" id="pushNotifyDismiss" class="pwa-install-dismiss" aria-label="Dismiss">✕</button>
+</div>
+
+<style>
+  /* Sits above the PWA install banner (same corner) rather than beside
+     it, so the two never fight for the same space on a narrow phone
+     screen - only one is ever visible at a time in practice anyway,
+     since install shows pre-install and this shows post-install/login. */
+  .push-notify-banner {
+    bottom: 88px;
+  }
+  @media (max-width: 480px) {
+    .push-notify-banner {
+      bottom: 78px;
+    }
+  }
+</style>
+
+<script src="{% static 'js/push-notify.js' %}?v=1" defer></script>

@@ -153,9 +153,15 @@
     <!-- PWA install prompt -->
     {% include "listings/partials/_pwa_install_banner.html" %}
 
+    <!-- Push notification opt-in (logged-in users only) -->
+    {% if user.is_authenticated %}
+      {% include "listings/partials/_push_notify_banner.html" %}
+    {% endif %}
+
     <!-- GLOBAL DATA -->
     <script>
       window.GOOGLE_MAPS_API_KEY = "{{ GOOGLE_MAPS_API_KEY }}";
+      window.VAPID_PUBLIC_KEY = "{{ VAPID_PUBLIC_KEY }}";
     </script>
 
     <!-- CORE JS -->

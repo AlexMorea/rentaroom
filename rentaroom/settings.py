@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     "services",
     "placements",
     "stays",
+    "trust",
 ]
 
 # Use BigAutoField by default to silence model warnings about AutoField
@@ -134,6 +135,7 @@ TEMPLATES = [
                 # GOOGLE MAPS KEY
                 "listings.context_processors.google_maps_key",
                 "listings.context_processors.seo_settings",
+                "listings.context_processors.vapid_public_key",
             ],
         },
     },
@@ -250,6 +252,38 @@ STORAGES = {
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/rooms/"
+
+
+# ================= WEB PUSH (VAPID) =================
+# Same pattern as SECRET_KEY above: require real keys in production, but
+# generate an ephemeral pair in DEBUG so local dev/tests work without any
+# setup. Real keys for production should be generated once and stored as
+# env vars (see accounts/management/commands/generate_vapid_keys.py) -
+# rotating them invalidates every existing push subscription.
+VAPID_PRIVATE_KEY_PEM = os.environ.get("VAPID_PRIVATE_KEY_PEM", "").strip()
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "safety@rooms4you.co.za").strip()
+
+if not (VAPID_PRIVATE_KEY_PEM and VAPID_PUBLIC_KEY):
+    if DEBUG or RUNNING_TESTS:
+        from accounts.push import generate_ephemeral_vapid_keys
+
+        VAPID_PRIVATE_KEY_PEM, VAPID_PUBLIC_KEY = generate_ephemeral_vapid_keys()
+    else:
+        # Don't hard-crash production over an optional feature - push
+        # notifications just silently no-op (see accounts/push.py)
+        # rather than the whole site going down over missing keys.
+        VAPID_PRIVATE_KEY_PEM, VAPID_PUBLIC_KEY = "", ""
+
+
+# ================= ANDROID TWA (Trusted Web Activity) =================
+# Filled in once mobile/android's signing keystore exists - see
+# mobile/android/README.md. Until then /.well-known/assetlinks.json
+# correctly serves an empty array (no Play Store app claims this domain
+# yet), rather than the endpoint 500ing or lying.
+TWA_PACKAGE_NAME = os.environ.get("TWA_PACKAGE_NAME", "").strip()
+_twa_fingerprints = os.environ.get("TWA_SHA256_FINGERPRINTS", "").strip()
+TWA_SHA256_FINGERPRINTS = [f.strip() for f in _twa_fingerprints.split(",") if f.strip()]
 
 
 # ================= GOOGLE MAPS =================

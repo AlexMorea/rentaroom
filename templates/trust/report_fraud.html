@@ -161,9 +161,48 @@
         <hr>
 
         <p>
+            Every report below is logged and goes straight to our Trust & Safety
+            team's review queue — you'll get a reference number to keep.
+        </p>
 
-            Until our in-app reporting system is available, you can contact the Rooms4You Trust & Safety Team directly.
+        <form method="post" style="display:grid; gap:14px; margin-top:10px;">
+            {% csrf_token %}
 
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.category.id_for_label }}"><strong>{{ form.category.label }}</strong></label>
+                {{ form.category }}
+                {% if form.category.errors %}<p class="field-error">{{ form.category.errors|join:", " }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.listing_reference.id_for_label }}"><strong>{{ form.listing_reference.label }}</strong></label>
+                {{ form.listing_reference }}
+            </div>
+
+            <div>
+                <label for="{{ form.detail.id_for_label }}"><strong>{{ form.detail.label }}</strong></label>
+                {{ form.detail }}
+                {% if form.detail.errors %}<p class="field-error">{{ form.detail.errors|join:", " }}</p>{% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.reporter_contact.id_for_label }}"><strong>{{ form.reporter_contact.label }}</strong></label>
+                {{ form.reporter_contact }}
+            </div>
+
+            <button type="submit" class="btn-primary" style="justify-self:start;">
+                🚨 Submit Report
+            </button>
+        </form>
+
+        <hr style="margin:22px 0;">
+
+        <p class="text-muted" style="margin-bottom:10px;">
+            Prefer to talk to someone directly? You can also reach the Trust & Safety Team here:
         </p>
 
         <div class="dashboard-grid">
@@ -265,32 +304,36 @@
 
     </div>
 
-    <!-- COMING SOON -->
+    <!-- TRANSPARENCY -->
 
     <div class="form-card mt-4"
          style="background:#fff7ed;border:1px solid #fdba74;">
 
         <h2>
-            🚀 Coming Soon
+            📊 Trust & Safety, In Numbers
         </h2>
 
         <hr>
 
-        <ul style="line-height:2;">
+        <div class="dashboard-grid">
+            <div>
+                <h4>{{ verified_landlord_count }}</h4>
+                <p>Verified landlords</p>
+            </div>
+            <div>
+                <h4>{{ reports_received_count }}</h4>
+                <p>Reports received</p>
+            </div>
+            <div>
+                <h4>{{ reports_resolved_count }}</h4>
+                <p>Reports reviewed &amp; closed</p>
+            </div>
+        </div>
 
-            <li>📝 In-app fraud reporting</li>
-
-            <li>📎 Screenshot uploads</li>
-
-            <li>📍 Report directly from listings</li>
-
-            <li>📊 Report tracking</li>
-
-            <li>🔔 Investigation updates</li>
-
-            <li>🚫 One-click account reporting</li>
-
-        </ul>
+        <p class="text-muted" style="margin-top:14px;">
+            Still on the roadmap: screenshot uploads on reports, and a way for you
+            to track your own report's status without contacting us directly.
+        </p>
 
     </div>
 

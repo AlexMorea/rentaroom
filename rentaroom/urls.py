@@ -16,6 +16,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("service-worker.js", listings_views.service_worker_view, name="service_worker"),
     path("robots.txt", listings_views.robots_txt, name="robots_txt"),
+    path(".well-known/assetlinks.json", listings_views.assetlinks_json, name="assetlinks_json"),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     path("", include("listings.urls")),
     path("accounts/", include("accounts.urls")),
