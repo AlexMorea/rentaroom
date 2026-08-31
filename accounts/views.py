@@ -3,7 +3,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from listings.models import Profile
@@ -61,88 +60,6 @@ def membership_view(request):
         "listing_limit": membership.listing_limit(),
         "days_left": membership.days_left,
     })
-
-
-@login_required
-def upgrade_view(request):
-
-    denied = landlord_only(request)
-    if denied:
-        return denied
-
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user
-    )
-
-    if request.method == "POST":
-        new_tier = request.POST.get("tier")
-
-        allowed = ["starter", "bronze", "silver", "gold"]
-
-        if new_tier in allowed:
-            membership.tier = new_tier
-            membership.save()
-
-            messages.success(
-                request,
-                "Membership updated successfully."
-            )
-            return redirect("membership")
-
-    return render(request, "accounts/upgrade.html", {
-        "membership": membership
-    })
-
-
-@login_required
-def payment_request_view(request):
-
-    denied = landlord_only(request)
-    if denied:
-        return denied
-
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user
-    )
-
-    if request.method == "POST":
-        membership.payment_requested = True
-        membership.payment_requested_at = timezone.now()
-        membership.save()
-
-        messages.success(
-            request,
-            "Payment request submitted. We will activate your account shortly."
-        )
-        return redirect("membership")
-
-    return render(request, "accounts/payment_request.html", {
-        "membership": membership
-    })
-
-
-@login_required
-def confirm_payment(request):
-
-    denied = landlord_only(request)
-    if denied:
-        return denied
-
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user
-    )
-
-    membership.payment_requested = True
-    membership.payment_requested_at = timezone.now()
-    membership.status = "pending"
-    membership.save()
-
-    messages.success(
-        request,
-        "Payment submitted. We will verify and activate your account shortly."
-    )
-
-    return redirect("membership")
 
 
 @staff_member_required
