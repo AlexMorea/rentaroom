@@ -359,9 +359,6 @@ def voice_bridge_twiml(request, room_id):
     return HttpResponse(str(response), content_type="text/xml")
 
 
-    return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
-
-
 @login_required
 def mark_success(request, room_id):
     room = get_object_or_404(Room, id=room_id)
