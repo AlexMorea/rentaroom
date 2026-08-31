@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -81,3 +82,68 @@ class ProfilePageRoleDisplayTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["badge_text"], "Driver")
         self.assertEqual(resp.context["stat_links"], [])
+
+
+class AccountLoginLockoutTests(TestCase):
+    """
+    Regression coverage for a real gap: login was only rate-limited by IP,
+    so a targeted credential-stuffing attack against one known account,
+    spread across many different IPs, was never throttled at all (no
+    single IP ever crossed the per-IP threshold). Per-account lockout
+    closes that without collaterally locking out other users who happen
+    to share an IP with the attacker.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.victim = User.objects.create_user(
+            username="victim@example.com", email="victim@example.com", password="CorrectHorseBattery1!"
+        )
+        profile = self.victim.profile
+        profile.is_phone_verified = True
+        profile.is_email_verified = True
+        profile.save()
+
+    def _attempt(self, ip, email="victim@example.com", password="wrong"):
+        c = Client(REMOTE_ADDR=ip)
+        return c.post("/login/", {"email": email, "password": password}, follow=True)
+
+    def test_account_locks_after_repeated_failures_across_different_ips(self):
+        for i in range(7):
+            self._attempt(f"10.0.0.{i}")
+
+        # 8th attempt, brand-new IP, even with the CORRECT password - still blocked.
+        resp = self._attempt("10.0.0.200", password="CorrectHorseBattery1!")
+        self.assertContains(resp, "Too many login attempts on this account")
+        self.assertFalse(resp.wsgi_request.user.is_authenticated)
+
+    def test_lockout_does_not_affect_a_different_account_on_the_shared_ip(self):
+        other = User.objects.create_user(
+            username="other@example.com", email="other@example.com", password="AnotherPass1!"
+        )
+        other_profile = other.profile
+        other_profile.is_phone_verified = True
+        other_profile.is_email_verified = True
+        other_profile.save()
+
+        # Attacker hammers the victim's account from one IP...
+        for _ in range(7):
+            self._attempt("10.0.0.5")
+
+        # ...a different account, same IP, should be unaffected.
+        resp = self._attempt("10.0.0.5", email="other@example.com", password="AnotherPass1!")
+        self.assertTrue(resp.wsgi_request.user.is_authenticated)
+
+    def test_successful_login_clears_the_account_lockout_counter(self):
+        for _ in range(3):
+            self._attempt("10.0.0.9")
+
+        resp = self._attempt("10.0.0.9", password="CorrectHorseBattery1!")
+        self.assertTrue(resp.wsgi_request.user.is_authenticated)
+
+        # Counter cleared - failed attempts start fresh, not continuing
+        # from 3 toward the 7 threshold.
+        for _ in range(3):
+            self._attempt("10.0.0.9")
+        resp = self._attempt("10.0.0.9", password="CorrectHorseBattery1!")
+        self.assertTrue(resp.wsgi_request.user.is_authenticated)

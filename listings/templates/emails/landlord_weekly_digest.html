@@ -1,0 +1,40 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Your week on Rooms4You</h1>
+
+<p>
+Hello {{ user.first_name|default:"there" }},
+</p>
+
+<div class="info-card">
+  <p><strong>{{ totals.contacts }}</strong> contact{{ totals.contacts|pluralize }} (calls, WhatsApp, email or messages)</p>
+  <p><strong>{{ totals.views }}</strong> view{{ totals.views|pluralize }}</p>
+  <p><strong>{{ totals.favorites }}</strong> save{{ totals.favorites|pluralize }}</p>
+</div>
+
+{% if stale_rooms %}
+<h2>⚠ Needs a quick confirm</h2>
+<p>
+These listings haven't been confirmed in a while - tenants are still seeing
+them as available, so a quick confirmation keeps that accurate:
+</p>
+<div class="info-card">
+  {% for room in stale_rooms %}
+    <p>• <strong>{{ room.title }}</strong> — {{ room.freshness_label }}</p>
+  {% endfor %}
+</div>
+<a href="https://www.rooms4you.co.za{% url 'landlord_rooms' %}" class="btn">
+  Confirm My Listings
+</a>
+{% endif %}
+
+<h2 style="margin-top: 28px;">💡 This week's tip</h2>
+<p>{{ tip }}</p>
+
+<a href="https://www.rooms4you.co.za{% url 'landlord_rooms' %}" class="btn btn-secondary" style="margin-top: 8px;">
+  Open My Dashboard
+</a>
+
+{% endblock %}

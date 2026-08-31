@@ -111,6 +111,19 @@ def _verify_account_otp(user, channel, otp_input):
     return False
 
 
+# Login attempt limits. Two separate counters, not one:
+# - IP-based (existing) stops one attacker hammering many accounts from
+#   the same machine/botnet node.
+# - Account-based (below) stops a targeted credential-stuffing attack on
+#   ONE known account (e.g. a landlord's public email) spread across many
+#   different IPs/proxies - the IP counter alone never triggers for that,
+#   since no single IP crosses its threshold.
+# Tighter limit + longer cooldown than the IP counter, since it's scoped
+# to a single identifier and a legitimate user rarely needs 7 tries.
+ACCOUNT_LOGIN_MAX_ATTEMPTS = 7
+ACCOUNT_LOGIN_LOCKOUT_SECONDS = 1800
+
+
 def register(request):
     form = UserRegisterForm(request.POST or None)
 
@@ -239,6 +252,17 @@ def user_login(request):
     login_value = (request.POST.get("email") or "").strip()
     password = request.POST.get("password") or ""
 
+    # Keyed on the raw submitted identifier (lowercased), not on whether
+    # it resolves to a real account - checking/incrementing this the same
+    # way regardless of account existence means the lockout itself can't
+    # be used to probe which emails are registered.
+    account_key = f"login_attempts_account:{login_value.lower()}"
+    account_attempts = cache.get(account_key, 0)
+
+    if login_value and account_attempts >= ACCOUNT_LOGIN_MAX_ATTEMPTS:
+        messages.error(request, "Too many login attempts on this account. Try again later.")
+        return redirect("login")
+
     user_obj = (
         User.objects.filter(email__iexact=login_value).first()
         or User.objects.filter(username__iexact=login_value).first()
@@ -246,16 +270,20 @@ def user_login(request):
 
     if not user_obj:
         cache.set(login_key, attempts + 1, timeout=900)
+        cache.set(account_key, account_attempts + 1, timeout=ACCOUNT_LOGIN_LOCKOUT_SECONDS)
         messages.error(request, "Invalid credentials.")
         return redirect("login")
-    
+
 
     user = authenticate(request, username=user_obj.username, password=password)
 
     if not user:
         cache.set(login_key, attempts + 1, timeout=900)
+        cache.set(account_key, account_attempts + 1, timeout=ACCOUNT_LOGIN_LOCKOUT_SECONDS)
         messages.error(request, "Invalid credentials.")
         return redirect("login")
+
+    cache.delete(account_key)
 
     profile = user.profile
 

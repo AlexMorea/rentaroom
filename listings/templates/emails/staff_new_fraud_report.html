@@ -1,0 +1,40 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+{% if is_repeat_offender %}
+<h1>🚨 Repeat report — {{ report.get_category_display }}</h1>
+<p>
+This is at least the second <strong>open</strong> report against the same
+{% if report.room %}listing{% else %}account{% endif %} — worth reviewing
+ahead of the queue.
+</p>
+{% else %}
+<h1>New fraud report — {{ report.get_category_display }}</h1>
+{% endif %}
+
+<div class="info-card">
+  <p><strong>Reference:</strong> {{ report.reference_code }}</p>
+  <p><strong>Category:</strong> {{ report.get_category_display }}</p>
+  {% if report.room %}
+    <p><strong>Listing:</strong> {{ report.room.title }} ({{ report.room.location }})</p>
+  {% endif %}
+  {% if report.reported_user %}
+    <p><strong>Reported user:</strong> {{ report.reported_user.get_full_name|default:report.reported_user.username }}</p>
+  {% endif %}
+  <p><strong>Reporter:</strong> {% if report.reporter %}{{ report.reporter.username }}{% else %}Not logged in{% endif %}{% if report.reporter_contact %} ({{ report.reporter_contact }}){% endif %}</p>
+  {% if related_count %}
+    <p><strong>Other open reports on this listing/user:</strong> {{ related_count }}</p>
+  {% endif %}
+</div>
+
+{% if report.detail %}
+<h2>What was reported</h2>
+<p style="white-space: pre-line;">{{ report.detail }}</p>
+{% endif %}
+
+<a href="{{ admin_url }}" class="btn">
+  Review in Admin
+</a>
+
+{% endblock %}

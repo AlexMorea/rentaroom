@@ -1,0 +1,54 @@
+{
+  "packageId": "za.co.rooms4you.twa",
+  "host": "www.rooms4you.co.za",
+  "name": "Rooms4You",
+  "launcherName": "Rooms4You",
+  "display": "standalone",
+  "themeColor": "#0B6FBFFF",
+  "themeColorDark": "#002A5CFF",
+  "navigationColor": "#0B6FBFFF",
+  "navigationColorDark": "#002A5CFF",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#00000000",
+  "backgroundColor": "#F8FAFCFF",
+  "enableNotifications": true,
+  "startUrl": "/?source=twa",
+  "iconUrl": "https://www.rooms4you.co.za/static/images/icon-512.png",
+  "maskableIconUrl": "https://www.rooms4you.co.za/static/images/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Browse Rooms",
+      "shortName": "Browse",
+      "url": "/rooms/?source=shortcut",
+      "chosenIconUrl": "https://www.rooms4you.co.za/static/images/icon-192.png"
+    },
+    {
+      "name": "List a Room",
+      "shortName": "List",
+      "url": "/rooms/new/?source=shortcut",
+      "chosenIconUrl": "https://www.rooms4you.co.za/static/images/icon-192.png"
+    }
+  ],
+  "generatorApp": "rooms4you-manual-scaffold",
+  "webManifestUrl": "https://www.rooms4you.co.za/static/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": []
+}

@@ -1,0 +1,19 @@
+{
+  "appId": "za.co.rooms4you.app",
+  "appName": "Rooms4You",
+  "webDir": "www",
+  "server": {
+    "url": "https://www.rooms4you.co.za",
+    "cleartext": false,
+    "allowNavigation": ["*.rooms4you.co.za"]
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#F8FAFC"
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

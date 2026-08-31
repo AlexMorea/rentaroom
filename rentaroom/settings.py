@@ -1,6 +1,7 @@
 import os
 import re
 import secrets
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -94,6 +95,7 @@ INSTALLED_APPS = [
     "services",
     "placements",
     "stays",
+    "trust",
 ]
 
 # Use BigAutoField by default to silence model warnings about AutoField
@@ -133,6 +135,7 @@ TEMPLATES = [
                 # GOOGLE MAPS KEY
                 "listings.context_processors.google_maps_key",
                 "listings.context_processors.seo_settings",
+                "listings.context_processors.vapid_public_key",
             ],
         },
     },
@@ -185,7 +188,14 @@ else:
     }
 
 # ================= SECURITY =================
-if not DEBUG:
+# `manage.py test` always runs with the Django test client, which talks
+# plain HTTP over an in-memory "testserver" host - never HTTPS. Forcing
+# SECURE_SSL_REDIRECT there makes django.middleware.security.SecurityMiddleware
+# 301-redirect every single test request before it reaches the view, which
+# looks like unrelated view/test breakage but is really just this flag.
+RUNNING_TESTS = "test" in sys.argv
+
+if not DEBUG and not RUNNING_TESTS:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -244,6 +254,38 @@ LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/rooms/"
 
 
+# ================= WEB PUSH (VAPID) =================
+# Same pattern as SECRET_KEY above: require real keys in production, but
+# generate an ephemeral pair in DEBUG so local dev/tests work without any
+# setup. Real keys for production should be generated once and stored as
+# env vars (see accounts/management/commands/generate_vapid_keys.py) -
+# rotating them invalidates every existing push subscription.
+VAPID_PRIVATE_KEY_PEM = os.environ.get("VAPID_PRIVATE_KEY_PEM", "").strip()
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "safety@rooms4you.co.za").strip()
+
+if not (VAPID_PRIVATE_KEY_PEM and VAPID_PUBLIC_KEY):
+    if DEBUG or RUNNING_TESTS:
+        from accounts.push import generate_ephemeral_vapid_keys
+
+        VAPID_PRIVATE_KEY_PEM, VAPID_PUBLIC_KEY = generate_ephemeral_vapid_keys()
+    else:
+        # Don't hard-crash production over an optional feature - push
+        # notifications just silently no-op (see accounts/push.py)
+        # rather than the whole site going down over missing keys.
+        VAPID_PRIVATE_KEY_PEM, VAPID_PUBLIC_KEY = "", ""
+
+
+# ================= ANDROID TWA (Trusted Web Activity) =================
+# Filled in once mobile/android's signing keystore exists - see
+# mobile/android/README.md. Until then /.well-known/assetlinks.json
+# correctly serves an empty array (no Play Store app claims this domain
+# yet), rather than the endpoint 500ing or lying.
+TWA_PACKAGE_NAME = os.environ.get("TWA_PACKAGE_NAME", "").strip()
+_twa_fingerprints = os.environ.get("TWA_SHA256_FINGERPRINTS", "").strip()
+TWA_SHA256_FINGERPRINTS = [f.strip() for f in _twa_fingerprints.split(",") if f.strip()]
+
+
 # ================= GOOGLE MAPS =================
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
@@ -270,6 +312,11 @@ else:
 
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "thabisomorea@gmail.com")
 DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
+
+# Where new fraud reports get emailed for staff triage - see
+# trust/signals.py. Defaults to the address already shown across the
+# Trust Centre/Report Fraud pages.
+SAFETY_TEAM_EMAIL = os.environ.get("SAFETY_TEAM_EMAIL", "safety@rooms4you.co.za")
 
 
 # ================= SMS / TWILIO (OTP) =================
@@ -315,12 +362,32 @@ POPULAR_SCORE_THRESHOLD = int(os.environ.get("POPULAR_SCORE_THRESHOLD", "100"))
 # for ordering and badge decisions. Default enabled but override with env var.
 USE_MATERIALIZED_SCORE = env_bool("USE_MATERIALIZED_SCORE", "True")
 
+# ----------------- Listing Freshness -----------------
+# A room the landlord hasn't confirmed in this many days gets a "please
+# confirm" nudge (email + push) - see flag_stale_listings. Chosen as two
+# weeks: frequent enough that "available" stays meaningfully true, not so
+# frequent that landlords tune the nudge out.
+LISTING_STALE_DAYS = int(os.environ.get("LISTING_STALE_DAYS", "14"))
+
+# A room still unconfirmed after this many days gets auto-hidden
+# (is_available=False) rather than sitting there indefinitely looking
+# live. Landlord gets a notification with a one-click reactivate link -
+# this is a soft hide, not a delete.
+LISTING_AUTO_HIDE_DAYS = int(os.environ.get("LISTING_AUTO_HIDE_DAYS", "30"))
+
 # ----------------- Celery Defaults -----------------
 # Broker URL for Celery (empty by default — Celery disabled until configured).
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "")
 
 # Celery beat schedule dictionary placeholder. Populate in production
 # settings or via an environment-specific settings module.
+#
+# NOTE: every scheduled task below ships with force=False (report-only,
+# same convention as compute_scores/backfill_hits/flag_overdue_placement_fees) -
+# a scheduled job that emails landlords, auto-hides listings, or changes
+# a materialized score should be a conscious "yes, turn this on for
+# real" decision in a production settings override, not something that
+# starts happening silently the moment Celery beat is wired up.
 CELERY_BEAT_SCHEDULE = {}
 
 # Default periodic task: compute materialized room scores once per hour.
@@ -333,7 +400,27 @@ try:
             "task": "listings.tasks.compute_scores_task",
             "schedule": crontab(minute=0, hour="*/1"),
             "args": (False,),
-        }
+        },
+        # Once a day is enough - staleness is measured in days, not hours,
+        # and this is the job that actually sends emails/push, so it
+        # shouldn't run more often than the nudges it's gating on.
+        "flag-stale-listings-daily": {
+            "task": "listings.tasks.flag_stale_listings_task",
+            "schedule": crontab(minute=0, hour=6),
+            "args": (False,),
+        },
+        # Monday morning - matches how the digest itself is framed
+        # ("your week on Rooms4You").
+        "landlord-weekly-digest": {
+            "task": "listings.tasks.send_landlord_digest_task",
+            "schedule": crontab(minute=0, hour=8, day_of_week=1),
+            "args": (False,),
+        },
+        "compute-response-stats-daily": {
+            "task": "listings.tasks.compute_response_stats_task",
+            "schedule": crontab(minute=30, hour=6),
+            "args": (False,),
+        },
     })
 except Exception:
     # Celery not installed in this environment; leave schedule empty.

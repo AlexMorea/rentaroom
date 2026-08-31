@@ -15,6 +15,8 @@ from django.views.decorators.http import require_POST
 
 from utils.email import send_template_email
 
+from trust.models import FraudReport
+
 from ..models import Contact, Message, Review, Room, RoomStat
 
 try:
@@ -77,6 +79,9 @@ def add_review(request, room_id):
     return redirect("room_detail", pk=room.id)
 
 
+VALID_REPORT_REASONS = {choice for choice, _label in FraudReport.CATEGORY_CHOICES}
+
+
 @login_required
 @require_POST
 def report_room(request, pk):
@@ -107,9 +112,23 @@ def report_room(request, pk):
         f"reason={reason} | detail={detail}"
     )
 
+    # Persist the report so the Trust & Safety team can actually see and
+    # action it, instead of it only ever existing as a log line nobody
+    # queries. The room-detail form's reason values (spam/scam/abuse/
+    # wrong_info) are a subset of FraudReport's categories, so they map
+    # straight across.
+    report = FraudReport.objects.create(
+        reporter=request.user if request.user.is_authenticated else None,
+        room=room,
+        reported_user=room.owner,
+        category=reason if reason in VALID_REPORT_REASONS else FraudReport.CATEGORY_OTHER,
+        detail=detail,
+    )
+
     messages.success(
         request,
-        "Thanks! Your report was received ✅ We’ll review this listing."
+        f"Thanks! Your report was received ✅ (ref {report.reference_code}). "
+        "Our Trust & Safety team will review this listing."
     )
 
     return redirect("room_detail", pk=room.id)
@@ -294,9 +313,8 @@ def call_landlord(request, room_id):
         return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
     try:
-        # can_place_call above already required TwilioClient is not None -
-        # this just makes that provable rather than tracked only through
-        # the boolean variable.
+        # can_place_call above already confirmed TwilioClient is not None;
+        # the assert just gives the type checker the same guarantee.
         assert TwilioClient is not None
         client = TwilioClient(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         callback_url = request.build_absolute_uri(
@@ -348,6 +366,14 @@ def voice_bridge_twiml(request, room_id):
     room = get_object_or_404(Room, id=room_id)
     landlord_phone = (room.contact_phone or "").strip()
 
+    if VoiceResponse is None:
+        # Twilio isn't installed/importable. Shouldn't be reachable in
+        # practice - call_landlord() already refuses to place a Twilio call
+        # when the SDK failed to import, so Twilio never gets a callback_url
+        # pointing here - but guard it so a stray hit returns a clean 503
+        # instead of crashing on VoiceResponse() being None.
+        return HttpResponse(status=503)
+
     response = VoiceResponse()
     if landlord_phone:
         response.say("Connecting you to the landlord now.")
@@ -356,9 +382,6 @@ def voice_bridge_twiml(request, room_id):
         response.say("Sorry, we could not connect this call. Please try messaging instead.")
 
     return HttpResponse(str(response), content_type="text/xml")
-
-
-    return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
 
 
 @login_required

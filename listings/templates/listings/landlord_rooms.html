@@ -21,10 +21,31 @@
           <span class="availability-badge {{ room.availability_state }} lr-availability lr-availability-{{ room.availability_state }}">
             {{ room.availability_badge_text }}
           </span>
+          <span class="lr-freshness {% if room.is_stale %}lr-freshness-stale{% endif %}">
+            {% if room.is_stale %}⚠{% else %}✓{% endif %} {{ room.freshness_label }}
+          </span>
         </div>
+
+        {% if room.completeness_percent < 100 %}
+        <div class="lr-completeness">
+          <div class="lr-completeness-track">
+            <div class="lr-completeness-fill" style="width: {{ room.completeness_percent }}%;"></div>
+          </div>
+          <span class="lr-completeness-text">
+            {{ room.completeness_percent }}% complete — {{ room.completeness_missing|first }}
+          </span>
+        </div>
+        {% endif %}
       </div>
 
       <div class="room-actions lr-room-actions">
+        <form method="post" action="{% url 'confirm_room_availability' room.id %}" class="lr-confirm-form">
+          {% csrf_token %}
+          <button type="submit" class="lr-confirm-btn" title="Confirm this listing is still accurate">
+            ✓ Confirm
+          </button>
+        </form>
+
         <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form lr-vacancy-form">
           {% csrf_token %}
           {% if room.is_available and room.available_units > 0 %}
@@ -141,12 +162,65 @@
     color: #64748b !important;
   }
 
+  .lr-freshness {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #16a34a;
+  }
+  .lr-freshness-stale {
+    color: #d97706;
+  }
+
+  .lr-completeness {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    max-width: 320px;
+  }
+  .lr-completeness-track {
+    flex: 1 1 auto;
+    height: 6px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    overflow: hidden;
+  }
+  .lr-completeness-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #0B6FBF, #002A5C);
+    border-radius: 999px;
+  }
+  .lr-completeness-text {
+    flex-shrink: 0;
+    font-size: 0.74rem;
+    color: #94a3b8;
+    white-space: nowrap;
+  }
+
   .lr-room-actions {
     display: flex !important;
     flex-direction: column;
     align-items: flex-end;
     gap: 8px;
     flex-shrink: 0;
+  }
+  .lr-confirm-form {
+    margin: 0;
+  }
+  .lr-confirm-btn {
+    border: 1px solid #0B6FBF;
+    background: #eff6ff;
+    color: #0B6FBF;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
   }
   .lr-vacancy-form {
     margin: 0;

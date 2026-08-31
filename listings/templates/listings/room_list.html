@@ -502,13 +502,13 @@
 </div>
 {% endif %}
 
-<script>
-  const roomsData = {{ map_rooms|safe }};
-</script>
+{{ map_rooms|json_script:"map-rooms-data" }}
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     if (!document.getElementById("roomsMap")) return;
+
+    const roomsData = JSON.parse(document.getElementById("map-rooms-data").textContent);
 
     const map = L.map("roomsMap");
 
@@ -518,6 +518,15 @@
 
     const markers = [];
     const markerMap = {};
+
+    // Room titles are landlord-supplied text - never interpolate them into
+    // an HTML string (Leaflet popup content renders as raw HTML). Escape
+    // before building the popup markup below.
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
 
     function renderMarkers(data) {
       markers.forEach((m) => map.removeLayer(m));
@@ -532,7 +541,7 @@
 
         const priceIcon = L.divIcon({
           className: "price-marker",
-          html: `R${room.price}`,
+          html: `R${escapeHtml(room.price)}`,
           iconSize: [40, 20],
         });
 
@@ -541,9 +550,9 @@
         }).addTo(map);
 
         marker.bindPopup(`
-        <b>${room.title}</b><br>
-        R${room.price}/month<br>
-        <a href="/rooms/${room.id}/">View listing</a>
+        <b>${escapeHtml(room.title)}</b><br>
+        R${escapeHtml(room.price)}/month<br>
+        <a href="/rooms/${encodeURIComponent(room.id)}/">View listing</a>
       `);
 
         markers.push(marker);

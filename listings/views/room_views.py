@@ -25,6 +25,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
@@ -491,44 +492,45 @@ def room_detail(request, pk):
 
     # lightweight analytics write
     # Create view stat asynchronously so the detail page responds quickly.
+    def _spawn_stat_thread(rid, uid):
+        import threading
+
+        def _async_stat():
+            try:
+                RoomStat.objects.create(
+                    room_id=rid,
+                    user_id=uid,
+                    stat_type="view",
+                )
+            except DatabaseError:
+                logger.exception("Failed to write RoomStat in background")
+
+        threading.Thread(target=_async_stat, daemon=True).start()
+
     try:
+        stat_uid = request.user.id if request.user.is_authenticated else None
+
         if settings.CELERY_BROKER_URL:
             # If Celery is configured prefer using a task (fast path). We import
             # lazily to avoid hard dependency during tests.
             try:
                 from listings.tasks import create_room_view_stat_task
 
-                create_room_view_stat_task.delay(room.id, request.user.id if request.user.is_authenticated else None)
+                create_room_view_stat_task.delay(room.id, stat_uid)
             except (ImportError, ConnectionError, TimeoutError, OSError):
-                # Fallback to background thread if Celery import fails
-                import threading
-
-                def _async_stat(rid, uid):
-                    try:
-                        RoomStat.objects.create(
-                            room_id=rid,
-                            user_id=uid,
-                            stat_type="view",
-                        )
-                    except DatabaseError:
-                        logger.exception("Failed to write RoomStat in background")
-
-                threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
+                # Fallback to background thread if Celery import fails.
+                # Deferred with on_commit: the thread's own DB connection
+                # can't see this request's writes (like the room itself)
+                # until they're actually committed - starting it eagerly
+                # inside an open transaction (e.g. TestCase's per-test
+                # atomic block) races the commit and can deadlock/"database
+                # is locked" against the still-open one. on_commit() runs
+                # immediately when there's no open transaction (the normal
+                # request case), so this stays just as async in production.
+                transaction.on_commit(lambda: _spawn_stat_thread(room.id, stat_uid))
         else:
             # No Celery broker configured — do a lightweight background thread
-            import threading
-
-            def _async_stat(rid, uid):
-                try:
-                    RoomStat.objects.create(
-                        room_id=rid,
-                        user_id=uid,
-                        stat_type="view",
-                    )
-                except DatabaseError:
-                    logger.exception("Failed to write RoomStat in background")
-
-            threading.Thread(target=_async_stat, args=(room.id, request.user.id if request.user.is_authenticated else None), daemon=True).start()
+            transaction.on_commit(lambda: _spawn_stat_thread(room.id, stat_uid))
     except (ConnectionError, DatabaseError, RuntimeError, TimeoutError, OSError) as e:
         logger.warning("Failed to schedule background RoomStat write: %s", str(e))
 
@@ -836,8 +838,70 @@ def toggle_room_vacancy(request, room_id):
         room.availability_status = "now"
         messages.success(request, f'"{room.title}" marked as available.')
 
+    # An explicit availability change IS a confirmation the listing is
+    # accurate right now - resets the staleness clock same as the
+    # dedicated "Confirm" button, so this one click covers both.
+    room.last_confirmed_at = timezone.now()
+    room.last_nudge_sent_at = None
     room.save()
     return redirect("landlord_rooms")
+
+
+@login_required
+@require_POST
+def confirm_room_availability(request, room_id):
+    """
+    Dashboard "Still accurate? Confirm" button - for when nothing about
+    the listing has actually changed, so there's no reason to make the
+    landlord open the vacancy toggle just to reset the staleness clock.
+    """
+    room = get_object_or_404(Room, id=room_id, owner=request.user)
+    room.confirm_availability()
+    messages.success(request, f'Thanks — "{room.title}" is confirmed up to date.')
+    return redirect("landlord_rooms")
+
+
+def confirm_availability_via_link(request, signed_token):
+    """
+    No-login landing page for the one-click links sent in the "please
+    confirm" email/push nudge (see flag_stale_listings). Deliberately
+    doesn't require login - a landlord replying to an email nudge is the
+    exact moment login friction loses the response, and the token itself
+    (signed + time-limited) is the auth.
+    """
+    from django.core import signing
+
+    max_age = (settings.LISTING_AUTO_HIDE_DAYS + settings.LISTING_STALE_DAYS) * 86400
+
+    try:
+        payload = signing.loads(
+            signed_token, salt="room-availability-confirm", max_age=max_age
+        )
+    except signing.BadSignature:
+        return render(request, "listings/confirm_availability_link.html", {"error": "invalid"})
+
+    room = Room.objects.filter(pk=payload.get("room_id")).first()
+    if room is None:
+        return render(request, "listings/confirm_availability_link.html", {"error": "invalid"})
+
+    action = payload.get("action")
+
+    if action == "confirm":
+        room.confirm_availability()
+    elif action == "vacate":
+        room.is_available = False
+        room.available_units = 0
+        room.last_confirmed_at = timezone.now()
+        room.last_nudge_sent_at = None
+        room.save()
+    else:
+        return render(request, "listings/confirm_availability_link.html", {"error": "invalid"})
+
+    return render(
+        request,
+        "listings/confirm_availability_link.html",
+        {"room": room, "action": action},
+    )
 
 
 @login_required

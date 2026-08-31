@@ -1,0 +1,15 @@
+# Local development / editor tooling only - not used in production.
+# Install with: pip install -r requirements-dev.txt
+-r requirements.txt
+
+# Static type stubs for Django so Pylance/Pyright can resolve model fields,
+# querysets, request.user, etc. instead of reporting them as unknown.
+django-types
+
+# celery.py/settings.py import Celery only inside try/except ImportError
+# (see their comments) - it's optional at runtime. Installed here only so
+# Pylance/Pyright can resolve those imports instead of flagging them.
+celery
+
+# Type stubs for psycopg2, same reasoning as django-types above.
+types-psycopg2

@@ -23,13 +23,22 @@
     {% if landlord.profile.is_verified_landlord %}
       <span class="badge badge-verified"> ★ Verified Landlord </span>
     {% endif %}
-    {% if landlord.profile.is_phone_verified %}
-      <span class="badge">✓ Phone Verified</span>
-    {% endif %}
     {% if landlord.profile.is_email_verified %}
       <span class="badge">✓ Email Verified</span>
     {% endif %}
+    {% if landlord.profile.is_fast_responder %}
+      <span class="badge">⚡ Fast Responder</span>
+    {% endif %}
   </div>
+
+  {% if landlord.profile.response_time_label %}
+  <p class="text-muted landlord-since" style="margin-top:-8px;">
+    💬 {{ landlord.profile.response_time_label }}
+    {% if landlord.profile.response_rate_percent is not None %}
+      · replies to {{ landlord.profile.response_rate_percent }}% of enquiries
+    {% endif %}
+  </p>
+  {% endif %}
 
   <div class="landlord-stats">
     <div class="landlord-stat-card">
@@ -45,7 +54,7 @@
   </div>
 </div>
 
-{% if not landlord.profile.is_verified_landlord and not landlord.profile.is_phone_verified and not landlord.profile.is_email_verified %}
+{% if not landlord.profile.is_verified_landlord and not landlord.profile.is_email_verified %}
 <div class="form-card landlord-trust-note">
   <p class="text-muted" style="margin:0;">
     🔒 As with any online marketplace, view the room in person and confirm details

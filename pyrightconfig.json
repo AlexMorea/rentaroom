@@ -1,0 +1,28 @@
+{
+  // Config for Pyright / Pylance (VS Code's Python type checker).
+  // Matches the "basic" mode already used in this project.
+  "typeCheckingMode": "basic",
+  "exclude": [
+    "**/venv",
+    "**/.venv",
+    "**/env",
+    "**/migrations",
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+
+  // Django builds model fields, request.user, get_FOO_display(), FK "_id"
+  // accessors, and related-manager attributes dynamically at class-creation
+  // time. Without the mypy django-stubs plugin (which Pylance/Pyright does
+  // not run), no static stub package can fully describe these - so Pyright
+  // reports thousands of "unknown attribute" false positives on completely
+  // valid Django code (e.g. `room.id`, `booking.get_status_display()`,
+  // `request.user.profile`). This is a known, structural limitation of
+  // Pyright with Django (see typeddjango/django-stubs), not a bug in this
+  // codebase. We install `django-types` (see requirements-dev.txt) to
+  // resolve as much as it can, and turn this specific rule off rather than
+  // leave the project drowning in noise it cannot act on. All other checks
+  // (undefined names, wrong argument counts, real Optional/None bugs, etc.)
+  // stay on.
+  "reportAttributeAccessIssue": "none"
+}

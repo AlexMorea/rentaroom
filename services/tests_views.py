@@ -28,7 +28,7 @@ class DriverProfileAnalyticsTests(TestCase):
 
         evt = ServiceAnalyticsEvent.objects.filter(event_type="driver_view", metadata__driver=driver.id).first()
         self.assertIsNotNone(evt)
-        assert evt is not None  # narrows for the type checker below
+        assert evt is not None  # narrows for the type checker; assertIsNotNone above already fails the test otherwise
         self.assertIsNone(evt.user)
 
 

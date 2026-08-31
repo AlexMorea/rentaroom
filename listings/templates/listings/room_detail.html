@@ -1,6 +1,7 @@
 {% extends "listings/base.html" %}
 {% load static %}
 {% load humanize %}
+{% load profile_extras %}
 
 {% block title %}{{ room.title }} - R{{ room.price|floatformat:0|intcomma }}/month in {{ room.location }} | Rooms4You{% endblock %}
 
@@ -104,6 +105,14 @@
               <strong class="rd-fact-value">{{ room.created_at|timesince }} ago</strong>
             </div>
           </div>
+
+          <div class="meta-card rd-fact">
+            <span class="rd-fact-icon">{% if room.is_stale %}⏳{% else %}🔄{% endif %}</span>
+            <div>
+              <span class="meta-label rd-fact-label">Last confirmed</span>
+              <strong class="rd-fact-value">{{ room.freshness_label }}</strong>
+            </div>
+          </div>
         </div>
 
         <!-- DESCRIPTION -->
@@ -146,16 +155,35 @@
 
           {% if user.is_authenticated %}
 
+          {% with owner_profile=room.owner|profile %}
           <a href="{% url 'landlord_profile' room.owner.id %}" class="landlord-card rd-landlord-card">
-            <div class="landlord-avatar rd-landlord-avatar">
+            <div class="landlord-avatar rd-landlord-avatar {% if not owner_profile.is_verified_landlord %}rd-landlord-avatar-unverified{% endif %}">
               {{ room.owner.first_name|default:"L"|slice:":1"|upper }}
             </div>
 
             <div>
               <strong class="rd-landlord-name">{{ room.owner.first_name }} {{ room.owner.last_name }}</strong>
-              <div class="landlord-status rd-landlord-status">Verified landlord · View profile →</div>
+              <div class="landlord-status rd-landlord-status {% if not owner_profile.is_verified_landlord %}rd-landlord-status-unverified{% endif %}">
+                {% if owner_profile.is_verified_landlord %}
+                  ★ Verified landlord
+                {% else %}
+                  Landlord · not yet verified
+                {% endif %}
+                · View profile →
+              </div>
+              {% if owner_profile.is_email_verified or owner_profile.response_time_label %}
+              <div class="rd-landlord-checks">
+                {% if owner_profile.is_email_verified %}<span class="rd-check-chip">✉️ Email verified</span>{% endif %}
+                {% if owner_profile.response_time_label %}
+                  <span class="rd-check-chip {% if owner_profile.is_fast_responder %}rd-check-chip-fast{% endif %}">
+                    {% if owner_profile.is_fast_responder %}⚡{% else %}💬{% endif %} {{ owner_profile.response_time_label }}
+                  </span>
+                {% endif %}
+              </div>
+              {% endif %}
             </div>
           </a>
+          {% endwith %}
 
           <div class="contact-actions rd-contact-actions">
 
@@ -549,6 +577,30 @@
     color: #16a34a;
     font-weight: 600;
     margin-top: 2px;
+  }
+  .rd-landlord-status-unverified {
+    color: #64748b;
+  }
+  .rd-landlord-avatar-unverified {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #cbd5e1;
+  }
+  .rd-landlord-checks {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .rd-check-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #f1f5f9;
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+  .rd-check-chip-fast {
+    background: #fff7ed;
+    color: #9a3412;
   }
 
   .rd-contact-actions {

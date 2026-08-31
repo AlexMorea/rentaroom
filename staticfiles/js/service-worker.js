@@ -10,7 +10,7 @@
 //   what rooms are actually still available.
 //
 // Bump CACHE_NAME whenever this file changes, so old caches get cleared.
-const CACHE_NAME = "rooms4you-v3";
+const CACHE_NAME = "rooms4you-v4";
 const OFFLINE_URL = "/offline/";
 
 const PRECACHE_URLS = [
@@ -82,4 +82,45 @@ self.addEventListener("fetch", (event) => {
   }
   // Everything else (API-like fetches, etc.) - let it pass through
   // untouched, no caching behavior applied.
+});
+
+// ---------------------------------------------------------------------
+// Web Push - shows a notification for whatever the server sent
+// (accounts.push.send_web_push always sends {title, body, url} JSON).
+// Falls back to generic text if the payload is missing/malformed so a
+// push never silently does nothing.
+// ---------------------------------------------------------------------
+self.addEventListener("push", (event) => {
+  let data = { title: "Rooms4You", body: "You have a new notification.", url: "/" };
+
+  if (event.data) {
+    try {
+      data = { ...data, ...event.data.json() };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/static/images/icon-192.png",
+      badge: "/static/images/icon-192.png",
+      data: { url: data.url },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url === url && "focus" in client) return client.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });
