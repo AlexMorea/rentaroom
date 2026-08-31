@@ -223,7 +223,7 @@ class Migration(migrations.Migration):
                 (
                     "rating",
                     models.PositiveSmallIntegerField(
-                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]
+                        choices=[(1, 1), (2, 2), (3, 3), (4, 4), (5, 5)]  # pyright: ignore[reportArgumentType] - Django accepts an int label fine; this is a frozen migration
                     ),
                 ),
                 ("comment", models.TextField(blank=True)),

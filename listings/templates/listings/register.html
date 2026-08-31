@@ -90,7 +90,7 @@
             <label>Email</label>
             {{ form.email }}
             <small class="pr-hint"
-              >📧 We'll send a verification code here</small
+              >{% if sms_otp_enabled %}📧 Used for login and important notices{% else %}📧 We'll send a verification code here{% endif %}</small
             >
           </div>
 
@@ -109,6 +109,9 @@
               <div class="pr-phone-code">{{ form.country_code }}</div>
               <div class="pr-phone-number">{{ form.phone_number }}</div>
             </div>
+            {% if sms_otp_enabled %}
+            <small class="pr-hint">📱 We'll text your verification code here</small>
+            {% endif %}
           </div>
 
           <!-- TENANT ONLY -->
@@ -232,7 +235,11 @@
           </button>
 
           <p class="pr-next-step">
+            {% if sms_otp_enabled %}
+            🔒 Next: we'll text you a 6-digit code to verify your account.
+            {% else %}
             🔒 Next: we'll email you a 6-digit code to verify your account.
+            {% endif %}
           </p>
         </form>
 

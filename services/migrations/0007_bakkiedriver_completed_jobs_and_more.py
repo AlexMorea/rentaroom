@@ -28,11 +28,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="bakkiedriver",
             name="rating",
-            field=models.DecimalField(decimal_places=2, default=5.0, max_digits=3),
+            field=models.DecimalField(decimal_places=2, default=5.0, max_digits=3),  # pyright: ignore[reportArgumentType]
         ),
         migrations.AddField(
             model_name="bakkiedriver",
             name="total_earnings",
-            field=models.DecimalField(decimal_places=2, default=0, max_digits=10),
+            field=models.DecimalField(decimal_places=2, default=0, max_digits=10),  # pyright: ignore[reportArgumentType]
         ),
     ]

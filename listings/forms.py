@@ -192,6 +192,11 @@ class UserRegisterForm(forms.Form):
 
         profile.save()
 
+        # The post_save signal on User already cached an (empty) Profile on
+        # `user.profile` before we populated this one - refresh that cache so
+        # callers (OTP dispatch, routing) see the real phone number.
+        user.profile = profile
+
         # CREATE MEMBERSHIP ONLY FOR LANDLORDS
         if profile.role == "landlord":
             Membership.objects.get_or_create(
@@ -431,10 +436,7 @@ class RoomForm(forms.ModelForm):
         self.fields["available_units"].label = "Units available now"
 
         # Client-side helper: mark contact fields required in the widget
-        try:
-            role = getattr(self.user, "profile", None) and self.user.profile.role  # pyright: ignore[reportOptionalMemberAccess] - guarded by the getattr(...) and short-circuit above
-        except AttributeError:
-            role = None
+        role = getattr(getattr(self.user, "profile", None), "role", None)
 
         if role == "landlord":
             for fld in ("contact_phone", "contact_whatsapp"):

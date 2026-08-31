@@ -7,7 +7,6 @@ from . import views
 from .views import RateLimitedPasswordResetView
 
 urlpatterns = [
-
     
     # PUBLIC PAGES
     path("", views.home, name="home"),

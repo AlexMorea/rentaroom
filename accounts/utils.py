@@ -31,8 +31,13 @@ def get_or_create_membership(user):
 def require_active_membership(user):
     membership = get_or_create_membership(user)
 
+    # get_or_create_membership returns None for non-landlords - both
+    # current call sites are already gated behind @user_passes_test
+    # (is_landlord), so this is defensive rather than reachable today.
+    # Membership trial expiry isn't a concept that applies to a
+    # non-landlord, so don't block them.
     if membership is None:
-        return False
+        return True
 
     return not (
         membership.is_trial

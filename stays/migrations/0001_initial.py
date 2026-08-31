@@ -33,8 +33,8 @@ class Migration(migrations.Migration):
                 ('price_per_night', models.DecimalField(decimal_places=2, max_digits=8)),
                 ('max_guests', models.PositiveIntegerField(default=2)),
                 ('min_nights', models.PositiveIntegerField(default=1)),
-                ('check_in_time', models.TimeField(default='14:00')),
-                ('check_out_time', models.TimeField(default='10:00')),
+                ('check_in_time', models.TimeField(default='14:00')),  # pyright: ignore[reportArgumentType]
+                ('check_out_time', models.TimeField(default='10:00')),  # pyright: ignore[reportArgumentType]
                 ('house_rules', models.TextField(blank=True, default='')),
                 ('has_wifi', models.BooleanField(default=False)),
                 ('has_parking', models.BooleanField(default=False)),

@@ -47,5 +47,9 @@ class StaticViewSitemap(Sitemap):
             "privacy",
         ]
 
-    def location(self, item):
-        return reverse(item)
+    def location(self, obj):
+        # Django's Sitemap.location is typed for the common case where
+        # items() yields model instances; this sitemap's items() yields
+        # URL names (str) instead, which is an equally valid use of the
+        # (untyped-at-runtime) Sitemap contract.
+        return reverse(obj)  # pyright: ignore[reportArgumentType]

@@ -357,6 +357,12 @@ def voice_bridge_twiml(request, room_id):
     Must stay unauthenticated and CSRF-exempt - Twilio's servers call
     this directly, not a logged-in browser session.
     """
+    if VoiceResponse is None:
+        # twilio isn't installed in this environment - Twilio's servers
+        # shouldn't be calling this webhook if the feature isn't
+        # configured, but fail safely rather than crashing if they do.
+        return HttpResponse(status=503)
+
     room = get_object_or_404(Room, id=room_id)
     landlord_phone = (room.contact_phone or "").strip()
 

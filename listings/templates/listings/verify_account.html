@@ -21,7 +21,11 @@ auth-page
     </h2>
 
     <p class="auth-hint va-intro">
+      {% if otp_channel == "sms" %}
+      We've sent a 6-digit verification code by SMS to your phone.
+      {% else %}
       We've sent a 6-digit verification code to your email address.
+      {% endif %}
       Enter the code below to activate your Rooms4You account.
     </p>
 

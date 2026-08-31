@@ -8,7 +8,11 @@
     <div class="sf-icon">🔑</div>
     <h2 class="sf-title">Verify Phone Number</h2>
     <p class="sf-sub">
+      {% if otp_channel == "sms" %}
+      Enter the code we sent by SMS to your new number.
+      {% else %}
       Enter the OTP code we sent to your email.
+      {% endif %}
     </p>
 
     <form method="POST" class="sf-form">

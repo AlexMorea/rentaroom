@@ -75,6 +75,7 @@ class MembershipAdmin(admin.ModelAdmin):
     )
 
     # ✅ APPROVE (ONE CLICK)
+    @admin.action(description="Approve selected memberships")
     def approve_memberships(self, request, queryset):
         count = 0
 
@@ -88,9 +89,8 @@ class MembershipAdmin(admin.ModelAdmin):
             f"✅ {count} membership(s) approved successfully."
         )
 
-    approve_memberships.short_description = "Approve selected memberships"
-
     # ❌ REJECT
+    @admin.action(description="Reject selected payments")
     def reject_memberships(self, request, queryset):
         count = queryset.count()
 
@@ -101,5 +101,3 @@ class MembershipAdmin(admin.ModelAdmin):
             request,
             f"❌ {count} payment(s) rejected."
         )
-
-    reject_memberships.short_description = "Reject selected payments"
