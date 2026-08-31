@@ -1,0 +1,37 @@
+{% extends "listings/base.html" %} {% block content %}
+
+<div class="auth-shell">
+  <div class="auth-card" style="text-align: center">
+
+    {% if error %}
+
+      <h2 class="auth-title">Link expired or invalid</h2>
+      <p style="opacity: 0.8; margin: 0 0 14px">
+        This confirmation link is either too old or has already been used.
+        You can still confirm or update your listing from your dashboard.
+      </p>
+      <a class="btn-primary auth-btn" href="{% url 'landlord_rooms' %}">Go to My Listings</a>
+
+    {% elif action == "confirm" %}
+
+      <h2 class="auth-title">✅ Thanks — confirmed</h2>
+      <p style="opacity: 0.8; margin: 0 0 14px">
+        "{{ room.title }}" is confirmed up to date and will keep showing as available.
+      </p>
+      <a class="btn-primary auth-btn" href="{% url 'room_detail' room.id %}">View Listing</a>
+
+    {% elif action == "vacate" %}
+
+      <h2 class="auth-title">Got it — marked occupied</h2>
+      <p style="opacity: 0.8; margin: 0 0 14px">
+        "{{ room.title }}" has been marked as no longer available. You can switch it back
+        to available any time from your dashboard.
+      </p>
+      <a class="btn-primary auth-btn" href="{% url 'landlord_rooms' %}">Go to My Listings</a>
+
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

@@ -105,6 +105,14 @@
               <strong class="rd-fact-value">{{ room.created_at|timesince }} ago</strong>
             </div>
           </div>
+
+          <div class="meta-card rd-fact">
+            <span class="rd-fact-icon">{% if room.is_stale %}⏳{% else %}🔄{% endif %}</span>
+            <div>
+              <span class="meta-label rd-fact-label">Last confirmed</span>
+              <strong class="rd-fact-value">{{ room.freshness_label }}</strong>
+            </div>
+          </div>
         </div>
 
         <!-- DESCRIPTION -->
@@ -163,10 +171,14 @@
                 {% endif %}
                 · View profile →
               </div>
-              {% if owner_profile.is_phone_verified or owner_profile.is_email_verified %}
+              {% if owner_profile.is_email_verified or owner_profile.response_time_label %}
               <div class="rd-landlord-checks">
-                {% if owner_profile.is_phone_verified %}<span class="rd-check-chip">📱 Phone verified</span>{% endif %}
                 {% if owner_profile.is_email_verified %}<span class="rd-check-chip">✉️ Email verified</span>{% endif %}
+                {% if owner_profile.response_time_label %}
+                  <span class="rd-check-chip {% if owner_profile.is_fast_responder %}rd-check-chip-fast{% endif %}">
+                    {% if owner_profile.is_fast_responder %}⚡{% else %}💬{% endif %} {{ owner_profile.response_time_label }}
+                  </span>
+                {% endif %}
               </div>
               {% endif %}
             </div>
@@ -585,6 +597,10 @@
     background: #f1f5f9;
     border-radius: 999px;
     padding: 3px 9px;
+  }
+  .rd-check-chip-fast {
+    background: #fff7ed;
+    color: #9a3412;
   }
 
   .rd-contact-actions {

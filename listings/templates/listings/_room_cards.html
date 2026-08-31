@@ -66,6 +66,9 @@
         {% if owner_profile and owner_profile.is_verified_landlord %}
           <span class="badge badge-verified rc-badge rc-badge-verified">★ Verified</span>
         {% endif %}
+        {% if owner_profile and owner_profile.is_fast_responder %}
+          <span class="badge rc-badge rc-badge-fast">⚡ Fast responder</span>
+        {% endif %}
       {% endwith %}
     </div>
    </div>
@@ -262,6 +265,10 @@
   .rc-badge-verified {
     background: rgba(255, 255, 255, 0.92) !important;
     color: #002A5C !important;
+  }
+  .rc-badge-fast {
+    background: rgba(255, 247, 237, 0.95) !important;
+    color: #9a3412 !important;
   }
 
   /* ===== Signature: the price chip ===== */

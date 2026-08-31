@@ -109,6 +109,19 @@ class Room(models.Model):
     # materialized composite score (optional performance optimization)
     score = models.PositiveIntegerField(default=0, db_index=True)
 
+    # ----------------- Freshness -----------------
+    # When the landlord last actively confirmed this listing is accurate
+    # (via the dashboard "Confirm" button, the vacancy toggle, or an
+    # emailed one-click link). Defaults to "now" so a newly created room
+    # starts its freshness clock at creation, not at some arbitrary
+    # earlier date - see flag_stale_listings for what happens once this
+    # goes quiet for too long.
+    last_confirmed_at = models.DateTimeField(default=timezone.now, db_index=True)
+    # When we last sent a "please confirm" nudge, so flag_stale_listings
+    # doesn't re-nudge every single day once a room crosses the stale
+    # threshold - only after another full LISTING_STALE_DAYS has passed.
+    last_nudge_sent_at = models.DateTimeField(null=True, blank=True)
+
     def clean(self):
         if self.total_units < 1:
             raise ValidationError({"total_units": "Total units must be at least 1."})
@@ -192,6 +205,84 @@ class Room(models.Model):
         # lightweight contact count (RoomStat preferred for analytics)
         return RoomStat.objects.filter(room=self, stat_type__startswith="contact").count()
 
+    # ----------------- Freshness -----------------
+    @property
+    def days_since_confirmed(self) -> int:
+        return max((timezone.now() - self.last_confirmed_at).days, 0)
+
+    @property
+    def is_stale(self) -> bool:
+        """A listing claiming to be available that nobody has confirmed
+        in a while - the exact "looks available, isn't really" problem
+        this whole feature exists to catch. A room already marked
+        unavailable isn't "stale", it's just correctly occupied."""
+        return self.is_available and self.days_since_confirmed >= settings.LISTING_STALE_DAYS
+
+    @property
+    def freshness_label(self) -> str:
+        """Human-readable freshness signal, shown to tenants (builds
+        trust that "available" is current) and landlords (tells them
+        exactly what a tenant sees, and whether it's time to confirm)."""
+        days = self.days_since_confirmed
+        if days == 0:
+            return "Confirmed available today"
+        if days == 1:
+            return "Confirmed available yesterday"
+        if days < settings.LISTING_STALE_DAYS:
+            return f"Confirmed available {days} days ago"
+        return f"Not confirmed in {days} days"
+
+    def confirm_availability(self):
+        """Landlord actively vouching this listing is still accurate -
+        resets both the staleness clock and the nudge cooldown, so a
+        confirmed room won't get nudged again until it's genuinely gone
+        quiet for another full LISTING_STALE_DAYS."""
+        self.last_confirmed_at = timezone.now()
+        self.last_nudge_sent_at = None
+        self.save(update_fields=["last_confirmed_at", "last_nudge_sent_at"])
+
+    # ----------------- Completeness -----------------
+    # Deliberately computed rather than stored - it only ever needs to be
+    # read by the landlord viewing their own dashboard, so there's no
+    # ranking/query reason to materialize it like `score`.
+    _COMPLETENESS_CHECKS: ClassVar[list[tuple[str, str]]] = [
+        ("has_photos", "Add at least 3 photos"),
+        ("has_description", "Write a fuller description (30+ words)"),
+        ("has_map_pin", "Pin the exact location on the map"),
+        ("has_whatsapp", "Add a WhatsApp number so tenants can reach you fast"),
+        ("has_precise_address", "Add the full street address"),
+    ]
+
+    @property
+    def has_photos(self) -> bool:
+        return self.images.count() >= 3
+
+    @property
+    def has_description(self) -> bool:
+        return len((self.description or "").split()) >= 30
+
+    @property
+    def has_map_pin(self) -> bool:
+        return self.latitude is not None and self.longitude is not None
+
+    @property
+    def has_whatsapp(self) -> bool:
+        return bool(self.contact_whatsapp.strip())
+
+    @property
+    def has_precise_address(self) -> bool:
+        return len((self.full_address or "").strip()) >= 8
+
+    @property
+    def completeness_percent(self) -> int:
+        checks = self._COMPLETENESS_CHECKS
+        passed = sum(1 for attr, _label in checks if getattr(self, attr))
+        return round((passed / len(checks)) * 100)
+
+    @property
+    def completeness_missing(self) -> list[str]:
+        return [label for attr, label in self._COMPLETENESS_CHECKS if not getattr(self, attr)]
+
 
 class Review(models.Model):
 
@@ -231,8 +322,18 @@ class Profile(models.Model):
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="tenant")
 
-    pending_email = models.EmailField(blank=True, null=True) 
-    email_change_token = models.UUIDField(null=True, blank=True) 
+    pending_email = models.EmailField(blank=True, null=True)
+    email_change_token = models.UUIDField(null=True, blank=True)
+    # NOTE: despite the name, this is set from the same email-delivered
+    # OTP as is_email_verified (see listings/views/auth_views.py -
+    # verify_account/confirm_phone_change) - there is no SMS/WhatsApp
+    # channel wired up yet (Twilio in this codebase is voice-call-masking
+    # only, and isn't funded/configured). Functionally it's real: it
+    # means "completed onboarding's OTP step" and correctly gates
+    # get_user_state()/evaluate_user_state(). Just don't surface it to
+    # users as a distinct "phone verified" trust signal anywhere - it
+    # isn't one yet. trust:verification.html already lists real phone
+    # verification as "Coming Soon" for exactly this reason.
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
 
@@ -283,6 +384,47 @@ class Profile(models.Model):
         ],
         default="self"
     )
+
+    # ----------------- Response time (landlords) -----------------
+    # Materialized by compute_response_stats, same pattern as Room.score -
+    # computed from real Message threads (median time from a tenant's
+    # first message to the landlord's first reply), not self-reported.
+    # Null/0 means "not enough measured threads yet", handled by
+    # response_time_label below rather than showing a misleading claim
+    # off one data point.
+    avg_response_minutes = models.PositiveIntegerField(null=True, blank=True)
+    response_rate_percent = models.PositiveSmallIntegerField(null=True, blank=True)
+    responses_measured = models.PositiveIntegerField(default=0)
+
+    # Below this many measured threads, there isn't enough signal to
+    # claim a response-time pattern - one lucky (or unlucky) reply
+    # shouldn't earn or cost a landlord a public label.
+    MIN_THREADS_FOR_RESPONSE_LABEL: ClassVar[int] = 3
+
+    @property
+    def response_time_label(self) -> str | None:
+        if self.responses_measured < self.MIN_THREADS_FOR_RESPONSE_LABEL or self.avg_response_minutes is None:
+            return None
+
+        minutes = self.avg_response_minutes
+        if minutes <= 60:
+            return "Usually responds within an hour"
+        if minutes <= 60 * 4:
+            return "Usually responds within a few hours"
+        if minutes <= 60 * 24:
+            return "Usually responds within a day"
+        if minutes <= 60 * 24 * 3:
+            return "Usually responds within a few days"
+        return "Response time varies"
+
+    @property
+    def is_fast_responder(self) -> bool:
+        return (
+            self.responses_measured >= self.MIN_THREADS_FOR_RESPONSE_LABEL
+            and self.avg_response_minutes is not None
+            and self.avg_response_minutes <= 240
+            and (self.response_rate_percent or 0) >= 70
+        )
 
     def full_phone(self):
         phone = (self.phone_number or "").strip()

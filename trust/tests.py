@@ -138,3 +138,84 @@ class FraudReportModelTests(TestCase):
     def test_reference_code_format(self):
         report = FraudReport.objects.create(category=FraudReport.CATEGORY_OTHER)
         self.assertEqual(report.reference_code, f"R4Y-{report.pk:06d}")
+
+
+class StaffNotificationTests(TestCase):
+    """
+    Regression coverage for a real gap: FraudReport creation notified
+    nobody - reports only ever surfaced if a staff member remembered to
+    check the Django admin. This is what actually backs the Trust
+    Centre's "we investigate reports" promise.
+    """
+
+    def setUp(self):
+        self.landlord = User.objects.create_user(username="landlord_x", password="p")
+        self.room = make_room(self.landlord)
+
+    def test_new_report_emails_the_safety_team(self):
+        with patch("trust.signals.send_template_email") as mail:
+            FraudReport.objects.create(category=FraudReport.CATEGORY_SCAM, room=self.room)
+
+        mail.assert_called_once()
+        kwargs = mail.call_args.kwargs
+        self.assertEqual(kwargs["to_email"], "safety@rooms4you.co.za")
+        self.assertNotIn("REPEAT", kwargs["subject"])
+
+    def test_second_open_report_on_same_room_is_flagged_as_repeat(self):
+        FraudReport.objects.create(category=FraudReport.CATEGORY_SCAM, room=self.room)
+
+        with patch("trust.signals.send_template_email") as mail:
+            FraudReport.objects.create(category=FraudReport.CATEGORY_FAKE_LISTING, room=self.room)
+
+        kwargs = mail.call_args.kwargs
+        self.assertIn("REPEAT", kwargs["subject"])
+        self.assertTrue(kwargs["context"]["is_repeat_offender"])
+        self.assertEqual(kwargs["context"]["related_count"], 1)
+
+    def test_resolved_reports_do_not_count_toward_repeat_flag(self):
+        first = FraudReport.objects.create(category=FraudReport.CATEGORY_SCAM, room=self.room)
+        first.mark_status(FraudReport.STATUS_RESOLVED)
+
+        with patch("trust.signals.send_template_email") as mail:
+            FraudReport.objects.create(category=FraudReport.CATEGORY_FAKE_LISTING, room=self.room)
+
+        kwargs = mail.call_args.kwargs
+        self.assertFalse(kwargs["context"]["is_repeat_offender"])
+
+    def test_email_failure_does_not_prevent_report_from_saving(self):
+        with patch("trust.signals.send_template_email", side_effect=RuntimeError("smtp down")):
+            report = FraudReport.objects.create(category=FraudReport.CATEGORY_SCAM, room=self.room)
+
+        self.assertIsNotNone(report.pk)
+        self.assertTrue(FraudReport.objects.filter(pk=report.pk).exists())
+
+    def test_report_via_general_report_fraud_page_also_notifies_staff(self):
+        with patch("trust.signals.send_template_email") as mail:
+            self.client.post(
+                reverse("trust:report_fraud"),
+                {"category": FraudReport.CATEGORY_OTHER, "detail": "suspicious message"},
+            )
+        mail.assert_called_once()
+
+
+class RelatedOpenReportsTests(TestCase):
+    def setUp(self):
+        self.landlord = User.objects.create_user(username="landlord_y", password="p")
+        self.room = make_room(self.landlord)
+
+    def test_unsaved_report_has_no_related_reports(self):
+        report = FraudReport(category=FraudReport.CATEGORY_SCAM, room=self.room)
+        self.assertFalse(report.is_repeat_offender)
+
+    def test_report_with_no_room_or_user_has_no_related_reports(self):
+        report = FraudReport.objects.create(category=FraudReport.CATEGORY_OTHER)
+        self.assertFalse(report.is_repeat_offender)
+
+    def test_matches_by_reported_user_across_different_rooms(self):
+        other_room = make_room(self.landlord, title="R2")
+        FraudReport.objects.create(category=FraudReport.CATEGORY_SCAM, reported_user=self.landlord, room=self.room)
+
+        second = FraudReport.objects.create(
+            category=FraudReport.CATEGORY_FAKE_LANDLORD, reported_user=self.landlord, room=other_room
+        )
+        self.assertTrue(second.is_repeat_offender)

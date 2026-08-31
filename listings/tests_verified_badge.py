@@ -44,7 +44,7 @@ class RoomDetailVerifiedBadgeTests(TestCase):
         self.assertIn("not yet verified", body)
         self.assertNotIn("★ Verified landlord", body)
 
-    def test_verified_landlord_shows_verified_badge_and_checks(self):
+    def test_verified_landlord_shows_verified_badge_and_email_check(self):
         profile = Profile.objects.get(user=self.landlord)
         profile.is_verified_landlord = True
         profile.is_phone_verified = True
@@ -55,5 +55,23 @@ class RoomDetailVerifiedBadgeTests(TestCase):
         body = resp.content.decode()
 
         self.assertIn("★ Verified landlord", body)
-        self.assertIn("Phone verified", body)
         self.assertIn("Email verified", body)
+
+    def test_phone_verified_is_never_shown_as_a_public_claim(self):
+        """
+        Regression coverage: is_phone_verified is set from the same
+        email-delivered OTP as is_email_verified (see Profile model
+        comment) - there's no real phone/SMS channel behind it. Showing
+        it as a distinct "Phone verified" badge would be a false trust
+        claim, and directly contradicts trust:verification.html, which
+        lists real phone verification as "Coming Soon".
+        """
+        profile = Profile.objects.get(user=self.landlord)
+        profile.is_phone_verified = True
+        profile.is_email_verified = False
+        profile.save()
+
+        resp = self.client.get(reverse("room_detail", args=[self.room.id]))
+        body = resp.content.decode()
+
+        self.assertNotIn("Phone verified", body)

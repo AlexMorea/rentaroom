@@ -117,6 +117,8 @@ urlpatterns = [
 
     path("landlord/rooms/", views.landlord_rooms, name="landlord_rooms"),
     path("landlord/rooms/<int:room_id>/toggle-vacancy/", views.toggle_room_vacancy, name="toggle_room_vacancy"),
+    path("landlord/rooms/<int:room_id>/confirm-availability/", views.confirm_room_availability, name="confirm_room_availability"),
+    path("confirm-availability/<str:signed_token>/", views.confirm_availability_via_link, name="confirm_availability_via_link"),
     path("landlord/<int:user_id>/profile/", views.landlord_profile, name="landlord_profile"),
     path("landlord/images/", views.landlord_images_hub, name="landlord_images_hub"),
 
