@@ -3,6 +3,21 @@ from django.core.cache import cache
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from accounts.devices import DEVICE_COOKIE_NAME, hash_token
+from accounts.models import TrustedDevice
+
+
+def trust_device(client, user):
+    """
+    Pre-registers the given test Client as a known device for this user,
+    so a login test that isn't specifically about the new-device OTP
+    challenge (see listings.tests_device_verification for that) can
+    still assert on direct post-login behaviour.
+    """
+    token = "test-device-token"
+    TrustedDevice.objects.get_or_create(user=user, token_hash=hash_token(token))
+    client.cookies[DEVICE_COOKIE_NAME] = token
+
 
 class LoginRoleRoutingTests(TestCase):
     """
@@ -21,6 +36,7 @@ class LoginRoleRoutingTests(TestCase):
         profile.is_phone_verified = True
         profile.is_email_verified = True
         profile.save()
+        trust_device(self.client, user)
         return user
 
     def test_tenant_login_redirects_to_room_list(self):
@@ -106,6 +122,13 @@ class AccountLoginLockoutTests(TestCase):
 
     def _attempt(self, ip, email="victim@example.com", password="wrong"):
         c = Client(REMOTE_ADDR=ip)
+        # Each call makes a brand-new Client (to vary the IP) - trust it
+        # as a known device for whichever account is being attempted, so
+        # these lockout-counter assertions aren't tangled up with the
+        # separate new-device OTP challenge under test elsewhere.
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
+            trust_device(c, user)
         return c.post("/login/", {"email": email, "password": password}, follow=True)
 
     def test_account_locks_after_repeated_failures_across_different_ips(self):

@@ -236,6 +236,17 @@
           </p>
         </form>
 
+        {% if GOOGLE_OAUTH_CLIENT_ID %}
+        <div class="pr-oauth-divider"><span>or</span></div>
+
+        <form method="post" action="{% url 'google_auth' %}" id="googleAuthForm" class="pr-google-form">
+          {% csrf_token %}
+          <input type="hidden" name="credential" id="googleCredential" />
+        </form>
+
+        <div id="googleSignInBtn" class="pr-google-btn-wrap"></div>
+        {% endif %}
+
         <p class="pr-login-hint">
           Already have an account?
           <a class="pr-inline-link" href="{% url 'login' %}">Log in</a>
@@ -604,6 +615,28 @@
     font-size: 0.9rem;
   }
 
+  .pr-oauth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin: 18px 0;
+  }
+  .pr-oauth-divider::before,
+  .pr-oauth-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid #e2e8f0;
+  }
+  .pr-oauth-divider span {
+    padding: 0 12px;
+  }
+  .pr-google-btn-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
   @media (max-width: 860px) {
     .pr-shell {
       margin: 0;
@@ -724,6 +757,33 @@
   roleSel?.addEventListener("change", toggle);
   toggle();
 </script>
+
+{% if GOOGLE_OAUTH_CLIENT_ID %}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  function handleGoogleCredential(response) {
+    const form = document.getElementById("googleAuthForm");
+    const field = document.getElementById("googleCredential");
+    if (!form || !field) return;
+    field.value = response.credential;
+    form.submit();
+  }
+
+  window.addEventListener("load", () => {
+    if (!window.google || !window.google.accounts) return;
+
+    google.accounts.id.initialize({
+      client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
+      callback: handleGoogleCredential,
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById("googleSignInBtn"),
+      { theme: "outline", size: "large", width: 320, text: "signup_with" }
+    );
+  });
+</script>
+{% endif %}
 
 <script>
   (function () {

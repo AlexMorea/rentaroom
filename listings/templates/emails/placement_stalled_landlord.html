@@ -1,0 +1,35 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>An enquiry needs an update</h1>
+
+<p>
+Hello {{ placement.landlord.first_name|default:"there" }},
+</p>
+
+<p>
+{{ placement.tenant.first_name|default:"A tenant" }}'s enquiry on
+<strong>{{ room.title }}</strong> has been sitting at
+"{{ placement.get_status_display }}" for {{ days }} days with no update.
+</p>
+
+<div class="info-card">
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p><strong>Tenant:</strong> {{ placement.tenant.get_full_name|default:placement.tenant.email }}</p>
+  <p><strong>Status:</strong> {{ placement.get_status_display }}</p>
+</div>
+
+<p>
+Following up keeps the rental process moving and helps you fill the room
+faster - schedule a viewing, confirm a decision, or mark the placement as
+cancelled if it's no longer going ahead.
+</p>
+
+<p style="text-align:center;">
+<a href="https://rooms4you.co.za/dashboard/" class="btn">
+Go to dashboard
+</a>
+</p>
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Complete Your Rooms4You Listing 🏠</h1>
+
+<p>
+Hello {{ user.first_name|default:"there" }},
+</p>
+
+<p>
+Welcome to Rooms4You. We noticed your account has been created, but you
+haven't posted a property listing yet.
+</p>
+
+<p>
+We'd love to help you take the next step. You can add your available rooms
+to the platform, and we'll advertise your listings for <strong>FREE</strong>
+during our pre-launch period.
+</p>
+
+<p style="text-align:center;">
+<a href="{{ app_url }}" class="btn">
+List your room
+</a>
+</p>
+
+<p>
+If you need any assistance with creating your listing, uploading photos, or
+have any questions, please feel free to contact us - we're here to help
+make the process as easy as possible.
+</p>
+
+<p>
+Thank you for being part of the early Rooms4You community. We look forward
+to helping you reach genuine tenants.
+</p>
+
+<p>
+Kind regards,<br>
+<strong>Alex Morea</strong><br>
+Founder &amp; CEO<br>
+Rooms4You
+</p>
+
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends "listings/base.html" %}
+
+{% block title %}
+Verify Device | Rooms4You
+{% endblock %}
+
+{% block body_class %}
+auth-page
+{% endblock %}
+
+{% block content %}
+
+<div class="auth-shell">
+
+  <div class="auth-card va-card">
+
+    <div class="va-icon">🛡️</div>
+
+    <h2 class="auth-title">
+      Confirm It's You
+    </h2>
+
+    <p class="auth-hint va-intro">
+      We don't recognise this device. We've sent a 6-digit code to your
+      email address - enter it below to finish signing in.
+    </p>
+
+    <form method="POST" class="auth-form va-form">
+
+      {% csrf_token %}
+
+      <div class="field va-field">
+
+        <label class="auth-label">
+          Verification Code
+        </label>
+
+        <input
+          type="text"
+          id="otp"
+          name="otp"
+          maxlength="6"
+          required
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="Enter 6-digit code"
+          class="input va-otp-input"
+        />
+
+      </div>
+
+      <button
+        type="submit"
+        class="btn-primary auth-btn va-submit-btn"
+      >
+        Confirm &amp; Log In
+      </button>
+
+    </form>
+
+    <div class="va-resend-zone">
+
+      <p class="auth-hint va-resend-label">
+        Didn't receive the code?
+      </p>
+
+      <button
+        type="button"
+        id="resend-btn"
+        class="btn-secondary va-resend-btn"
+      >
+        <span id="resend-text">
+          Resend Code
+        </span>
+      </button>
+
+      <div
+        id="resend-message"
+        aria-live="polite"
+        class="va-resend-message"
+      ></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+  .va-card {
+    background: #fff !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    text-align: center !important;
+  }
+  .va-icon {
+    font-size: 2rem;
+    margin-bottom: 6px;
+  }
+  .va-intro {
+    margin-bottom: 24px;
+  }
+  .va-form {
+    text-align: left;
+  }
+  .va-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #0f172a;
+  }
+  .va-otp-input {
+    text-align: center;
+    font-size: 1.4rem !important;
+    letter-spacing: 8px;
+    font-weight: 700;
+  }
+  .va-submit-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .va-resend-zone {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .va-resend-label {
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .va-resend-btn {
+    width: 100%;
+  }
+  .va-resend-message {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+(function () {
+
+  const BTN_ID = "resend-btn";
+  const TEXT_ID = "resend-text";
+  const MSG_ID = "resend-message";
+  const STORAGE_KEY = "device_otp_resend_until";
+  const DEFAULT_COOLDOWN = 90;
+
+  const btn = document.getElementById(BTN_ID);
+  const txt = document.getElementById(TEXT_ID);
+  const msg = document.getElementById(MSG_ID);
+
+  function setMessage(text, level) {
+    if (!msg) return;
+    msg.textContent = text || "";
+    if (level === "success") {
+      msg.style.color = "#16a34a";
+    } else if (level === "warning") {
+      msg.style.color = "#d97706";
+    } else if (level === "error") {
+      msg.style.color = "#dc2626";
+    } else {
+      msg.style.color = "#64748b";
+    }
+  }
+
+  function disableButton() {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.style.opacity = ".7";
+    btn.style.cursor = "not-allowed";
+  }
+
+  function enableButton() {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+    if (txt) txt.textContent = "Resend Code";
+  }
+
+  function startCountdown(seconds) {
+    const until = Date.now() + (seconds * 1000);
+    try {
+      sessionStorage.setItem(STORAGE_KEY, String(until));
+    } catch (e) {}
+    updateCountdown();
+  }
+
+  function updateCountdown() {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      enableButton();
+      return;
+    }
+    const until = parseInt(raw, 10);
+    const remaining = Math.max(0, Math.ceil((until - Date.now()) / 1000));
+    if (remaining <= 0) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      enableButton();
+      return;
+    }
+    disableButton();
+    if (txt) txt.textContent = `Resend in ${remaining}s`;
+    setTimeout(updateCountdown, 1000);
+  }
+
+  async function handleResend() {
+    disableButton();
+    if (txt) txt.textContent = "Sending...";
+    setMessage("");
+
+    try {
+      const res = await fetch(
+        "/resend-device-otp/",
+        { headers: { "X-Requested-With": "XMLHttpRequest" } }
+      );
+
+      const data = await res.json().catch(() => ({}));
+      const cooldown = data.cooldown || DEFAULT_COOLDOWN;
+
+      if (res.ok) {
+        setMessage(data.message || "Code sent.", "success");
+        startCountdown(cooldown);
+        return;
+      }
+
+      if (res.status === 429) {
+        setMessage(data.message || "Please wait before requesting another code.", "warning");
+        startCountdown(cooldown);
+        return;
+      }
+
+      setMessage(data.message || "Failed to resend code.", "error");
+      enableButton();
+
+    } catch (err) {
+      setMessage("Failed to resend code.", "error");
+      enableButton();
+    }
+  }
+
+  btn?.addEventListener("click", handleResend);
+  updateCountdown();
+
+})();
+</script>
+
+{% endblock %}

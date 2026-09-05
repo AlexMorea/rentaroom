@@ -207,7 +207,122 @@ class UserRegisterForm(forms.Form):
             )
 
         return user
-    
+
+
+class GoogleCompleteProfileForm(forms.Form):
+    """
+    Finishes a Google sign-in for a brand-new (or never-onboarded)
+    account. Same fields as UserRegisterForm minus email/password - Google
+    already gave us a verified email, and there's no password to set for
+    a Google-authenticated account.
+    """
+
+    role = forms.ChoiceField(
+        choices=Profile.ROLE_CHOICES,
+        widget=forms.Select(attrs={"class": "input"}),
+    )
+
+    persona = forms.ChoiceField(
+        choices=Profile.PERSONA_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={"class": "input"}),
+    )
+
+    country_code = forms.ChoiceField(
+        choices=[("+27", "+27 🇿🇦"), ("+1", "+1 🇺🇸"), ("+44", "+44 🇬🇧")],
+        initial="+27",
+        widget=forms.Select(attrs={"class": "input"}),
+    )
+
+    phone_number = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class": "input",
+            "placeholder": "Phone number",
+            "inputmode": "tel",
+            "autocomplete": "tel",
+        })
+    )
+
+    alt_no = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Alternative number (optional)"}),
+    )
+    home_address = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Full home address"}),
+    )
+    postal_code = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Postal code"}),
+    )
+
+    terms_accepted = forms.BooleanField(required=False)
+
+    def clean(self):
+        cleaned = super().clean()
+        role = cleaned.get("role")
+
+        if not cleaned.get("phone_number"):
+            self.add_error("phone_number", "Phone number is required.")
+
+        if role == "tenant" and not cleaned.get("persona"):
+            self.add_error("persona", "Select your persona.")
+
+        if role == "landlord":
+            if not cleaned.get("home_address"):
+                self.add_error("home_address", "Address required.")
+            if not cleaned.get("postal_code"):
+                self.add_error("postal_code", "Postal code required.")
+            if not cleaned.get("terms_accepted"):
+                self.add_error(
+                    "terms_accepted",
+                    "You must accept the Terms of Service and Privacy Policy to continue."
+                )
+
+        return cleaned
+
+    def apply_to(self, user):
+        profile, _ = Profile.objects.get_or_create(user=user)
+
+        profile.role = self.cleaned_data["role"]
+
+        if profile.role == "tenant":
+            profile.persona = self.cleaned_data["persona"]
+
+        profile.country_code = self.cleaned_data.get("country_code")
+        profile.phone_number = normalize_sa_phone(self.cleaned_data.get("phone_number"))
+
+        if profile.role == "landlord":
+            alt = (self.cleaned_data.get("alt_no") or "").strip()
+            profile.alt_no = normalize_sa_phone(alt) if alt else ""
+            profile.home_address = (self.cleaned_data.get("home_address") or "").strip()
+            profile.postal_code = (self.cleaned_data.get("postal_code") or "").strip()
+            profile.terms_accepted = self.cleaned_data["terms_accepted"]
+            profile.terms_accepted_at = timezone.now()
+            profile.privacy_accepted_at = timezone.now()
+
+        # Google already verified this address - this step stands in for
+        # the email-OTP step a normal signup goes through.
+        profile.is_email_verified = True
+        profile.is_phone_verified = True
+        profile.save()
+
+        if profile.role == "landlord":
+            Membership.objects.get_or_create(
+                user=user,
+                defaults={
+                    "tier": "starter",
+                    "is_active": True,
+                    "is_trial": True,
+                    "trial_start": timezone.now(),
+                    "trial_end": timezone.now() + timedelta(days=30),
+                    "status": "active",
+                },
+            )
+
+        return profile
+
+
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User

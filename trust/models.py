@@ -28,6 +28,7 @@ class FraudReport(models.Model):
     CATEGORY_DEPOSIT_SCAM = "deposit_scam"
     CATEGORY_IMPERSONATION = "impersonation"
     CATEGORY_SUSPICIOUS_PAYMENT = "suspicious_payment"
+    CATEGORY_TENANT_UNREACHABLE = "tenant_unreachable"
     CATEGORY_OTHER = "other"
 
     CATEGORY_CHOICES: ClassVar[list[tuple[str, str]]] = [
@@ -40,6 +41,7 @@ class FraudReport(models.Model):
         (CATEGORY_DEPOSIT_SCAM, "Deposit scam"),
         (CATEGORY_IMPERSONATION, "Someone impersonating Rooms4You"),
         (CATEGORY_SUSPICIOUS_PAYMENT, "Suspicious payment request"),
+        (CATEGORY_TENANT_UNREACHABLE, "Tenant unreachable / went AWOL"),
         (CATEGORY_OTHER, "Other"),
     ]
 

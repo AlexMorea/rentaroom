@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from listings.views import is_landlord
 
@@ -52,6 +53,34 @@ def update_placement(request, placement_id):
         "placement": placement,
         "form": form,
     })
+
+
+@login_required
+@user_passes_test(is_landlord)
+@require_POST
+def report_tenant_unreachable(request, placement_id):
+    """
+    "This tenant has gone AWOL" - a landlord-triggered flag for a
+    placement that's already Moved In, filed as a FraudReport for staff
+    triage (see Placement.flag_tenant_unreachable).
+    """
+    placement = get_object_or_404(Placement, id=placement_id, landlord=request.user)
+
+    if placement.status != Placement.STATUS_MOVED_IN:
+        messages.error(request, "This can only be reported for a moved-in placement.")
+        return redirect("placements:landlord_dashboard")
+
+    if placement.tenant_flagged_unreachable_at:
+        messages.info(request, "You've already reported this - our Trust & Safety team has it.")
+        return redirect("placements:landlord_dashboard")
+
+    placement.flag_tenant_unreachable(reported_by=request.user)
+
+    messages.success(
+        request,
+        "Thanks - we've flagged this for our Trust & Safety team to follow up.",
+    )
+    return redirect("placements:landlord_dashboard")
 
 
 # ---------------------------------------------------------------------

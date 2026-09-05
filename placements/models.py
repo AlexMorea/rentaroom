@@ -81,6 +81,16 @@ class Placement(models.Model):
     # management command doesn't keep nagging every day forever.
     move_in_check_sent_at = models.DateTimeField(null=True, blank=True)
 
+    # Set once flag_stalled_placements has nudged both sides that this
+    # placement hasn't moved forward in a while. One-time per stall, not
+    # re-sent every day - see that command.
+    stall_nudge_sent_at = models.DateTimeField(null=True, blank=True)
+
+    # Set when a landlord reports that a moved-in tenant has gone
+    # unreachable/vanished (see Placement.flag_tenant_unreachable). Also
+    # doubles as the "already reported" guard against duplicate reports.
+    tenant_flagged_unreachable_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -187,6 +197,65 @@ class Placement(models.Model):
         PlacementInvoice.objects.get_or_create(
             placement=self,
             defaults={"amount": self.expected_success_fee},
+        )
+
+    # ---------------------------------------------------------------
+    # Stall detection / tenant-unreachable reporting
+    # ---------------------------------------------------------------
+    @property
+    def current_status_since(self):
+        """When this placement last actually changed status, per the
+        append-only PlacementStatusHistory audit trail (written by
+        signals.py on every real transition) - unlike updated_at, this
+        isn't bumped by unrelated saves that don't change status."""
+        latest = self.status_history.order_by("-created_at").first()
+        return latest.created_at if latest else self.created_at
+
+    @property
+    def days_in_current_status(self) -> int:
+        return (timezone.now() - self.current_status_since).days
+
+    # Statuses where "nothing has happened in a while" is actually worth
+    # nudging someone about - terminal/awaiting-payment/awaiting-review
+    # states already have their own dedicated reminders elsewhere.
+    STALLABLE_STATUSES: ClassVar[set[str]] = {
+        STATUS_INTERESTED,
+        STATUS_VIEWING_SCHEDULED,
+        STATUS_VIEWING_COMPLETED,
+        STATUS_APPROVED,
+    }
+
+    def is_stalled(self, threshold_days: int = 7) -> bool:
+        return (
+            self.status in self.STALLABLE_STATUSES
+            and self.days_in_current_status >= threshold_days
+        )
+
+    def flag_tenant_unreachable(self, reported_by):
+        """
+        Landlord-triggered "this tenant has gone AWOL" report. Files a
+        FraudReport for staff triage (reusing the existing Trust Centre
+        queue rather than a second admin surface) and records the
+        timestamp here so the dashboard can show it was reported and the
+        view can't double-file it.
+        """
+        from trust.models import FraudReport
+
+        if self.tenant_flagged_unreachable_at:
+            return None
+
+        self.tenant_flagged_unreachable_at = timezone.now()
+        self.save(update_fields=["tenant_flagged_unreachable_at"])
+
+        return FraudReport.objects.create(
+            reporter=reported_by,
+            room=self.room,
+            reported_user=self.tenant,
+            category=FraudReport.CATEGORY_TENANT_UNREACHABLE,
+            detail=(
+                f"Landlord reports tenant has gone unreachable/vanished after "
+                f"moving into \"{self.room.title}\" (placement #{self.pk})."
+            ),
         )
 
 

@@ -4,6 +4,7 @@ import secrets
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.html import strip_tags
 
 from services.models import BakkieDriver
@@ -38,6 +39,20 @@ def send_otp_email(user, otp):
             "otp": otp,
             "year": 2026
         }
+    )
+
+
+def send_new_device_otp_email(user, otp, *, device_label=""):
+    send_template_email(
+        subject="Confirm it's you - new sign-in to Rooms4You",
+        to_email=user.email,
+        template="emails/new_device_otp.html",
+        context={
+            "user": user,
+            "otp": otp,
+            "device_label": device_label,
+            "year": timezone.now().year,
+        },
     )
 
 

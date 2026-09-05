@@ -136,6 +136,7 @@ TEMPLATES = [
                 "listings.context_processors.google_maps_key",
                 "listings.context_processors.seo_settings",
                 "listings.context_processors.vapid_public_key",
+                "listings.context_processors.google_oauth_client_id",
             ],
         },
     },
@@ -318,6 +319,17 @@ DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 # Trust Centre/Report Fraud pages.
 SAFETY_TEAM_EMAIL = os.environ.get("SAFETY_TEAM_EMAIL", "safety@rooms4you.co.za")
 
+# ================= GOOGLE SIGN-IN =================
+# "Continue with Google" on login/register (see listings/views/auth_views.py
+# - google_auth/google_complete_profile). Blank means the button simply
+# doesn't render (see listings/templates/listings/login.html) - no crash,
+# just no Google option until this is configured. Get this from
+# https://console.cloud.google.com/apis/credentials as an OAuth 2.0 "Web
+# application" client ID; no client secret is needed for this flow, since
+# the browser hands us a signed ID token that we verify directly with
+# Google rather than doing a server-side code exchange.
+GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+
 
 # ================= LOGGING =================
 LOGGING = {
@@ -354,6 +366,18 @@ LISTING_STALE_DAYS = int(os.environ.get("LISTING_STALE_DAYS", "14"))
 # live. Landlord gets a notification with a one-click reactivate link -
 # this is a soft hide, not a delete.
 LISTING_AUTO_HIDE_DAYS = int(os.environ.get("LISTING_AUTO_HIDE_DAYS", "30"))
+
+# A landlord who signed up but still has zero rooms after this many days
+# gets the one-time "complete your listing" nudge - see
+# flag_landlords_without_listing. Kept short (a few days), since this is
+# about un-stalling a fresh signup, not a long-term nag.
+LANDLORD_NO_LISTING_NUDGE_DAYS = int(os.environ.get("LANDLORD_NO_LISTING_NUDGE_DAYS", "3"))
+
+# A Placement stuck in an early, non-terminal status (Interested, Viewing
+# Scheduled/Completed, Approved) for this many days is "stalled" - see
+# placements/management/commands/flag_stalled_placements.py and
+# Placement.STALLABLE_STATUSES/is_stalled().
+PLACEMENT_STALL_DAYS = int(os.environ.get("PLACEMENT_STALL_DAYS", "7"))
 
 # ----------------- Celery Defaults -----------------
 # Broker URL for Celery (empty by default — Celery disabled until configured).
@@ -399,6 +423,13 @@ try:
         "compute-response-stats-daily": {
             "task": "listings.tasks.compute_response_stats_task",
             "schedule": crontab(minute=30, hour=6),
+            "args": (False,),
+        },
+        # Same window as the other landlord-facing nudges above - one
+        # daily pass is enough for a one-time, few-days-after-signup email.
+        "flag-landlords-without-listing-daily": {
+            "task": "listings.tasks.flag_landlords_without_listing_task",
+            "schedule": crontab(minute=15, hour=6),
             "args": (False,),
         },
     })

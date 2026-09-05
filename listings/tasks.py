@@ -62,3 +62,13 @@ def compute_response_stats_task(force=False):
     if force:
         args.append("--force")
     call_command("compute_response_stats", *args)
+
+
+@shared_task
+def flag_landlords_without_listing_task(force=False):
+    """One-time nudge for landlords who signed up but never posted a
+    room. Set force=True to actually send."""
+    args = []
+    if force:
+        args.append("--force")
+    call_command("flag_landlords_without_listing", *args)

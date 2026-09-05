@@ -1,0 +1,217 @@
+{% extends "listings/base.html" %}
+{% load static %}
+
+{% block title %}Complete your account | Rooms4You{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+
+<div class="auth-shell">
+  <div class="auth-card gcp-card">
+
+    <h2 class="auth-title">One more step</h2>
+    <p class="auth-hint gcp-intro">
+      Your Google account is verified - we just need a couple more details
+      to finish setting up your Rooms4You account.
+    </p>
+
+    <form method="post" class="auth-form gcp-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="pr-field">
+        <label>I am a...</label>
+        <div class="pr-role-cards">
+          <button type="button" class="pr-role-card" data-role="tenant">
+            <span class="pr-role-icon">🔍</span>
+            <span class="pr-role-label">Tenant</span>
+          </button>
+          <button type="button" class="pr-role-card" data-role="landlord">
+            <span class="pr-role-icon">🔑</span>
+            <span class="pr-role-label">Landlord</span>
+          </button>
+        </div>
+        <div class="pr-role-select-wrap">{{ form.role }}</div>
+      </div>
+
+      <div class="pr-field">
+        <label>Phone Number</label>
+        <div class="pr-phone-row">
+          <div class="pr-phone-code">{{ form.country_code }}</div>
+          <div class="pr-phone-number">{{ form.phone_number }}</div>
+        </div>
+        {{ form.phone_number.errors }}
+      </div>
+
+      <div id="tenantFields">
+        <div class="pr-field">
+          <label>Persona</label>
+          {{ form.persona }}
+        </div>
+      </div>
+
+      <div id="landlordFields" class="pr-hidden-fields">
+        <div class="pr-field">
+          <label>Alternative number</label>
+          {{ form.alt_no }}
+        </div>
+        <div class="pr-field">
+          <label>Home address</label>
+          {{ form.home_address }}
+          {{ form.home_address.errors }}
+        </div>
+        <div class="pr-field">
+          <label>Postal code</label>
+          {{ form.postal_code }}
+          {{ form.postal_code.errors }}
+        </div>
+
+        <div class="pr-consent">
+          <label class="pr-consent-label">
+            {{ form.terms_accepted }}
+            <span>
+              I agree to the
+              <a href="{% url 'terms' %}" target="_blank" class="pr-inline-link">Terms of Service</a>
+              and
+              <a href="{% url 'privacy' %}" target="_blank" class="pr-inline-link">Privacy Policy</a>
+              and consent to the processing of my personal information under POPIA.
+            </span>
+          </label>
+          {{ form.terms_accepted.errors }}
+        </div>
+      </div>
+
+      <button class="btn-primary gcp-submit-btn" type="submit">
+        Finish setting up my account
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<style>
+  .gcp-card {
+    background: #fff !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  .gcp-intro {
+    margin-bottom: 24px;
+  }
+  .gcp-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+  }
+  .gcp-submit-btn {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .pr-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: #0f172a;
+  }
+  .pr-role-cards {
+    display: flex;
+    gap: 12px;
+  }
+  .pr-role-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 10px;
+    border-radius: 14px;
+    border: 2px solid #e2e8f0;
+    background: #f8fafc;
+    cursor: pointer;
+  }
+  .pr-role-card.pr-role-active {
+    border-color: #0B6FBF;
+    background: #eef2ff;
+  }
+  .pr-role-icon {
+    font-size: 1.5rem;
+  }
+  .pr-role-label {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.92rem;
+  }
+  .pr-role-select-wrap {
+    display: none;
+  }
+  .pr-phone-row {
+    display: flex;
+    gap: 10px;
+  }
+  .pr-phone-code {
+    width: 110px;
+    flex-shrink: 0;
+  }
+  .pr-phone-number {
+    flex: 1;
+    min-width: 0;
+  }
+  .pr-hidden-fields {
+    display: none;
+  }
+  .pr-consent-label {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    line-height: 1.6;
+    font-size: 0.85rem;
+    color: #334155;
+    cursor: pointer;
+  }
+  .pr-inline-link {
+    color: #0B6FBF;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const roleSel = document.getElementById("id_role");
+  const landlord = document.getElementById("landlordFields");
+  const tenant = document.getElementById("tenantFields");
+  const roleCards = document.querySelectorAll(".pr-role-card");
+
+  function toggle() {
+    const role = roleSel?.value;
+    if (role === "landlord") {
+      landlord.style.display = "block";
+      tenant.style.display = "none";
+    } else {
+      landlord.style.display = "none";
+      tenant.style.display = "block";
+    }
+    roleCards.forEach((card) => {
+      card.classList.toggle("pr-role-active", card.dataset.role === role);
+    });
+  }
+
+  roleCards.forEach((card) => {
+    card.addEventListener("click", () => {
+      if (!roleSel) return;
+      roleSel.value = card.dataset.role;
+      roleSel.dispatchEvent(new Event("change"));
+    });
+  });
+
+  roleSel?.addEventListener("change", toggle);
+  toggle();
+</script>
+{% endblock %}
