@@ -18,3 +18,9 @@ def vapid_public_key(request):
     # Safe to expose - it's the whole point of a *public* key. The
     # matching private key never leaves settings/env vars.
     return {"VAPID_PUBLIC_KEY": settings.VAPID_PUBLIC_KEY}
+
+
+def google_oauth_client_id(request):
+    # Safe to expose - an OAuth client ID identifies the app to Google,
+    # it isn't a secret (there is no client secret in this ID-token flow).
+    return {"GOOGLE_OAUTH_CLIENT_ID": settings.GOOGLE_OAUTH_CLIENT_ID}

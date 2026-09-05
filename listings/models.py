@@ -337,6 +337,11 @@ class Profile(models.Model):
     is_phone_verified = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
 
+    # Set once flag_landlords_without_listing has emailed this landlord to
+    # nudge them to post their first room. One-time (not re-sent on a
+    # timer) - see that command for why.
+    no_listing_nudge_sent_at = models.DateTimeField(null=True, blank=True)
+
     # keep old for compatibility
     is_verified = models.BooleanField(default=False)
     is_verified_landlord = models.BooleanField(

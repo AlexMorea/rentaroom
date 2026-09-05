@@ -106,6 +106,20 @@
     <a href="{% url 'placements:update_placement' placement.id %}" class="btn-secondary pl-action-btn">
       Update Placement
     </a>
+
+    {% if placement.status == "moved_in" %}
+      {% if placement.tenant_flagged_unreachable_at %}
+        <p class="text-muted pl-meta">⚠ Reported unreachable - Trust &amp; Safety is on it.</p>
+      {% else %}
+        <form method="post" action="{% url 'placements:report_tenant_unreachable' placement.id %}"
+              onsubmit="return confirm('Report this tenant as unreachable/gone AWOL? Our Trust & Safety team will follow up.');">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary pl-action-btn pl-action-danger">
+            Tenant unreachable?
+          </button>
+        </form>
+      {% endif %}
+    {% endif %}
   </div>
   {% endfor %}
 </div>
@@ -224,6 +238,11 @@
   .pl-action-btn {
     margin-top: 12px;
     display: inline-flex;
+  }
+
+  .pl-action-danger {
+    color: #b91c1c;
+    border-color: #fecaca;
   }
 
   /* ================= STATUS BADGES =================

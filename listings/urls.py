@@ -30,6 +30,12 @@ urlpatterns = [
     path("verify-account/", views.verify_account, name="verify_account"),
     path("resend-account-otp/", views.resend_account_otp, name="resend_account_otp"),
 
+    path("verify-device/", views.verify_device, name="verify_device"),
+    path("resend-device-otp/", views.resend_device_otp, name="resend_device_otp"),
+
+    path("auth/google/", views.google_auth, name="google_auth"),
+    path("auth/google/complete-profile/", views.google_complete_profile, name="google_complete_profile"),
+
     path("change-email/", views.change_email, name="change_email"),
     path("confirm-email-change/", views.confirm_email_change, name="confirm_email_change"),
 

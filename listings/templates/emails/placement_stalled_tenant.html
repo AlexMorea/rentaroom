@@ -1,0 +1,36 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Still interested in "{{ room.title }}"?</h1>
+
+<p>
+Hello {{ placement.tenant.first_name|default:"there" }},
+</p>
+
+<p>
+It's been {{ days }} days since there's been any movement on your enquiry
+for <strong>{{ room.title }}</strong>, and it's still showing as
+"{{ placement.get_status_display }}".
+</p>
+
+<div class="info-card">
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p><strong>Location:</strong> {{ room.location }}</p>
+  <p><strong>Status:</strong> {{ placement.get_status_display }}</p>
+</div>
+
+<p>
+If you're still keen, log in and follow up with the landlord to move things
+along - a viewing, a decision, or a move-in date. If you've found somewhere
+else, no problem - just let the landlord know so they can offer the room to
+someone else.
+</p>
+
+<p style="text-align:center;">
+<a href="https://rooms4you.co.za/rooms/{{ room.id }}/" class="btn">
+View listing
+</a>
+</p>
+
+{% endblock %}

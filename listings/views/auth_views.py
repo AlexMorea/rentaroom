@@ -3,6 +3,8 @@ import re
 from datetime import timedelta
 from secrets import compare_digest
 
+import requests
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -16,16 +18,24 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
+from accounts.devices import is_known_device, remember_device
 from accounts.state_engine import get_user_state
 
-from ..forms import UserRegisterForm
+from ..forms import GoogleCompleteProfileForm, UserRegisterForm
 from ..models import PhoneOTP, Profile
-from ..utils import generate_otp, send_otp_email, send_welcome_email
+from ..utils import generate_otp, send_new_device_otp_email, send_otp_email, send_welcome_email
 from .helpers import get_display_name, get_or_create_membership
 
 logger = logging.getLogger(__name__)
 
 OTP_RESEND_SECONDS = 90
+DEVICE_OTP_PURPOSE = "device_verification"
+# Deliberately distinct from the plain "otp_resend_{id}" key used by the
+# signup/email-change OTP flows - sharing one key would mean triggering a
+# device challenge could leave a stale cooldown that blocks an unrelated
+# "resend signup OTP" request for the same user id (or vice versa).
+DEVICE_OTP_RESEND_PREFIX = "device_otp_resend"
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
 
 # Login attempt limits. Two separate counters, not one:
 # - IP-based (existing) stops one attacker hammering many accounts from
@@ -148,7 +158,12 @@ def verify_account(request):
             cache.delete(attempt_key)
 
             state = get_user_state(user)
-            return redirect(state["next_route"])
+            response = redirect(state["next_route"])
+            # This device just completed a real OTP challenge (the signup
+            # one) - no need to challenge it again on its very next
+            # request, so it's trusted from here on.
+            remember_device(response, request, user)
+            return response
 
         messages.error(request, "Invalid or expired OTP")
 
@@ -231,8 +246,15 @@ def user_login(request):
         logger.info(f"OTP BLOCK: user {user.id}")
         return redirect("verify_account")
 
-    login(request, user)
     cache.delete(login_key)
+
+    # NEW DEVICE CHECK - a device that hasn't completed this challenge
+    # before doesn't get a session yet, no matter how correct the
+    # password was. It has to prove it's really this person first.
+    if not is_known_device(request, user):
+        return _start_device_challenge(request, user)
+
+    login(request, user)
 
     messages.success(
         request,
@@ -245,6 +267,148 @@ def user_login(request):
 
     state = get_user_state(user)
     return redirect(state["next_route"])
+
+
+def _start_device_challenge(request, user):
+    """
+    Shared by the password login path and the Google sign-in path for an
+    existing account: sends a one-time code to the account's email and
+    parks the pending user id in session until verify_device confirms it.
+    """
+    otp = generate_otp()
+
+    PhoneOTP.objects.filter(user=user).delete()
+
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number=DEVICE_OTP_PURPOSE,
+        otp=otp,
+    )
+
+    try:
+        send_new_device_otp_email(user, otp)
+    except Exception:
+        logger.exception("Failed to send new-device OTP email for user %s", user.pk)
+        messages.error(
+            request,
+            "We couldn't send a verification code. Please try logging in again shortly."
+        )
+        return redirect("login")
+
+    set_otp_cooldown(user.id, prefix=DEVICE_OTP_RESEND_PREFIX)
+
+    request.session["pending_device_user_id"] = user.id
+
+    messages.info(
+        request,
+        "We don't recognise this device. Enter the code we just emailed you to continue."
+    )
+
+    return redirect("verify_device")
+
+
+def verify_device(request):
+    user_id = request.session.get("pending_device_user_id")
+
+    if not user_id:
+        return redirect("login")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+
+        otp_input = request.POST.get("otp")
+
+        attempt_key = f"device_otp_attempts_{user.id}"
+        attempts = cache.get(attempt_key, 0)
+
+        if attempts >= 5:
+            messages.error(request, "Too many attempts. Try logging in again later.")
+            return render(request, "listings/verify_device.html")
+
+        if not otp_input:
+            messages.error(request, "Enter the code.")
+            return render(request, "listings/verify_device.html")
+
+        record = PhoneOTP.objects.filter(
+            user=user,
+            phone_number=DEVICE_OTP_PURPOSE,
+            is_verified=False,
+            created_at__gte=timezone.now() - timedelta(minutes=15),
+        ).order_by("-created_at").first()
+
+        if record and compare_digest(record.otp, otp_input):
+            record.is_verified = True
+            record.save()
+
+            PhoneOTP.objects.filter(user=user, phone_number=DEVICE_OTP_PURPOSE).delete()
+
+            login(request, user)
+
+            request.session.pop("pending_device_user_id", None)
+            cache.delete(attempt_key)
+
+            messages.success(request, f"Welcome back {get_display_name(user)} 👋")
+
+            state = get_user_state(user)
+            response = redirect(state["next_route"])
+            remember_device(response, request, user)
+            return response
+
+        messages.error(request, "Invalid or expired code.")
+        cache.set(attempt_key, attempts + 1, timeout=900)
+
+    return render(request, "listings/verify_device.html")
+
+
+def resend_device_otp(request):
+    user_id = request.session.get("pending_device_user_id")
+
+    if not user_id:
+        return JsonResponse({
+            "level": "error",
+            "message": "Your session has expired. Please log in again."
+        }, status=400)
+
+    user = get_object_or_404(User, id=user_id)
+
+    cache_key = f"{DEVICE_OTP_RESEND_PREFIX}_{user.id}"
+
+    if cache.get(cache_key):
+        return JsonResponse({
+            "level": "warning",
+            "message": "Please wait before requesting another code.",
+            "cooldown": OTP_RESEND_SECONDS
+        }, status=429)
+
+    cache.delete(f"device_otp_attempts_{user.id}")
+
+    otp = generate_otp()
+
+    PhoneOTP.objects.filter(user=user).delete()
+
+    PhoneOTP.objects.create(
+        user=user,
+        phone_number=DEVICE_OTP_PURPOSE,
+        otp=otp,
+    )
+
+    try:
+        send_new_device_otp_email(user, otp)
+    except Exception:
+        logger.exception("Failed to send device-verification resend for user %s", user.pk)
+        return JsonResponse({
+            "level": "error",
+            "message": "Couldn't send the code. Please try again shortly."
+        }, status=502)
+
+    set_otp_cooldown(user.id, prefix=DEVICE_OTP_RESEND_PREFIX)
+
+    return JsonResponse({
+        "level": "success",
+        "message": "Code sent successfully.",
+        "cooldown": OTP_RESEND_SECONDS
+    })
 
 
 @require_POST
@@ -306,9 +470,9 @@ def resend_account_otp(request):
     })
 
 
-def set_otp_cooldown(user_id):
+def set_otp_cooldown(user_id, prefix="otp_resend"):
     cache.set(
-        f"otp_resend_{user_id}",
+        f"{prefix}_{user_id}",
         True,
         timeout=OTP_RESEND_SECONDS
     )
@@ -553,7 +717,154 @@ class RateLimitedPasswordResetView(PasswordResetView):
 def handle_phone_change(user_obj, profile_obj, new_phone):
     if not new_phone or new_phone == profile_obj.phone_number:
         return
-    
+
     profile_obj.phone_number = new_phone
     profile_obj.is_phone_verified = False
+
+
+# ---------------------------------------------------------------------
+# "Continue with Google"
+# ---------------------------------------------------------------------
+def _verify_google_credential(credential):
+    """
+    Verifies a Google Identity Services ID token by asking Google's own
+    tokeninfo endpoint about it, rather than pulling in a whole OAuth
+    client library for one signature check. Returns the decoded claims
+    dict on success, or None on any failure (network, bad token, wrong
+    audience, unverified email) - callers just treat None as "sign-in
+    failed", they don't need to know why.
+    """
+    if not credential:
+        return None
+
+    try:
+        resp = requests.get(
+            GOOGLE_TOKENINFO_URL,
+            params={"id_token": credential},
+            timeout=8,
+        )
+    except requests.RequestException:
+        logger.exception("Google tokeninfo request failed")
+        return None
+
+    if resp.status_code != 200:
+        return None
+
+    data = resp.json()
+
+    if data.get("aud") != settings.GOOGLE_OAUTH_CLIENT_ID:
+        logger.warning("Google credential audience mismatch")
+        return None
+
+    if data.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+        return None
+
+    if str(data.get("email_verified", "")).lower() != "true":
+        return None
+
+    return data
+
+
+@require_POST
+@never_cache
+def google_auth(request):
+    """
+    Receives the ID token from the "Continue with Google" button on
+    login/register (see listings/templates/listings/login.html) and
+    either logs the matching existing account in (still subject to the
+    same new-device challenge as a password login) or, for a brand new
+    email, parks it in session and sends them to
+    google_complete_profile to pick a role/phone before an account is
+    fully usable.
+    """
+    if not settings.GOOGLE_OAUTH_CLIENT_ID:
+        messages.error(request, "Google sign-in isn't available right now.")
+        return redirect("login")
+
+    data = _verify_google_credential(request.POST.get("credential"))
+
+    if not data:
+        messages.error(request, "Google sign-in failed. Please try again.")
+        return redirect("login")
+
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        messages.error(request, "Google sign-in failed. Please try again.")
+        return redirect("login")
+
+    user = User.objects.filter(email__iexact=email).first()
+
+    if user is None:
+        first_name = (data.get("given_name") or "").strip()
+        last_name = (data.get("family_name") or "").strip()
+
+        user = User.objects.create(
+            username=email,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        user.set_unusable_password()
+        user.is_active = True
+        user.save()
+
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.is_email_verified = True
+        profile.save(update_fields=["is_email_verified"])
+
+        request.session["google_pending_user_id"] = user.id
+        return redirect("google_complete_profile")
+
+    profile = getattr(user, "profile", None)
+
+    if profile is None or not profile.is_phone_verified:
+        # An account that exists but never finished onboarding (e.g. it
+        # was created outside the normal signup flow) - finish it the
+        # same way a fresh Google signup would.
+        request.session["google_pending_user_id"] = user.id
+        return redirect("google_complete_profile")
+
+    if not user.is_active:
+        messages.error(request, "This account has been deactivated.")
+        return redirect("login")
+
+    if is_known_device(request, user):
+        login(request, user)
+        messages.success(request, f"Welcome back {get_display_name(user)} 👋")
+        state = get_user_state(user)
+        return redirect(state["next_route"])
+
+    return _start_device_challenge(request, user)
+
+
+def google_complete_profile(request):
+    user_id = request.session.get("google_pending_user_id")
+
+    if not user_id:
+        return redirect("login")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        form = GoogleCompleteProfileForm(request.POST)
+
+        if form.is_valid():
+            form.apply_to(user)
+
+            login(request, user)
+            request.session.pop("google_pending_user_id", None)
+
+            messages.success(request, f"Welcome to Rooms4You, {get_display_name(user)} 🎉")
+
+            state = get_user_state(user)
+            response = redirect(state["next_route"])
+            # Google's own auth just verified this person, and this
+            # profile step stands in for the OTP step - this device is
+            # trusted from here on, same as a fresh normal signup.
+            remember_device(response, request, user)
+            return response
+    else:
+        form = GoogleCompleteProfileForm()
+
+    return render(request, "listings/google_complete_profile.html", {"form": form})
 

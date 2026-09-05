@@ -205,3 +205,42 @@ class PushSubscription(models.Model):
 
     def __str__(self):
         return f"Push subscription for {self.user} ({self.endpoint[:40]}...)"
+
+
+class TrustedDevice(models.Model):
+    """
+    One browser/device that has already completed a login-time OTP
+    challenge for a given user (see listings/views/auth_views.py -
+    user_login/verify_device). A future login that presents this same
+    device's cookie skips the challenge; any other device gets asked
+    "is this you?" via a fresh emailed OTP before the session is created.
+
+    Only a salted hash of the device token is stored (never the raw
+    token itself) - same reasoning as not storing raw passwords: a
+    leaked row shouldn't let anyone impersonate the device it names.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="trusted_devices",
+    )
+    token_hash = models.CharField(max_length=64, db_index=True)
+    label = models.CharField(max_length=255, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["user", "token_hash"],
+                name="uniq_trusteddevice_user_token",
+            )
+        ]
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["user"]),
+        ]
+
+    def __str__(self):
+        return f"Trusted device for {self.user} ({self.label or 'unknown'})"
