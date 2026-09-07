@@ -765,6 +765,9 @@
     const form = document.getElementById("googleAuthForm");
     const field = document.getElementById("googleCredential");
     if (!form || !field) return;
+    if (!response || !response.credential) {
+      return;
+    }
     field.value = response.credential;
     form.submit();
   }
@@ -775,6 +778,7 @@
     google.accounts.id.initialize({
       client_id: "{{ GOOGLE_OAUTH_CLIENT_ID }}",
       callback: handleGoogleCredential,
+      ux_mode: "popup",
     });
 
     google.accounts.id.renderButton(

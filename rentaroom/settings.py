@@ -215,6 +215,18 @@ CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
 SECURE_REFERRER_POLICY = "same-origin"
 
+# Django's SecurityMiddleware defaults this to "same-origin", which blocks
+# window.opener/postMessage between a page and a popup it opened - exactly
+# the channel Google Identity Services' "Continue with Google" button uses
+# to hand back the credential from its popup (see listings/templates/
+# listings/login.html and register.html). Without this override, the
+# button's popup gets stuck on a blank page after the user picks an
+# account and clicks Continue: it can't tell the opener it's done.
+# "same-origin-allow-popups" (Google's own recommended value for this
+# exact case) keeps the cross-origin isolation for everything else while
+# allowing that one opener<->popup handshake.
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
 
 # ================= STATIC / MEDIA =================
 STATIC_URL = "/static/"
