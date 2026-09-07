@@ -42,6 +42,19 @@ POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 logger = logging.getLogger(__name__)
 
 
+def _favorited_ids_for(request, room_ids):
+    """Which of these room ids the current user has already saved -
+    scoped to just the current page's rooms (cheap, indexed lookup),
+    mirroring how popular_ids is computed fresh alongside the room list
+    rather than baked into the cached room-id/HTML payloads."""
+    if not request.user.is_authenticated:
+        return set()
+    return set(
+        Favorite.objects.filter(user=request.user, room_id__in=room_ids)
+        .values_list("room_id", flat=True)
+    )
+
+
 def room_list(request):
 
     # ================= CACHE CHECK =================
@@ -127,6 +140,10 @@ def room_list(request):
             page_obj.object_list.values("id", "title", "price", "latitude", "longitude")
         )
 
+        favorited_ids = _favorited_ids_for(
+            request, page_obj.object_list.values_list("id", flat=True)
+        )
+
         cache_key_popular = f"popular_ids_v1:{'mat' if getattr(settings, 'USE_MATERIALIZED_SCORE', True) else 'calc'}:{POPULAR_SCORE_THRESHOLD}"
         popular_ids = cache.get(cache_key_popular)
         if popular_ids is None:
@@ -166,6 +183,7 @@ def room_list(request):
                 "searched_location": searched_location,
                 "show_location_suggestion": show_location_suggestion,
                 "popular_ids": popular_ids,
+                "favorited_ids": favorited_ids,
             },
         )
     # ================= END FULL-PAGE CACHE fast path =================
@@ -340,6 +358,10 @@ def room_list(request):
         )
     )
 
+    favorited_ids = _favorited_ids_for(
+        request, page_obj.object_list.values_list("id", flat=True)
+    )
+
     # cache popular ids to avoid running the aggregate query on every request
     cache_key_popular = f"popular_ids_v1:{'mat' if USE_MATERIALIZED_SCORE else 'calc'}:{POPULAR_SCORE_THRESHOLD}"
     popular_ids = cache.get(cache_key_popular)
@@ -392,7 +414,11 @@ def room_list(request):
 
         html = render_to_string(
             "listings/_room_cards.html",
-            {"rooms": page_obj.object_list, "popular_ids": popular_ids},
+            {
+                "rooms": page_obj.object_list,
+                "popular_ids": popular_ids,
+                "favorited_ids": favorited_ids,
+            },
             request=request,
         )
 
@@ -465,6 +491,7 @@ def room_list(request):
             "searched_location": searched_location,
             "show_location_suggestion": show_location_suggestion,
             "popular_ids": popular_ids,
+            "favorited_ids": favorited_ids,
         },
     )
 
@@ -910,10 +937,14 @@ def toggle_favorite(request, room_id):
 
     room = get_object_or_404(Room, id=room_id, is_available=True)
 
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
     # Role check (safe guard)
     profile = getattr(request.user, "profile", None)
 
     if not profile or profile.role != "tenant":
+        if is_ajax:
+            return JsonResponse({"error": "Only tenants can save rooms."}, status=403)
         messages.error(request, "Only tenants can save rooms.")
         return redirect("room_detail", pk=room.id)  # ✅ FIXED
 
@@ -923,10 +954,18 @@ def toggle_favorite(request, room_id):
     )
 
     if created:
-        messages.success(request, "❤️ Room added to saved listings.")
+        if not is_ajax:
+            messages.success(request, "❤️ Room added to saved listings.")
     else:
         favorite.delete()
-        messages.info(request, "🗑️ Room removed from saved listings.")
+        if not is_ajax:
+            messages.info(request, "🗑️ Room removed from saved listings.")
+
+    # The room-card grid (room_list.html) saves/unsaves in place via this
+    # branch instead of navigating away - room_detail's existing form
+    # POST (no X-Requested-With header) keeps the redirect it always had.
+    if is_ajax:
+        return JsonResponse({"favorited": created})
 
     # IMPORTANT FIX HERE TOO
     return redirect("room_detail", pk=room.id)  # ✅ FIXED

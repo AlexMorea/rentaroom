@@ -58,6 +58,10 @@
 
     <!-- BADGES -->
     <div class="room-badges rc-badges">
+      {% if room.is_new %}
+        <span class="badge rc-badge rc-badge-new">🆕 New</span>
+      {% endif %}
+
       {% if popular_ids and room.id in popular_ids %}
         <span class="badge badge-popular rc-badge rc-badge-popular">🔥 Popular</span>
       {% endif %}
@@ -71,6 +75,27 @@
         {% endif %}
       {% endwith %}
     </div>
+
+    <!-- SAVE / FAVORITE -->
+    <button
+      type="button"
+      class="rc-fav-btn {% if favorited_ids and room.id in favorited_ids %}rc-fav-active{% endif %}"
+      data-fav-btn
+      data-room-id="{{ room.id }}"
+      data-favorited="{% if favorited_ids and room.id in favorited_ids %}true{% else %}false{% endif %}"
+      aria-label="Save this room"
+      aria-pressed="{% if favorited_ids and room.id in favorited_ids %}true{% else %}false{% endif %}"
+    >
+      <svg class="rc-fav-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path
+          d="M12 20.5s-7.5-4.6-10-9.2C.4 8.1 1.9 4.8 5 4.1c2-.5 3.9.3 5 2 .1.1.1.1.2 0 1.1-1.7 3-2.5 5-2 3.1.7 4.6 4 3 7.2-2.5 4.6-10 9.2-10 9.2z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
    </div>
   </div>
 
@@ -145,6 +170,28 @@
     transform: translateY(-4px);
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
   }
+  /* Applied by static/js/room-card.js only to cards that land via the
+     "Browse More" AJAX pagination, not the first page's cards - a
+     subtle staggered rise instead of new results just popping in. */
+  .rc-card.rc-card-enter {
+    animation: rc-card-in 0.42s ease both;
+  }
+  @keyframes rc-card-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rc-card.rc-card-enter {
+      animation: none;
+    }
+  }
+  /* Hover feedback does nothing for the touch devices most of our
+     traffic is on - this gives tapping a card the same "it responded to
+     me" feel a hover gives a mouse user. */
+  .rc-card:active {
+    transform: scale(0.985);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+  }
 
   .rc-media,
   .room-media.rc-media {
@@ -191,10 +238,18 @@
     flex-shrink: 0;
     scroll-snap-align: start;
     object-fit: cover !important;
-    transition: transform 0.4s ease;
+    transition: transform 0.4s ease, opacity 0.35s ease;
   }
   .rc-card:hover .rc-img {
     transform: scale(1.045);
+  }
+  /* Progressive enhancement only - rc-img-loading is added by JS right
+     before an image starts loading (see static/js/room-card.js) and
+     always removed on load/error. If JS never runs, images simply
+     never get this class and stay fully visible - no risk of a photo
+     being stuck invisible. */
+  .rc-img.rc-img-loading {
+    opacity: 0;
   }
 
   .rc-slider-btn {
@@ -269,6 +324,55 @@
   .rc-badge-fast {
     background: rgba(255, 247, 237, 0.95) !important;
     color: #9a3412 !important;
+  }
+  .rc-badge-new {
+    background: rgba(22, 163, 74, 0.92) !important;
+    color: #fff !important;
+  }
+
+  /* ===== Save / favorite heart ===== */
+  .rc-fav-btn {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    z-index: 4;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .rc-fav-btn:hover {
+    background: rgba(15, 23, 42, 0.55);
+  }
+  .rc-fav-btn:active {
+    transform: scale(0.9);
+  }
+  .rc-fav-icon path {
+    transition: fill 0.15s ease, stroke 0.15s ease;
+  }
+  .rc-fav-btn.rc-fav-active {
+    background: rgba(255, 255, 255, 0.92);
+  }
+  .rc-fav-btn.rc-fav-active .rc-fav-icon path {
+    fill: #ef4444;
+    stroke: #ef4444;
+  }
+  .rc-fav-btn.rc-fav-pop {
+    animation: rc-fav-pop 0.32s ease;
+  }
+  @keyframes rc-fav-pop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.28); }
+    100% { transform: scale(1); }
   }
 
   /* ===== Signature: the price chip ===== */
