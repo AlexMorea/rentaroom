@@ -42,6 +42,7 @@
 
         <form method="post" class="pr-form">
           {% csrf_token %}
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
 
           {{ form.non_field_errors }}
 
@@ -89,6 +90,7 @@
 
         <form method="post" action="{% url 'google_auth' %}" id="googleAuthForm" class="pr-google-form">
           {% csrf_token %}
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
           <input type="hidden" name="credential" id="googleCredential" />
         </form>
 
