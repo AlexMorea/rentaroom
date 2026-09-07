@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import timedelta
 from secrets import compare_digest
+from urllib.parse import quote
 
 import requests
 from django.conf import settings
@@ -14,7 +15,9 @@ from django.core.cache import cache
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
@@ -36,6 +39,36 @@ DEVICE_OTP_PURPOSE = "device_verification"
 # "resend signup OTP" request for the same user id (or vice versa).
 DEVICE_OTP_RESEND_PREFIX = "device_otp_resend"
 GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+# Session key carrying a validated ?next= across the device-verification
+# detour (see _start_device_challenge/verify_device) - a plain query
+# param would be lost once the OTP screen redirects away from it.
+POST_LOGIN_NEXT_SESSION_KEY = "post_login_next"
+
+
+def _safe_next_url(request, raw_next):
+    """
+    Validates a `next` value (from Django's own login_required redirect,
+    or carried through the login form) before ever redirecting to it -
+    same purpose as Django's own LoginView.get_success_url(), just for
+    this custom login view. An unvalidated `next` is a classic open-
+    redirect vector, so anything that doesn't point back at this same
+    host is silently dropped rather than followed.
+    """
+    if not raw_next:
+        return ""
+    if url_has_allowed_host_and_scheme(
+        raw_next, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return raw_next
+    return ""
+
+
+def _redirect_to_login(next_url):
+    """Back to the login form, keeping `next` in the URL so a mistyped
+    password doesn't lose where the user was headed."""
+    if next_url:
+        return redirect(f"{reverse('login')}?next={quote(next_url)}")
+    return redirect("login")
 
 # Login attempt limits. Two separate counters, not one:
 # - IP-based (existing) stops one attacker hammering many accounts from
@@ -186,7 +219,12 @@ def user_login(request):
         return redirect("login")
 
     if request.method != "POST":
-        return render(request, "listings/login.html")
+        next_url = _safe_next_url(request, request.GET.get("next", ""))
+        return render(request, "listings/login.html", {"next_url": next_url})
+
+    next_url = _safe_next_url(
+        request, request.POST.get("next") or request.GET.get("next", "")
+    )
 
     login_value = (request.POST.get("email") or "").strip()
     password = request.POST.get("password") or ""
@@ -200,7 +238,7 @@ def user_login(request):
 
     if login_value and account_attempts >= ACCOUNT_LOGIN_MAX_ATTEMPTS:
         messages.error(request, "Too many login attempts on this account. Try again later.")
-        return redirect("login")
+        return _redirect_to_login(next_url)
 
     user_obj = (
         User.objects.filter(email__iexact=login_value).first()
@@ -211,7 +249,7 @@ def user_login(request):
         cache.set(login_key, attempts + 1, timeout=900)
         cache.set(account_key, account_attempts + 1, timeout=ACCOUNT_LOGIN_LOCKOUT_SECONDS)
         messages.error(request, "Invalid credentials.")
-        return redirect("login")
+        return _redirect_to_login(next_url)
 
 
     user = authenticate(request, username=user_obj.username, password=password)
@@ -220,7 +258,7 @@ def user_login(request):
         cache.set(login_key, attempts + 1, timeout=900)
         cache.set(account_key, account_attempts + 1, timeout=ACCOUNT_LOGIN_LOCKOUT_SECONDS)
         messages.error(request, "Invalid credentials.")
-        return redirect("login")
+        return _redirect_to_login(next_url)
 
     cache.delete(account_key)
 
@@ -252,6 +290,8 @@ def user_login(request):
     # before doesn't get a session yet, no matter how correct the
     # password was. It has to prove it's really this person first.
     if not is_known_device(request, user):
+        if next_url:
+            request.session[POST_LOGIN_NEXT_SESSION_KEY] = next_url
         return _start_device_challenge(request, user)
 
     login(request, user)
@@ -265,8 +305,13 @@ def user_login(request):
     if getattr(profile, "must_change_password", False):
         return redirect("change_password")
 
+    # Someone who clicked "Contact landlord" (or any other
+    # @login_required action) while logged out lands back on that exact
+    # page instead of their role's generic default - see
+    # POST_LOGIN_NEXT_SESSION_KEY for the same handling after the
+    # device-verification detour.
     state = get_user_state(user)
-    return redirect(state["next_route"])
+    return redirect(next_url or state["next_route"])
 
 
 def _start_device_challenge(request, user):
@@ -346,12 +391,15 @@ def verify_device(request):
             login(request, user)
 
             request.session.pop("pending_device_user_id", None)
+            next_url = _safe_next_url(
+                request, request.session.pop(POST_LOGIN_NEXT_SESSION_KEY, "")
+            )
             cache.delete(attempt_key)
 
             messages.success(request, f"Welcome back {get_display_name(user)} 👋")
 
             state = get_user_state(user)
-            response = redirect(state["next_route"])
+            response = redirect(next_url or state["next_route"])
             remember_device(response, request, user)
             return response
 
@@ -781,6 +829,8 @@ def google_auth(request):
         messages.error(request, "Google sign-in isn't available right now.")
         return redirect("login")
 
+    next_url = _safe_next_url(request, request.POST.get("next", ""))
+
     data = _verify_google_credential(request.POST.get("credential"))
 
     if not data:
@@ -832,8 +882,10 @@ def google_auth(request):
         login(request, user)
         messages.success(request, f"Welcome back {get_display_name(user)} 👋")
         state = get_user_state(user)
-        return redirect(state["next_route"])
+        return redirect(next_url or state["next_route"])
 
+    if next_url:
+        request.session[POST_LOGIN_NEXT_SESSION_KEY] = next_url
     return _start_device_challenge(request, user)
 
 

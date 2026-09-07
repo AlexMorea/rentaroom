@@ -170,3 +170,88 @@ class AccountLoginLockoutTests(TestCase):
             self._attempt("10.0.0.9")
         resp = self._attempt("10.0.0.9", password="CorrectHorseBattery1!")
         self.assertTrue(resp.wsgi_request.user.is_authenticated)
+
+
+class PostLoginNextRedirectTests(TestCase):
+    """
+    Regression coverage for: clicking a @login_required action (e.g.
+    "Call Landlord" on room_detail) while logged out, then logging in,
+    landed everyone on their role's generic default page instead of
+    back on the page/action they actually wanted - this custom login
+    view never read Django's own `?next=` at all. Covers both the
+    direct-login path and the case where the account also has to pass
+    the new-device OTP challenge first (see tests_device_verification
+    for that challenge on its own).
+    """
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="next_user", email="next_user@example.com", password="password123"
+        )
+        profile = self.user.profile
+        profile.is_phone_verified = True
+        profile.is_email_verified = True
+        profile.save()
+
+    def tearDown(self):
+        cache.clear()
+
+    def _protected_url(self):
+        # Any real @login_required view (no extra role checks) works as
+        # the "where they were" destination.
+        return reverse("profile")
+
+    def test_anonymous_login_required_hit_redirects_with_next(self):
+        resp = self.client.get(self._protected_url())
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/login/?next=", resp.url)
+
+    def test_known_device_login_honours_next(self):
+        trust_device(self.client, self.user)
+        next_path = self._protected_url()
+
+        resp = self.client.post(
+            "/login/",
+            {"email": self.user.email, "password": "password123", "next": next_path},
+        )
+
+        self.assertRedirects(resp, next_path, fetch_redirect_response=False)
+
+    def test_next_survives_the_device_verification_detour(self):
+        next_path = self._protected_url()
+
+        # Unrecognised device -> challenged instead of logged in, same as
+        # tests_device_verification, but this time carrying `next`.
+        self.client.post(
+            "/login/",
+            {"email": self.user.email, "password": "password123", "next": next_path},
+        )
+        self.assertEqual(
+            self.client.session.get("post_login_next"), next_path
+        )
+
+        from listings.models import PhoneOTP
+        otp = PhoneOTP.objects.get(user=self.user, phone_number="device_verification").otp
+
+        resp = self.client.post("/verify-device/", {"otp": otp})
+
+        self.assertRedirects(resp, next_path, fetch_redirect_response=False)
+        self.assertNotIn("post_login_next", self.client.session)
+
+    def test_unsafe_next_is_ignored_not_followed(self):
+        trust_device(self.client, self.user)
+
+        resp = self.client.post(
+            "/login/",
+            {
+                "email": self.user.email,
+                "password": "password123",
+                "next": "https://evil.example.com/phish",
+            },
+        )
+
+        # Falls back to ordinary role-based routing, never the attacker
+        # URL - this is the open-redirect guard on _safe_next_url.
+        self.assertEqual(resp.status_code, 302)
+        self.assertNotIn("evil.example.com", resp.url)
