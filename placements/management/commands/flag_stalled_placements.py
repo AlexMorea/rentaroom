@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.urls import reverse
 from django.utils import timezone
 
+from accounts.push import notify_user
 from placements.models import Placement
 from utils.email import send_template_email
 
@@ -64,6 +66,12 @@ class Command(BaseCommand):
                 template="emails/placement_stalled_tenant.html",
                 context=context,
             )
+        notify_user(
+            placement.tenant,
+            title="Still interested?",
+            body=f'Your enquiry on "{placement.room.title}" needs an update.',
+            url=reverse("placements:tenant_dashboard"),
+        )
 
         if placement.landlord.email:
             send_template_email(
@@ -72,3 +80,9 @@ class Command(BaseCommand):
                 template="emails/placement_stalled_landlord.html",
                 context=context,
             )
+        notify_user(
+            placement.landlord,
+            title="An enquiry needs an update",
+            body=f'"{placement.room.title}" has a stalled enquiry - tap to follow up.',
+            url=reverse("placements:landlord_dashboard"),
+        )

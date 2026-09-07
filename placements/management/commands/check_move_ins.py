@@ -1,7 +1,9 @@
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from django.urls import reverse
 from django.utils import timezone
 
+from accounts.push import notify_user
 from placements.models import Placement
 
 
@@ -85,3 +87,19 @@ class Command(BaseCommand):
             recipients,
             fail_silently=True,
         )
+
+        push_body = f'Please confirm your move-in for "{placement.room.title}".'
+        if to_tenant:
+            notify_user(
+                placement.tenant,
+                title="Confirm your move-in",
+                body=push_body,
+                url=reverse("placements:tenant_dashboard"),
+            )
+        if to_landlord:
+            notify_user(
+                placement.landlord,
+                title="Confirm move-in",
+                body=push_body,
+                url=reverse("placements:landlord_dashboard"),
+            )

@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from utils.email import send_template_email
 
+from accounts.push import notify_user
 from trust.models import FraudReport
 
 from ..models import Contact, Message, Review, Room, RoomStat
@@ -230,6 +231,13 @@ def track_contact(request, room_id, method):
             )
         except (SMTPException, OSError):
             logger.warning("Failed to send new-inquiry notification email for room %s", room.id)
+
+        notify_user(
+            room.owner,
+            title=f"New inquiry on {room.title}",
+            body=f"{request.user.first_name or request.user.username} is interested in your listing.",
+            url=reverse("room_detail", args=[room.id]),
+        )
 
         return render(
             request,
