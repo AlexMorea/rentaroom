@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Rooms4You</title>
+  <desc>Rooms4You - Connecting Spaces To Faces</desc>
+
+  <rect x="0" y="0" width="512" height="512" fill="#ffffff"/>
+
+  <circle cx="256" cy="216" r="150" fill="#0B6FBF"/>
+
+  <polygon points="256,460 165,300 347,300" fill="#0B6FBF"/>
+  <polygon points="256,460 195,320 317,320" fill="#1FA6F0"/>
+
+  <polygon points="256,120 175,195 337,195" fill="#ffffff"/>
+  <rect x="196" y="195" width="120" height="95" fill="#ffffff"/>
+
+  <rect x="216" y="220" width="30" height="30" fill="#F7941D"/>
+  <rect x="266" y="220" width="30" height="30" fill="#F7941D"/>
+  <rect x="216" y="255" width="30" height="30" fill="#F7941D"/>
+  <rect x="266" y="255" width="30" height="30" fill="#F7941D"/>
+</svg>
