@@ -36,6 +36,35 @@ def age_room(room, days):
     room.refresh_from_db()
 
 
+def age_room_created_at(room, days):
+    # created_at is auto_now_add, so it can't be set via .create() kwargs -
+    # same update()+refresh pattern as age_room, just for the field the
+    # "New" room-card badge (Room.is_new) actually reads.
+    Room.objects.filter(pk=room.pk).update(
+        created_at=timezone.now() - timezone.timedelta(days=days)
+    )
+    room.refresh_from_db()
+
+
+class RoomIsNewTests(TestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(username="new_room_owner", password="p")
+
+    def test_just_posted_room_is_new(self):
+        room = make_room(self.owner)
+        self.assertTrue(room.is_new)
+
+    def test_room_just_under_the_threshold_is_still_new(self):
+        room = make_room(self.owner)
+        age_room_created_at(room, Room.NEW_LISTING_DAYS - 1)
+        self.assertTrue(room.is_new)
+
+    def test_room_past_the_threshold_is_not_new(self):
+        room = make_room(self.owner)
+        age_room_created_at(room, Room.NEW_LISTING_DAYS + 1)
+        self.assertFalse(room.is_new)
+
+
 class RoomFreshnessPropertyTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username="owner", password="p")

@@ -200,6 +200,17 @@ class Room(models.Model):
     def review_count(self):
         return self.reviews.count()
 
+    NEW_LISTING_DAYS: ClassVar[int] = 3
+
+    @property
+    def is_new(self) -> bool:
+        """Surfaces a "New" badge on room cards for freshly posted
+        listings - the first few days are when a listing most needs an
+        extra nudge to stand out, before it's built up views/ratings of
+        its own. Pure datetime comparison (no query), safe to read on
+        every card in a list without an N+1."""
+        return (timezone.now() - self.created_at).days < self.NEW_LISTING_DAYS
+
     @property
     def contact_count(self):
         # lightweight contact count (RoomStat preferred for analytics)
