@@ -1,6 +1,8 @@
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from django.urls import reverse
 
+from accounts.push import notify_user
 from stays.models import BookingInvoice
 
 # Days of an unpaid guest house success fee invoice before a warning
@@ -39,19 +41,24 @@ class Command(BaseCommand):
 
     def _send_warning(self, invoice):
         host = invoice.booking.guesthouse.host
-        if not host.email:
-            return
 
-        send_mail(
-            "Rooms4You: your Success Fee is overdue",
-            (
-                f"Hi {host.get_full_name() or host.username},\n\n"
-                f"Your Success Fee of R{invoice.amount} for the booking at "
-                f"\"{invoice.booking.guesthouse.name}\" is still unpaid. "
-                f"Please settle this soon.\n\n"
-                f"- The Rooms4You Team"
-            ),
-            None,
-            [host.email],
-            fail_silently=True,
+        if host.email:
+            send_mail(
+                "Rooms4You: your Success Fee is overdue",
+                (
+                    f"Hi {host.get_full_name() or host.username},\n\n"
+                    f"Your Success Fee of R{invoice.amount} for the booking at "
+                    f"\"{invoice.booking.guesthouse.name}\" is still unpaid. "
+                    f"Please settle this soon.\n\n"
+                    f"- The Rooms4You Team"
+                ),
+                None,
+                [host.email],
+                fail_silently=True,
+            )
+        notify_user(
+            host,
+            title="Your Success Fee is overdue",
+            body=f'R{invoice.amount} is still unpaid for "{invoice.booking.guesthouse.name}".',
+            url=reverse("stays:host_bookings"),
         )

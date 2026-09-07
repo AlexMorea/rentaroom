@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import Membership
+from accounts.push import notify_user
 from placements.models import PlacementInvoice
 
 # Days of an unpaid Success Fee invoice before each stage triggers.
@@ -83,38 +85,48 @@ class Command(BaseCommand):
             ))
 
     def _send_warning(self, invoice, landlord):
-        if not landlord.email:
-            return
-        send_mail(
-            "Rooms4You: your Success Fee is overdue",
-            (
-                f"Hi {landlord.get_full_name() or landlord.username},\n\n"
-                f"Your Success Fee of R{invoice.amount} for \"{invoice.placement.room.title}\" "
-                f"is still unpaid. Please settle this soon to avoid your account being "
-                f"suspended for new listings.\n\n"
-                f"- The Rooms4You Team"
-            ),
-            None,
-            [landlord.email],
-            fail_silently=True,
+        if landlord.email:
+            send_mail(
+                "Rooms4You: your Success Fee is overdue",
+                (
+                    f"Hi {landlord.get_full_name() or landlord.username},\n\n"
+                    f"Your Success Fee of R{invoice.amount} for \"{invoice.placement.room.title}\" "
+                    f"is still unpaid. Please settle this soon to avoid your account being "
+                    f"suspended for new listings.\n\n"
+                    f"- The Rooms4You Team"
+                ),
+                None,
+                [landlord.email],
+                fail_silently=True,
+            )
+        notify_user(
+            landlord,
+            title="Your Success Fee is overdue",
+            body=f'R{invoice.amount} is still unpaid for "{invoice.placement.room.title}".',
+            url=reverse("placements:landlord_dashboard"),
         )
 
     def _send_suspension_notice(self, invoice, landlord):
-        if not landlord.email:
-            return
-        send_mail(
-            "Rooms4You: your account has been suspended",
-            (
-                f"Hi {landlord.get_full_name() or landlord.username},\n\n"
-                f"Your Success Fee of R{invoice.amount} for \"{invoice.placement.room.title}\" "
-                f"remained unpaid for {SUSPEND_AFTER_DAYS} days, so your account has been "
-                f"suspended - you won't be able to add new listings until this is settled. "
-                f"Your existing listings have not been deleted.\n\n"
-                f"Please contact support@rooms4you.co.za to arrange payment and reactivate "
-                f"your account.\n\n"
-                f"- The Rooms4You Team"
-            ),
-            None,
-            [landlord.email],
-            fail_silently=True,
+        if landlord.email:
+            send_mail(
+                "Rooms4You: your account has been suspended",
+                (
+                    f"Hi {landlord.get_full_name() or landlord.username},\n\n"
+                    f"Your Success Fee of R{invoice.amount} for \"{invoice.placement.room.title}\" "
+                    f"remained unpaid for {SUSPEND_AFTER_DAYS} days, so your account has been "
+                    f"suspended - you won't be able to add new listings until this is settled. "
+                    f"Your existing listings have not been deleted.\n\n"
+                    f"Please contact support@rooms4you.co.za to arrange payment and reactivate "
+                    f"your account.\n\n"
+                    f"- The Rooms4You Team"
+                ),
+                None,
+                [landlord.email],
+                fail_silently=True,
+            )
+        notify_user(
+            landlord,
+            title="Your account has been suspended",
+            body=f'Unpaid Success Fee for "{invoice.placement.room.title}" - tap for details.',
+            url=reverse("placements:landlord_dashboard"),
         )
