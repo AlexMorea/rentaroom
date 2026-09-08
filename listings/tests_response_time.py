@@ -184,6 +184,19 @@ class ResponseTimeTemplateTests(TestCase):
         self.assertIn("Usually responds within an hour", body)
         self.assertIn("90%", body)
 
+    def test_landlord_profile_badges_have_a_background_modifier(self):
+        # Regression coverage: the shared .badge class sets color:#fff
+        # but no background, so a badge with no modifier class (as
+        # "Fast Responder"/"Email Verified" used to render) is
+        # invisible white-on-white text.
+        Profile.objects.filter(user=self.landlord).update(is_email_verified=True)
+
+        resp = self.client.get(reverse("landlord_profile", args=[self.landlord.id]))
+        body = resp.content.decode()
+
+        self.assertIn("badge-fast-responder", body)
+        self.assertIn("badge-email-verified", body)
+
     def test_no_signal_shown_for_landlord_without_enough_data(self):
         quiet_landlord = User.objects.create_user(username="quietlandlord", password="p")
         Profile.objects.filter(user=quiet_landlord).update(role="landlord")
