@@ -24,10 +24,10 @@
       <span class="badge badge-verified"> ★ Verified Landlord </span>
     {% endif %}
     {% if landlord.profile.is_email_verified %}
-      <span class="badge">✓ Email Verified</span>
+      <span class="badge badge-email-verified">✓ Email Verified</span>
     {% endif %}
     {% if landlord.profile.is_fast_responder %}
-      <span class="badge">⚡ Fast Responder</span>
+      <span class="badge badge-fast-responder">⚡ Fast Responder</span>
     {% endif %}
   </div>
 
@@ -152,6 +152,23 @@
   .landlord-badges .badge {
     flex-shrink: 0;
     white-space: nowrap;
+    /* base.css's shared .badge class is position:absolute (built for
+       photo-overlay badges elsewhere) - left unset here, every badge
+       stacks on top of the same spot instead of flowing in this flex
+       row. Same fix already applied to room cards' badges. */
+    position: static !important;
+  }
+  /* base.css's bare .badge class sets color:#fff but no background -
+     fine for badge-popular/badge-verified, which set their own, but
+     these two never had a modifier class, so they rendered as
+     invisible white text on white/near-white pills. */
+  .badge-email-verified {
+    background: #eff6ff;
+    color: #1d4ed8 !important;
+  }
+  .badge-fast-responder {
+    background: #fff7ed;
+    color: #9a3412 !important;
   }
 
   .landlord-stats {

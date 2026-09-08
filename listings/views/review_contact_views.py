@@ -247,6 +247,12 @@ def track_contact(request, room_id, method):
                 "link": mailto,
                 "button_text": "Open Email",
                 "fallback_text": "If your email app didn't open automatically, tap the button below.",
+                # mailto: only works if the device has a mail app set as
+                # the default handler - not guaranteed, especially on
+                # Android. This gives anyone without one a way to still
+                # get in touch instead of hitting a dead end.
+                "copy_value": landlord_email,
+                "copy_label": "Copy landlord's email address",
             },
         )
 

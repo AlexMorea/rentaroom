@@ -10,6 +10,23 @@
     <p class="auth-small" style="margin-top: 12px; opacity: 0.75">
       If nothing happens, your browser may block opening apps automatically.
     </p>
+
+    {% if copy_value %}
+    <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+      <p class="auth-small" style="margin: 0 0 8px; opacity: 0.75;">
+        No email app set up? Copy the address instead:
+      </p>
+      <button
+        type="button"
+        class="btn-secondary auth-btn"
+        id="copyValueBtn"
+        data-copy-value="{{ copy_value }}"
+      >
+        📋 {{ copy_label|default:"Copy" }}
+      </button>
+      <p id="copyValueMsg" aria-live="polite" style="margin-top: 8px; font-weight: 700; font-size: 0.85rem;"></p>
+    </div>
+    {% endif %}
   </div>
 </div>
 
@@ -19,5 +36,27 @@
     window.location.href = "{{ link }}";
   }, 200);
 </script>
+
+{% if copy_value %}
+<script>
+  (function () {
+    const btn = document.getElementById("copyValueBtn");
+    const msg = document.getElementById("copyValueMsg");
+    if (!btn) return;
+
+    btn.addEventListener("click", async function () {
+      const value = btn.dataset.copyValue;
+      try {
+        await navigator.clipboard.writeText(value);
+        msg.textContent = "✅ Copied to clipboard";
+        msg.style.color = "#16a34a";
+      } catch (err) {
+        msg.textContent = value;
+        msg.style.color = "#64748b";
+      }
+    });
+  })();
+</script>
+{% endif %}
 
 {% endblock %}

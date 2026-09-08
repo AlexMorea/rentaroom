@@ -188,17 +188,17 @@
           <div class="contact-actions rd-contact-actions">
 
             {% if room.contact_phone %}
-            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'phone' %}" target="_blank" rel="noopener noreferrer">📞 Call Landlord</a>
+            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'phone' %}">📞 Call Landlord</a>
             {% endif %}
 
             {% if room.contact_whatsapp or room.contact_phone %}
-            <a class="btn-primary whatsapp-btn rd-contact-btn rd-contact-btn-whatsapp" href="{% url 'track_contact' room.id 'whatsapp' %}" target="_blank" rel="noopener noreferrer">
+            <a class="btn-primary whatsapp-btn rd-contact-btn rd-contact-btn-whatsapp" href="{% url 'track_contact' room.id 'whatsapp' %}">
               <i class="fa-brands fa-whatsapp"></i> WhatsApp Landlord
             </a>
             {% endif %}
 
             {% if room.owner.email or room.contact_email %}
-            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'email' %}" target="_blank" rel="noopener noreferrer">
+            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'email' %}">
               📧 Email Landlord
             </a>
             {% endif %}
