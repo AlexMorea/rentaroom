@@ -4,8 +4,12 @@
      reveals it once the browser actually fires beforeinstallprompt
      (meaning it's genuinely installable), so it never shows on browsers
      that don't support installation (e.g. iOS Safari) or once already
-     installed. Positioned bottom-left, opposite the WhatsApp FAB
-     bottom-right, so the two never overlap. -->
+     installed. Anchored top-right instead of the bottom - the WhatsApp
+     support FAB in _footer.html is fixed bottom-right, and the old
+     bottom-left placement's mobile media query widened this banner to
+     the full screen width, reaching right under that button (same
+     z-index stacking as any other overlap). Top-right has nothing else
+     fixed there to collide with, on any screen size. -->
 <div id="pwaInstallBanner" class="pwa-install-banner" hidden>
   <span class="pwa-install-icon">📲</span>
   <div class="pwa-install-text">
@@ -28,8 +32,11 @@
   }
   .pwa-install-banner {
     position: fixed;
-    left: 16px;
-    bottom: 16px;
+    /* 82px clears both the 70px desktop navbar and the 60px mobile one
+       (see .navbar / its @media max-width:768px override in base.css)
+       with room to spare, rather than needing two separate offsets. */
+    top: 82px;
+    right: 16px;
     z-index: 9998;
     display: flex;
     align-items: center;
@@ -82,9 +89,12 @@
   }
   @media (max-width: 480px) {
     .pwa-install-banner {
+      /* A compact top-right card rather than the old full-width bar -
+         narrower phones just get tighter side margins, not a stretch
+         across the whole screen (that's what reached under the
+         WhatsApp FAB in the first place). */
       left: 12px;
       right: 12px;
-      bottom: 12px;
       max-width: none;
     }
   }
