@@ -26,7 +26,15 @@ from accounts.state_engine import get_user_state
 
 from ..forms import GoogleCompleteProfileForm, UserRegisterForm
 from ..models import PhoneOTP, Profile
-from ..utils import generate_otp, send_new_device_otp_email, send_otp_email, send_welcome_email
+from ..utils import (
+    generate_otp,
+    send_new_device_otp_email,
+    send_new_device_otp_whatsapp,
+    send_otp_email,
+    send_otp_whatsapp,
+    send_welcome_email,
+    send_welcome_whatsapp,
+)
 from .helpers import get_display_name, get_or_create_membership
 
 logger = logging.getLogger(__name__)
@@ -119,6 +127,8 @@ def register(request):
                     "Account created. Enter the OTP sent to your email."
                 )
 
+            send_otp_whatsapp(user, otp)
+
             request.session["pending_user_id"] = user.id
 
             return redirect("verify_account")
@@ -178,6 +188,8 @@ def verify_account(request):
                 send_welcome_email(user)
             except Exception:
                 logger.exception("Failed to send welcome email for user %s", user.pk)
+
+            send_welcome_whatsapp(user)
 
             login(request, user)
 
@@ -340,6 +352,8 @@ def _start_device_challenge(request, user):
         )
         return redirect("login")
 
+    send_new_device_otp_whatsapp(user, otp)
+
     set_otp_cooldown(user.id, prefix=DEVICE_OTP_RESEND_PREFIX)
 
     request.session["pending_device_user_id"] = user.id
@@ -450,6 +464,8 @@ def resend_device_otp(request):
             "message": "Couldn't send the code. Please try again shortly."
         }, status=502)
 
+    send_new_device_otp_whatsapp(user, otp)
+
     set_otp_cooldown(user.id, prefix=DEVICE_OTP_RESEND_PREFIX)
 
     return JsonResponse({
@@ -508,6 +524,8 @@ def resend_account_otp(request):
             "level": "error",
             "message": "Couldn't send the OTP email. Please try again shortly."
         }, status=502)
+
+    send_otp_whatsapp(user, otp)
 
     set_otp_cooldown(user.id)
 
@@ -611,6 +629,7 @@ def change_email(request):
         )
 
         send_otp_email(user, otp)
+        send_otp_whatsapp(user, otp)
 
         request.session["pending_email"] = new_email
 
@@ -656,6 +675,7 @@ def change_phone(request):
         )
 
         send_otp_email(user, otp)
+        send_otp_whatsapp(user, otp)
 
         # Store BOTH for confirmation step
         request.session["pending_phone"] = phone

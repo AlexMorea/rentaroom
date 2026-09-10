@@ -9,6 +9,7 @@ from django.utils.html import strip_tags
 
 from services.models import BakkieDriver
 from utils.email import send_template_email
+from utils.whatsapp import send_whatsapp_template
 
 
 def send_html_email(subject, to_email, template_name, context):
@@ -42,6 +43,14 @@ def send_otp_email(user, otp):
     )
 
 
+def send_otp_whatsapp(user, otp):
+    # Bonus channel alongside the email above, not instead of it - a
+    # WhatsApp OTP is often seen faster than an email, especially on a
+    # first signup where the inbox isn't open yet.
+    if hasattr(user, "profile"):
+        send_whatsapp_template(user.profile, settings.WHATSAPP_TEMPLATE_OTP, params=[otp])
+
+
 def send_new_device_otp_email(user, otp, *, device_label=""):
     send_template_email(
         subject="Confirm it's you - new sign-in to Rooms4You",
@@ -56,6 +65,11 @@ def send_new_device_otp_email(user, otp, *, device_label=""):
     )
 
 
+def send_new_device_otp_whatsapp(user, otp):
+    if hasattr(user, "profile"):
+        send_whatsapp_template(user.profile, settings.WHATSAPP_TEMPLATE_DEVICE_OTP, params=[otp])
+
+
 def send_welcome_email(user):
     send_template_email(
         subject="Welcome to Rooms4You",
@@ -67,6 +81,12 @@ def send_welcome_email(user):
             "year": 2026,
         }
     )
+
+
+def send_welcome_whatsapp(user):
+    if hasattr(user, "profile"):
+        name = (user.first_name or user.username or "").strip()
+        send_whatsapp_template(user.profile, settings.WHATSAPP_TEMPLATE_WELCOME, params=[name])
 
 
 def normalize_sa_phone(phone):

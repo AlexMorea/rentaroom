@@ -289,6 +289,33 @@ if not (VAPID_PRIVATE_KEY_PEM and VAPID_PUBLIC_KEY):
         VAPID_PRIVATE_KEY_PEM, VAPID_PUBLIC_KEY = "", ""
 
 
+# ================= WHATSAPP BUSINESS (Meta Cloud API) =================
+# Dormant until real values exist - see utils/whatsapp.py, and
+# docs/whatsapp_setup.md for how to get them from Meta Business Manager.
+# Every WhatsApp send silently no-ops until both are set; nothing else
+# in the app depends on this being configured.
+WHATSAPP_ACCESS_TOKEN = os.environ.get("WHATSAPP_ACCESS_TOKEN", "").strip()
+WHATSAPP_PHONE_NUMBER_ID = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "").strip()
+
+# Approved template *names* - must exactly match what's approved in Meta
+# Business Manager > WhatsApp Manager > Message Templates (see
+# docs/whatsapp_setup.md for the exact wording to submit for each one).
+# Kept as settings rather than hardcoded at each call site, so a
+# template can be renamed/resubmitted without touching code.
+WHATSAPP_TEMPLATE_OTP = os.environ.get("WHATSAPP_TEMPLATE_OTP", "account_otp").strip()
+WHATSAPP_TEMPLATE_DEVICE_OTP = os.environ.get("WHATSAPP_TEMPLATE_DEVICE_OTP", "device_otp").strip()
+WHATSAPP_TEMPLATE_WELCOME = os.environ.get("WHATSAPP_TEMPLATE_WELCOME", "welcome").strip()
+WHATSAPP_TEMPLATE_WAITLIST_AVAILABLE = os.environ.get(
+    "WHATSAPP_TEMPLATE_WAITLIST_AVAILABLE", "waitlist_room_available"
+).strip()
+WHATSAPP_TEMPLATE_MOVE_IN_NUDGE = os.environ.get(
+    "WHATSAPP_TEMPLATE_MOVE_IN_NUDGE", "move_in_confirmation"
+).strip()
+WHATSAPP_TEMPLATE_PLACEMENT_STALLED = os.environ.get(
+    "WHATSAPP_TEMPLATE_PLACEMENT_STALLED", "placement_stalled"
+).strip()
+
+
 # ================= ANDROID TWA (Trusted Web Activity) =================
 # Filled in once mobile/android's signing keystore exists - see
 # mobile/android/README.md. Until then /.well-known/assetlinks.json

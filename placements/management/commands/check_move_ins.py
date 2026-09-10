@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.urls import reverse
@@ -5,6 +6,7 @@ from django.utils import timezone
 
 from accounts.push import notify_user
 from placements.models import Placement
+from utils.whatsapp import send_whatsapp_template
 
 
 class Command(BaseCommand):
@@ -96,6 +98,12 @@ class Command(BaseCommand):
                 body=push_body,
                 url=reverse("placements:tenant_dashboard"),
             )
+            if hasattr(placement.tenant, "profile"):
+                send_whatsapp_template(
+                    placement.tenant.profile,
+                    settings.WHATSAPP_TEMPLATE_MOVE_IN_NUDGE,
+                    params=[placement.room.title],
+                )
         if to_landlord:
             notify_user(
                 placement.landlord,
@@ -103,3 +111,9 @@ class Command(BaseCommand):
                 body=push_body,
                 url=reverse("placements:landlord_dashboard"),
             )
+            if hasattr(placement.landlord, "profile"):
+                send_whatsapp_template(
+                    placement.landlord.profile,
+                    settings.WHATSAPP_TEMPLATE_MOVE_IN_NUDGE,
+                    params=[placement.room.title],
+                )
