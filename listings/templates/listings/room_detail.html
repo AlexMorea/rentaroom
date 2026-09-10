@@ -155,6 +155,43 @@
 
           {% if user.is_authenticated %}
 
+          {% if room_is_full %}
+          <div class="rd-waitlist-card">
+            <div class="rd-waitlist-icon">⏳</div>
+            <div class="rd-waitlist-text">
+              <strong>This room is currently full</strong>
+              <p class="text-muted rd-waitlist-copy">
+                {% if room.availability_status == "from" and room.available_from %}
+                  Expected to open up from {{ room.available_from|date:"d M Y" }}.
+                {% else %}
+                  Join the waitlist and we'll email and notify you the moment a spot opens up.
+                {% endif %}
+                {% if waitlist_count %}
+                  <span class="rd-waitlist-count">{{ waitlist_count }} tenant{{ waitlist_count|pluralize }} already waiting.</span>
+                {% endif %}
+              </p>
+            </div>
+
+            {% if user.profile.role == "tenant" and room.owner_id != user.id %}
+              {% if waitlist_entry %}
+                <form method="post" action="{% url 'placements:leave_waitlist' room.id %}" class="rd-waitlist-form">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-secondary rd-btn-secondary">
+                    ✅ On waitlist (#{{ waitlist_entry.position }}) · Leave
+                  </button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'placements:join_waitlist' room.id %}" class="rd-waitlist-form">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-primary rd-btn-secondary">
+                    🙋 Join Waitlist
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </div>
+          {% endif %}
+
           {% with owner_profile=room.owner|profile %}
           <a href="{% url 'landlord_profile' room.owner.id %}" class="landlord-card rd-landlord-card">
             <div class="landlord-avatar rd-landlord-avatar {% if not owner_profile.is_verified_landlord %}rd-landlord-avatar-unverified{% endif %}">
@@ -537,6 +574,45 @@
     flex-wrap: wrap;
   }
   .rd-btn-secondary {
+    flex-shrink: 0;
+  }
+
+  /* Waitlist card - shown instead of "contact to move in" framing when
+     the room is fully occupied but still listed (a landlord building
+     a queue ahead of a known re-availability date). */
+  .rd-waitlist-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .rd-waitlist-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+  .rd-waitlist-text {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+  .rd-waitlist-text strong {
+    color: #0f172a;
+  }
+  .rd-waitlist-copy {
+    margin: 4px 0 0;
+    font-size: 0.88rem;
+  }
+  .rd-waitlist-count {
+    display: block;
+    margin-top: 4px;
+    font-weight: 600;
+    color: #92400e;
+  }
+  .rd-waitlist-form {
     flex-shrink: 0;
   }
 

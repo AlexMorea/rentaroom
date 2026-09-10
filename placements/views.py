@@ -1,16 +1,22 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from listings.models import Contact, Message, Room
 from listings.views import is_landlord
 
 from .forms import MoveInConfirmationForm, PlacementUpdateForm
-from .models import Placement
+from .models import Placement, Waitlist
 
 
 def is_tenant(user):
     return hasattr(user, "profile") and user.profile.role == "tenant"
+
+
+def _room_has_vacancy(room: Room) -> bool:
+    return room.is_available and room.available_units > 0
 
 
 # ---------------------------------------------------------------------
@@ -84,6 +90,144 @@ def report_tenant_unreachable(request, placement_id):
 
 
 # ---------------------------------------------------------------------
+# Waitlists
+# ---------------------------------------------------------------------
+@login_required
+@user_passes_test(is_tenant)
+@require_POST
+def join_waitlist(request, room_id):
+    room = get_object_or_404(Room, id=room_id, is_available=True)
+
+    if room.owner_id == request.user.id:
+        messages.error(request, "You can't join the waitlist for your own room.")
+        return redirect("room_detail", pk=room.id)
+
+    if _room_has_vacancy(room):
+        messages.info(
+            request,
+            "This room already has vacancies - no need to wait, contact the landlord directly.",
+        )
+        return redirect("room_detail", pk=room.id)
+
+    entry, created = Waitlist.objects.get_or_create(
+        tenant=request.user,
+        room=room,
+        defaults={"landlord": room.owner, "added_by": Waitlist.ADDED_BY_TENANT},
+    )
+
+    if not created and entry.status == Waitlist.STATUS_CANCELLED:
+        entry.status = Waitlist.STATUS_WAITING
+        entry.added_by = Waitlist.ADDED_BY_TENANT
+        entry.notified_at = None
+        entry.save(update_fields=["status", "added_by", "notified_at"])
+        created = True
+
+    if created:
+        messages.success(
+            request,
+            f"You're #{entry.position} in line for \"{room.title}\" - "
+            "we'll email and notify you the moment it opens up.",
+        )
+    else:
+        messages.info(request, "You're already on the waitlist for this room.")
+
+    return redirect("room_detail", pk=room.id)
+
+
+@login_required
+@require_POST
+def leave_waitlist(request, room_id):
+    entry = get_object_or_404(
+        Waitlist, room_id=room_id, tenant=request.user, status__in=[Waitlist.STATUS_WAITING, Waitlist.STATUS_NOTIFIED]
+    )
+    entry.status = Waitlist.STATUS_CANCELLED
+    entry.save(update_fields=["status"])
+    messages.success(request, "You've left the waitlist.")
+    return redirect("room_detail", pk=room_id)
+
+
+@login_required
+@user_passes_test(is_landlord)
+def room_waitlist(request, room_id):
+    room = get_object_or_404(Room, id=room_id, owner=request.user)
+
+    entries = (
+        Waitlist.objects.filter(room=room, status__in=[Waitlist.STATUS_WAITING, Waitlist.STATUS_NOTIFIED])
+        .select_related("tenant__profile")
+    )
+
+    already_listed_ids = {entry.tenant_id for entry in entries}
+
+    # Privacy guard: a landlord can only add a tenant who's actually
+    # engaged with this specific room (contacted, messaged, or already
+    # has a Placement) - not any tenant on the site.
+    engaged_tenant_ids = (
+        set(Contact.objects.filter(room=room).exclude(user_id=room.owner_id).values_list("user_id", flat=True))
+        | set(Message.objects.filter(room=room).exclude(sender_id=room.owner_id).values_list("sender_id", flat=True))
+        | set(Placement.objects.filter(room=room).exclude(tenant_id=room.owner_id).values_list("tenant_id", flat=True))
+    )
+    addable_tenants = User.objects.filter(id__in=engaged_tenant_ids - already_listed_ids)
+
+    return render(request, "placements/room_waitlist.html", {
+        "room": room,
+        "entries": entries,
+        "addable_tenants": addable_tenants,
+    })
+
+
+@login_required
+@user_passes_test(is_landlord)
+@require_POST
+def add_to_waitlist(request, room_id):
+    room = get_object_or_404(Room, id=room_id, owner=request.user)
+    tenant = get_object_or_404(User, id=request.POST.get("tenant_id"))
+
+    has_engaged = (
+        Contact.objects.filter(room=room, user=tenant).exists()
+        or Message.objects.filter(room=room, sender=tenant).exists()
+        or Placement.objects.filter(room=room, tenant=tenant).exists()
+    )
+    if not has_engaged:
+        messages.error(
+            request,
+            "You can only waitlist a tenant who's already contacted you about this room.",
+        )
+        return redirect("placements:room_waitlist", room_id=room.id)
+
+    entry, created = Waitlist.objects.get_or_create(
+        tenant=tenant,
+        room=room,
+        defaults={"landlord": room.owner, "added_by": Waitlist.ADDED_BY_LANDLORD},
+    )
+
+    if not created and entry.status == Waitlist.STATUS_CANCELLED:
+        entry.status = Waitlist.STATUS_WAITING
+        entry.added_by = Waitlist.ADDED_BY_LANDLORD
+        entry.notified_at = None
+        entry.save(update_fields=["status", "added_by", "notified_at"])
+        created = True
+
+    if created:
+        messages.success(request, f"{tenant.get_full_name() or tenant.username} added to the waitlist.")
+    else:
+        messages.info(request, "That tenant is already on the waitlist.")
+
+    return redirect("placements:room_waitlist", room_id=room.id)
+
+
+@login_required
+@user_passes_test(is_landlord)
+@require_POST
+def remove_from_waitlist(request, entry_id):
+    entry = get_object_or_404(Waitlist, id=entry_id, landlord=request.user)
+    room_id = entry.room_id
+    entry.status = Waitlist.STATUS_CANCELLED
+    entry.save(update_fields=["status"])
+    messages.success(request, "Removed from the waitlist.")
+    return redirect("placements:room_waitlist", room_id=room_id)
+
+
+# ---------------------------------------------------------------------
 # Tenant dashboard
 # ---------------------------------------------------------------------
 @login_required
@@ -102,9 +246,17 @@ def tenant_dashboard(request):
         status__in=[Placement.STATUS_PAID, Placement.STATUS_CANCELLED]
     ).order_by("-updated_at").first()
 
+    waitlist_entries = (
+        Waitlist.objects.filter(
+            tenant=request.user, status__in=[Waitlist.STATUS_WAITING, Waitlist.STATUS_NOTIFIED]
+        )
+        .select_related("room", "landlord")
+    )
+
     return render(request, "placements/tenant_dashboard.html", {
         "current_placement": current_placement,
         "all_placements": placements,
+        "waitlist_entries": waitlist_entries,
     })
 
 

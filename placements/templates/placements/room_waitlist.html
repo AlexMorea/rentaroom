@@ -1,0 +1,141 @@
+{% extends "listings/base.html" %}
+{% block title %}Waitlist for {{ room.title }} | Rooms4You{% endblock %}
+{% block content %}
+
+<h1 class="page-title">Waitlist for "{{ room.title }}"</h1>
+
+<p class="scam-warning wl-intro">
+  {{ entries|length }} tenant{{ entries|length|pluralize }} waiting for this room. The moment you mark it
+  available again, everyone still waiting is notified by email and push - in the order they joined.
+</p>
+
+<a href="{% url 'landlord_rooms' %}" class="btn-secondary wl-back-btn">← Back to My Rooms</a>
+
+{% if not entries %}
+  <div class="form-card wl-empty">
+    <div class="wl-empty-icon">👀</div>
+    <p class="text-muted">No one's on the waitlist yet. Once a tenant contacts you about this room, you'll be able to add them here.</p>
+  </div>
+{% else %}
+<div class="dashboard-grid wl-grid">
+  {% for entry in entries %}
+  <div class="form-card wl-card">
+    <div class="wl-card-top">
+      <div>
+        <a href="{% url 'tenant_profile' entry.tenant.id %}" class="wl-tenant-link">
+          {{ entry.tenant.get_full_name|default:entry.tenant.username }}
+        </a>
+        <p class="text-muted wl-meta">
+          {% if entry.status == "notified" %}Notified{% else %}#{{ entry.position }} in line{% endif %}
+          · joined {{ entry.created_at|timesince }} ago
+          · {% if entry.added_by == "landlord" %}added by you{% else %}joined themselves{% endif %}
+        </p>
+      </div>
+      <span class="wl-status wl-status-{{ entry.status }}">{{ entry.get_status_display }}</span>
+    </div>
+
+    <form method="post" action="{% url 'placements:remove_from_waitlist' entry.id %}" class="wl-remove-form"
+          onsubmit="return confirm('Remove this tenant from the waitlist?');">
+      {% csrf_token %}
+      <button type="submit" class="btn-secondary wl-remove-btn">Remove</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if addable_tenants %}
+<h2 class="page-title wl-section-title">Add a tenant who's already contacted you</h2>
+<div class="form-card wl-add-card">
+  <form method="post" action="{% url 'placements:add_to_waitlist' room.id %}" class="wl-add-form">
+    {% csrf_token %}
+    <select name="tenant_id" class="input wl-add-select" required>
+      <option value="">Select a tenant...</option>
+      {% for tenant in addable_tenants %}
+        <option value="{{ tenant.id }}">{{ tenant.get_full_name|default:tenant.username }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn-primary wl-add-btn">+ Add to Waitlist</button>
+  </form>
+</div>
+{% endif %}
+
+<style>
+  .wl-intro {
+    margin-bottom: 16px;
+  }
+  .wl-back-btn {
+    display: inline-flex;
+    margin-bottom: 20px;
+  }
+
+  .wl-empty {
+    text-align: center;
+    padding: 36px 20px;
+  }
+  .wl-empty-icon {
+    font-size: 2.4rem;
+    margin-bottom: 10px;
+  }
+
+  .wl-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .wl-tenant-link {
+    font-weight: 800;
+    color: #0f172a;
+    text-decoration: none;
+  }
+  .wl-tenant-link:hover {
+    color: var(--blue);
+  }
+  .wl-meta {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+  }
+
+  .wl-status {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    background: #f1f5f9;
+    color: #475569;
+  }
+  .wl-status-waiting {
+    background: #e0f2fe;
+    color: #075985;
+  }
+  .wl-status-notified {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .wl-remove-form {
+    margin-top: 14px;
+  }
+
+  .wl-section-title {
+    margin-top: 32px;
+    font-size: 1.2rem;
+  }
+  .wl-add-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .wl-add-select {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+</style>
+
+{% endblock %}

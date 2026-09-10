@@ -1,0 +1,33 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Good news - it's available! 🎉</h1>
+
+<p>
+Hello {{ tenant.first_name|default:"there" }},
+</p>
+
+<p>
+You asked to be notified when <strong>{{ room.title }}</strong> opened up - it just did. You're one
+of the first to know, before it's back to being seen by everyone browsing Rooms4You.
+</p>
+
+<div class="info-card">
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p><strong>Location:</strong> {{ room.location }}</p>
+  <p><strong>Price:</strong> R{{ room.price }}</p>
+  <p><strong>Status:</strong> {{ room.availability_badge_text }}</p>
+</div>
+
+<p>
+Contact the landlord as soon as you can - rooms can fill up fast once they're back on the market.
+</p>
+
+<p style="text-align:center;">
+<a href="https://rooms4you.co.za/rooms/{{ room.id }}/" class="btn">
+View room &amp; contact landlord
+</a>
+</p>
+
+{% endblock %}

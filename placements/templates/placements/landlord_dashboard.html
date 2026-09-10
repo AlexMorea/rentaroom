@@ -71,7 +71,11 @@
     <div class="pl-card-top">
       <div>
         <h3 class="pl-room-title">{{ placement.room.title }}</h3>
-        <p class="text-muted pl-meta">Tenant: {{ placement.tenant.get_full_name|default:placement.tenant.username }}</p>
+        <p class="text-muted pl-meta">
+          Tenant: <a href="{% url 'tenant_profile' placement.tenant.id %}" class="pl-tenant-link">
+            {{ placement.tenant.get_full_name|default:placement.tenant.username }}
+          </a>
+        </p>
       </div>
       <span class="pl-status pl-status-{{ placement.status }}">{{ placement.get_status_display }}</span>
     </div>
@@ -203,6 +207,11 @@
   }
   .pl-meta {
     margin: 0;
+  }
+  .pl-tenant-link {
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: none;
   }
 
   .pl-inline-dates {

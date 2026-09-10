@@ -1,0 +1,156 @@
+{% extends "listings/base.html" %}
+{% block title %}{{ tenant.get_full_name|default:tenant.username }} | Rooms4You{% endblock %}
+{% block content %}
+
+<div class="tp-hero">
+  <div class="tp-avatar-lg">
+    {{ tenant.first_name|default:tenant.username|slice:":1"|upper }}
+  </div>
+
+  <h1 class="page-title tp-name">
+    {{ tenant.get_full_name|default:tenant.username }}
+  </h1>
+
+  <p class="text-muted tp-since">
+    Tenant · member since {{ tenant.date_joined|date:"M Y" }}
+  </p>
+
+  <div class="tp-badges">
+    {% if tenant.profile.is_email_verified %}
+      <span class="badge badge-email-verified">✓ Email Verified</span>
+    {% endif %}
+    {% if tenant.profile.persona %}
+      <span class="badge badge-verified">{{ tenant.profile.get_persona_display }}</span>
+    {% endif %}
+  </div>
+
+  <p class="text-muted tp-note">
+    🔒 You can see this profile because {{ tenant.first_name|default:"this tenant" }} has contacted you about one of your listings.
+  </p>
+</div>
+
+<h2 class="page-title tp-section-title">Your rooms {{ tenant.first_name|default:"they" }} contacted</h2>
+{% if engaged_rooms %}
+<div class="dashboard-grid tp-grid">
+  {% for room in engaged_rooms %}
+  <div class="form-card tp-room-card">
+    <strong>{{ room.title }}</strong>
+    <p class="text-muted tp-room-meta">{{ room.location }} · {{ room.availability_badge_text }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="form-card tp-empty"><p class="text-muted" style="margin:0;">No engagement on record yet.</p></div>
+{% endif %}
+
+{% if waitlist_entries %}
+<h2 class="page-title tp-section-title">Waitlists</h2>
+<div class="dashboard-grid tp-grid">
+  {% for entry in waitlist_entries %}
+  <div class="form-card tp-room-card">
+    <strong>{{ entry.room.title }}</strong>
+    <p class="text-muted tp-room-meta">
+      {% if entry.status == "notified" %}Notified{% else %}#{{ entry.position }} in line{% endif %}
+    </p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if joinable_rooms %}
+<h2 class="page-title tp-section-title">Add to a waitlist</h2>
+<div class="form-card tp-add-card">
+  {% for room in joinable_rooms %}
+  <form method="post" action="{% url 'placements:add_to_waitlist' room.id %}" class="tp-add-form">
+    {% csrf_token %}
+    <input type="hidden" name="tenant_id" value="{{ tenant.id }}">
+    <span class="tp-add-room-title">{{ room.title }}</span>
+    <button type="submit" class="btn-secondary tp-add-btn">+ Waitlist for this room</button>
+  </form>
+  {% endfor %}
+</div>
+{% endif %}
+
+<style>
+  .tp-hero {
+    text-align: center;
+    max-width: 560px;
+    margin: 0 auto 28px;
+    padding: 32px 24px;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, #eef2ff 0%, #ffffff 70%);
+    border: 1px solid rgba(99,102,241,0.15);
+  }
+  .tp-avatar-lg {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+  .tp-name {
+    font-size: 1.35rem;
+    margin-bottom: 4px;
+  }
+  .tp-since {
+    margin: 0 0 14px;
+  }
+  .tp-badges {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .tp-badges .badge {
+    position: static !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .tp-note {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .tp-section-title {
+    font-size: 1.15rem;
+    margin-top: 28px;
+  }
+  .tp-room-meta {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+  }
+  .tp-empty {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .tp-add-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tp-add-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .tp-add-form:last-child {
+    border-bottom: none;
+  }
+  .tp-add-room-title {
+    font-weight: 600;
+  }
+</style>
+
+{% endblock %}

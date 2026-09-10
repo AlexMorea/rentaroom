@@ -24,6 +24,11 @@
           <span class="lr-freshness {% if room.is_stale %}lr-freshness-stale{% endif %}">
             {% if room.is_stale %}⚠{% else %}✓{% endif %} {{ room.freshness_label }}
           </span>
+          {% if room.waiting_count %}
+          <a href="{% url 'placements:room_waitlist' room.id %}" class="lr-waitlist-badge">
+            👀 {{ room.waiting_count }} waiting
+          </a>
+          {% endif %}
         </div>
 
         {% if room.completeness_percent < 100 %}
@@ -173,6 +178,19 @@
   }
   .lr-freshness-stale {
     color: #d97706;
+  }
+  .lr-waitlist-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: #fef3c7;
+    color: #92400e;
+    text-decoration: none;
   }
 
   .lr-completeness {
