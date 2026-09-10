@@ -6,6 +6,7 @@ from django.utils import timezone
 from accounts.push import notify_user
 from placements.models import Placement
 from utils.email import send_template_email
+from utils.whatsapp import send_whatsapp_template
 
 
 class Command(BaseCommand):
@@ -72,6 +73,12 @@ class Command(BaseCommand):
             body=f'Your enquiry on "{placement.room.title}" needs an update.',
             url=reverse("placements:tenant_dashboard"),
         )
+        if hasattr(placement.tenant, "profile"):
+            send_whatsapp_template(
+                placement.tenant.profile,
+                settings.WHATSAPP_TEMPLATE_PLACEMENT_STALLED,
+                params=[placement.room.title],
+            )
 
         if placement.landlord.email:
             send_template_email(
@@ -86,3 +93,9 @@ class Command(BaseCommand):
             body=f'"{placement.room.title}" has a stalled enquiry - tap to follow up.',
             url=reverse("placements:landlord_dashboard"),
         )
+        if hasattr(placement.landlord, "profile"):
+            send_whatsapp_template(
+                placement.landlord.profile,
+                settings.WHATSAPP_TEMPLATE_PLACEMENT_STALLED,
+                params=[placement.room.title],
+            )

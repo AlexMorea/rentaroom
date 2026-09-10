@@ -169,7 +169,8 @@ static assets through WhiteNoise; only user-uploaded images go to Cloudinary.
 | PostgreSQL     | Primary datastore in production; SQLite file locally                 | `DATABASE_URL`        |
 | Cloudinary     | All room / guest-house / vehicle / proof-of-payment images; deletes cascade via `post_delete` signals | `CLOUDINARY_*` |
 | Brevo          | Transactional email over HTTPS API (no SMTP, Render-free-tier friendly) | `BREVO_API_KEY`    |
-| Twilio Verify  | SMS OTP channel for onboarding; falls back to email OTP when unset   | `TWILIO_*`            |
+| Twilio         | Scaffolding for a masked-call feature (`call_landlord()`) - installed but not currently wired to any URL, and no `TWILIO_*` settings exist yet | (none live)   |
+| WhatsApp (Meta Cloud API) | Bonus notification channel alongside email/push - dormant no-op until configured, see §10 | `WHATSAPP_*` |
 | Redis          | Shared cache and Celery broker when present; LocMem otherwise        | `REDIS_URL`           |
 | Celery + beat  | Scheduled scoring, freshness sweeps, digests, response-time stats    | `CELERY_BROKER_URL`   |
 | Google         | Sign-In token verification (`oauth2.googleapis.com/tokeninfo`) and Maps JS for the pin picker | `GOOGLE_MAPS_API_KEY` |
@@ -383,9 +384,11 @@ sign-in, and new-device challenges. The custom login view lives in
 
 - Sign-up creates the `User` (active) and a `PhoneOTP`, then emails a code.
   `verify_account` confirms it and sets `is_email_verified` / `is_phone_verified`.
-- OTP delivery is email by default; if `TWILIO_*` credentials and
-  `SMS_OTP_ENABLED` are set, onboarding OTP goes over Twilio Verify SMS instead,
-  with email as fallback.
+- OTP delivery is email, plus WhatsApp as a bonus channel once configured (see
+  §10) - email is always sent and is the channel that's actually checked;
+  WhatsApp never replaces it. `twilio` is in requirements.txt but only backs
+  the (currently unrouted) call-masking helper in `call_landlord()` - there's
+  no live SMS OTP path today despite the name suggesting otherwise.
 - Resend is rate-limited (90 s cooldown, cache-keyed per user).
 - Email-change and phone-change flows each re-verify with a fresh OTP;
   `pending_email` + a UUID token guard the change.
@@ -444,6 +447,25 @@ so a landlord who has enabled neither still gets one.
   subscribe/unsubscribe endpoints under `/accounts/push/`.
 - The Android TWA delegates native notification permission to the same Web Push
   subscriptions — no FCM/APNs server keys needed.
+
+### WhatsApp (Meta Cloud API)
+
+- `utils/whatsapp.py` - a *bonus* channel alongside email/push, never a
+  replacement. Dormant until `WHATSAPP_ACCESS_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID`
+  are set (see `docs/whatsapp_setup.md`); every call silently no-ops until then,
+  same pattern as VAPID push degrading gracefully without keys.
+- `Profile.whatsapp_number` is optional and separate from `phone_number` (not
+  everyone's WhatsApp is the same number as their phone) - falls back to
+  `phone_number` via `Profile.whatsapp_full_number()` when blank.
+- WhatsApp requires a pre-approved Message Template for anything sent outside
+  a live customer-service session, so each message maps to a template *name*
+  in settings (`WHATSAPP_TEMPLATE_*`) rather than free text.
+- Wired in today: account + new-device OTP, welcome, waitlist-room-available,
+  move-in confirmation nudge, stalled-placement nudge. Deliberately not wired
+  into the weekly landlord digest or stale-listing nudges - those read as
+  "Marketing" category under Meta's template rules (pricier, needs opt-in),
+  where the OTP/utility-style messages above are the cheap "Utility"/
+  "Authentication" categories.
 
 ---
 

@@ -9,6 +9,7 @@ from django.utils import timezone
 from accounts.push import notify_user
 from listings.models import Room
 from utils.email import send_template_email
+from utils.whatsapp import send_whatsapp_template
 
 
 class Placement(models.Model):
@@ -475,6 +476,13 @@ class Waitlist(models.Model):
                         "room": room,
                         "year": timezone.now().year,
                     },
+                )
+
+            if hasattr(entry.tenant, "profile"):
+                send_whatsapp_template(
+                    entry.tenant.profile,
+                    settings.WHATSAPP_TEMPLATE_WAITLIST_AVAILABLE,
+                    params=[room.title],
                 )
 
             notify_user(

@@ -69,6 +69,11 @@
       </div>
 
       <div class="ep-field">
+        <label>WhatsApp number (if different, optional)</label>
+        {{ p_form.whatsapp_number }} {{ p_form.whatsapp_number.errors }}
+      </div>
+
+      <div class="ep-field">
         <label>Persona</label>
         {{ p_form.persona }} {{ p_form.persona.errors }}
       </div>
@@ -89,6 +94,11 @@
             <a href="{% url 'change_phone' %}" class="ep-change-link">Change</a>
           </div>
         </div>
+      </div>
+
+      <div class="ep-field">
+        <label>WhatsApp number (if different, optional)</label>
+        {{ p_form.whatsapp_number }} {{ p_form.whatsapp_number.errors }}
       </div>
 
       <div class="ep-field">

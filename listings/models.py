@@ -376,6 +376,13 @@ class Profile(models.Model):
     cell_no = models.CharField(max_length=15, null=True, blank=True)
     alt_no = models.CharField(max_length=20, blank=True, default="")
 
+    # Distinct from phone_number - not everyone's WhatsApp is registered
+    # on the same number as their primary phone (same reasoning as
+    # Room.contact_whatsapp being kept separate from Room.contact_phone).
+    # Optional; whatsapp_full_number() falls back to phone_number when
+    # this is blank, so most users never need to fill it in separately.
+    whatsapp_number = models.CharField(max_length=20, blank=True, default="")
+
     # address
     home_address = models.CharField(max_length=255, blank=True, default="")
     postal_code = models.CharField(max_length=10, blank=True, default="")
@@ -442,8 +449,8 @@ class Profile(models.Model):
             and (self.response_rate_percent or 0) >= 70
         )
 
-    def full_phone(self):
-        phone = (self.phone_number or "").strip()
+    def _format_number(self, raw: str) -> str:
+        phone = (raw or "").strip()
 
         if not phone:
             return ""
@@ -458,7 +465,19 @@ class Profile(models.Model):
         phone = phone.removeprefix("0")
 
         return f"{self.country_code.strip()}{phone}"
-        
+
+    def full_phone(self):
+        return self._format_number(self.phone_number)
+
+    def whatsapp_full_number(self):
+        """
+        Same formatting as full_phone(), but preferring whatsapp_number
+        when the user has given a separate one - see that field's
+        comment. Falls back to phone_number when blank.
+        """
+        return self._format_number(self.whatsapp_number or self.phone_number)
+
+
 
     def __str__(self):
         display_name = (self.user.first_name or "").strip() or (self.user.email or "").strip()

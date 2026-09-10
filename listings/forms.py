@@ -52,6 +52,20 @@ class UserRegisterForm(forms.Form):
         })
     )
 
+    # Separate from phone_number above - not everyone's WhatsApp is on
+    # the same number as their primary phone. Optional for everyone
+    # (tenant or landlord); falls back to phone_number when left blank
+    # (see Profile.whatsapp_full_number()).
+    whatsapp_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            "class": "input",
+            "placeholder": "WhatsApp number, if different (optional)",
+            "inputmode": "tel",
+            "autocomplete": "tel",
+        }),
+    )
+
     # landlord extras
     alt_no = forms.CharField(
         required=False,
@@ -178,6 +192,9 @@ class UserRegisterForm(forms.Form):
         phone_number = self.cleaned_data.get("phone_number")
         profile.country_code = country_code
         profile.phone_number = normalize_sa_phone(phone_number)
+
+        whatsapp_number = (self.cleaned_data.get("whatsapp_number") or "").strip()
+        profile.whatsapp_number = normalize_sa_phone(whatsapp_number) if whatsapp_number else ""
 
         # LANDLORD EXTRA
         if profile.role == "landlord":
@@ -358,12 +375,22 @@ class ProfileUpdateForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"class": "input", "inputmode": "tel", "autocomplete": "tel"})
     )
 
+    # Optional, separate from phone_number - see Profile.whatsapp_number.
+    whatsapp_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            "class": "input", "inputmode": "tel", "autocomplete": "tel",
+            "placeholder": "If different from your phone number",
+        }),
+    )
+
     class Meta:
         model = Profile
         fields = (
             "persona",
             "country_code",
             "phone_number",
+            "whatsapp_number",
             "alt_no",
             "home_address",
             "postal_code",
@@ -391,7 +418,24 @@ class ProfileUpdateForm(forms.ModelForm):
             raise forms.ValidationError("Enter valid SA number. Example: 841234567")
 
         return phone
-        
+
+    def clean_whatsapp_number(self):
+        # Optional - unlike phone_number, blank is a valid answer (falls
+        # back to phone_number, see Profile.whatsapp_full_number()).
+        whatsapp = (self.cleaned_data.get("whatsapp_number") or "").strip()
+
+        if not whatsapp:
+            return ""
+
+        whatsapp = re.sub(r"[^\d]", "", whatsapp)
+        whatsapp = whatsapp.removeprefix("27")
+        whatsapp = whatsapp.removeprefix("0")
+
+        if len(whatsapp) != 9:
+            raise forms.ValidationError("Enter valid SA number. Example: 841234567")
+
+        return whatsapp
+
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room
