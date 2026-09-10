@@ -7,9 +7,9 @@ from django.db.models import Avg, Count, Prefetch, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 
-from placements.models import Placement
+from placements.models import Placement, Waitlist
 
-from ..models import Message, Review, Room, RoomImage, RoomStat
+from ..models import Contact, Message, Review, Room, RoomImage, RoomStat
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,12 @@ def landlord_rooms(request):
             Prefetch(
                 "images",
                 queryset=RoomImage.objects.only("id", "image", "room_id")
+            )
+        )
+        .annotate(
+            waiting_count=Count(
+                "waitlist_entries",
+                filter=Q(waitlist_entries__status=Waitlist.STATUS_WAITING),
             )
         )
         .order_by("-created_at")
@@ -76,6 +82,67 @@ def landlord_profile(request, user_id):
         "active_room_count": rooms.count(),
         "avg_rating": rating_agg["avg"],
         "review_count": rating_agg["count"] or 0,
+    })
+
+
+def _tenant_has_engaged_with_landlord(tenant_id, landlord_id) -> bool:
+    """
+    Gates tenant_profile: a landlord can view a tenant's profile only if
+    that tenant has actually engaged with one of the landlord's rooms
+    (contacted, messaged, or already has a Placement) - not any tenant
+    on the site. Mirrors the same privacy guard used when a landlord
+    adds a tenant to a room's waitlist (see placements.views.add_to_waitlist).
+    """
+    return (
+        Contact.objects.filter(user_id=tenant_id, room__owner_id=landlord_id).exists()
+        or Message.objects.filter(sender_id=tenant_id, room__owner_id=landlord_id).exists()
+        or Placement.objects.filter(tenant_id=tenant_id, landlord_id=landlord_id).exists()
+    )
+
+
+@login_required
+@user_passes_test(is_landlord)
+def tenant_profile(request, user_id):
+    """
+    Landlord-facing view of a tenant's profile - the counterpart to
+    landlord_profile, but access-gated (see _tenant_has_engaged_with_landlord)
+    rather than public, since tenants haven't opted into a public profile
+    the way landlords have.
+    """
+    tenant = get_object_or_404(User, id=user_id)
+
+    if not (hasattr(tenant, "profile") and tenant.profile.role == "tenant"):
+        raise Http404("This user does not have a tenant profile.")
+
+    if not _tenant_has_engaged_with_landlord(tenant.id, request.user.id):
+        raise Http404("You don't have access to this tenant's profile.")
+
+    engaged_rooms = (
+        Room.objects.filter(owner=request.user)
+        .filter(Q(contacts__user=tenant) | Q(messages__sender=tenant))
+        .distinct()
+        .order_by("-created_at")
+    )
+
+    waitlist_entries = (
+        Waitlist.objects.filter(tenant=tenant, landlord=request.user)
+        .exclude(status=Waitlist.STATUS_CANCELLED)
+        .select_related("room")
+    )
+    waitlisted_room_ids = {entry.room_id for entry in waitlist_entries}
+
+    # Landlord's own occupied rooms this tenant could still be added to.
+    joinable_rooms = (
+        Room.objects.filter(owner=request.user, is_available=True, available_units=0)
+        .exclude(id__in=waitlisted_room_ids)
+        .order_by("-created_at")
+    )
+
+    return render(request, "listings/tenant_profile.html", {
+        "tenant": tenant,
+        "engaged_rooms": engaged_rooms,
+        "waitlist_entries": waitlist_entries,
+        "joinable_rooms": joinable_rooms,
     })
 
 

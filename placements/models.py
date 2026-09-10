@@ -3,9 +3,12 @@ from typing import ClassVar
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
+from accounts.push import notify_user
 from listings.models import Room
+from utils.email import send_template_email
 
 
 class Placement(models.Model):
@@ -354,3 +357,132 @@ class PlacementInvoice(models.Model):
 
     def is_overdue(self, grace_period_days: int) -> bool:
         return self.status == self.STATUS_PENDING and self.days_pending >= grace_period_days
+
+
+class Waitlist(models.Model):
+    """
+    A tenant waiting for a currently-full room to open up.
+
+    The business case: listing is free, so a landlord has no reason to
+    take a room down just because it's occupied - if it's got a known
+    or expected re-availability (Room.availability_status == "from"),
+    keeping it listed and letting interested tenants queue up means the
+    room has a ready audience the moment it actually opens, instead of
+    starting from zero. It also doubles as a demand signal: a landlord
+    (and Rooms4You) can see exactly how many tenants are waiting on a
+    given room.
+
+    Either side can start an entry - a tenant joining themselves off the
+    room detail page (added_by=tenant), or a landlord adding a tenant
+    who's already shown interest, e.g. via the room's Contact/Message/
+    Placement history (added_by=landlord). Landlords can't add a tenant
+    they have no relationship with - see placements.views.add_to_waitlist.
+    """
+
+    STATUS_WAITING = "waiting"
+    STATUS_NOTIFIED = "notified"
+    STATUS_CANCELLED = "cancelled"
+
+    STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
+        (STATUS_WAITING, "Waiting"),
+        (STATUS_NOTIFIED, "Notified"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+
+    ADDED_BY_TENANT = "tenant"
+    ADDED_BY_LANDLORD = "landlord"
+
+    ADDED_BY_CHOICES: ClassVar[list[tuple[str, str]]] = [
+        (ADDED_BY_TENANT, "Tenant joined themselves"),
+        (ADDED_BY_LANDLORD, "Landlord added them"),
+    ]
+
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="waitlist_entries")
+    tenant = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="waitlist_entries",
+    )
+    # Denormalized (same pattern as Placement.landlord) so a landlord's
+    # own waitlists can be queried without a join through room.owner.
+    landlord = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="room_waitlists",
+    )
+
+    added_by = models.CharField(max_length=10, choices=ADDED_BY_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_WAITING)
+    notified_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering: ClassVar[list[str]] = ["created_at"]
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["tenant", "room"],
+                name="uniq_waitlist_tenant_room",
+            )
+        ]
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["room", "status"]),
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["landlord", "status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.tenant} waiting for {self.room.title} ({self.status})"
+
+    @property
+    def position(self) -> int:
+        """
+        1-based queue position among still-waiting entries for this
+        room, oldest first - what "prioritized" concretely means here:
+        first in line gets notified (and can act) first.
+        """
+        return Waitlist.objects.filter(
+            room_id=self.room_id,
+            status=self.STATUS_WAITING,
+            created_at__lte=self.created_at,
+        ).count()
+
+    @classmethod
+    def notify_all_for_room(cls, room: Room) -> int:
+        """
+        Called once a room transitions from full to having a vacancy
+        again (see placements.signals) - notifies every still-waiting
+        entry, in queue order, by email and push. Returns how many were
+        notified. Entries are marked "notified" rather than deleted, so
+        both sides can still see who was waiting once the room re-fills.
+        """
+        entries = cls.objects.filter(room=room, status=cls.STATUS_WAITING).select_related("tenant")
+
+        notified = 0
+        for entry in entries:
+            entry.status = cls.STATUS_NOTIFIED
+            entry.notified_at = timezone.now()
+            entry.save(update_fields=["status", "notified_at"])
+
+            if entry.tenant.email:
+                send_template_email(
+                    subject=f'"{room.title}" is available again!',
+                    to_email=entry.tenant.email,
+                    template="emails/waitlist_room_available.html",
+                    context={
+                        "tenant": entry.tenant,
+                        "room": room,
+                        "year": timezone.now().year,
+                    },
+                )
+
+            notify_user(
+                entry.tenant,
+                title="A room you're waiting for is available!",
+                body=f'"{room.title}" just opened up - contact the landlord now.',
+                url=reverse("room_detail", args=[room.id]),
+            )
+            notified += 1
+
+        return notified

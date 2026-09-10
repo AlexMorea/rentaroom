@@ -30,6 +30,7 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
 from accounts.utils import require_active_membership
+from placements.models import Waitlist
 from utils.email import send_template_email
 
 from ..forms import RoomForm
@@ -583,6 +584,19 @@ def room_detail(request, pk):
             room_id=room.id
         ).exists()
 
+    # Fully occupied but still listed (is_available stays True so it
+    # keeps showing up while landlords build a waitlist ahead of the
+    # room actually re-opening - see Room.availability_status "from").
+    room_is_full = not room.is_available or room.available_units <= 0
+    waitlist_entry = None
+    waitlist_count = 0
+    if room_is_full:
+        waitlist_count = Waitlist.objects.filter(room=room, status=Waitlist.STATUS_WAITING).count()
+        if request.user.is_authenticated:
+            waitlist_entry = Waitlist.objects.filter(
+                room=room, tenant=request.user, status=Waitlist.STATUS_WAITING
+            ).first()
+
     canonical_url = f"https://www.rooms4you.co.za{reverse('room_detail', args=[room.id])}"
     image_urls = [img.image.url for img in room.images.all()] or [
         f"https://www.rooms4you.co.za{static('images/logo-social.png')}"
@@ -650,6 +664,9 @@ def room_detail(request, pk):
         {
             "room": room,
             "is_saved": is_saved,
+            "room_is_full": room_is_full,
+            "waitlist_entry": waitlist_entry,
+            "waitlist_count": waitlist_count,
             "product_ld_json": ld_json(product_data),
             "breadcrumb_ld_json": ld_json(breadcrumb_data),
         },

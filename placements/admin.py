@@ -6,7 +6,7 @@ from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils.html import format_html
 
-from .models import Placement, PlacementInvoice, PlacementStatusHistory
+from .models import Placement, PlacementInvoice, PlacementStatusHistory, Waitlist
 
 
 class PlacementStatusHistoryInline(admin.TabularInline):
@@ -210,3 +210,16 @@ class PlacementStatusHistoryAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+
+@admin.register(Waitlist)
+class WaitlistAdmin(admin.ModelAdmin):
+    list_display = ("id", "tenant", "landlord", "room", "status", "added_by", "position", "created_at")
+    list_filter = ("status", "added_by", "created_at")
+    search_fields = (
+        "tenant__username", "tenant__email",
+        "landlord__username", "landlord__email",
+        "room__title",
+    )
+    autocomplete_fields = ("tenant", "landlord", "room")
+    readonly_fields = ("created_at", "updated_at", "notified_at")

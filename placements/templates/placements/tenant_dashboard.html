@@ -74,6 +74,34 @@
   </div>
 {% endif %}
 
+{% if waitlist_entries %}
+  <h3 class="page-title pl-section-title">Your Waitlists</h3>
+  <div class="dashboard-grid">
+    {% for entry in waitlist_entries %}
+    <div class="form-card pl-card wl-card">
+      <div class="pl-card-top">
+        <div>
+          <h4 class="pl-history-title">{{ entry.room.title }}</h4>
+          <p class="text-muted pl-meta">Landlord: {{ entry.landlord.get_full_name|default:entry.landlord.username }}</p>
+        </div>
+        <span class="wl-status wl-status-{{ entry.status }}">{{ entry.get_status_display }}</span>
+      </div>
+
+      {% if entry.status == "notified" %}
+        <p class="text-muted wl-meta">🎉 This room opened up - check it out and contact the landlord.</p>
+        <a href="{% url 'room_detail' entry.room.id %}" class="btn-primary pl-action-btn">View Room</a>
+      {% else %}
+        <p class="text-muted wl-meta">#{{ entry.position }} in line - we'll notify you the moment it opens up.</p>
+        <form method="post" action="{% url 'placements:leave_waitlist' entry.room.id %}" class="wl-remove-form">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary pl-action-btn">Leave Waitlist</button>
+        </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <style>
   .pl-empty {
     text-align: center;
@@ -250,6 +278,30 @@
     .pl-dates {
       gap: 16px;
     }
+  }
+
+  /* ================= WAITLIST ================= */
+  .wl-status {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    background: #e0f2fe;
+    color: #075985;
+  }
+  .wl-status-notified {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .wl-meta {
+    margin: 10px 0 0;
+  }
+  .wl-remove-form {
+    margin-top: 12px;
   }
 </style>
 

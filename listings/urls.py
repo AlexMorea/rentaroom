@@ -127,6 +127,7 @@ urlpatterns = [
     path("confirm-availability/<str:signed_token>/", views.confirm_availability_via_link, name="confirm_availability_via_link"),
     path("landlord/<int:user_id>/profile/", views.landlord_profile, name="landlord_profile"),
     path("landlord/images/", views.landlord_images_hub, name="landlord_images_hub"),
+    path("tenant/<int:user_id>/profile/", views.tenant_profile, name="tenant_profile"),
 
     # PWA
     path("offline/", views.offline_page, name="offline"),
