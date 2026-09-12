@@ -12,9 +12,21 @@ class DisableCacheMiddleware:
 
     Anonymous GET/HEAD responses that don't set a cookie (i.e. nothing
     session- or CSRF-specific is being established on this response) are
-    safe to let the browser/CDN cache briefly instead - same 60s TTL as
-    the server-side cache they mirror, so a stale listing can't linger
+    safe to let the browser cache briefly instead - same 60s TTL as the
+    server-side cache they mirror, so a stale listing can't linger
     longer than the source of truth already allows.
+
+    "private" here, not "public" - a real report from a live deploy
+    showed why: "public" lets any SHARED cache along the way (a mobile
+    carrier's data-saving proxy, a CDN edge) hold a copy and serve it to
+    other visitors too, not just the browser that made the request. One
+    of those grabbed a page in the few-second window around a deploy and
+    kept serving that stale snapshot well past 60s to everyone behind
+    it - on one visitor's phone the page looked half-updated (CSS is a
+    separate, correctly-fresh request; the HTML itself was the stale
+    part) while it was already correct for everyone else. "private"
+    still lets that one visitor's own browser cache the page - it only
+    stops it being shared.
     """
 
     def __init__(self, get_response):
@@ -30,7 +42,7 @@ class DisableCacheMiddleware:
         )
 
         if cacheable:
-            response["Cache-Control"] = "public, max-age=60"
+            response["Cache-Control"] = "private, max-age=60"
         else:
             response["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response["Pragma"] = "no-cache"
