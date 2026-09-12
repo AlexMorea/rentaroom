@@ -52,7 +52,7 @@
 
       <div
         style="
-          border:1px solid #e5e7eb;
+          border: 1px solid var(--border);
           border-radius:16px;
           padding:18px;
         "
@@ -73,7 +73,7 @@
 
       <div
         style="
-          border:1px solid #e5e7eb;
+          border: 1px solid var(--border);
           border-radius:16px;
           padding:18px;
         "
@@ -88,7 +88,7 @@
 
       <div
         style="
-          border:1px solid #e5e7eb;
+          border: 1px solid var(--border);
           border-radius:16px;
           padding:18px;
         "
@@ -136,6 +136,73 @@
 
     <hr style="margin:24px 0;opacity:.2;">
 
+    <h3 style="text-align:center;">Send Us A Message</h3>
+
+    <p style="text-align:center;max-width:600px;margin:0 auto 20px;opacity:.85;">
+      Prefer a form over email? Fill this in and we'll reply to the address you give us.
+    </p>
+
+    <form method="post" class="ct-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="form-alert form-alert-error">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <div class="ct-grid-2">
+        <div class="ct-field">
+          <label>Name</label>
+          {{ form.name }} {{ form.name.errors }}
+        </div>
+
+        <div class="ct-field">
+          <label>Email</label>
+          {{ form.email }} {{ form.email.errors }}
+        </div>
+      </div>
+
+      <div class="ct-field">
+        <label>Reason</label>
+        {{ form.reason }} {{ form.reason.errors }}
+      </div>
+
+      <div class="ct-field">
+        <label>Message</label>
+        {{ form.message }} {{ form.message.errors }}
+      </div>
+
+      <div class="form-actions" style="justify-content:center;">
+        <button type="submit" class="btn-primary">Send Message</button>
+      </div>
+    </form>
+
+    <style>
+      .ct-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16px;
+      }
+      .ct-field {
+        margin-bottom: 16px;
+      }
+      .ct-field label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 6px;
+        font-size: 0.88rem;
+        color: var(--text);
+      }
+      @media (max-width: 640px) {
+        .ct-grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
     <h3>About Rooms4You</h3>
 
     <p style="line-height:1.8;opacity:.9;">
@@ -154,8 +221,8 @@
 
     <div
       style="
-        background:#f8fafc;
-        border:1px solid #e2e8f0;
+        background: var(--card-sunken);
+        border: 1px solid var(--border);
         border-radius:16px;
         padding:18px;
       "

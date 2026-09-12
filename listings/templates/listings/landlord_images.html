@@ -16,7 +16,7 @@
 
 <div
   style="
-    background: white;
+    background: var(--card);
     padding: 14px 16px;
     border-radius: 14px;
     box-shadow: var(--shadow);
@@ -40,10 +40,10 @@
     {% for img in images %}
     <div
       style="
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border);
         border-radius: 14px;
         overflow: hidden;
-        background: white;
+        background: var(--card);
       "
     >
       <a href="{% url 'edit_room_images' img.room.id %}" style="display: block">
@@ -76,7 +76,7 @@
     {% empty %}
     <div
       style="
-        background: white;
+        background: var(--card);
         padding: 18px;
         border-radius: 14px;
         box-shadow: var(--shadow);

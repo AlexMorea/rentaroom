@@ -270,7 +270,7 @@
   }
   .pr-panel-wrap {
     display: flex;
-    background: #fff;
+    background: var(--card);
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
@@ -326,7 +326,7 @@
   .pr-logo-badge {
     display: inline-flex;
     align-items: center;
-    background: #fff;
+    background: var(--card);
     border-radius: 14px;
     padding: 9px 14px;
     margin-bottom: 28px;
@@ -390,11 +390,11 @@
     margin: 0 0 4px;
     font-size: 1.4rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text);
   }
   .pr-form-sub {
     margin: 0 0 24px;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.9rem;
   }
   .pr-form {
@@ -416,18 +416,18 @@
     font-weight: 700;
     margin-bottom: 6px;
     font-size: 0.88rem;
-    color: #0f172a;
+    color: var(--text);
   }
   .pr-hint {
     display: block;
     margin-top: 5px;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.8rem;
   }
   .pr-driver-note {
     display: block;
     margin-top: -8px;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.85rem;
   }
   .pr-inline-link {
@@ -449,7 +449,7 @@
     padding: 16px 10px;
     border-radius: 14px;
     border: 2px solid #e2e8f0;
-    background: #f8fafc;
+    background: var(--card-sunken);
     cursor: pointer;
     transition:
       border-color 0.15s ease,
@@ -464,12 +464,12 @@
   }
   .pr-role-label {
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text);
     font-size: 0.92rem;
   }
   .pr-role-desc {
     font-size: 0.76rem;
-    color: #64748b;
+    color: var(--text-muted);
   }
   .pr-role-select-wrap {
     display: none;
@@ -502,8 +502,8 @@
     width: 42px;
     height: 42px;
     border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
+    border: 1px solid var(--border);
+    background: var(--card-sunken);
     font-size: 1.05rem;
     cursor: pointer;
     display: flex;
@@ -515,7 +515,7 @@
     margin-top: 10px;
     height: 5px;
     border-radius: 999px;
-    background: #f1f5f9;
+    background: var(--card-sunken);
     overflow: hidden;
   }
   .pr-strength-fill {
@@ -531,13 +531,13 @@
     margin-top: 6px;
     font-size: 0.78rem;
     font-weight: 700;
-    color: #64748b;
+    color: var(--text-muted);
   }
   .pr-pw-checklist {
     list-style: none;
     margin: 10px 0 0;
     padding: 12px 14px;
-    background: #f8fafc;
+    background: var(--card-sunken);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -548,7 +548,7 @@
     align-items: center;
     gap: 8px;
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--text-muted);
   }
   .pr-pw-check-icon {
     flex-shrink: 0;
@@ -560,7 +560,7 @@
     justify-content: center;
     font-size: 0.65rem;
     background: #e2e8f0;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
   .pr-pw-check.pr-pw-check-met {
     color: #166534;
@@ -593,7 +593,7 @@
     align-items: flex-start;
     line-height: 1.6;
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--text);
     cursor: pointer;
   }
   .pr-consent-label input[type="checkbox"] {
@@ -608,15 +608,15 @@
   .pr-next-step {
     text-align: center;
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin: 12px 0 0;
   }
   .pr-login-hint {
     text-align: center;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #e2e8f0;
-    color: #64748b;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
     font-size: 0.9rem;
   }
 
@@ -624,7 +624,7 @@
     display: flex;
     align-items: center;
     text-align: center;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.8rem;
     margin: 18px 0;
   }
@@ -632,7 +632,7 @@
   .pr-oauth-divider::after {
     content: "";
     flex: 1;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border);
   }
   .pr-oauth-divider span {
     padding: 0 12px;

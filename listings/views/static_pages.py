@@ -2,11 +2,16 @@ import logging
 import os
 
 from django.conf import settings
+from django.contrib import messages
+from django.core.mail import BadHeaderError, EmailMessage
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from ..forms import ContactMessageForm
 from ..models import Contact, Profile, Review, Room, RoomStat
+
+CONTACT_RECIPIENT_EMAIL = "hello@rooms4you.co.za"
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +116,43 @@ def services(request):
 
 
 def contact(request):
-    return render(request, "listings/contact.html")
+    if request.method == "POST":
+        form = ContactMessageForm(request.POST)
+
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+            email = form.cleaned_data["email"]
+            reason = dict(ContactMessageForm.REASON_CHOICES)[form.cleaned_data["reason"]]
+            message = form.cleaned_data["message"]
+
+            try:
+                EmailMessage(
+                    subject=f"[Rooms4You Contact] {reason} from {name}",
+                    body=f"From: {name} <{email}>\nReason: {reason}\n\n{message}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[CONTACT_RECIPIENT_EMAIL],
+                    reply_to=[email],
+                ).send()
+                messages.success(
+                    request,
+                    "Thanks for reaching out - we'll get back to you shortly.",
+                )
+                return redirect("contact")
+            except BadHeaderError:
+                messages.error(request, "Invalid header found - please try again.")
+            except Exception:
+                logger.exception("Failed to send contact form email")
+                messages.error(
+                    request,
+                    "Something went wrong sending your message - please email "
+                    f"{CONTACT_RECIPIENT_EMAIL} directly instead.",
+                )
+        else:
+            messages.error(request, "Please fix the errors below.")
+    else:
+        form = ContactMessageForm()
+
+    return render(request, "listings/contact.html", {"form": form})
 
 
 def offline_page(request):

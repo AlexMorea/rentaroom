@@ -90,7 +90,7 @@ auth-page
   /* Same fix as login.html/register.html - .auth-card has no
      background/shadow set anywhere in base.css */
   .va-card {
-    background: #fff !important;
+    background: var(--card) !important;
     box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
     border: 1px solid rgba(15, 23, 42, 0.06);
     text-align: center !important;
@@ -110,7 +110,7 @@ auth-page
     font-weight: 700;
     margin-bottom: 6px;
     font-size: 0.9rem;
-    color: #0f172a;
+    color: var(--text);
   }
   .va-otp-input {
     text-align: center;
@@ -126,7 +126,7 @@ auth-page
   .va-resend-zone {
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--border);
   }
   .va-resend-label {
     margin-bottom: 12px;

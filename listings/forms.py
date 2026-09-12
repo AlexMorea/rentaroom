@@ -14,6 +14,32 @@ from .models import Profile, Room, RoomImage
 from .utils import normalize_sa_phone
 
 
+class ContactMessageForm(forms.Form):
+    REASON_CHOICES: ClassVar[tuple[tuple[str, str], ...]] = (
+        ("general", "General enquiry"),
+        ("partnership", "Partnership"),
+        ("media", "Media & Press"),
+        ("support", "Support"),
+    )
+
+    name = forms.CharField(
+        max_length=120,
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Your name"}),
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": "input", "placeholder": "you@example.com"}),
+    )
+    reason = forms.ChoiceField(
+        choices=REASON_CHOICES,
+        widget=forms.Select(attrs={"class": "input"}),
+    )
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={
+            "class": "input", "rows": 5, "placeholder": "How can we help?",
+        }),
+    )
+
+
 class UserRegisterForm(forms.Form):
     first_name = forms.CharField(
         widget=forms.TextInput(attrs={"class": "input", "placeholder": "First name"})
