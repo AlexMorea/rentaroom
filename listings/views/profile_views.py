@@ -1,10 +1,16 @@
 import logging
 
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.db import transaction
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
+
+from accounts.devices import DEVICE_COOKIE_NAME, hash_token
+from accounts.models import TrustedDevice
 
 from ..forms import ProfileUpdateForm, UserUpdateForm
 from ..models import Favorite, Room, RoomImage, RoomStat
@@ -279,4 +285,76 @@ def edit_profile(request):
             "p": profile,
         },
     )
+
+
+@login_required
+def account_settings(request):
+    current_token = request.COOKIES.get(DEVICE_COOKIE_NAME)
+    current_hash = hash_token(current_token) if current_token else None
+
+    devices = list(request.user.trusted_devices.order_by("-last_seen_at"))
+    for device in devices:
+        device.is_current = bool(current_hash) and device.token_hash == current_hash
+
+    return render(
+        request,
+        "listings/account_settings.html",
+        {"devices": devices},
+    )
+
+
+def _style_password_form(form):
+    # PasswordChangeForm's default widgets carry no CSS class - every
+    # other form field in the app gets "input" via its widget attrs
+    # (see UserUpdateForm/ProfileUpdateForm in forms.py), so match that
+    # here rather than leaving these three fields looking unstyled.
+    autocompletes = {
+        "old_password": "current-password",
+        "new_password1": "new-password",
+        "new_password2": "new-password",
+    }
+    for name, field in form.fields.items():
+        field.widget.attrs.update({
+            "class": "input",
+            "autocomplete": autocompletes.get(name, ""),
+        })
+    return form
+
+
+@login_required
+def change_password(request):
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        _style_password_form(form)
+
+        if form.is_valid():
+            user = form.save()
+            # Otherwise Django's session auth hash check logs the user
+            # out immediately - changing your own password shouldn't
+            # end your current session.
+            update_session_auth_hash(request, user)
+
+            messages.success(request, "Password changed successfully.")
+            return redirect("account_settings")
+
+        messages.error(request, "Please fix the errors below.")
+    else:
+        form = _style_password_form(PasswordChangeForm(request.user))
+
+    return render(request, "listings/change_password.html", {"form": form})
+
+
+@login_required
+@require_POST
+def revoke_trusted_device(request, device_id):
+    device = get_object_or_404(
+        TrustedDevice, id=device_id, user=request.user
+    )
+    device.delete()
+
+    messages.success(
+        request,
+        "Device removed. It will need to verify again next time it signs in.",
+    )
+    return redirect("account_settings")
 

@@ -47,9 +47,58 @@ input.is-submitting {
   --orange: #FF8000;
   --bg: #f8fafc;
   --text: #0f172a;
+  --text-muted: #64748b;
   --card: #ffffff;
+  --card-sunken: #f8fafc;
+  --border: #e2e8f0;
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --input-bg: #ffffff;
+  --input-border: rgba(0, 0, 0, 0.12);
+  --sidebar-bg: rgba(219, 234, 254, 0.55);
+  --sidebar-border: rgba(11, 111, 191, 0.25);
+  --sidebar-link-bg: rgba(255, 255, 255, 0.35);
+  --sidebar-link-bg-hover: rgba(255, 255, 255, 0.65);
+  --sidebar-link-color: #1e3a8a;
   --radius: 18px;
   --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark palette - applied when the OS prefers dark and the visitor hasn't
+   overridden it (data-theme unset or "dark"), or whenever data-theme is
+   explicitly "dark" (the toggle in the navbar sets this, regardless of
+   OS preference, and persists it in localStorage - see theme-toggle.js). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f172a;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --card: #1e293b;
+    --card-sunken: #16213a;
+    --border: #334155;
+    --header-bg: rgba(15, 23, 42, 0.85);
+    --input-bg: #1e293b;
+    --input-border: rgba(255, 255, 255, 0.14);
+    --sidebar-bg: rgba(15, 23, 42, 0.75);
+    --sidebar-border: rgba(11, 111, 191, 0.35);
+    --sidebar-link-bg: rgba(255, 255, 255, 0.06);
+    --sidebar-link-bg-hover: rgba(255, 255, 255, 0.12);
+    --sidebar-link-color: #cbd5e1;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --card: #1e293b;
+  --border: #334155;
+  --header-bg: rgba(15, 23, 42, 0.85);
+  --input-bg: #1e293b;
+  --input-border: rgba(255, 255, 255, 0.14);
+  --sidebar-bg: rgba(15, 23, 42, 0.75);
+  --sidebar-border: rgba(11, 111, 191, 0.35);
+  --sidebar-link-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-link-bg-hover: rgba(255, 255, 255, 0.12);
+  --sidebar-link-color: #cbd5e1;
 }
 
 * {
@@ -61,6 +110,7 @@ body {
   font-family: "Inter", system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 a {
@@ -142,7 +192,7 @@ a {
   background: none;
   border: none;
   border-radius: 8px;
-  color: #0f172a;
+  color: var(--text);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.18s ease;
@@ -422,9 +472,10 @@ body.nav-open {
 
 .btn-secondary {
   padding: 12px 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
+  background: var(--card);
+  color: var(--text);
   font-weight: 700;
   opacity: 0.9;
   cursor: pointer;
@@ -519,8 +570,9 @@ body.nav-open {
   padding: 10px 14px;
   border-radius: 12px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
@@ -530,8 +582,9 @@ body.nav-open {
   font-weight: 700;
   text-decoration: none;
   transition: all 0.25s ease;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: white;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
@@ -547,8 +600,8 @@ body.nav-open {
 }
 
 .pagination-back {
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--card);
+  color: var(--text);
 }
 
 /* ✅ Room detail CTA bar (mobile sticky) */
@@ -807,12 +860,11 @@ body.nav-open .nav-links * {
   position: sticky;
   top: 0;
   z-index: 2000;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--header-bg);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border);
   isolation: isolate;
   z-index: 1000;
-  background: rgba(255,255,255,.92);
   backdrop-filter: blur(12px);
 }
 
@@ -832,7 +884,7 @@ body.nav-open .nav-links * {
   top: 84px;
   right: 14px;
   left: 14px;
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--card);
   flex-direction: column;
   padding: 14px;
   border-radius: 16px;
@@ -924,8 +976,9 @@ input[type="date"].input {
   height: 46px;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
   font-size: 1rem;
   line-height: 1.2;
 }
@@ -1424,10 +1477,10 @@ body.scroll-down .trust-strip {
 }
 
 .dashboard-grid .stat-card {
-  background: #fff;
+  background: var(--card);
   border-radius: 18px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -2089,11 +2142,11 @@ body.scroll-down .trust-strip {
   height: calc(100vh - 70px);
 
   /* 🌊 glassmorphism effect */
-  background: rgba(219, 234, 254, 0.55); /* light blue transparent */
+  background: var(--sidebar-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 
-  border-right: 1px solid rgba(11, 111, 191, 0.25);
+  border-right: 1px solid var(--sidebar-border);
 
   padding: 16px;
   overflow-y: auto;
@@ -2186,11 +2239,11 @@ body.scroll-down .trust-strip {
 
   border-radius: 10px;
 
-  color: #1e3a8a;
+  color: var(--sidebar-link-color);
   font-weight: 700;
   text-decoration: none;
 
-  background: rgba(255, 255, 255, 0.35); /* transparent card feel */
+  background: var(--sidebar-link-bg);
 
   backdrop-filter: blur(6px);
 
@@ -2198,9 +2251,24 @@ body.scroll-down .trust-strip {
 }
 
 .sidebar a:hover {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--sidebar-link-bg-hover);
   transform: translateX(3px);
   color: #0B6FBF;
+}
+
+.sidebar a.active {
+  background: var(--sidebar-link-bg-hover);
+  color: #0B6FBF;
+  box-shadow: inset 3px 0 0 #0B6FBF;
+}
+
+.sidebar-badge-new {
+  float: right;
+  font-size: 0.70rem;
+  background: #1FA6F0;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 .sidebar.open ~ .sidebar-tab {
@@ -2208,10 +2276,15 @@ body.scroll-down .trust-strip {
   left: 200px;
 }
 
+/* hidden always wins */
+.hidden {
+  display: none !important;
+}
+
 .auth-box h2 {
   margin-bottom: 20px;
   font-size: 24px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .auth-option {
@@ -2223,12 +2296,13 @@ body.scroll-down .trust-strip {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  background: #f8fafc;
+  background: var(--card-sunken);
+  color: var(--text);
   transition: 0.2s;
 }
 
 .auth-option:hover {
-  background: #eef2ff;
+  background: var(--border);
   transform: translateY(-2px);
 }
 
@@ -2259,8 +2333,8 @@ body.scroll-down .trust-strip {
 
   padding: 8px 12px;
 
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 999px;
 
   cursor: pointer;
@@ -2288,11 +2362,6 @@ body.scroll-down .trust-strip {
   font-size: 16px;
 }
 
-/* hidden always wins */
-.hidden {
-  display: none !important;
-}
-
 /* modal */
 .auth-modal {
   position: fixed;
@@ -2308,13 +2377,12 @@ body.scroll-down .trust-strip {
 
 .auth-box {
   width: 320px;
-  background: white;
+  background: var(--card);
   border-radius: 24px;
   padding: 32px 24px;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
   animation: pop 0.25s ease;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
 @keyframes fadeIn {
@@ -2324,6 +2392,31 @@ body.scroll-down .trust-strip {
   to {
     opacity: 1;
   }
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+  cursor: pointer;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.theme-toggle-icon-light {
+  display: none;
+}
+.theme-toggle-btn.is-dark .theme-toggle-icon-dark {
+  display: none;
+}
+.theme-toggle-btn.is-dark .theme-toggle-icon-light {
+  display: inline;
 }
 
 /* ================= COMING SOON PAGES ================= */
@@ -2854,20 +2947,20 @@ body.scroll-down .trust-strip {
 .meta-card {
   padding: 16px;
   border-radius: 18px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--card-sunken);
+  border: 1px solid var(--border);
 }
 
 .meta-label {
   display: block;
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 6px;
 }
 
 .detail-description {
   line-height: 1.8;
-  color: #334155;
+  color: var(--text);
 }
 
 .landlord-card {
@@ -2957,16 +3050,15 @@ body.scroll-down .trust-strip {
 }
 
 .stat-card {
-  background: #fff;
+  background: var(--card);
   border-radius: 18px;
   box-shadow: var(--shadow);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
   padding: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: white;
   padding: 22px;
   text-align: center;
   transition: 0.2s ease;
@@ -3206,6 +3298,13 @@ transition: width .25s ease;
 width: 100%;
 }
 
+.nav-links a.active {
+color: #0B6FBF;
+}
+.nav-links a.active::after {
+width: 100%;
+}
+
 .dashboard-btn {
 background: #0B6FBF;
 color: white !important;
@@ -3320,7 +3419,7 @@ display: none;
 /* Used across home.html, membership.html, payment_page.html - was
    referenced everywhere but never actually defined until now. */
 .text-muted {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 

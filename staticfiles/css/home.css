@@ -218,7 +218,7 @@ main.container {
 }
 
 .stat-card {
-  background: white;
+  background: var(--card, white);
   border-radius: 24px;
   padding: 38px;
   text-align: center;
@@ -239,7 +239,7 @@ main.container {
 /* ================= HOW */
 .how-it-works {
   padding: 100px 20px;
-  background: #f8fafc;
+  background: var(--bg);
 }
 
 .how-title {
@@ -257,7 +257,7 @@ main.container {
 }
 
 .how-card {
-  background: white;
+  background: var(--card);
   padding: 42px;
   border-radius: 28px;
   text-align: center;
@@ -352,7 +352,7 @@ main.container {
 }
 
 .market-card {
-  background: white;
+  background: var(--card);
   padding: 50px 30px;
   border-radius: 28px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
@@ -399,11 +399,11 @@ main.container {
 }
 
 .service-showcase-card{
-  background:white;
+  background:var(--card);
   border-radius:24px;
   padding:30px;
   text-align:center;
-  border:1px solid #e5e7eb;
+  border:1px solid var(--border);
   transition:.25s ease;
 }
 
@@ -428,10 +428,10 @@ main.container {
 }
 
 .trust-card{
-  background:#f8fafc;
+  background:var(--card-sunken);
   padding:24px;
   border-radius:20px;
-  border:1px solid #e2e8f0;
+  border:1px solid var(--border);
 }
 
 .trust-card h3{
@@ -668,8 +668,8 @@ main.container {
 }
 
 .audience-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 26px 22px;
   text-align: center;
@@ -733,8 +733,8 @@ main.container {
 }
 
 .vm-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 28px;
 }
@@ -777,13 +777,13 @@ main.container {
 
 .value-chip {
   display: block;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--card-sunken);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 18px 12px;
   text-align: center;
   font-weight: 700;
-  color: #334155;
+  color: var(--text);
 }
 
 /* ---- Meet the Founder ---- */
@@ -890,8 +890,8 @@ main.container {
 }
 
 .contact-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--card-sunken);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
   text-align: center;
@@ -918,18 +918,18 @@ main.container {
   min-width: 46px;
   min-height: 46px;
   border-radius: 50%;
-  background: #f1f5f9;
+  background: var(--card-sunken);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--dark);
+  color: var(--text);
   text-decoration: none;
   font-size: 1.15rem;
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .contact-social-row a:hover {
-  background: #e2e8f0;
+  background: var(--border);
   transform: translateY(-2px);
 }
 

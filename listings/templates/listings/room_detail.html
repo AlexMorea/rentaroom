@@ -403,11 +403,11 @@
   }
 
   .rd-card {
-    background: #fff;
+    background: var(--card);
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border: 1px solid var(--border);
   }
 
   /* ===== Media / hero ===== */
@@ -419,7 +419,7 @@
     padding-bottom: 62% !important; /* classic padding trick, not aspect-ratio -
       guaranteed cross-browser, no ambiguity */
     margin: 0 !important;
-    background: #f1f5f9;
+    background: var(--card-sunken);
     /* deliberately NO overflow:hidden here - same fix as the cards.
        This wrapper needs to let the price tag hang below the photo
        without being clipped. Only .rd-media-clip below clips. */
@@ -512,11 +512,11 @@
     margin: 0 0 6px;
     font-size: 1.5rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text);
   }
   .rd-location {
     margin: 0;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.95rem;
   }
 
@@ -533,8 +533,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #f8fafc;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--card-sunken);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 14px 16px;
   }
@@ -545,7 +545,7 @@
   .rd-fact-label {
     display: block;
     font-size: 0.72rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -553,14 +553,14 @@
   .rd-fact-value {
     display: block;
     font-size: 0.92rem;
-    color: #0f172a;
+    color: var(--text);
     margin-top: 2px;
   }
 
   .rd-section {
     margin-bottom: 30px;
     padding-bottom: 30px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border);
   }
   .rd-section:last-child,
   .rd-report-section {
@@ -570,14 +570,14 @@
     margin: 0 0 14px;
     font-size: 1.05rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text);
   }
   .rd-subsection-header {
     margin-top: 22px;
   }
 
   .rd-description {
-    color: #334155;
+    color: var(--text);
     line-height: 1.6;
     font-size: 0.95rem;
   }
@@ -683,8 +683,8 @@
     gap: 14px;
     text-decoration: none;
     color: inherit;
-    background: #f8fafc;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: var(--card-sunken);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 14px 16px;
     margin-bottom: 18px;
@@ -701,12 +701,12 @@
     justify-content: center;
     font-weight: 800;
     font-size: 1.2rem;
-    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #16a34a;
+    box-shadow: 0 0 0 3px var(--card-sunken), 0 0 0 5px #16a34a;
   }
   .rd-landlord-name {
     display: block;
     font-size: 1rem;
-    color: #0f172a;
+    color: var(--text);
   }
   .rd-landlord-status {
     font-size: 0.82rem;
@@ -715,10 +715,10 @@
     margin-top: 2px;
   }
   .rd-landlord-status-unverified {
-    color: #64748b;
+    color: var(--text-muted);
   }
   .rd-landlord-avatar-unverified {
-    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #cbd5e1;
+    box-shadow: 0 0 0 3px var(--card-sunken), 0 0 0 5px #cbd5e1;
   }
   .rd-landlord-checks {
     display: flex;
@@ -729,8 +729,8 @@
   .rd-check-chip {
     font-size: 0.72rem;
     font-weight: 600;
-    color: #0f172a;
-    background: #f1f5f9;
+    color: var(--text);
+    background: var(--border);
     border-radius: 999px;
     padding: 3px 9px;
   }
@@ -773,7 +773,7 @@
   .rd-empty-card {
     text-align: center;
     padding: 20px;
-    background: #f8fafc;
+    background: var(--card-sunken);
     border-radius: 14px;
   }
 
@@ -792,11 +792,11 @@
   .rd-rating-score {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--text);
   }
   .rd-rating-meta {
     font-size: 0.82rem;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   .rd-review-list {
@@ -807,7 +807,7 @@
   .rd-review-card {
     display: flex;
     gap: 12px;
-    background: #f8fafc;
+    background: var(--card-sunken);
     border-radius: 14px;
     padding: 14px 16px;
   }
@@ -816,8 +816,8 @@
     height: 36px;
     min-width: 36px;
     border-radius: 50%;
-    background: #e2e8f0;
-    color: #334155;
+    background: var(--border);
+    color: var(--text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -826,7 +826,7 @@
     flex-shrink: 0;
   }
   .rd-review-name {
-    color: #0f172a;
+    color: var(--text);
     font-size: 0.9rem;
   }
   .rd-review-stars {
@@ -835,12 +835,12 @@
   }
   .rd-review-comment {
     margin: 0;
-    color: #475569;
+    color: var(--text);
     font-size: 0.88rem;
     line-height: 1.5;
   }
   .rd-muted {
-    color: #94a3b8;
+    color: var(--text-muted);
     text-align: center;
   }
 
@@ -852,7 +852,7 @@
     margin-bottom: 6px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #334155;
+    color: var(--text);
   }
   .rd-select {
     width: 100%;

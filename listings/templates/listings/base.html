@@ -4,6 +4,15 @@
   <head>
     <meta charset="UTF-8" />
 
+    <!-- Sets the saved theme before first paint, so a dark-mode visitor
+         never sees a flash of the light theme while base.css loads. -->
+    <script>
+      (function () {
+        var saved = localStorage.getItem("r4y-theme");
+        if (saved) document.documentElement.setAttribute("data-theme", saved);
+      })();
+    </script>
+
     <title>{% block title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -59,7 +68,7 @@
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
 
-    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=13" />
+    <link rel="stylesheet" href="{% static 'css/base.css' %}?v=15" />
 
     <link rel="stylesheet" href="{% static 'css/trust.css' %}?v=1" />
 
@@ -168,6 +177,8 @@
     <script src="{% static 'js/navbar.js' %}?v=1" defer></script>
     <script src="{% static 'js/sidebar.js' %}?v=1" defer></script>
     <script src="{% static 'js/auth-modal.js' %}?v=1" defer></script>
+    <script src="{% static 'js/theme-toggle.js' %}?v=1" defer></script>
+    <script src="{% static 'js/nav-active-link.js' %}?v=1" defer></script>
     <script src="{% static 'js/toast.js' %}?v=1" defer></script>
     <script src="{% static 'js/idle.js' %}?v=1" defer></script>
     <script src="{% static 'js/slider.js' %}?v=1" defer></script>

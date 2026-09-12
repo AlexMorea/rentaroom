@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/home.css' %}?v=1" />
+<link rel="stylesheet" href="{% static 'css/home.css' %}?v=2" />
 {% endblock %}
 
 {% block content %}
@@ -30,7 +30,7 @@
           rgba(255, 128, 0, 0.12),
           transparent 28%
         ),
-        linear-gradient(135deg, #eef2ff 0%, #ffffff 70%);
+        linear-gradient(135deg, var(--card-sunken) 0%, var(--card) 70%);
       border: 1px solid rgba(99, 102, 241, 0.2);
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.07);
       backdrop-filter: blur(10px);
@@ -270,8 +270,8 @@
       class="form-card premium-card"
       style="
         text-align: center;
-        background: linear-gradient(135deg, #fff7ed, #ffedd5);
-        border: 1px solid #fed7aa;
+        background: linear-gradient(135deg, var(--card-sunken), var(--card));
+        border: 1px solid var(--border);
       "
     >
       <h2 style="margin: 0">{{ room_count }}</h2>
@@ -282,8 +282,8 @@
       class="form-card premium-card"
       style="
         text-align: center;
-        background: linear-gradient(135deg, #fff7ed, #ffedd5);
-        border: 1px solid #fed7aa;
+        background: linear-gradient(135deg, var(--card-sunken), var(--card));
+        border: 1px solid var(--border);
       "
     >
       <h2 style="margin: 0">{{ landlord_count }}</h2>
@@ -294,8 +294,8 @@
       class="form-card premium-card"
       style="
         text-align: center;
-        background: linear-gradient(135deg, #fff7ed, #ffedd5);
-        border: 1px solid #fed7aa;
+        background: linear-gradient(135deg, var(--card-sunken), var(--card));
+        border: 1px solid var(--border);
       "
     >
       <h2 style="margin: 0">{{ contact_count }}</h2>
@@ -306,8 +306,8 @@
       class="form-card premium-card"
       style="
         text-align: center;
-        background: linear-gradient(135deg, #fff7ed, #ffedd5);
-        border: 1px solid #fed7aa;
+        background: linear-gradient(135deg, var(--card-sunken), var(--card));
+        border: 1px solid var(--border);
       "
     >
       <h2 style="margin: 0">{{ review_count }}</h2>

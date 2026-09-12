@@ -54,6 +54,10 @@
       Profile
     </a>
 
+    <a href="{% url 'account_settings' %}">
+      Settings
+    </a>
+
     <a
       href="#"
       onclick="
@@ -85,6 +89,16 @@
     </button>
 
   {% endif %}
+
+  <button
+    id="themeToggle"
+    class="theme-toggle-btn"
+    type="button"
+    aria-label="Switch to dark mode"
+  >
+    <span class="theme-toggle-icon theme-toggle-icon-dark">🌙</span>
+    <span class="theme-toggle-icon theme-toggle-icon-light">☀️</span>
+  </button>
 
 </nav>
 

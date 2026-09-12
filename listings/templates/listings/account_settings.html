@@ -1,0 +1,245 @@
+{% extends "listings/base.html" %}
+{% block title %}Settings | Rooms4You{% endblock %}
+{% block content %}
+
+<div class="form-shell as-shell">
+  <div class="as-header">
+    <div>
+      <h1 class="page-title as-title">Settings</h1>
+      <p class="text-muted as-subtitle">Manage your password, sign-in security and account.</p>
+    </div>
+    <a class="btn-secondary" href="{% url 'profile' %}">← Back to profile</a>
+  </div>
+
+  <!-- PERSONAL INFO -->
+  <div class="form-card as-card">
+    <div class="as-section-title">👤 Personal info</div>
+    <p class="text-muted as-card-copy">
+      Your name, email, phone and address live on your profile.
+    </p>
+    <a class="btn-secondary as-card-btn" href="{% url 'edit_profile' %}">Edit profile</a>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="form-card as-card">
+    <div class="as-section-title">🔒 Security</div>
+
+    <div class="as-row">
+      <div>
+        <strong class="as-row-title">Password</strong>
+        <p class="text-muted as-row-copy">Change the password you use to sign in.</p>
+      </div>
+      <a class="btn-secondary as-row-btn" href="{% url 'change_password' %}">Change password</a>
+    </div>
+
+    <hr class="as-divider" />
+
+    <div class="as-row as-row-top">
+      <div>
+        <strong class="as-row-title">Trusted devices</strong>
+        <p class="text-muted as-row-copy">
+          Devices that have already verified with a one-time code. Remove any you
+          don't recognise, or no longer use.
+        </p>
+      </div>
+    </div>
+
+    {% if devices %}
+    <ul class="as-device-list">
+      {% for device in devices %}
+      <li class="as-device-row">
+        <div class="as-device-info">
+          <div class="as-device-label">
+            {{ device.label|default:"Unknown device"|truncatechars:70 }}
+            {% if device.is_current %}<span class="as-device-current">This device</span>{% endif %}
+          </div>
+          <div class="as-device-meta">
+            Last used {{ device.last_seen_at|timesince }} ago · Added {{ device.created_at|date:"d M Y" }}
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'revoke_trusted_device' device.id %}" class="as-device-form">
+          {% csrf_token %}
+          <button type="submit" class="btn-secondary as-revoke-btn">Remove</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted as-empty">No trusted devices yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- ACCOUNT -->
+  <div class="form-card as-card">
+    <div class="as-section-title">⚠️ Account</div>
+
+    <div class="as-row">
+      <div>
+        <strong class="as-row-title">Delete account</strong>
+        <p class="text-muted as-row-copy">Permanently remove your account and listings. This can't be undone.</p>
+      </div>
+      <a class="as-delete-link" href="{% url 'delete_account' %}">Delete account</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .as-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .as-header .btn-secondary {
+    width: auto !important;
+    flex-shrink: 0;
+  }
+  .as-title {
+    text-align: left;
+    margin: 0;
+  }
+  .as-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+  }
+
+  .as-card {
+    margin-bottom: 18px;
+  }
+  .as-card:last-child {
+    margin-bottom: 0;
+  }
+  .as-section-title {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text);
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .as-card-copy {
+    margin: 0 0 14px;
+    font-size: 0.9rem;
+  }
+  .as-card-btn {
+    width: auto !important;
+  }
+
+  .as-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .as-row-top {
+    align-items: flex-start;
+  }
+  .as-row-title {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .as-row-copy {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    max-width: 46ch;
+  }
+  .as-row-btn {
+    width: auto !important;
+    flex-shrink: 0;
+  }
+
+  .as-divider {
+    margin: 18px 0;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .as-device-list {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .as-device-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--card-sunken);
+    border: 1px solid var(--border);
+  }
+  .as-device-info {
+    min-width: 0;
+    flex: 1 1 220px;
+  }
+  .as-device-label {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .as-device-current {
+    margin-left: 8px;
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 2px 8px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+  .as-device-meta {
+    margin-top: 3px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .as-device-form {
+    flex-shrink: 0;
+  }
+  .as-revoke-btn {
+    width: auto !important;
+    color: #dc2626;
+  }
+  .as-empty {
+    margin: 14px 0 0;
+    font-size: 0.88rem;
+  }
+
+  .as-delete-link {
+    flex-shrink: 0;
+    color: #dc2626;
+    font-weight: 700;
+    text-decoration: none;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 480px) {
+    .as-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .as-row-btn,
+    .as-delete-link {
+      width: 100% !important;
+      text-align: center;
+    }
+  }
+</style>
+
+{% endblock %}

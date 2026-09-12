@@ -90,6 +90,15 @@ urlpatterns = [
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("inbox/", views.inbox, name="inbox"),
 
+    # SETTINGS
+    path("settings/", views.account_settings, name="account_settings"),
+    path("settings/password/", views.change_password, name="change_password"),
+    path(
+        "settings/devices/<int:device_id>/revoke/",
+        views.revoke_trusted_device,
+        name="revoke_trusted_device",
+    ),
+
 
     # ROOMS (CORE RESOURCE)
     path("rooms/", views.room_list, name="room_list"),
