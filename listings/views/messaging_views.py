@@ -12,6 +12,8 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from accounts.push import notify_user
+from trust.models import FraudReport
+from trust.scam_detection import auto_flag_if_scammy
 
 from ..models import Contact, Message, Room
 
@@ -102,6 +104,13 @@ def conversation_thread(request, room_id, other_user_id):
                     title=f"New message from {request.user.first_name or request.user.username}",
                     body=body[:120],
                     url=reverse("conversation_thread", args=[room.id, request.user.id]),
+                )
+                auto_flag_if_scammy(
+                    text=body,
+                    source_key=f"message:{request.user.id}:{room.id}",
+                    category=FraudReport.CATEGORY_DEPOSIT_SCAM,
+                    room=room,
+                    reported_user=request.user,
                 )
 
         return redirect("conversation_thread", room_id=room.id, other_user_id=other_user.id)

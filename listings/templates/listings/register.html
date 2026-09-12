@@ -49,6 +49,12 @@
         <form method="post" class="pr-form">
           {% csrf_token %} {{ form.non_field_errors }}
 
+          <!-- HONEYPOT: invisible to real users, only a bot fills this -->
+          <div class="pr-hp-field" aria-hidden="true">
+            <label for="{{ form.website.id_for_label }}">Leave this field empty</label>
+            {{ form.website }}
+          </div>
+
           <!-- ROLE SELECTOR -->
           <div class="pr-field">
             <label>I am a...</label>
@@ -401,6 +407,14 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+  }
+  .pr-hp-field {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    height: 0;
+    width: 0;
+    overflow: hidden;
   }
   .pr-row {
     display: flex;

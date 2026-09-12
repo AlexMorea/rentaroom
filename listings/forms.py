@@ -11,7 +11,7 @@ from django.utils import timezone
 from accounts.models import Membership
 
 from .models import Profile, Room, RoomImage
-from .utils import normalize_sa_phone
+from .utils import is_disposable_email, normalize_sa_phone
 
 
 class ContactMessageForm(forms.Form):
@@ -127,6 +127,15 @@ class UserRegisterForm(forms.Form):
         widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Repeat password"})
     )
 
+    # Honeypot - invisible to real users (hidden via CSS in register.html),
+    # so only a scripted bot that blindly fills every input on the page
+    # would ever populate it. register() checks this before touching the
+    # form at all; it isn't validated here as "must be blank" on purpose -
+    # a bot that finds and skips it shouldn't get a distinguishing error.
+    website = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        "class": "pr-hp-input", "tabindex": "-1", "autocomplete": "off",
+    }))
+
     # ---------------- VALIDATION ---------------- #
 
     def clean_email(self):
@@ -134,6 +143,12 @@ class UserRegisterForm(forms.Form):
 
         if User.objects.filter(email__iexact=email).exists():
             raise ValidationError("This email is already registered.")
+
+        if is_disposable_email(email):
+            raise ValidationError(
+                "Please sign up with a permanent email address - "
+                "temporary/disposable inboxes aren't accepted."
+            )
 
         return email
 

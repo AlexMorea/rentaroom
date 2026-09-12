@@ -33,9 +33,13 @@ from accounts.utils import require_active_membership
 from placements.models import Waitlist
 from utils.email import send_template_email
 
+from trust.models import FraudReport
+from trust.scam_detection import auto_flag_if_scammy
+
 from ..forms import RoomForm
 from ..models import Favorite, Room, RoomImage, RoomStat
 from ..seo import ld_json
+from ..utils import clear_room_list_cache
 from .helpers import get_or_create_membership, is_landlord
 
 POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
@@ -730,17 +734,7 @@ def create_room(request):
         else:
             messages.success(request, "Room created successfully.")
 
-        # Clear room list cache after room creation
-        cache_keys_to_delete = [
-            f"room_list:{request.user.id}*",
-            "room_list_ids:*",
-        ]
-        for pattern in cache_keys_to_delete:
-            try:
-                cache.delete_pattern(pattern)
-            except (AttributeError, TypeError):
-                # delete_pattern not available on all cache backends; use delete for individual keys
-                pass
+        clear_room_list_cache(request.user.id)
 
         # EMAIL AFTER COMMIT
         transaction.on_commit(lambda: send_template_email(
@@ -748,6 +742,14 @@ def create_room(request):
             to_email=request.user.email,
             template="emails/room_live.html",
             context={"room": room, "year": 2026}
+        ))
+
+        transaction.on_commit(lambda: auto_flag_if_scammy(
+            text=f"{room.title}\n\n{room.description}",
+            source_key=f"room:{room.id}",
+            category=FraudReport.CATEGORY_DEPOSIT_SCAM,
+            room=room,
+            reported_user=room.owner,
         ))
 
         return redirect("upload_room_images", room.id)
@@ -785,16 +787,15 @@ def edit_room(request, pk):
                     updated_room.full_clean()
                     updated_room.save()
 
-                # Clear room list cache after room edit
-                cache_keys_to_delete = [
-                    f"room_list:{request.user.id}*",
-                    "room_list_ids:*",
-                ]
-                for pattern in cache_keys_to_delete:
-                    try:
-                        cache.delete_pattern(pattern)
-                    except (AttributeError, TypeError):
-                        pass
+                clear_room_list_cache(request.user.id)
+
+                transaction.on_commit(lambda: auto_flag_if_scammy(
+                    text=f"{updated_room.title}\n\n{updated_room.description}",
+                    source_key=f"room:{updated_room.id}",
+                    category=FraudReport.CATEGORY_DEPOSIT_SCAM,
+                    room=updated_room,
+                    reported_user=updated_room.owner,
+                ))
 
                 messages.success(
                     request,

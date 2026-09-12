@@ -78,6 +78,23 @@ def _redirect_to_login(next_url):
         return redirect(f"{reverse('login')}?next={quote(next_url)}")
     return redirect("login")
 
+
+def _client_ip(request):
+    return (
+        request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+        or request.META.get("REMOTE_ADDR")
+    )
+
+
+# Signup throttle - register() has no OTP/lockout of its own to fall
+# back on the way login does, so without this a script can mass-create
+# accounts (each still needs to clear email OTP to do anything, but a
+# flood of unverified accounts is its own cost: DB rows, email volume,
+# noise in every admin list). Counts every POST attempt, not just
+# successful ones, so a script probing for valid form data still trips it.
+SIGNUP_MAX_ATTEMPTS = 8
+SIGNUP_WINDOW_SECONDS = 3600
+
 # Login attempt limits. Two separate counters, not one:
 # - IP-based (existing) stops one attacker hammering many accounts from
 #   the same machine/botnet node.
@@ -91,6 +108,26 @@ ACCOUNT_LOGIN_MAX_ATTEMPTS = 7
 ACCOUNT_LOGIN_LOCKOUT_SECONDS = 1800
 
 def register(request):
+    if request.method == "POST" and (request.POST.get("website") or "").strip():
+        # Honeypot tripped - a scripted bot filled a field that's
+        # invisible to real users. Fail silently (fresh empty form, no
+        # error) rather than tipping the bot off to what caught it.
+        logger.info("Signup honeypot triggered from IP %s", _client_ip(request))
+        return render(request, "listings/register.html", {"form": UserRegisterForm()})
+
+    if request.method == "POST":
+        signup_key = f"signup_attempts:{_client_ip(request)}"
+        attempts = cache.get(signup_key, 0)
+
+        if attempts >= SIGNUP_MAX_ATTEMPTS:
+            messages.error(
+                request,
+                "Too many signup attempts from this network. Please try again later."
+            )
+            return render(request, "listings/register.html", {"form": UserRegisterForm()})
+
+        cache.set(signup_key, attempts + 1, timeout=SIGNUP_WINDOW_SECONDS)
+
     form = UserRegisterForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -219,10 +256,7 @@ def verify_account(request):
 
 @never_cache
 def user_login(request):
-    ip = (
-        request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
-        or request.META.get("REMOTE_ADDR")
-    )
+    ip = _client_ip(request)
     login_key = f"login_attempts:{ip}"
     attempts = cache.get(login_key, 0)
 
@@ -759,10 +793,7 @@ class RateLimitedPasswordResetView(PasswordResetView):
 
         email = (form.cleaned_data.get("email") or "").strip().lower()
 
-        ip = (
-            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
-            or request.META.get("REMOTE_ADDR")
-        )
+        ip = _client_ip(request)
 
         base_key = f"pwreset:{ip}:{email}"
 

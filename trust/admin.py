@@ -1,11 +1,32 @@
 from django.contrib import admin
 
+from accounts.moderation import suspend_account
+
 from .models import FraudReport
 
 
 @admin.action(description="Mark selected reports as Investigating")
 def mark_investigating(modeladmin, request, queryset):
     queryset.update(status=FraudReport.STATUS_INVESTIGATING)
+
+
+@admin.action(description="Suspend reported user's account and resolve report")
+def suspend_reported_user_and_resolve(modeladmin, request, queryset):
+    suspended = 0
+    for report in queryset:
+        if report.reported_user_id:
+            suspend_account(report.reported_user)
+            suspended += 1
+        report.mark_status(
+            FraudReport.STATUS_RESOLVED,
+            staff_user=request.user,
+            note="Account suspended via Trust & Safety admin action.",
+        )
+
+    modeladmin.message_user(
+        request,
+        f"Suspended {suspended} account(s) and resolved {queryset.count()} report(s)."
+    )
 
 
 @admin.action(description="Mark selected reports as Resolved")
@@ -38,5 +59,5 @@ class FraudReportAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("room", "reported_user", "reporter")
     readonly_fields = ("created_at", "updated_at", "reference_code")
-    actions = (mark_investigating, mark_resolved, mark_dismissed)
+    actions = (mark_investigating, mark_resolved, mark_dismissed, suspend_reported_user_and_resolve)
     date_hierarchy = "created_at"
