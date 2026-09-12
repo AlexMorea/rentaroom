@@ -135,6 +135,11 @@
       </div>
 
       <p class="room-posted rc-posted">Posted {{ room.created_at|timesince }} ago</p>
+
+      <div class="rc-cta">
+        View details &amp; contact landlord
+        <span class="rc-cta-arrow" aria-hidden="true">→</span>
+      </div>
     </div>
   </a>
 </article>
@@ -502,6 +507,30 @@
     margin: 0;
     font-size: 0.74rem;
     color: #94a3b8;
+  }
+
+  /* Footer CTA - explicit "click me" affordance so the card doesn't rely
+     on visitors guessing the whole thing is clickable. Sits inside the
+     same .rc-link anchor as the rest of the info block, so it's just a
+     styled row rather than a second/nested link. */
+  .rc-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0B6FBF;
+  }
+  .rc-cta-arrow {
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+  }
+  .rc-card:hover .rc-cta-arrow {
+    transform: translateX(3px);
   }
 
   @media (max-width: 480px) {
