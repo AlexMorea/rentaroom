@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Log in</h1>
+  <form method="post">{% csrf_token %}{{ form.as_p }}<input type="hidden" name="next" value="{{ next }}"><button class="btn">Log in</button></form>
+  <p>New here? <a href="{% url 'signup' %}">Create an account</a></p>
+</section>
+{% endblock %}

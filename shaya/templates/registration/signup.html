@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Join Shaya</h1>
+  <form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn">Create account</button></form>
+  <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+</section>
+{% endblock %}

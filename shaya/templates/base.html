@@ -1,0 +1,32 @@
+{% load static %}<!doctype html>
+<html lang="en-ZA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0f">
+  <title>{% block title %}Shaya · Mzansi's own short video app{% endblock %}</title>
+  {% block meta %}<meta name="description" content="Short videos made in Mzansi. Creators get paid from 1,000 views.">{% endblock %}
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0b0f'/%3E%3Ctext x='16' y='23' font-size='20' font-family='sans-serif' font-weight='800' text-anchor='middle' fill='%23ffb612'%3ES%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{% static 'shaya/shaya.css' %}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="topbar">
+    <a class="brand" href="{% url 'feed' %}">Shaya<span class="dot">.</span></a>
+    {% block topnav %}{% endblock %}
+    <form method="post" action="{% url 'toggle_data_saver' %}" class="saver">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button title="Data saver plays lighter videos and doesn't preload">{% if data_saver %}Data saver: on{% else %}Data saver: off{% endif %}</button>
+    </form>
+  </header>
+  {% if messages %}<div class="messages">{% for m in messages %}<p class="msg {{ m.tags }}">{{ m }}</p>{% endfor %}</div>{% endif %}
+  <main>{% block content %}{% endblock %}</main>
+  <nav class="tabbar">
+    <a href="{% url 'feed' %}">Home</a>
+    <a href="{% url 'feed' %}?tab=following">Following</a>
+    <a class="post" href="{% url 'upload' %}" aria-label="Post a clip">+</a>
+    <a href="{% url 'dashboard' %}">Studio</a>
+    {% if user.is_authenticated %}<a href="{% url 'profile' user.username %}">Me</a>{% else %}<a href="{% url 'login' %}">Log in</a>{% endif %}
+  </nav>
+  <script src="{% static 'shaya/shaya.js' %}" defer></script>
+</body>
+</html>

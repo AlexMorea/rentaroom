@@ -1,0 +1,9 @@
+<div class="actions">
+  <a class="avatar" href="{% url 'profile' video.creator.username %}" title="{{ video.creator.profile.name }}">{{ video.creator.username|first|upper }}</a>
+  <button class="act like{% if is_liked %} on{% endif %}" data-like="{% url 'toggle_like' video.pk %}" {% if not user.is_authenticated %}data-login="{% url 'login' %}"{% endif %} aria-label="Like">
+    <span class="ico">&#9829;</span><span class="n">{{ video.n_likes }}</span>
+  </button>
+  <a class="act" href="{% url 'video_detail' video.pk %}#comments" aria-label="Comments"><span class="ico">&#128172;</span><span class="n">{{ video.n_comments }}</span></a>
+  <button class="act" data-share="{{ request.scheme }}://{{ request.get_host }}{% url 'video_detail' video.pk %}" data-text="{{ video.caption|truncatechars:80 }}" aria-label="Share"><span class="ico">&#10150;</span><span class="n">Share</span></button>
+  <span class="act views" title="Views that count towards pay"><span class="ico">&#9654;</span><span class="n">{{ video.n_views }}</span></span>
+</div>

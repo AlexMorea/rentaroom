@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block body_class %}feed-page{% endblock %}
+{% block topnav %}
+<nav class="feedtabs">
+  <a href="?tab=foryou" class="{% if tab != 'following' %}active{% endif %}">For You</a>
+  <a href="?tab=following" class="{% if tab == 'following' %}active{% endif %}">Following</a>
+</nav>
+<form class="filters" method="get">
+  <input type="hidden" name="tab" value="{{ tab }}">
+  <input name="q" value="{{ q }}" placeholder="Search #amapiano" aria-label="Search">
+  <select name="lang" onchange="this.form.submit()" aria-label="Language">
+    <option value="">All languages</option>
+    {% for code, label in languages %}<option value="{{ code }}"{% if code == lang %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+</form>
+{% endblock %}
+{% block content %}
+<section class="feed" data-saver="{{ data_saver|yesno:'1,0' }}">
+  {% for item in items %}{% with video=item.video %}
+  <article class="clip{% if item.ad %} sponsored{% endif %}"
+           {% if item.ad %}data-ad="{% url 'ad_impression' item.ad.pk %}"{% else %}data-view="{% url 'view_beacon' video.pk %}"{% endif %}>
+    <video src="{% if data_saver and video.data_saver_file %}{{ video.data_saver_file.url }}{% else %}{{ video.file.url }}{% endif %}"
+           playsinline loop muted preload="{% if data_saver %}none{% else %}metadata{% endif %}"></video>
+    <div class="overlay">
+      <div class="meta">
+        {% if item.ad %}<span class="badge">Sponsored · {{ item.ad.advertiser }}</span>{% endif %}
+        <a class="handle" href="{% url 'profile' video.creator.username %}">@{{ video.creator.username }}</a>
+        <p class="caption">{{ video.caption }}</p>
+        <p class="tags"><span>{{ video.get_language_display }}</span>{% if video.province %}<span>{{ video.get_province_display }}</span>{% endif %}</p>
+      </div>
+      {% if video.pk in liked %}{% include "clips/_actions.html" with is_liked=True %}{% else %}{% include "clips/_actions.html" with is_liked=False %}{% endif %}
+    </div>
+    <button class="unmute" aria-label="Tap for sound">&#128264; Tap for sound</button>
+  </article>
+  {% endwith %}{% empty %}
+  <div class="empty">
+    <h2>Nothing here yet</h2>
+    <p>{% if tab == 'following' %}Follow some creators to fill this tab.{% else %}Be the first to post a clip.{% endif %}</p>
+    <a class="btn" href="{% url 'upload' %}">Post a clip</a>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

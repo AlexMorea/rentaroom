@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Settings</h1>
+  <form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn">Save</button></form>
+  <p class="muted small">To get paid you also need an ID check. In this demo, staff mark accounts as verified in the admin. In production, a KYC provider checks your SA ID or Smart ID card.</p>
+</section>
+{% endblock %}

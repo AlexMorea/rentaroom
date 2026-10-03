@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}@{{ video.creator.username }} on Shaya{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ video.caption|truncatechars:150 }}">
+<meta property="og:title" content="@{{ video.creator.username }} on Shaya">
+<meta property="og:description" content="{{ video.caption|truncatechars:150 }}">
+<meta property="og:type" content="video.other">
+<meta property="og:video" content="{{ request.scheme }}://{{ request.get_host }}{{ video.file.url }}">
+{% endblock %}
+{% block content %}
+<div class="detail">
+  <article class="clip single" data-view="{% url 'view_beacon' video.pk %}">
+    <video src="{% if data_saver and video.data_saver_file %}{{ video.data_saver_file.url }}{% else %}{{ video.file.url }}{% endif %}" playsinline loop muted preload="metadata"></video>
+    <div class="overlay">
+      <div class="meta">
+        <a class="handle" href="{% url 'profile' video.creator.username %}">@{{ video.creator.username }}</a>
+        <p class="caption">{{ video.caption }}</p>
+        <p class="tags"><span>{{ video.get_language_display }}</span>{% if video.province %}<span>{{ video.get_province_display }}</span>{% endif %}</p>
+      </div>
+      {% include "clips/_actions.html" with is_liked=liked %}
+    </div>
+    <button class="unmute">&#128264; Tap for sound</button>
+  </article>
+  <section class="panel" id="comments">
+    <h2>{{ video.n_comments }} comment{{ video.n_comments|pluralize }}</h2>
+    {% for c in comments %}
+      <p class="comment"><a href="{% url 'profile' c.user.username %}">@{{ c.user.username }}</a> {{ c.text }}</p>
+    {% empty %}<p class="muted">No comments yet. Say something nice.</p>{% endfor %}
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'add_comment' video.pk %}" class="inline">
+        {% csrf_token %}{{ comment_form.text }}<button class="btn">Send</button>
+      </form>
+    {% else %}<p><a href="{% url 'login' %}?next={{ request.path }}">Log in</a> to comment.</p>{% endif %}
+    <details class="report">
+      <summary>Report this clip</summary>
+      <form method="post" action="{% url 'report_video' video.pk %}">
+        {% csrf_token %}{{ report_form.as_p }}<button class="btn ghost">Send report</button>
+      </form>
+    </details>
+  </section>
+</div>
+{% endblock %}

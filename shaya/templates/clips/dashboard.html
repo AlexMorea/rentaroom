@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load shaya_tags %}
+{% block title %}Creator studio · Shaya{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>Creator studio</h1>
+  {% with p=user.profile %}
+  {% if not p.can_earn %}
+  <div class="notice">
+    <b>Get set up to earn.</b> You need:
+    <ul>
+      <li>{% if p.age and p.age >= 18 %}&#10004;{% else %}&#10008;{% endif %} To be 18 or older</li>
+      <li>{% if p.id_verified %}&#10004;{% else %}&#10008;{% endif %} SA ID verified</li>
+      <li>{% if p.payout_shap_id %}&#10004;{% else %}&#10008;{% endif %} A PayShap ShapID in <a href="{% url 'edit_profile' %}">settings</a></li>
+    </ul>
+  </div>
+  {% endif %}
+  {% endwith %}
+  <div class="cards">
+    <div class="card"><span>Available to withdraw</span><b>{{ balance_cents|rands }}</b>
+      <form method="post" action="{% url 'withdraw' %}">{% csrf_token %}<button class="btn"{% if balance_cents < min_payout_cents %} disabled{% endif %}>Withdraw via PayShap</button></form>
+      <small>Minimum {{ min_payout_cents|rands }}</small>
+    </div>
+    <div class="card"><span>Paid views this month</span><b>{{ estimate.paid_views }}</b>
+      <small>Estimated {{ estimate.estimate_cents|rands }}{% if estimate.rate_per_1000_cents %} at last month's {{ estimate.rate_per_1000_cents|rands }} per 1,000{% else %}, rate set when the month closes{% endif %}</small>
+    </div>
+    <div class="card"><span>How pay works</span>
+      <small>{{ creator_share_pct|floatformat:0 }}% of Shaya's ad revenue goes to creators each month, split by paid views. A clip starts earning once it reaches {{ threshold }} views. Views only count if someone actually watches (3s+), and repeat views from the same person within 24 hours don't count. <a href="{% url 'about' %}">More</a></small>
+    </div>
+  </div>
+</section>
+<section class="panel">
+  <h2>Your clips</h2>
+  <table class="table">
+    <tr><th>Clip</th><th>Views</th><th>Road to {{ threshold }}</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td><a href="{% url 'video_detail' r.video.pk %}">{{ r.video.caption|default:"(no caption)"|truncatechars:40 }}</a></td>
+      <td>{{ r.video.n_views }}</td>
+      <td>{% if r.monetised %}<span class="pill ok">Earning</span>{% else %}<div class="bar"><i style="width:{{ r.progress }}%"></i></div>{% endif %}</td>
+    </tr>
+    {% empty %}<tr><td colspan="3"><a href="{% url 'upload' %}">Post your first clip</a></td></tr>{% endfor %}
+  </table>
+</section>
+<section class="panel">
+  <h2>Monthly earnings</h2>
+  <table class="table">
+    <tr><th>Month</th><th>Paid views</th><th>Earned</th></tr>
+    {% for e in earnings %}<tr><td>{{ e.period }}</td><td>{{ e.paid_views }}</td><td>{{ e.amount_cents|rands }}</td></tr>
+    {% empty %}<tr><td colspan="3" class="muted">No closed months yet.</td></tr>{% endfor %}
+  </table>
+  {% if payouts %}
+  <h2>Withdrawals</h2>
+  <table class="table">
+    <tr><th>Date</th><th>Amount</th><th>Status</th><th>Ref</th></tr>
+    {% for p in payouts %}<tr><td>{{ p.created_at|date:"j M Y" }}</td><td>{{ p.amount_cents|rands }}</td><td>{{ p.get_status_display }}</td><td>{{ p.reference }}</td></tr>{% endfor %}
+  </table>
+  {% endif %}
+</section>
+{% endblock %}
