@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .models import Membership
@@ -10,6 +10,8 @@ class MembershipAdmin(admin.ModelAdmin):
         "user",
         "tier",
         "status",
+        "is_founding",
+        "trial_end",
         "requested_tier",
         "payment_requested",
         "proof_of_payment",
@@ -27,6 +29,7 @@ class MembershipAdmin(admin.ModelAdmin):
 
 
     list_filter = (
+        "is_founding",
         "status",
         "tier",
         "payment_requested",
@@ -51,7 +54,11 @@ class MembershipAdmin(admin.ModelAdmin):
         }),
 
         ("📦 Membership", {
-            "fields": ("tier", "status", "is_active", "is_trial")
+            "fields": ("tier", "status", "is_active", "is_trial", "trial_end")
+        }),
+
+        ("🏅 Founding Landlord", {
+            "fields": ("is_founding", "founding_since")
         }),
 
         ("💳 Payment Info", {
@@ -70,9 +77,29 @@ class MembershipAdmin(admin.ModelAdmin):
     )
 
     actions = (
+        "enrol_founding_landlords",
         "approve_memberships",
         "reject_memberships",
     )
+
+    # 🏅 FOUNDING LANDLORD
+    @admin.action(description="Enrol as Founding Landlord (Gold free + first tenant free)")
+    def enrol_founding_landlords(self, request, queryset):
+        enrolled, skipped = 0, []
+
+        for membership in queryset.select_related("user"):
+            if membership.enrol_as_founding():
+                enrolled += 1
+            else:
+                skipped.append(membership.user.username)
+
+        self.message_user(request, f"🏅 {enrolled} membership(s) enrolled as Founding Landlords.")
+        if skipped:
+            self.message_user(
+                request,
+                "Skipped (suspended account or payment under review): " + ", ".join(skipped),
+                messages.WARNING,
+            )
 
     # ✅ APPROVE (ONE CLICK)
     def approve_memberships(self, request, queryset):

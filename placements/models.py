@@ -6,6 +6,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.founding import FOUNDING_WAIVER_REASON
+from accounts.models import Membership
 from accounts.push import notify_user
 from listings.models import Room
 from utils.email import send_template_email
@@ -198,10 +200,34 @@ class Placement(models.Model):
         self.status = self.STATUS_SUCCESS_FEE_DUE
         self.save()
 
-        PlacementInvoice.objects.get_or_create(
-            placement=self,
-            defaults={"amount": self.expected_success_fee},
-        )
+        waive = self.qualifies_for_founding_waiver()
+        defaults: dict[str, object] = {"amount": self.expected_success_fee}
+        if waive:
+            # Amount kept at the normal fee so the waiver's value shows up
+            # in admin totals and the landlord sees what they saved.
+            defaults.update(
+                status=PlacementInvoice.STATUS_WAIVED,
+                waiver_reason=FOUNDING_WAIVER_REASON,
+            )
+
+        _, created = PlacementInvoice.objects.get_or_create(placement=self, defaults=defaults)
+
+        if created and waive:
+            # Nothing is owed, so close it out like a paid placement
+            # rather than leaving it counted as "fee due" on dashboards.
+            self.status = self.STATUS_PAID
+            self.save()
+
+    def qualifies_for_founding_waiver(self) -> bool:
+        """A Founding Landlord's first placement is free - once only."""
+        is_founding = Membership.objects.filter(user_id=self.landlord_id, is_founding=True).exists()
+        if not is_founding:
+            return False
+
+        return not PlacementInvoice.objects.filter(
+            placement__landlord_id=self.landlord_id,
+            waiver_reason=FOUNDING_WAIVER_REASON,
+        ).exists()
 
     # ---------------------------------------------------------------
     # Stall detection / tenant-unreachable reporting
@@ -320,6 +346,7 @@ class PlacementInvoice(models.Model):
     )
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    waiver_reason = models.CharField(max_length=100, blank=True)
 
     payment_reference = models.CharField(max_length=50, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)

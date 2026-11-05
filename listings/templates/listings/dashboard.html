@@ -71,6 +71,22 @@ Dashboard | Rooms4You
 
 <!-- ================= MEMBERSHIP CTA ================= -->
 
+{% if membership.is_founding %}
+<div class="form-card membership-card ld-membership-card ld-founding-card">
+  <div class="membership-content">
+    <div>
+      <h3>🏅 You're a Founding Landlord</h3>
+      <p>
+        Thank you for joining Rooms4You early.
+        {% if membership.is_trial %}List as many rooms as you like, free until
+        <strong>{{ membership.trial_end|date:"j F Y" }}</strong>.{% endif %}
+        Your first tenant through Rooms4You has no success fee.
+      </p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% if membership.tier == "starter" and membership.status == "active" %}
 <div class="form-card membership-card ld-membership-card">
   <div class="membership-content">
@@ -331,6 +347,9 @@ Dashboard | Rooms4You
   }
   .ld-upgrade-btn {
     flex-shrink: 0;
+  }
+  .ld-founding-card {
+    border: 1px solid #fcd34d;
   }
 
   /* ===== Link cards (Placements, Inbox) share a base treatment ===== */

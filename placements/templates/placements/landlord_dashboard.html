@@ -91,9 +91,15 @@
 
     {% if placement.status == "success_fee_due" or placement.status == "paid" %}
       <div class="pl-fee-chip">
+        {% if placement.invoice.waiver_reason %}
+        <strong>Success Fee:</strong> <s>R{{ placement.invoice.amount }}</s> Free
+        &nbsp;·&nbsp;
+        <span class="text-muted">🏅 {{ placement.invoice.waiver_reason }}</span>
+        {% else %}
         <strong>Success Fee:</strong> R{{ placement.invoice.amount|default:placement.expected_success_fee }}
         &nbsp;·&nbsp;
         <span class="text-muted">{{ placement.invoice.get_status_display|default:"Pending" }}</span>
+        {% endif %}
       </div>
     {% endif %}
 

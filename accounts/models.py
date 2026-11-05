@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+from accounts import founding
 from accounts.helpers import generate_membership_id
 
 
@@ -60,6 +61,10 @@ class Membership(models.Model):
     )
     approved_at = models.DateTimeField(null=True, blank=True)
 
+    # FOUNDING LANDLORD PROGRAMME (see accounts/founding.py)
+    is_founding = models.BooleanField(default=False)
+    founding_since = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -68,6 +73,13 @@ class Membership(models.Model):
 
         if not self.trial_end:
             self.trial_end = self.trial_start + timezone.timedelta(days=30)
+
+        # Enrolling here rather than at each signup path: memberships are
+        # created via get_or_create in half a dozen places (register,
+        # Google sign-in, the post_save signal, membership pages), and
+        # every one of them passes 30-day Starter defaults.
+        if self._state.adding and not self.is_founding and founding.programme_open():
+            self.apply_founding()
 
         if not self.payment_reference:
             self.payment_reference = self.membership_id
@@ -105,6 +117,39 @@ class Membership(models.Model):
             return True
 
         return current_count < limit
+
+    # FOUNDING LANDLORD
+
+    def apply_founding(self):
+        """Sets the founding perks on this instance without saving.
+
+        A landlord still on a trial gets Gold, with the trial stretched to
+        the programme's free-until date (so MembershipMiddleware's normal
+        trial-expiry check is what ends it). A landlord who has already
+        paid keeps their paid plan untouched - turning it back into a
+        trial would make it expire - and gets the badge and the free
+        first tenant only.
+        """
+        now = timezone.now()
+        self.is_founding = True
+        self.founding_since = self.founding_since or now
+
+        if self.is_trial:
+            self.tier = "gold"
+            self.trial_end = max(self.trial_end or now, founding.free_until())
+            self.is_active = True
+            self.status = "active"
+
+    def enrol_as_founding(self):
+        """Enrols an existing membership (admin action). Returns False and
+        changes nothing for an account suspended by Trust & Safety (login
+        deactivated) or with a payment still under review."""
+        if not self.user.is_active or self.status == "pending":
+            return False
+
+        self.apply_founding()
+        self.save()
+        return True
 
     # PAYMENT FLOW METHODS
 

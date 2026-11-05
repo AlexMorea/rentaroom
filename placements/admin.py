@@ -178,7 +178,7 @@ class PlacementAdmin(admin.ModelAdmin):
 
 @admin.register(PlacementInvoice)
 class PlacementInvoiceAdmin(admin.ModelAdmin):
-    list_display = ("id", "placement", "amount", "status", "paid_at", "marked_paid_by")
+    list_display = ("id", "placement", "amount", "status", "waiver_reason", "paid_at", "marked_paid_by")
     list_filter = ("status",)
     search_fields = ("placement__tenant__username", "placement__room__title", "payment_reference")
     readonly_fields = ("created_at", "updated_at")

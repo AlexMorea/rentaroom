@@ -214,8 +214,9 @@
                 {% endif %}
                 · View profile →
               </div>
-              {% if owner_profile.is_email_verified or owner_profile.response_time_label %}
+              {% if owner_profile.is_email_verified or owner_profile.response_time_label or room.owner.membership.is_founding %}
               <div class="rd-landlord-checks">
+                {% if room.owner.membership.is_founding %}<span class="rd-check-chip rd-check-chip-founding">🏅 Founding Landlord</span>{% endif %}
                 {% if owner_profile.is_email_verified %}<span class="rd-check-chip">✉️ Email verified</span>{% endif %}
                 {% if owner_profile.response_time_label %}
                   <span class="rd-check-chip {% if owner_profile.is_fast_responder %}rd-check-chip-fast{% endif %}">
@@ -737,6 +738,10 @@
   .rd-check-chip-fast {
     background: #fff7ed;
     color: #9a3412;
+  }
+  .rd-check-chip-founding {
+    background: #fef3c7;
+    color: #78350f;
   }
 
   .rd-contact-actions {
