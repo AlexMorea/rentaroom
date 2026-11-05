@@ -201,7 +201,7 @@ class Placement(models.Model):
         self.save()
 
         waive = self.qualifies_for_founding_waiver()
-        defaults = {"amount": self.expected_success_fee}
+        defaults: dict[str, object] = {"amount": self.expected_success_fee}
         if waive:
             # Amount kept at the normal fee so the waiver's value shows up
             # in admin totals and the landlord sees what they saved.

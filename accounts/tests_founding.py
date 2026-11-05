@@ -46,6 +46,7 @@ class FoundingLandlordMembershipTests(TestCase):
 
         self.assertFalse(membership.is_founding)
         self.assertEqual(membership.tier, "starter")
+        assert membership.trial_end is not None
         self.assertLess(membership.trial_end, timezone.now() + timedelta(days=31))
 
     def test_enrol_reactivates_expired_trial(self):
