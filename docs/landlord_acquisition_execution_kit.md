@@ -37,11 +37,11 @@ champion signs up a landlord.
 
 | # | Issue in the app today | What to do now (no code) | Proper fix later (I can build it) |
 |---|---|---|---|
-| 1 | **The free trial ends after 30 days** and then the landlord is switched off. Landlords signed this week would be locked out on ~2 December, before launch. | Every evening, in **Django admin → Memberships**, set each new landlord to **tier = Gold** and **trial end = 30 April 2027**. Takes ~20 seconds per landlord. | A "Founding Landlord" flag that sets this automatically plus a badge |
+| 1 | ~~**The free trial ends after 30 days**~~ ✅ **Fixed in the app:** every landlord who signs up by 31 Jan 2027 becomes a **Founding Landlord** automatically, with Gold free until 30 April 2027 and a 🏅 badge. Landlords already on a running trial are enrolled when the update is deployed. | Nothing day to day. For an older landlord whose trial already ran out: **Django admin → Memberships → select → "Enrol as Founding Landlord"**. | Done |
 | 2 | **Sign-up needs an email address** and sends the verification code (OTP) **by email**. Many township landlords have no email they remember. | Teach champions: **use "Continue with Google"**. Almost every Android phone already has a Google (Gmail) account signed in, even if the owner never uses it. That's one tap and no OTP. If there's no Google account, help them create a Gmail on the spot. | Phone-number sign-up with SMS/WhatsApp OTP (the `sms-otp` branches look like a start) |
 | 3 | **Sign-ups are capped at 8 attempts per hour per network** (anti-fraud). If a champion signs up several landlords on **the champion's own hotspot**, the 9th gets blocked. | Sign landlords up **on the landlord's own phone and data** (best anyway, since they keep the account). If you must use the champion's phone, switch networks between landlords, or don't do more than ~6 per hour on one hotspot. | Raise the limit, or allow-list a "field agent" account |
-| 4 | **Listing cap**: Starter = 2 listings. | The Gold upgrade in #1 removes it. Champions also group identical rooms into **one listing using total/available units**. | Covered by #1 |
-| 5 | **Success fee** (R100–R350 when a tenant moves in) | Decide today: is the **first placement free** for founding landlords? Champions must give one consistent answer. | Waiver flag on the first invoice |
+| 4 | ~~**Listing cap**: Starter = 2 listings~~ ✅ Founding Landlords are on Gold (unlimited). | Champions still group identical rooms into **one listing using total/available units**, which makes search tidier. | Done |
+| 5 | ✅ **Decided and built: a Founding Landlord's first tenant is free.** The app waives the first success-fee invoice automatically and shows it as "Free" on their placements page. From the second tenant on, the normal fee applies. | Champions say it every time (§6). | Done |
 | 6 | **WhatsApp notifications** are built but switched off | Optional this week. Follow `docs/whatsapp_setup.md` when there's time. Landlords live on WhatsApp, so enquiry alerts there will matter in January. | — |
 
 **Also today:**
@@ -56,7 +56,7 @@ champion signs up a landlord.
 
 | Person | Role | Owns | Daily output |
 |---|---|---|---|
-| **Founder** | Command centre and online acquisition | App uptime, admin upgrades, verification calls, online channels, tracker, daily scoreboard | 10+ online conversations, every new landlord upgraded and verified within 24 h |
+| **Founder** | Command centre and online acquisition | App uptime, verification calls, online channels, tracker, daily scoreboard | 10+ online conversations, every new landlord verified within 24 h |
 | **Jacob Hopa (CBO)** | Head of street team | Zone plans, champion pairs, quality of listings, community anchors (councillors, churches, stokvels) | Morning brief, 1 anchor meeting a day, evening report |
 | **Champion pairs** | Door-to-door | Signing up landlords, taking photos, collecting leads | **Per pair per day: 30 doors, 4 listed on the spot, 6 leads** |
 
@@ -145,7 +145,7 @@ You'll spend roughly **3–4 hours a day** on acquisition and the rest on the ap
 | Time | Task |
 |---|---|
 | 07:30 | App health check: site up, sign-up works, last night's errors |
-| 08:00 | **Admin sweep**: upgrade yesterday's landlords to Founding Gold (§1 #1) |
+| 08:00 | **Admin sweep**: check yesterday's landlords show 🏅 Founding in Django admin → Memberships (filter "is founding") |
 | 08:30–10:00 | **Online hunt** (§4.2): 10+ new conversations |
 | 10:00–12:00 | Software work |
 | 12:00–13:00 | **Call the street team's leads** and sign-photo numbers from the morning; list them remotely |
@@ -186,7 +186,7 @@ without their "yes". Keep the WhatsApp reply of consent.
 2. Short voice call: "Tap the link → Continue with Google → choose Landlord."
 3. You guide them on the call while they add the room, or with their
    permission **you** fill it in on a shared screen. Their photos go in.
-4. Publish → upgrade in admin → welcome message (§7.7).
+4. Publish → welcome message (§7.7). Founding status is automatic.
 
 ### 4.4 Verification and welcome call (every new landlord, within 24 h)
 
@@ -226,7 +226,7 @@ has **40+ available listings with photos, across at least 3 price bands.**
 ### 5.2 What to track daily (it's in the tracker)
 
 Doors knocked → Landlords spoken to → Listed now / Leads → Leads converted
-→ Verified → Upgraded to Founding Gold. Plus **declines with reasons.**
+→ Verified → Founding 🏅 confirmed. Plus **declines with reasons.**
 
 **Healthy numbers after week 1:** 1 in 3 landlords spoken to lists, and
 half of leads convert within 48 h. If you're below that, change the pitch, not the effort.
@@ -249,7 +249,7 @@ Everyone, on the street or online, says the same thing:
 > **"Listing your room on Rooms4You is free. As a Founding Landlord you get
 > unlimited listings free until the end of April 2027. We only earn a small
 > once-off fee, from R100, if a tenant who found you through Rooms4You
-> actually moves in. *[If you decide to waive it: Your first tenant through us is free.]*
+> actually moves in, and **your first tenant through us is completely free.**
 > Your street address stays private. We launch to tenants in January,
 > which is the busiest month for people looking for rooms."**
 

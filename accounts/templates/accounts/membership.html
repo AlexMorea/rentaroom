@@ -34,7 +34,24 @@ Rooms4You{% endblock %} {% block content %}
     <strong>Current Plan:</strong> {{ membership.get_tier_display }}
   </div>
 
-  {% if membership.is_trial %}
+  {% if membership.is_founding %}
+  <div
+    class="form-card"
+    style="
+      text-align: center;
+      margin-bottom: 24px;
+      background: #fef3c7;
+      color: #78350f;
+      border: 1px solid #fcd34d;
+    "
+  >
+    🏅 <strong>Founding Landlord</strong>
+    {% if membership.is_trial %}
+      · Gold free until <strong>{{ membership.trial_end|date:"j F Y" }}</strong>
+    {% endif %}
+    · your first tenant through Rooms4You has no success fee.
+  </div>
+  {% elif membership.is_trial %}
   <div
     class="form-card"
     style="

@@ -2,6 +2,7 @@ import os
 import re
 import secrets
 import sys
+from datetime import date
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -392,6 +393,18 @@ POPULAR_SCORE_THRESHOLD = int(os.environ.get("POPULAR_SCORE_THRESHOLD", "100"))
 # Toggle whether the code should prefer a materialized `Room.score` column
 # for ordering and badge decisions. Default enabled but override with env var.
 USE_MATERIALIZED_SCORE = env_bool("USE_MATERIALIZED_SCORE", "True")
+
+# ----------------- Founding Landlord programme -----------------
+# Landlords who sign up on or before the deadline are enrolled
+# automatically: Gold (unlimited listings) free until FREE_UNTIL, and
+# their first placement's success fee waived - see accounts/founding.py.
+# Set the deadline to a past date to close the programme to new signups.
+FOUNDING_LANDLORD_SIGNUP_DEADLINE = date.fromisoformat(
+    os.environ.get("FOUNDING_LANDLORD_SIGNUP_DEADLINE", "2027-01-31")
+)
+FOUNDING_LANDLORD_FREE_UNTIL = date.fromisoformat(
+    os.environ.get("FOUNDING_LANDLORD_FREE_UNTIL", "2027-04-30")
+)
 
 # ----------------- Listing Freshness -----------------
 # A room the landlord hasn't confirmed in this many days gets a "please

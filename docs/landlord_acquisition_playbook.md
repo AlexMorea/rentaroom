@@ -272,7 +272,7 @@ phone number and email and **written or recorded consent**.
 **Checklist (agent ticks each one):**
 1. ☐ Consent: landlord agrees to listing and to being contacted (POPIA)
 2. ☐ Account created; phone verified (OTP)
-3. ☐ Founding Landlord upgrade requested (founder applies it in admin the same day)
+3. ☐ Founding Landlord 🏅 shows on their dashboard (automatic for sign-ups by 31 Jan 2027)
 4. ☐ **Photos:** at least 3 per room type. Clean room, daylight, curtains open,
    one of the bathroom or toilet, one of the yard entrance (no house number
    visible). Shoot horizontally.

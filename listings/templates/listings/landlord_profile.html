@@ -23,6 +23,9 @@
     {% if landlord.profile.is_verified_landlord %}
       <span class="badge badge-verified"> ★ Verified Landlord </span>
     {% endif %}
+    {% if landlord.membership.is_founding %}
+      <span class="badge badge-founding">🏅 Founding Landlord</span>
+    {% endif %}
     {% if landlord.profile.is_email_verified %}
       <span class="badge badge-email-verified">✓ Email Verified</span>
     {% endif %}
@@ -169,6 +172,10 @@
   .badge-fast-responder {
     background: #fff7ed;
     color: #9a3412 !important;
+  }
+  .badge-founding {
+    background: #fef3c7;
+    color: #78350f !important;
   }
 
   .landlord-stats {
