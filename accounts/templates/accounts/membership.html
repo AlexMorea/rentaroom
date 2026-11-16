@@ -1,252 +1,183 @@
-{% extends "listings/base.html" %} {% block title %}Choose Your Membership |
-Rooms4You{% endblock %} {% block content %}
+{% extends "listings/base.html" %}
+{% load humanize %}
+{% block title %}Plans &amp; Pricing | Rooms4You{% endblock %}
+{% block content %}
 
-<div class="container py-5" style="background: #fff7ed; color: #7c2d12; border-radius: 12px">
-  <!-- BETA / COMING SOON BANNER -->
-  <div
-    class="form-card"
-    style="
-      background: #FF8000;
-      color: #002A5C;
-      text-align: center;
-      margin-bottom: 24px;
-      border: none;
-      padding: 24px;
-    "
-  >
-    <h1 style="margin: 0; font-size: 2rem">🚧 COMING SOON</h1>
-
-    <p style="margin-top: 10px; font-size: 1.05rem">
-      Rooms4You Memberships are <strong>launching soon</strong>. Pricing,
-      premium tools and landlord upgrades shown below are preview features.
-    </p>
-  </div>
-
-  <h2 class="page-title" style="margin: 0">Choose Your Membership</h2>
-
-  <p style="text-align: center; margin-bottom: 16px">
-    Unlock more visibility, faster tenant placement, and grow your rental
-    business with Rooms4You.
+<div class="mp-wrap">
+  <h1 class="page-title">Your plan</h1>
+  <p class="mp-lead">
+    Listing on Rooms4You is <strong>free forever</strong>, with unlimited rooms and no success fee or commission.
+    Pro is for landlords who want to fill rooms faster.
   </p>
 
   <!-- CURRENT PLAN -->
-  <div class="form-card" style="text-align: center; margin-bottom: 16px">
-    <strong>Current Plan:</strong> {{ membership.get_tier_display }}
+  <div class="form-card mp-current">
+    {% if membership.has_pro %}
+      <h2 class="mp-current-title">⭐ You're on Pro</h2>
+      {% if membership.on_pro_trial %}
+        <p>Free until <strong>{{ membership.trial_end|date:"j F Y" }}</strong>. Nothing to pay before then.</p>
+      {% elif membership.paid_until %}
+        <p>
+          Paid up to <strong>{{ membership.paid_until|date:"j F Y" }}</strong>.
+          {% if membership.auto_renew %}Renews automatically through PayFast.{% else %}Won't renew; you'll move to Free after that date.{% endif %}
+        </p>
+        {% if membership.auto_renew %}
+          <form method="post" action="{% url 'billing:cancel_pro' %}"
+                onsubmit="return confirm('Cancel your Pro subscription? You keep Pro until the end of the period you have paid for.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-secondary mp-small-btn">Cancel subscription</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    {% else %}
+      <h2 class="mp-current-title">You're on Free</h2>
+      <p>Unlimited listings, always. Upgrade to Pro any time below.</p>
+    {% endif %}
   </div>
 
   {% if membership.is_founding %}
-  <div
-    class="form-card"
-    style="
-      text-align: center;
-      margin-bottom: 24px;
-      background: #fef3c7;
-      color: #78350f;
-      border: 1px solid #fcd34d;
-    "
-  >
-    🏅 <strong>Founding Landlord</strong>
-    {% if membership.is_trial %}
-      · Gold free until <strong>{{ membership.trial_end|date:"j F Y" }}</strong>
+  <div class="form-card mp-founding">
+    🏅 <strong>Founding Landlord price lock:</strong>
+    {% if discount %}
+      {{ discount }}% off Pro for life, for as long as you stay subscribed.
+      {% if membership.on_pro_trial %}After {{ membership.trial_end|date:"j F Y" }} your Pro price is
+      <strong>R{{ monthly_price|intcomma }}/month</strong>.{% endif %}
+    {% else %}
+      your founding discount lapsed when your subscription ended.
     {% endif %}
-    · your first tenant through Rooms4You has no success fee.
-  </div>
-  {% elif membership.is_trial %}
-  <div
-    class="form-card"
-    style="
-      text-align: center;
-      margin-bottom: 24px;
-      background: #fff7ed;
-      color: #7c2d12;
-      border: 1px solid #fed7aa;
-    "
-  >
-    Trial ends on <strong>{{ membership.trial_end }}</strong>
   </div>
   {% endif %}
 
-  <!-- MEMBERSHIP CARDS -->
-  <div class="dashboard-grid" style="margin-top: 20px">
-    <!-- STARTER -->
-    <div class="form-card">
-      <h3 style="margin-bottom: 6px">Starter4You</h3>
-
-      <div style="opacity: 0.7; font-weight: 600">Free Forever</div>
-
-      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Up to 3 Active Listings</strong></li>
-        <li>Receive Tenant Enquiries</li>
-        <li>WhatsApp Contact Access</li>
-        <li>Availability Status</li>
-        <li>Basic Search Visibility</li>
-        <li>Manage Listings Anytime</li>
+  <!-- PLANS -->
+  <div class="mp-plans">
+    <div class="form-card mp-plan">
+      <h3>Free</h3>
+      <p class="mp-price">R0 <span>forever</span></p>
+      <ul class="mp-list">
+        <li>✔ Unlimited listings</li>
+        <li>✔ Verified Landlord badge (after our checks)</li>
+        <li>✔ Tenant enquiries, in-app chat &amp; WhatsApp</li>
+        <li>✔ Placement tracking to move-in</li>
+        <li>✔ Listing analytics</li>
+        <li>✔ No success fee, no commission</li>
       </ul>
     </div>
 
-    <!-- BRONZE -->
-    <div class="form-card" style="border: 1px solid rgba(255, 128, 0, 0.35)">
-      <h3 style="margin-bottom: 6px">Bronze4You</h3>
-
-      <div style="font-weight: 700">R49.00/mo</div>
-
-      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Up to 10 Active Listings</strong></li>
-        <li>Verified Landlord Badge</li>
-        <li>Priority Search Placement</li>
-        <li>Listing Performance Stats</li>
-        <li>Basic Analytics</li>
-        <li>Faster Tenant Exposure</li>
-        <li>Email Support</li>
+    <div class="form-card mp-plan mp-plan-pro">
+      <h3>Pro</h3>
+      <p class="mp-price">
+        {% if discount %}<s class="mp-was">R{{ band.monthly_price|intcomma }}</s>{% endif %}
+        R{{ monthly_price|intcomma }} <span>/ month</span>
+      </p>
+      <p class="mp-band">For your {{ rooms }} room{{ rooms|pluralize }}: {{ band.label|lower }}</p>
+      <ul class="mp-list">
+        <li>✔ Everything in Free</li>
+        <li>✔ {{ free_boosts_per_month }} free 7-day boosts every month</li>
+        <li>✔ Ranking lift in search results</li>
+        <li>✔ New Pro tools as they launch: tenant screening, digital leases &amp; inspection reports</li>
+        <li>✔ Cancel any time, no contract</li>
       </ul>
 
-      <a
-        href="{% url 'membership_payment' 'bronze' %}"
-        class="btn-primary w-100 mt-3 tier-bronze-btn"
-      >
-        Upgrade to Bronze4You
-      </a>
-    </div>
-
-    <!-- SILVER -->
-    <div
-      class="form-card"
-      style="
-        border: 2px solid #1FA6F0;
-        position: relative;
-        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
-      "
-    >
-      <div
-        style="
-          position: absolute;
-          top: -12px;
-          right: 12px;
-          background: #FF8000;
-          color: #002A5C;
-          padding: 4px 10px;
-          border-radius: 999px;
-          font-size: 0.75rem;
-          font-weight: 700;
-        "
-      >
-        MOST POPULAR
-      </div>
-
-      <h3 style="margin-bottom: 6px">Silver4You ⭐</h3>
-
-      <div style="font-weight: 700">R99.00/mo</div>
-
-      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Up to 30 Active Listings</strong></li>
-        <li>Verified Landlord Badge</li>
-        <li>Higher Search Ranking</li>
-        <li>Featured Listing Rotation</li>
-        <li>Analytics Dashboard</li>
-        <li>Tenant Demand Insights</li>
-        <li>Priority Support</li>
-      </ul>
-
-      <a
-        href="{% url 'membership_payment' 'silver' %}"
-        class="btn-primary w-100 mt-3 tier-silver-btn"
-      >
-        Upgrade to Silver4You
-      </a>
-    </div>
-
-    <!-- GOLD -->
-    <div
-      class="form-card"
-      style="
-        border: 2px solid gold;
-        transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      "
-    >
-      <h3 style="margin-bottom: 6px">Gold4You 👑</h3>
-
-      <div style="font-weight: 700">R199.00/mo</div>
-
-      <div style="font-weight: 800; font-size: 1.1rem">Premium</div>
-
-      <ul style="margin-top: 14px; padding-left: 16px; line-height: 1.6">
-        <li><strong>Unlimited Active Listings</strong></li>
-        <li>Top Search Placement</li>
-        <li>Featured Listings</li>
-        <li>Advanced Analytics</li>
-        <li>Marketing Boosts</li>
-        <li>Early Access Features</li>
-        <li>Premium Support</li>
-      </ul>
-
-      <a
-        href="{% url 'membership_payment' 'gold' %}"
-        class="btn-primary w-100 mt-3 tier-gold-btn"
-      >
-        Go 4 Gold
-      </a>
+      {% if membership.on_pro_trial %}
+        <p class="mp-note">Pro is free for you until {{ membership.trial_end|date:"j F Y" }}.</p>
+      {% elif membership.has_pro and membership.auto_renew %}
+        <p class="mp-note">You're subscribed. Thank you!</p>
+      {% elif payments_enabled %}
+        <form method="post" action="{% url 'billing:pro_checkout' %}" class="mp-buy">
+          {% csrf_token %}
+          <button class="btn-primary" name="cycle" value="monthly">Go Pro: R{{ monthly_price|intcomma }}/month</button>
+          <button class="btn-secondary" name="cycle" value="annual">Pay yearly: R{{ annual_price|intcomma }} (2 months free)</button>
+        </form>
+        <p class="mp-small text-muted">Secure checkout by PayFast: card, Instant EFT or SnapScan.</p>
+      {% else %}
+        <p class="mp-note">Online payments open soon. Nothing is due right now.</p>
+      {% endif %}
     </div>
   </div>
 
-  <!-- FUTURE FEATURES -->
-  <div
-    class="form-card"
-    style="
-      margin-top: 30px;
-      text-align: center;
-      background: #eff6ff;
-      color: #1e3a8a;
-      border: 1px solid #bfdbfe;
-    "
-  >
-    <h4>🚀 Future Premium Features</h4>
-
-    <ul style="list-style: none; padding: 0; line-height: 2">
-      <li>📢 Listing Boosts</li>
-      <li>🏅 Featured Listings</li>
-      <li>📊 Advanced Analytics</li>
-      <li>✅ Verified Landlord Plus</li>
-      <li>📍 Location Spotlight Placement</li>
-      <li>📱 WhatsApp Lead Tracking</li>
-      <li>🔥 Vacancy Promotion Campaigns</li>
-    </ul>
-
-    <p class="text-muted">
-      More tools designed to help landlords fill rooms faster and increase
-      occupancy.
-    </p>
+  <!-- BANDS -->
+  <div class="form-card mp-bands">
+    <h3>Pro pricing by number of rooms</h3>
+    <p class="text-muted mp-small">A listing with several identical rooms counts each room.{% if discount %} Prices shown include your {{ discount }}% founding discount.{% endif %}</p>
+    <table class="mp-table">
+      <thead><tr><th>Rooms</th><th>Monthly</th><th>Yearly</th></tr></thead>
+      <tbody>
+        {% for row in bands %}
+          <tr {% if row.is_yours %}class="mp-yours"{% endif %}>
+            <td>{{ row.band.label }}{% if row.is_yours %} · <strong>you</strong>{% endif %}</td>
+            <td>R{{ row.monthly|intcomma }}</td>
+            <td>R{{ row.annual|intcomma }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
-  <!-- PAYMENT SECTION -->
-  <div
-    id="payment"
-    class="form-card"
-    style="margin-top: 28px; text-align: center"
-  >
-    <h4>Upgrade Your Account</h4>
-
-    <p class="mt-3">Use your unique reference when making payment:</p>
-
-    <h5 class="text-primary">{{ membership.payment_reference }}</h5>
-
-    <hr />
-
+  <!-- BOOSTS -->
+  <div class="form-card mp-bands">
+    <h3>⭐ Boosts: pay as you go</h3>
     <p>
-      After payment, click below and we will verify and activate your account.
+      Put one room at the top of its area's results, labelled <strong>Featured</strong>.
+      {% for option in boost_options %}<strong>R{{ option.price }}</strong> for {{ option.label }}{% if not forloop.last %} · {% endif %}{% endfor %}.
+      No subscription needed.
     </p>
-
-    <form method="POST">
-      {% csrf_token %}
-      <button class="btn-primary" style="background: #16a34a; border: none">
-        I Have Made Payment
-      </button>
-    </form>
-
-    <p class="mt-3 text-muted">
-      ✔ You can cancel anytime — your account will revert to Starter4You.
-    </p>
+    {% if not boosts_enabled %}
+      <p class="mp-note">Boosts open on the day Rooms4You launches to tenants.</p>
+    {% else %}
+      <a class="btn-secondary" href="{% url 'landlord_rooms' %}">Choose a room to boost</a>
+    {% endif %}
   </div>
+
+  <!-- PROMISE -->
+  <div class="form-card mp-promise">
+    <h3>Our promise to landlords</h3>
+    <ul class="mp-list">
+      <li>Listing is free forever. We never charge you to be on Rooms4You.</li>
+      <li>No success fee and no commission on your rent.</li>
+      <li>Trust is never for sale: the Verified badge comes only from our checks.</li>
+      <li>Tenants never pay to search or contact you.</li>
+    </ul>
+  </div>
+
+  {% if payments %}
+  <div class="form-card mp-bands">
+    <h3>Recent payments</h3>
+    <table class="mp-table">
+      <tbody>
+        {% for p in payments %}
+          <tr>
+            <td>{{ p.created_at|date:"j M Y" }}</td>
+            <td>{{ p.item_name }}</td>
+            <td>R{{ p.amount }}</td>
+            <td>{{ p.get_status_display }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 </div>
 
+<style>
+  .mp-wrap { max-width: 900px; margin: 0 auto; padding: 0 16px 40px; }
+  .mp-lead { text-align: center; max-width: 640px; margin: 0 auto 20px; }
+  .mp-current, .mp-founding, .mp-bands, .mp-promise { margin-bottom: 16px; }
+  .mp-current-title { margin: 0 0 6px; font-size: 1.3rem; }
+  .mp-founding { background: #fef3c7; color: #78350f; border: 1px solid #fcd34d; }
+  .mp-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .mp-plan h3 { margin: 0; }
+  .mp-plan-pro { border: 2px solid #FF8000; }
+  .mp-price { font-size: 2rem; font-weight: 800; margin: 6px 0; }
+  .mp-price span { font-size: 0.95rem; font-weight: 500; }
+  .mp-was { font-size: 1.1rem; opacity: 0.6; margin-right: 4px; }
+  .mp-band { margin: 0 0 8px; font-size: 0.9rem; }
+  .mp-list { list-style: none; padding: 0; margin: 8px 0; line-height: 1.9; }
+  .mp-buy { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .mp-note { background: #eff6ff; color: #1e3a8a; padding: 8px 12px; border-radius: 8px; }
+  .mp-small { font-size: 0.85rem; }
+  .mp-small-btn { margin-top: 8px; }
+  .mp-table { width: 100%; border-collapse: collapse; }
+  .mp-table th, .mp-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid rgba(0,0,0,0.08); }
+  .mp-yours { background: rgba(255, 128, 0, 0.08); }
+</style>
 {% endblock %}

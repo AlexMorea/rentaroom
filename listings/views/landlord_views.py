@@ -205,8 +205,8 @@ def dashboard(request):
         .order_by("-created_at")[:8]
     )
 
-    # Placements summary - previously invisible from the main dashboard,
-    # a landlord could have a success fee sitting unpaid and never see it
+    # Placements summary. fees_due_count only matters if the (switched
+    # off) success fee is ever re-enabled - it's always 0 otherwise.
     active_placements_count = Placement.objects.filter(landlord=request.user).exclude(
         status__in=[Placement.STATUS_PAID, Placement.STATUS_CANCELLED]
     ).count()

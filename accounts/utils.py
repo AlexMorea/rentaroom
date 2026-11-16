@@ -1,7 +1,3 @@
-from datetime import timedelta
-
-from django.utils import timezone
-
 from .helpers import generate_membership_id
 from .models import Membership
 
@@ -11,15 +7,7 @@ def get_or_create_membership(user):
     if user.profile.role != "landlord":
         return None
 
-    membership, _ = Membership.objects.get_or_create(
-        user=user,
-        defaults={
-            "tier": "starter",
-            "is_active": True,
-            "is_trial": True,
-            "trial_end": timezone.now() + timedelta(days=30)
-        }
-    )
+    membership, _ = Membership.objects.get_or_create(user=user)
 
     if not membership.membership_id:
         membership.membership_id = generate_membership_id()
@@ -29,13 +17,11 @@ def get_or_create_membership(user):
 
 
 def require_active_membership(user):
+    """True unless Trust & Safety has suspended this landlord. Plans and
+    payments never block managing listings - Free is unlimited."""
     membership = get_or_create_membership(user)
 
     if membership is None:
         return False
 
-    return not (
-        membership.is_trial
-        and membership.trial_end
-        and timezone.now() > membership.trial_end
-    )
+    return membership.can_create_listing()

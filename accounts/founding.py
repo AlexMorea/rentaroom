@@ -1,8 +1,9 @@
 """
 Founding Landlord programme - the pre-launch offer the street team sells:
-every landlord who signs up before the tenant launch gets Gold (unlimited
-listings) free until FOUNDING_LANDLORD_FREE_UNTIL, and their first tenant
-placed through Rooms4You carries no success fee.
+every landlord who signs up before the tenant launch gets Pro free until
+FOUNDING_LANDLORD_FREE_UNTIL, then Pro at a locked-in founding discount
+(billing.pricing.FOUNDING_DISCOUNT_PERCENT) for as long as they stay
+subscribed. Listing itself is free for everyone, forever.
 
 Dates are whole days in South African time (the settings hold plain
 dates), so "free until 30 April" means until midnight SAST at the end of
@@ -16,8 +17,9 @@ from django.utils import timezone
 
 SAST = ZoneInfo("Africa/Johannesburg")
 
-# Stored on the waived PlacementInvoice, and also how a landlord's one
-# free placement is found again (so the perk can't be used twice).
+# Stored on a waived PlacementInvoice. Only reachable while the (now
+# switched-off) room success fee is enabled - see
+# settings.PLACEMENT_SUCCESS_FEE_ENABLED.
 FOUNDING_WAIVER_REASON = "Founding Landlord: first tenant free"
 
 

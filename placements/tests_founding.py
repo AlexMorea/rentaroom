@@ -9,7 +9,11 @@ from listings.models import Profile, Room
 from placements.models import Placement, PlacementInvoice
 
 
+@override_settings(PLACEMENT_SUCCESS_FEE_ENABLED=True)
 class FoundingFirstTenantFreeTests(TestCase):
+    """The (switched-off) success fee path, kept tested so re-enabling
+    it is safe."""
+
     def setUp(self):
         self.landlord = User.objects.create_user(
             username="landlord@example.com", email="landlord@example.com", password="password123"
@@ -73,3 +77,28 @@ class FoundingFirstTenantFreeTests(TestCase):
 
         self.assertEqual(placement.invoice.status, PlacementInvoice.STATUS_PENDING)
         self.assertEqual(placement.status, Placement.STATUS_SUCCESS_FEE_DUE)
+
+
+class SuccessFeeSwitchedOffTests(TestCase):
+    def setUp(self):
+        self.landlord = User.objects.create_user(username="ll@example.com", password="password123")
+        Profile.objects.filter(user=self.landlord).update(role="landlord")
+        self.tenant = User.objects.create_user(username="t@example.com", password="password123")
+        self.room = Room.objects.create(
+            owner=self.landlord, title="Room B", description="A room", location="Soweto",
+            suburb="Orlando", town="Soweto", city="Johannesburg", full_address="2 Main Street",
+            postal_code="1804", room_type="Backroom", contact_phone="0821234567", price=2000,
+        )
+
+    def test_confirmed_move_in_is_recorded_without_an_invoice(self):
+        placement = Placement.objects.create(tenant=self.tenant, landlord=self.landlord, room=self.room)
+
+        placement.confirm_move_in(as_tenant=True, confirmed=True)
+        placement.confirm_move_in(as_tenant=False, confirmed=True)
+        placement.refresh_from_db()
+
+        self.assertEqual(placement.status, Placement.STATUS_MOVED_IN)
+        self.assertFalse(PlacementInvoice.objects.exists())
+        self.assertTrue(
+            placement.status_history.filter(to_status=Placement.STATUS_MOVED_IN).exists()
+        )

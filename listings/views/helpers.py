@@ -1,7 +1,4 @@
 import logging
-from datetime import timedelta
-
-from django.utils import timezone
 
 from accounts.helpers import generate_membership_id
 from accounts.models import Membership
@@ -14,15 +11,7 @@ def get_display_name(user):
 
 
 def get_or_create_membership(user):
-    membership, _ = Membership.objects.get_or_create(
-        user=user,
-        defaults={
-            "tier": "starter",
-            "is_active": True,
-            "is_trial": True,
-            "trial_end": timezone.now() + timedelta(days=30)
-        }
-    )
+    membership, _ = Membership.objects.get_or_create(user=user)
 
     # Ensure membership ID always exists
     if not membership.membership_id:

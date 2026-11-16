@@ -11,47 +11,75 @@ from accounts.helpers import generate_membership_id
 
 
 class Membership(models.Model):
+    """
+    A landlord's plan. Two tiers:
+
+    - Free: unlimited listings, verification, enquiries, placement
+      tracking. Never expires - listing on Rooms4You is free forever.
+    - Pro: the paid toolkit (boost credits, ranking lift, and the tools
+      added over time), priced by number of rooms - see billing/pricing.py.
+
+    Pro is held either as a free trial (is_trial + trial_end - this is
+    how Founding Landlords get Pro free until the programme date) or as
+    a paid period (paid_until, extended by each PayFast payment). When
+    either runs out, the account drops back to Free; listings stay up.
+
+    status/is_active are Trust & Safety controls only ("suspended" blocks
+    new listings) - they no longer have anything to do with payment.
+    """
+
+    TIER_FREE = "free"
+    TIER_PRO = "pro"
+
     TIER_CHOICES: ClassVar[list[tuple[str, str]]] = [
-        ('starter', 'Starter4You'),
-        ('bronze', 'Bronze4You'),
-        ('silver', 'Silver4You'),
-        ('gold', 'Gold4You'),
+        (TIER_FREE, "Free"),
+        (TIER_PRO, "Pro"),
     ]
 
     STATUS_CHOICES: ClassVar[list[tuple[str, str]]] = [
         ("active", "Active"),
-        ("pending", "Pending Payment"),
+        ("pending", "Pending Payment"),  # legacy EFT flow, no longer set
         ("suspended", "Suspended"),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
-    tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='starter')
+    tier = models.CharField(max_length=20, choices=TIER_CHOICES, default=TIER_FREE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
 
     membership_id = models.CharField(max_length=20, unique=True, blank=True)
 
     is_active = models.BooleanField(default=True)
-    is_trial = models.BooleanField(default=True)
 
+    # Pro trial (Founding Landlords: Pro free until the programme date).
+    is_trial = models.BooleanField(default=False)
     trial_start = models.DateTimeField(default=timezone.now)
     trial_end = models.DateTimeField(null=True, blank=True)
 
+    # Paid Pro. Extended by each successful PayFast payment.
+    paid_until = models.DateTimeField(null=True, blank=True)
+    pro_band = models.CharField(max_length=10, blank=True, help_text="Room band paid for (small/medium/large).")
+    billing_cycle = models.CharField(max_length=10, blank=True, help_text="monthly or annual.")
+    # PayFast subscription token - present while a recurring debit is set up.
+    payfast_token = models.CharField(max_length=64, blank=True)
+    auto_renew = models.BooleanField(default=False)
+
+    # Founding price lock: % off Pro for life, while subscribed.
+    founding_discount_percent = models.PositiveSmallIntegerField(default=0)
+
     payment_reference = models.CharField(max_length=50, unique=True, null=True, blank=True)
 
-    # NEW: PAYMENT FLOW
+    # LEGACY: manual EFT + proof-of-payment flow, replaced by PayFast.
+    # Kept so historical rows and the staff dashboard still load.
     payment_requested = models.BooleanField(default=False)
     payment_requested_at = models.DateTimeField(null=True, blank=True)
     requested_tier = models.CharField(max_length=20, blank=True, null=True)
-
-    # PROOF OF PAYMENT
     proof_of_payment = CloudinaryField(
-    resource_type="auto",
-    folder="payments",
-    null=True,
-    blank=True
-)
-    # ADMIN APPROVAL
+        resource_type="auto",
+        folder="payments",
+        null=True,
+        blank=True,
+    )
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -71,13 +99,9 @@ class Membership(models.Model):
         if not self.membership_id:
             self.membership_id = generate_membership_id()
 
-        if not self.trial_end:
-            self.trial_end = self.trial_start + timezone.timedelta(days=30)
-
         # Enrolling here rather than at each signup path: memberships are
         # created via get_or_create in half a dozen places (register,
-        # Google sign-in, the post_save signal, membership pages), and
-        # every one of them passes 30-day Starter defaults.
+        # Google sign-in, the post_save signal, membership pages).
         if self._state.adding and not self.is_founding and founding.programme_open():
             self.apply_founding()
 
@@ -86,56 +110,103 @@ class Membership(models.Model):
 
         super().save(*args, **kwargs)
 
+    # ---------------------------------------------------------------
+    # Plan state
+    # ---------------------------------------------------------------
     def is_trial_expired(self):
-        return self.trial_end and timezone.now() > self.trial_end
+        return bool(self.is_trial and self.trial_end and timezone.now() > self.trial_end)
+
+    @property
+    def on_pro_trial(self) -> bool:
+        return self.tier == self.TIER_PRO and self.is_trial and not self.is_trial_expired()
+
+    @property
+    def on_paid_pro(self) -> bool:
+        return self.tier == self.TIER_PRO and bool(self.paid_until and self.paid_until > timezone.now())
+
+    @property
+    def has_pro(self) -> bool:
+        if not self.is_active or self.status == "suspended":
+            return False
+        return self.on_pro_trial or self.on_paid_pro
+
+    @property
+    def pro_ends_at(self):
+        """When the current Pro access runs out (whichever is later)."""
+        ends = [d for d in (self.trial_end if self.on_pro_trial else None, self.paid_until) if d]
+        return max(ends) if ends else None
+
+    @property
+    def founding_lock_active(self) -> bool:
+        """The founding discount holds until a paid Pro period has lapsed
+        for longer than the grace period. Before they ever pay (still on
+        the free founding trial), it always holds."""
+        from billing.pricing import FOUNDING_LOCK_GRACE_DAYS
+
+        if not self.founding_discount_percent:
+            return False
+        if self.paid_until is None or self.has_pro:
+            return True
+        return timezone.now() <= self.paid_until + timezone.timedelta(days=FOUNDING_LOCK_GRACE_DAYS)
+
+    @property
+    def current_discount_percent(self) -> int:
+        return self.founding_discount_percent if self.founding_lock_active else 0
+
+    def lapse_if_expired(self) -> bool:
+        """Drops an expired Pro back to Free. Listings are untouched -
+        Free has no listing limit. Returns True if anything changed."""
+        if self.tier != self.TIER_PRO or self.on_pro_trial or self.on_paid_pro:
+            return False
+
+        self.tier = self.TIER_FREE
+        self.is_trial = False
+        self.auto_renew = False
+        self.save(update_fields=["tier", "is_trial", "auto_renew"])
+        return True
 
     def listing_limit(self):
-        return {
-            'starter': 2,
-            'bronze': 5,
-            'silver': 10,
-            'gold': None
-        }.get(self.tier)
+        """Free and Pro both list without limit."""
+        return None
 
-    def can_create_listing(self, current_count):
-        # inactive users blocked
-        if not self.is_active:
-            return False
+    def can_create_listing(self, current_count=0):
+        """Only a Trust & Safety suspension blocks listing now - never
+        the plan or a payment."""
+        return self.is_active and self.status != "suspended"
 
-        # trial expired → must pay
-        if self.is_trial and self.is_trial_expired():
-            return False
+    # ---------------------------------------------------------------
+    # Pro payments (called from billing.services on a verified PayFast
+    # payment notification - never from a browser redirect)
+    # ---------------------------------------------------------------
+    def extend_pro(self, *, band: str, cycle: str, months: int):
+        now = timezone.now()
+        # Paying during the free founding trial: the paid period starts
+        # when the trial ends, so they don't lose free months.
+        start = max(d for d in (now, self.paid_until, self.trial_end if self.on_pro_trial else None) if d)
+        self.paid_until = _add_months(start, months)
+        self.tier = self.TIER_PRO
+        self.pro_band = band
+        self.billing_cycle = cycle
+        self.save()
 
-        # payment pending → block abuse
-        if self.status == "pending":
-            return False
-
-        limit = self.listing_limit()
-
-        # unlimited
-        if limit is None:
-            return True
-
-        return current_count < limit
-
+    # ---------------------------------------------------------------
     # FOUNDING LANDLORD
-
+    # ---------------------------------------------------------------
     def apply_founding(self):
-        """Sets the founding perks on this instance without saving.
+        """Sets the founding perks on this instance without saving: Pro
+        free until the programme date, and the founding price lock. A
+        landlord already paying for Pro keeps their paid period as-is
+        and gets the badge and price lock only."""
+        from billing.pricing import FOUNDING_DISCOUNT_PERCENT
 
-        A landlord still on a trial gets Gold, with the trial stretched to
-        the programme's free-until date (so MembershipMiddleware's normal
-        trial-expiry check is what ends it). A landlord who has already
-        paid keeps their paid plan untouched - turning it back into a
-        trial would make it expire - and gets the badge and the free
-        first tenant only.
-        """
         now = timezone.now()
         self.is_founding = True
         self.founding_since = self.founding_since or now
+        self.founding_discount_percent = FOUNDING_DISCOUNT_PERCENT
 
-        if self.is_trial:
-            self.tier = "gold"
+        if not self.on_paid_pro:
+            self.tier = self.TIER_PRO
+            self.is_trial = True
             self.trial_end = max(self.trial_end or now, founding.free_until())
             self.is_active = True
             self.status = "active"
@@ -143,69 +214,19 @@ class Membership(models.Model):
     def enrol_as_founding(self):
         """Enrols an existing membership (admin action). Returns False and
         changes nothing for an account suspended by Trust & Safety (login
-        deactivated) or with a payment still under review."""
-        if not self.user.is_active or self.status == "pending":
+        deactivated)."""
+        if not self.user.is_active:
             return False
 
         self.apply_founding()
         self.save()
         return True
 
-    # PAYMENT FLOW METHODS
-
-    def reject_payment(self):
-            self.status = "suspended"
-            self.payment_requested = False
-
-            if self.proof_of_payment:
-                self.proof_of_payment.delete(save=False)
-
-            self.proof_of_payment = None
-            self.save()
-
-
-    def mark_payment_submitted(self, tier, proof_file):
-        self.status = "pending"
-        self.payment_requested = True
-        self.payment_requested_at = timezone.now()
-        self.requested_tier = tier
-        self.proof_of_payment = proof_file
-        self.save()
-
-    def activate_membership(self, tier=None, admin_user=None):
-        if tier:
-            self.requested_tier = tier
-
-        if not self.requested_tier:
-            return
-
-        self.tier = self.requested_tier
-        self.status = "active"
-        self.is_active = True
-        self.is_trial = False
-
-        self.payment_requested = False
-        self.requested_tier = None
-
-        self.approved_by = admin_user
-        self.approved_at = timezone.now()
-
-        self.save()
-
     def suspend_for_unpaid_placement_fee(self, invoice):
         """
-        Reuses the same suspension mechanism as reject_payment() (status
-        + is_active), rather than inventing separate suspension logic
-        for placement fees. can_create_listing() already blocks new
-        listings once is_active is False - existing listings are left
-        untouched (not deleted), and the landlord regains access as
-        soon as an admin marks the invoice paid and reactivates them.
-
-        Deliberately NOT called automatically from anywhere yet - see
-        placements/management/commands/flag_overdue_placement_fees.py,
-        which is gated behind settings.PLACEMENT_FEE_AUTO_SUSPEND
-        (defaults to False) so this can't start suspending real
-        landlord accounts without a conscious decision to turn it on.
+        Only reachable while PLACEMENT_SUCCESS_FEE_ENABLED and
+        PLACEMENT_FEE_AUTO_SUSPEND are both on (both default off) - see
+        placements/management/commands/flag_overdue_placement_fees.py.
         """
         self.status = "suspended"
         self.is_active = False
@@ -213,10 +234,22 @@ class Membership(models.Model):
 
     @property
     def days_left(self):
-        if self.trial_end:
-            delta = self.trial_end - timezone.now()
-            return max(delta.days, 0)
+        ends = self.pro_ends_at
+        if ends:
+            return max((ends - timezone.now()).days, 0)
         return 0
+
+
+def _add_months(start, months):
+    """Calendar months, clamping to the month's last day (31 Jan + 1
+    month = 28/29 Feb)."""
+    import calendar
+
+    month_index = start.month - 1 + months
+    year = start.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(start.day, calendar.monthrange(year, month)[1])
+    return start.replace(year=year, month=month, day=day)
 
 
 class PushSubscription(models.Model):

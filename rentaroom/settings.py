@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     "placements",
     "stays",
     "trust",
+    "billing",
 ]
 
 # Use BigAutoField by default to silence model warnings about AutoField
@@ -396,8 +397,9 @@ USE_MATERIALIZED_SCORE = env_bool("USE_MATERIALIZED_SCORE", "True")
 
 # ----------------- Founding Landlord programme -----------------
 # Landlords who sign up on or before the deadline are enrolled
-# automatically: Gold (unlimited listings) free until FREE_UNTIL, and
-# their first placement's success fee waived - see accounts/founding.py.
+# automatically: Pro free until FREE_UNTIL, then Pro at a locked-in
+# founding discount for as long as they stay subscribed - see
+# accounts/founding.py and billing/pricing.py.
 # Set the deadline to a past date to close the programme to new signups.
 FOUNDING_LANDLORD_SIGNUP_DEADLINE = date.fromisoformat(
     os.environ.get("FOUNDING_LANDLORD_SIGNUP_DEADLINE", "2027-01-31")
@@ -430,6 +432,31 @@ LANDLORD_NO_LISTING_NUDGE_DAYS = int(os.environ.get("LANDLORD_NO_LISTING_NUDGE_D
 # placements/management/commands/flag_stalled_placements.py and
 # Placement.STALLABLE_STATUSES/is_stalled().
 PLACEMENT_STALL_DAYS = int(os.environ.get("PLACEMENT_STALL_DAYS", "7"))
+
+# ----------------- Pricing & payments (see billing/) -----------------
+# The room success fee is switched OFF: Rooms4You earns from Pro and
+# boosts, not commission. Placements are still tracked through to a
+# confirmed move-in (that's the traction number), they just never raise
+# an invoice. Only set this to 1 if the business model changes back.
+PLACEMENT_SUCCESS_FEE_ENABLED = env_bool("PLACEMENT_SUCCESS_FEE_ENABLED", "False")
+
+# Boosts (paid "Featured" placement in search) stay off until tenants
+# launch - selling visibility before there's an audience isn't fair.
+# Flip BOOSTS_ENABLED=1 on launch day.
+BOOSTS_ENABLED = env_bool("BOOSTS_ENABLED", "False")
+
+# PayFast. Checkout is only offered once PAYFAST_MERCHANT_ID and
+# PAYFAST_MERCHANT_KEY are set; PAYFAST_SANDBOX stays on until the live
+# merchant account is verified. The passphrase must match the one set
+# in the PayFast dashboard (Settings -> Developer settings) - it's
+# required for subscriptions.
+PAYFAST_MERCHANT_ID = os.environ.get("PAYFAST_MERCHANT_ID", "").strip()
+PAYFAST_MERCHANT_KEY = os.environ.get("PAYFAST_MERCHANT_KEY", "").strip()
+PAYFAST_PASSPHRASE = os.environ.get("PAYFAST_PASSPHRASE", "").strip()
+PAYFAST_SANDBOX = env_bool("PAYFAST_SANDBOX", "True")
+# Public base URL PayFast sends payment notifications to. Defaults to
+# the canonical site; set to an ngrok/Render preview URL for testing.
+PAYFAST_SITE_URL = os.environ.get("PAYFAST_SITE_URL", "https://www.rooms4you.co.za").rstrip("/")
 
 # ----------------- Celery Defaults -----------------
 # Broker URL for Celery (empty by default — Celery disabled until configured).

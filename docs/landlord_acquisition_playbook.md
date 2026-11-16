@@ -63,13 +63,13 @@ Plan the work around these segments. Each one needs a different pitch.
 | Fear of scammers and bad tenants | Verified-landlord badge, fraud reporting, in-app messaging, Guardian safety mode for viewings |
 | Strangers knowing your address | **Your full address is not shown publicly.** Tenants see the area and suburb. You decide who visits |
 | Don't have time or skill for "apps" | We set it up with you on your phone in about 10 minutes |
-| Paying for adverts | Free to list during launch (see §2 for what "free" must mean in the app) |
+| Paying for adverts | Listing is free forever, with unlimited rooms. No commission on rent |
 
 ### 1.5 Likely objections
 
 | Objection | Response |
 |---|---|
-| "What's the catch? Who pays?" | "Listing is free. We only earn a small once-off fee **if** a tenant you found through us actually moves in, starting at R100. If nobody moves in, you pay nothing." *(Say this honestly. See §2.)* |
+| "What's the catch? Who pays?" | "Listing is free forever, and there's no success fee or commission on your rent. Landlords who want to fill rooms faster can pay for extras later: a Boost (R29 for a week at the top of search) or Pro (from R99 a month). As a founding landlord you get Pro free until 30 April 2027, then half price for life." *(See §2.)* |
 | "I don't need it, my rooms fill up." | "Great. Then list it for the next time someone moves out. It costs nothing, and you'll have people waiting instead of an empty month." |
 | "Is this SARS / the municipality?" | "No. We're a private company that helps rooms get tenants. We don't share your details with government." *(Only say this if it's true under our privacy policy.)* |
 | "I don't trust apps / I've been scammed." | Show the verified badge, show a real listing, give them your name and team ID card, and leave a printed flyer with the support number. |
@@ -78,43 +78,32 @@ Plan the work around these segments. Each one needs a different pitch.
 
 ---
 
-## 2. Fix this in the app before the team goes out ⚠️
+## 2. How Rooms4You makes money (say it the same way every time) ✅
 
-I checked how the app works today. Several rules will **break the "free
-listing" promise** if nobody changes them:
+**Updated 16 Nov 2026. This replaces the old success-fee model.**
 
-1. **The trial ends after 30 days** (`Membership.trial_end`). When it
-   ends, `MembershipMiddleware` deactivates the landlord, and they can't add
-   listings until they pay. A landlord signed up in week 1 would be
-   locked out in week 5, before tenant marketing has even started. That
-   would damage trust in their neighbourhood.
-2. **The free Starter tier allows only 2 listings.** Segment A landlords with
-   8 rooms will hit the limit immediately.
-   *Workaround that already exists:* one listing can cover several identical
-   rooms via **total units / available units**. Teach agents to group
-   identical rooms into one listing.
-3. **There is a success fee** (R100–R350 once a tenant moves in). That's fine
-   and fair, but agents must **say so upfront**. A landlord who is told
-   "it's all free" and then gets an invoice will tell the whole street.
-4. **Required fields** include full address and postal code. Agents should
-   know the postal codes for their zones before they go out.
+- **Listing is free forever, with unlimited rooms.** No trial that runs
+  out, no listing cap, no lock-out.
+- **No success fee and no commission.** We never take a cut of rent.
+- **Landlords pay only for optional extras that help them fill rooms faster:**
+  - **Boost:** R29 for 7 days or R79 for 30 days at the top of the area's
+    results, labelled "Featured". Boosts open when we launch to tenants.
+  - **Pro:** priced by number of rooms: R99/month (up to 5), R199/month
+    (6–15), R349/month (16+). Pay yearly and get 2 months free. Includes
+    2 free boosts a month, a ranking lift, and new tools as they launch
+    (tenant screening, digital leases).
+- **Founding Landlords** (signed up by 31 Jan 2027): **Pro free until
+  30 April 2027, then 50% off for life** (R49 / R99 / R174 a month) as long
+  as they stay subscribed. The app enrols them automatically and saves the
+  price lock on their account.
+- **Trust is never for sale.** The Verified badge comes only from our checks.
+- **Tenants never pay** to search or contact a landlord.
 
-**Recommended: a "Founding Landlord" programme.**
-- Every landlord signed up by the team gets **Gold (unlimited listings) free
-  for 6 months**, or until a fixed date, e.g. 30 April 2027.
-- You can do this today without code: in Django admin → Memberships, set
-  `tier = gold` and push `trial_end` out to the chosen date (or set
-  `is_trial = False` with `status = active`).
-- Optional: **waive the success fee for each founding landlord's first
-  placement.** It's a strong closing line: "Your first tenant through us is
-  completely free."
-- Give them a "Founding Landlord" status in your tracking sheet. Later this
-  could become a badge in the app.
-
-If you want, I can build this as a proper feature: a `founding` flag, a
-bulk admin action, and a badge on their listings.
-
----
+Practical notes for agents:
+- One listing can cover several identical rooms via **total units /
+  available units**. Pro pricing counts rooms, not listings.
+- **Required fields** include full address and postal code. Know the postal
+  codes for your zones before you go out.
 
 ## 3. Strategy: go deep, not wide
 
@@ -248,9 +237,9 @@ Setswana, Xitsonga, etc. according to the zone, and keep it conversational:
 > We're signing up landlords in [area] before we launch, so when tenants
 > start searching, your rooms are the first they see.
 >
-> It's **free to list**. You don't pay anything to advertise. We only charge
-> a small once-off fee, from R100, **if** a tenant who found you on our app
-> moves in. *(Founding landlords: your first tenant is free.)*
+> It's **free to list, forever**. No commission and no fee when a tenant
+> moves in. Because you're joining early, you also get our Pro tools free
+> until the end of April, and half price for life after that.
 >
 > Your address stays private: tenants only see your area and photos of the
 > room, and you decide who comes to view.
@@ -348,7 +337,7 @@ about 4 interested, 2–3 listed on the spot, plus 1 more on follow-up.
 
 | Week | Focus | Output |
 |---|---|---|
-| **0 (prep)** | Fix the trial and limits issue (§2); print flyers, posters, gate signs with QR code, team ID cards and lanyards; translate and practise the pitch; choose zones; set up the tracker and support WhatsApp number | Team ready, app ready |
+| **0 (prep)** | Learn the pricing message (§2); print flyers, posters, gate signs with QR code, team ID cards and lanyards; translate and practise the pitch; choose zones; set up the tracker and support WhatsApp number | Team ready, app ready |
 | **1** | Pilot: whole team in **Zone A** together. Learn what works, refine the pitch | 15–25 listings; top 5 objections captured |
 | **2** | Split into zones; Agent 4 starts phone and sign follow-ups; Agent 5 books churches and councillors | +25 listings (≈45 total) |
 | **3** | Full speed; start referrals; follow up the "not now" list | +30 (≈75) |
@@ -362,8 +351,8 @@ about 4 interested, 2–3 listed on the spot, plus 1 more on follow-up.
 
 - **Consent first.** Never list a room without the owner's agreement. Never
   scrape adverts.
-- **Be honest about fees.** Free to list, success fee only on move-in (unless
-  waived). No overpromising tenants or "guaranteed" income.
+- **Be honest about pricing.** Free to list forever, no commission. Boosts and
+  Pro are optional and paid. Never promise "guaranteed" tenants or income.
 - **Safety for the team.** Work in pairs, carry ID cards, keep a WhatsApp
   location share on, no visits after dark, and leave any situation that
   feels wrong.
