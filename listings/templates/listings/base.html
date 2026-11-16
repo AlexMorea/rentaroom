@@ -24,7 +24,7 @@
     <!-- ================= SEO ================= -->
     <meta
       name="description"
-      content="{% block meta_description %}South Africa's trusted way to find a room to rent, or find your next tenant. Verified landlords, direct messaging, no hidden fees.{% endblock %}"
+      content="{% block meta_description %}Safe, affordable room rentals in South Africa. Find a room to rent or your next tenant, with verified landlords, direct messaging and no hidden fees.{% endblock %}"
     />
     <link rel="canonical" href="{% block canonical_url %}https://www.rooms4you.co.za{{ request.path }}{% endblock %}" />
 
@@ -34,14 +34,14 @@
     <meta property="og:type" content="{% block og_type %}website{% endblock %}" />
     <meta property="og:site_name" content="Rooms4You" />
     <meta property="og:title" content="{% block og_title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}" />
-    <meta property="og:description" content="{% block og_description %}South Africa's trusted way to find a room to rent, or find your next tenant. Verified landlords, direct messaging, no hidden fees.{% endblock %}" />
+    <meta property="og:description" content="{% block og_description %}Safe, affordable room rentals in South Africa. Find a room to rent or your next tenant, with verified landlords, direct messaging and no hidden fees.{% endblock %}" />
     <meta property="og:image" content="{% block og_image %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endblock %}" />
     <meta property="og:url" content="{% block og_url %}https://www.rooms4you.co.za{{ request.path }}{% endblock %}" />
 
     <!-- Twitter/X Card - same idea, different platform -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{% block twitter_title %}Rooms4You - Find a Room or Tenant in South Africa{% endblock %}" />
-    <meta name="twitter:description" content="{% block twitter_description %}South Africa's trusted way to find a room to rent, or find your next tenant.{% endblock %}" />
+    <meta name="twitter:description" content="{% block twitter_description %}Safe, affordable room rentals in South Africa. Find a room to rent or your next tenant.{% endblock %}" />
     <meta name="twitter:image" content="{% block twitter_image %}https://www.rooms4you.co.za{% static 'images/logo-social.png' %}{% endblock %}" />
 
     <!-- PWA -->
@@ -103,7 +103,9 @@
       "@type": "Organization",
       "name": "Rooms4You",
       "url": "https://www.rooms4you.co.za/",
-      "logo": "https://www.rooms4you.co.za{% static 'images/logo-social.png' %}"
+      "logo": "https://www.rooms4you.co.za{% static 'images/logo-social.png' %}",
+      "description": "Safe, affordable room rentals in South Africa, connecting tenants with trusted landlords.",
+      "slogan": "Connecting Spaces To Faces"
     }
     </script>
     <script type="application/ld+json">
