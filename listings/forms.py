@@ -1,5 +1,4 @@
 import re
-from datetime import timedelta
 from typing import ClassVar
 
 from django import forms
@@ -252,17 +251,7 @@ class UserRegisterForm(forms.Form):
 
         # CREATE MEMBERSHIP ONLY FOR LANDLORDS
         if profile.role == "landlord":
-            Membership.objects.get_or_create(
-                user=user,
-                defaults={
-                    "tier": "starter",
-                    "is_active": True,
-                    "is_trial": True,
-                    "trial_start": timezone.now(),
-                    "trial_end": timezone.now() + timedelta(days=30),
-                    "status": "active"
-                }
-            )
+            Membership.objects.get_or_create(user=user)
 
         return user
 
@@ -366,17 +355,7 @@ class GoogleCompleteProfileForm(forms.Form):
         profile.save()
 
         if profile.role == "landlord":
-            Membership.objects.get_or_create(
-                user=user,
-                defaults={
-                    "tier": "starter",
-                    "is_active": True,
-                    "is_trial": True,
-                    "trial_start": timezone.now(),
-                    "trial_end": timezone.now() + timedelta(days=30),
-                    "status": "active",
-                },
-            )
+            Membership.objects.get_or_create(user=user)
 
         return profile
 

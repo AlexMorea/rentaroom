@@ -28,26 +28,13 @@ class MembershipMiddleware:
             try:
                 if request.user.profile.role == "landlord":
 
-                    membership = (
-                        Membership.objects
-                        .filter(user=request.user)
-                        .only(
-                            "is_trial",
-                            "is_active",
-                            "trial_end"
-                        )
-                        .first()
-                    )
+                    membership = Membership.objects.filter(user=request.user).first()
 
-                    if (
-                        membership
-                        and membership.is_trial
-                        and membership.is_trial_expired()
-                    ):
-                        membership.is_active = False
-                        membership.save(
-                            update_fields=["is_active"]
-                        )
+                    # An expired Pro trial or paid period drops back to
+                    # Free. It never deactivates the account - listing
+                    # is free forever.
+                    if membership:
+                        membership.lapse_if_expired()
 
             except AttributeError:
                 pass

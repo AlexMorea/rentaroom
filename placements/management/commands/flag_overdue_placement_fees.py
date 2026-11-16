@@ -38,6 +38,10 @@ class Command(BaseCommand):
     help = "Warns about, and optionally suspends, landlords with overdue Success Fee invoices."
 
     def handle(self, *args, **options):
+        if not settings.PLACEMENT_SUCCESS_FEE_ENABLED:
+            self.stdout.write("Room success fee is switched off - nothing to check.")
+            return
+
         auto_suspend = getattr(settings, "PLACEMENT_FEE_AUTO_SUSPEND", False)
 
         warned = 0

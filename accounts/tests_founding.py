@@ -23,17 +23,15 @@ class FoundingLandlordMembershipTests(TestCase):
         return user
 
     def test_new_membership_is_enrolled_while_programme_open(self):
-        # Same defaults every signup path passes to get_or_create.
-        membership, _ = Membership.objects.get_or_create(
-            user=self.make_landlord(),
-            defaults={"tier": "starter", "is_trial": True, "trial_end": timezone.now() + timedelta(days=30)},
-        )
+        membership, _ = Membership.objects.get_or_create(user=self.make_landlord())
 
         self.assertTrue(membership.is_founding)
         self.assertIsNotNone(membership.founding_since)
-        self.assertEqual(membership.tier, "gold")
+        self.assertEqual(membership.tier, Membership.TIER_PRO)
+        self.assertTrue(membership.on_pro_trial)
+        self.assertTrue(membership.has_pro)
         self.assertEqual(membership.trial_end, founding.free_until())
-        self.assertFalse(membership.is_trial_expired())
+        self.assertEqual(membership.founding_discount_percent, 50)
         self.assertTrue(membership.can_create_listing(50))
 
     def test_free_until_is_end_of_day_in_south_africa(self):
@@ -41,56 +39,48 @@ class FoundingLandlordMembershipTests(TestCase):
         self.assertEqual((end.date(), end.hour, end.minute), (date(2099, 4, 30), 23, 59))
 
     @PROGRAMME_CLOSED
-    def test_new_membership_after_deadline_gets_normal_trial(self):
+    def test_new_membership_after_deadline_is_free_with_unlimited_listings(self):
         membership = Membership.objects.create(user=self.make_landlord())
 
         self.assertFalse(membership.is_founding)
-        self.assertEqual(membership.tier, "starter")
-        assert membership.trial_end is not None
-        self.assertLess(membership.trial_end, timezone.now() + timedelta(days=31))
+        self.assertEqual(membership.tier, Membership.TIER_FREE)
+        self.assertFalse(membership.has_pro)
+        self.assertEqual(membership.founding_discount_percent, 0)
+        self.assertIsNone(membership.listing_limit())
+        self.assertTrue(membership.can_create_listing(500))
 
-    def test_enrol_reactivates_expired_trial(self):
-        with PROGRAMME_CLOSED:
-            membership = Membership.objects.create(
-                user=self.make_landlord(),
-                trial_start=timezone.now() - timedelta(days=60),
-            )
-        membership.is_active = False
-        membership.status = "suspended"
-        membership.save()
-
-        self.assertTrue(membership.enrol_as_founding())
-        membership.refresh_from_db()
-
-        self.assertTrue(membership.is_founding)
-        self.assertTrue(membership.is_active)
-        self.assertEqual(membership.status, "active")
-        self.assertEqual(membership.tier, "gold")
-        self.assertTrue(membership.can_create_listing(10))
-
-    def test_enrol_keeps_a_paid_plan_as_is(self):
+    def test_enrol_existing_free_landlord_gets_pro_trial_and_price_lock(self):
         with PROGRAMME_CLOSED:
             membership = Membership.objects.create(user=self.make_landlord())
-        membership.activate_membership(tier="bronze")
 
         self.assertTrue(membership.enrol_as_founding())
         membership.refresh_from_db()
 
         self.assertTrue(membership.is_founding)
-        self.assertEqual(membership.tier, "bronze")
-        self.assertFalse(membership.is_trial)
+        self.assertTrue(membership.on_pro_trial)
+        self.assertEqual(membership.founding_discount_percent, 50)
 
-    def test_enrol_skips_suspended_account_and_pending_payment(self):
+    def test_enrol_keeps_a_paid_pro_period_as_is(self):
+        with PROGRAMME_CLOSED:
+            membership = Membership.objects.create(user=self.make_landlord())
+        membership.extend_pro(band="small", cycle="monthly", months=1)
+        paid_until = membership.paid_until
+
+        self.assertTrue(membership.enrol_as_founding())
+        membership.refresh_from_db()
+
+        self.assertTrue(membership.is_founding)
+        self.assertFalse(membership.is_trial)
+        self.assertEqual(membership.paid_until, paid_until)
+        self.assertEqual(membership.founding_discount_percent, 50)
+
+    def test_enrol_skips_trust_and_safety_suspended_account(self):
         with PROGRAMME_CLOSED:
             suspended = Membership.objects.create(user=self.make_landlord("a@example.com"))
-            pending = Membership.objects.create(user=self.make_landlord("b@example.com"))
         suspended.user.is_active = False
         suspended.user.save()
-        pending.status = "pending"
-        pending.save()
 
         self.assertFalse(suspended.enrol_as_founding())
-        self.assertFalse(pending.enrol_as_founding())
         self.assertFalse(Membership.objects.filter(is_founding=True).exists())
 
     def test_landlord_profile_shows_founding_badge(self):

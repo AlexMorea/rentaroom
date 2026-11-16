@@ -30,6 +30,7 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
 from accounts.utils import require_active_membership
+from billing.boosts import featured_room_ids
 from placements.models import Waitlist
 from utils.email import send_template_email
 
@@ -141,6 +142,10 @@ def room_list(request):
         paginator = Paginator(rooms, 8)
         page_obj = paginator.get_page(page_number)
 
+        # Featured rooms were pinned when the ids were cached; recompute
+        # which of the leading ones are still boosted, for the badge.
+        featured_ids = cached_ids_payload.get("featured_ids", [])
+
         map_rooms = list(
             page_obj.object_list.values("id", "title", "price", "latitude", "longitude")
         )
@@ -188,6 +193,7 @@ def room_list(request):
                 "searched_location": searched_location,
                 "show_location_suggestion": show_location_suggestion,
                 "popular_ids": popular_ids,
+                "featured_ids": featured_ids,
                 "favorited_ids": favorited_ids,
             },
         )
@@ -330,6 +336,8 @@ def room_list(request):
 
 
     # ================= SORTING =================
+    featured_ids = []
+
     # accept both 'new' and 'newest' from templates
     if sort in {"new", "newest"}:
         rooms = rooms_qs.order_by("-created_at")
@@ -344,8 +352,17 @@ def room_list(request):
         rooms = rooms_qs.order_by("-price", "-created_at")
 
     else:
-        # Default 'best match' -- order by composite score then newest
+        # Default 'best match' -- order by composite score then newest,
+        # with up to FEATURED_SLOTS boosted rooms pinned on top. Boosts
+        # never touch Room.score, so the organic ranking stays honest.
         rooms = rooms_qs.order_by("-score", "-created_at")
+        featured_ids = featured_room_ids(rooms.values_list("id", flat=True))
+        if featured_ids:
+            rooms = rooms_qs.order_by(
+                Case(When(id__in=featured_ids, then=0), default=1, output_field=IntegerField()),
+                "-score",
+                "-created_at",
+            )
 
     # ================= PAGINATION =================
     page_number = request.GET.get("page") or 1
@@ -422,6 +439,7 @@ def room_list(request):
             {
                 "rooms": page_obj.object_list,
                 "popular_ids": popular_ids,
+                "featured_ids": featured_ids,
                 "favorited_ids": favorited_ids,
             },
             request=request,
@@ -468,6 +486,7 @@ def room_list(request):
             full_page_cache_key,
             {
                 "ids": list(paginator.object_list.values_list("id", flat=True)),
+                "featured_ids": featured_ids,
                 "suggested_location": suggested_location,
                 "searched_location": searched_location,
             },
@@ -496,6 +515,7 @@ def room_list(request):
             "searched_location": searched_location,
             "show_location_suggestion": show_location_suggestion,
             "popular_ids": popular_ids,
+            "featured_ids": featured_ids,
             "favorited_ids": favorited_ids,
         },
     )
@@ -684,20 +704,15 @@ def create_room(request):
     # ALWAYS ensure membership exists (SAFE)
     membership = get_or_create_membership(request.user)
 
-    user_listings_count = request.user.rooms.count()
-
-    # BLOCK: expired trial
-    if membership.is_trial and membership.is_trial_expired():
-        messages.error(request, "Your trial has expired. Please upgrade.")
-        return redirect("membership")
-
-    # BLOCK: listing limit reached
-    if not membership.can_create_listing(user_listings_count):
-        messages.warning(
+    # Listing is free and unlimited - only a Trust & Safety suspension
+    # blocks it.
+    if not membership.can_create_listing():
+        messages.error(
             request,
-            "🚫 You’ve reached your listing limit. Upgrade to add more rooms."
+            "Your account is suspended, so you can't add listings right now. "
+            "Please contact support@rooms4you.co.za."
         )
-        return redirect("membership")
+        return redirect("dashboard")
 
     form = RoomForm(request.POST or None, request.FILES or None, user=request.user)
 
@@ -762,7 +777,8 @@ def create_room(request):
 def edit_room(request, pk):
 
     if not require_active_membership(request.user):
-        return redirect("membership")
+        messages.error(request, "Your account is suspended. Please contact support@rooms4you.co.za.")
+        return redirect("dashboard")
 
     room = get_object_or_404(
         Room,

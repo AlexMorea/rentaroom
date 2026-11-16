@@ -189,14 +189,22 @@ class Placement(models.Model):
         if self.tenant_confirmed_move_in and self.landlord_confirmed_move_in:
             self.status = self.STATUS_MOVED_IN
             self.save()
-            # Moving straight to Success Fee Due + invoice generation is
-            # the "successful placement" outcome from the brief.
+            # A confirmed move-in is the "successful placement" outcome.
+            # (Raises an invoice only if the success fee is re-enabled.)
             self.mark_success_fee_due()
         else:
             self.status = self.STATUS_VERIFICATION_REQUIRED
             self.save()
 
     def mark_success_fee_due(self):
+        """Raises the success-fee invoice for a confirmed move-in - only
+        while settings.PLACEMENT_SUCCESS_FEE_ENABLED is on. It's off:
+        Rooms4You earns from Pro and boosts, not commission, so a
+        confirmed move-in simply stays "Moved In" (still counted as a
+        successful placement)."""
+        if not settings.PLACEMENT_SUCCESS_FEE_ENABLED:
+            return
+
         self.status = self.STATUS_SUCCESS_FEE_DUE
         self.save()
 

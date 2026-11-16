@@ -1,9 +1,7 @@
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.shortcuts import redirect, render
 
 from listings.models import Profile
 
@@ -40,181 +38,43 @@ def landlord_only(request):
 
 @login_required
 def membership_view(request):
+    """The Plans page: Free (what everyone has) and Pro, priced for this
+    landlord's actual room count, with their founding discount applied."""
+    from billing import pricing
+    from billing.payfast import payments_enabled
 
     denied = landlord_only(request)
     if denied:
         return denied
 
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user,
-        defaults={"tier": "starter"}
-    )
+    membership, _ = Membership.objects.get_or_create(user=request.user)
+    membership.lapse_if_expired()
 
-    if membership.is_trial and membership.is_trial_expired():
-        membership.is_active = False
-        membership.status = "suspended"
-        membership.save(update_fields=["is_active", "status"])
+    rooms = pricing.room_count_for(request.user)
+    band = pricing.band_for_rooms(rooms)
+    discount = membership.current_discount_percent
+
+    bands = [
+        {
+            "band": b,
+            "monthly": pricing.pro_price(b, pricing.CYCLE_MONTHLY, discount),
+            "annual": pricing.pro_price(b, pricing.CYCLE_ANNUAL, discount),
+            "is_yours": b.code == band.code,
+        }
+        for b in pricing.PRO_BANDS
+    ]
 
     return render(request, "accounts/membership.html", {
         "membership": membership,
-        "listing_limit": membership.listing_limit(),
-        "days_left": membership.days_left,
+        "rooms": rooms,
+        "band": band,
+        "bands": bands,
+        "discount": discount,
+        "monthly_price": pricing.pro_price(band, pricing.CYCLE_MONTHLY, discount),
+        "annual_price": pricing.pro_price(band, pricing.CYCLE_ANNUAL, discount),
+        "payments_enabled": payments_enabled(),
+        "boosts_enabled": settings.BOOSTS_ENABLED,
+        "boost_options": pricing.BOOST_OPTIONS,
+        "free_boosts_per_month": pricing.PRO_FREE_BOOSTS_PER_MONTH,
+        "payments": request.user.payments.exclude(status="pending")[:5],
     })
-
-
-@staff_member_required
-def admin_membership_dashboard(request):
-    pending = Membership.objects.filter(
-        status="pending"
-    ).order_by("-payment_requested_at")
-
-    active = Membership.objects.filter(
-        status="active"
-    )
-
-    return render(request, "admin/membership_dashboard.html", {
-        "pending": pending,
-        "active": active,
-    })
-
-
-@staff_member_required
-@require_POST
-def approve_membership(request, pk):
-    membership = get_object_or_404(Membership, id=pk)
-
-    tier = request.POST.get(
-        "tier",
-        membership.tier
-    )
-
-    membership.activate_membership(
-        tier=tier,
-        admin_user=request.user
-    )
-
-    messages.success(
-        request,
-        "Membership approved and activated."
-    )
-
-    return redirect("admin_membership_dashboard")
-
-
-@staff_member_required
-@require_POST
-def reject_membership(request, pk):
-    membership = get_object_or_404(Membership, id=pk)
-    membership.reject_payment()
-
-    messages.warning(
-        request,
-        "Membership rejected."
-    )
-
-    return redirect("admin_membership_dashboard")
-
-@login_required
-def membership_payment_view(request, tier):
-
-    denied = landlord_only(request)
-    if denied:
-        return denied
-
-    VALID_TIERS = {
-        "bronze": "R49",
-        "silver": "R99",
-        "gold": "R199"
-    }
-
-    tier = tier.lower()
-
-    if tier not in VALID_TIERS:
-        messages.error(
-            request,
-            "Invalid membership tier."
-        )
-        return redirect("membership")
-
-    membership, _ = Membership.objects.get_or_create(
-        user=request.user,
-        defaults={"tier": "starter"}
-    )
-
-    if membership.status == "pending":
-        messages.warning(
-            request,
-            "You already have a payment under review."
-        )
-        return redirect("membership")
-
-    if membership.tier == tier and membership.status == "active":
-        messages.info(
-            request,
-            f"You are already subscribed to {tier.title()}4You."
-        )
-        return redirect("membership")
-
-    if request.method == "POST":
-
-        proof = request.FILES.get("payment_proof")
-
-        if not proof:
-            messages.error(
-                request,
-                "Please upload proof of payment."
-            )
-            return redirect(
-                "membership_payment",
-                tier=tier
-            )
-
-        if proof.size > 5 * 1024 * 1024:
-            messages.error(
-                request,
-                "Proof of payment must be under 5MB."
-            )
-            return redirect(
-                "membership_payment",
-                tier=tier
-            )
-
-        allowed = [".jpg", ".jpeg", ".png", ".pdf"]
-
-        filename = proof.name.lower()
-
-        if not any(
-            filename.endswith(ext)
-            for ext in allowed
-        ):
-            messages.error(
-                request,
-                "Only JPG, PNG or PDF files are allowed."
-            )
-            return redirect(
-                "membership_payment",
-                tier=tier
-            )
-
-        with transaction.atomic():
-            membership.mark_payment_submitted(
-                tier,
-                proof
-            )
-
-        messages.success(
-            request,
-            "✅ Payment submitted successfully. Verification may take a few hours."
-        )
-
-        return redirect("membership")
-
-    return render(
-        request,
-        "accounts/payment_page.html",
-        {
-            "tier": tier,
-            "price": VALID_TIERS[tier],
-            "membership": membership
-        }
-    )

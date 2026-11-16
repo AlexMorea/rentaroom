@@ -1,0 +1,62 @@
+{% extends "listings/base.html" %}
+{% block title %}Boost your listing | Rooms4You{% endblock %}
+{% block content %}
+<h1 class="page-title">Boost “{{ room.title }}”</h1>
+
+<p class="bl-intro">
+  A boost puts your room at the top of results in its area, labelled
+  <strong>Featured</strong>, so more tenants see it first. Up to 3 featured rooms are
+  shown per page, and they take turns every hour so every boost gets seen.
+</p>
+
+{% if active_boost %}
+  <div class="form-card bl-active">
+    ⭐ Featured until <strong>{{ active_boost.ends_at|date:"j F Y, H:i" }}</strong>.
+    Buying another boost adds time on after this one ends.
+  </div>
+{% endif %}
+
+{% if blocker %}
+  <div class="form-card bl-blocked">{{ blocker }}</div>
+{% else %}
+  <div class="dashboard-grid bl-options">
+    {% if has_pro %}
+      <form method="post" class="form-card bl-option">
+        {% csrf_token %}
+        <h3>Pro free boost</h3>
+        <p class="bl-price">R0</p>
+        <p class="text-muted">{{ free_boost_days }} days · {{ credits }} left this month</p>
+        <button class="btn-primary" name="option" value="pro_credit" {% if credits <= 0 %}disabled{% endif %}>
+          Use a free boost
+        </button>
+      </form>
+    {% endif %}
+
+    {% for option in options %}
+      <form method="post" class="form-card bl-option">
+        {% csrf_token %}
+        <h3>{{ option.label }}</h3>
+        <p class="bl-price">R{{ option.price }}</p>
+        <p class="text-muted">Once-off · no subscription</p>
+        <button class="btn-primary" name="option" value="{{ option.code }}" {% if not payments_enabled %}disabled{% endif %}>
+          {% if payments_enabled %}Boost for R{{ option.price }}{% else %}Payments open soon{% endif %}
+        </button>
+      </form>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<p class="text-muted bl-small">
+  You can pay for visibility, never for trust: the Verified badge comes only from
+  our checks, and only rooms with a vacancy and a recently confirmed listing can be boosted.
+</p>
+
+<style>
+  .bl-intro { max-width: 640px; }
+  .bl-active { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; margin-bottom: 16px; }
+  .bl-blocked { background: #fff7ed; color: #7c2d12; border: 1px solid #fed7aa; }
+  .bl-option { text-align: center; }
+  .bl-price { font-size: 2rem; font-weight: 700; margin: 4px 0; }
+  .bl-small { font-size: 0.85rem; margin-top: 16px; }
+</style>
+{% endblock %}

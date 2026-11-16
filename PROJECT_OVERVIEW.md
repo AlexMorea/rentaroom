@@ -7,8 +7,9 @@
 > at time of writing and should be checked against current commercial terms.
 
 Rooms4You is a South African room-rental and short-stay marketplace, built by
-4You (Pty) Ltd, that connects tenants with landlords, earns only on successful
-placements, and puts trust and safety at the centre of the product. It is a
+4You (Pty) Ltd, that connects tenants with landlords, is free to list on,
+earns from optional landlord tools (Pro and Boosts), and puts trust and safety
+at the centre of the product. It is a
 Django web application in public beta, deployed as a single web service with a
 progressive-web-app front end and thin native shells for the app stores.
 
@@ -57,15 +58,14 @@ to rent and tenants find, contact and move into them.
   availability calendar and accept or decline date requests.
 - **Bakkie (moving) drivers** — register a vehicle, get verified, and take
   moving-day bookings from tenants.
-- **Staff / Trust & Safety** — triage fraud reports, verify landlords, approve
-  membership payments, and reconcile success-fee invoices, mostly through Django
+- **Staff / Trust & Safety** — triage fraud reports, verify landlords, review
+  Pro payments and boosts, and reconcile guest-house booking invoices, mostly through Django
   admin plus a few purpose-built staff dashboards.
 
 ### What makes it distinct
 
-- **Success-fee economics.** The platform only bills a placement fee once a
-  tenant has actually moved in (confirmed by both sides), and a booking fee only
-  once a stay is confirmed. It never touches tenant deposits or rent.
+- **Free to list, no commission.** Landlords list free forever and pay only
+  for optional Pro tools and Boosts. It never touches tenant deposits or rent.
 - **Listings that stay honest.** Landlords are nudged to re-confirm availability
   every two weeks; unconfirmed listings are demoted in ranking and eventually
   auto-hidden.
@@ -79,54 +79,62 @@ to rent and tenants find, contact and move into them.
 
 ## 2. Business model & money flow
 
-Two revenue lines, both reconciled manually — there is no payment gateway in the
-codebase. Users pay by EFT and upload proof; staff confirm and flip a status.
+**In one line:** listing is free forever; landlords pay for optional tools
+that fill rooms faster — **Pro** (a subscription priced by number of rooms)
+and **Boosts** (paid "Featured" placement). No success fee, no commission,
+and tenants never pay. Trust (the Verified badge, being listed at all) is
+never for sale. All prices live in `billing/pricing.py`.
 
-### Landlord membership tiers
+Payments go through **PayFast** (card, Instant EFT, SnapScan; recurring
+debit for Pro). A payment only counts once PayFast's server-to-server
+notification (ITN) passes our signature check, PayFast's own validation
+call, and an amount check — see `billing/payfast.py` and
+`billing/services.py`. Checkout appears only when `PAYFAST_MERCHANT_ID`,
+`PAYFAST_MERCHANT_KEY` and `PAYFAST_PASSPHRASE` are set.
 
-Every landlord gets a 30-day free trial (`Membership.is_trial`, `trial_end`).
-After that, listing capacity is gated by tier. Payment is
-*request → upload proof of payment → admin approves*
-(`mark_payment_submitted` → `activate_membership`).
+### Landlord plans (`accounts.Membership`)
 
-| Tier        | Code      | Listing limit | Indicative price     |
-|-------------|-----------|---------------|----------------------|
-| Starter4You | `starter` | 2             | Free (trial default) |
-| Bronze4You  | `bronze`  | 5             | R49                  |
-| Silver4You  | `silver`  | 10            | R99                  |
-| Gold4You    | `gold`    | Unlimited     | R199                 |
+| Plan | Who | What |
+|------|-----|------|
+| **Free** | Everyone, forever | Unlimited listings, verification, enquiries, placement tracking, analytics |
+| **Pro**  | Paid, or founding trial | 2 free 7-day boosts a month, a 10% ranking lift on real engagement (`compute_scores`), and new tools as they launch |
 
-`Membership.can_create_listing()` is the gate: it blocks inactive accounts,
-expired trials, and accounts with a payment still pending. `MembershipMiddleware`
-deactivates a landlord the moment their trial lapses.
+Pro pricing by rooms (sum of `Room.total_units`): **R99/month** up to 5,
+**R199** for 6–15, **R349** for 16+. Annual = 10× monthly (2 months free).
 
-### Success fees — room placements
+Pro is held as a trial (`is_trial` + `trial_end`) or a paid period
+(`paid_until`, extended by each verified payment). When it runs out,
+`MembershipMiddleware` drops the account back to Free — listings are never
+blocked or hidden for payment reasons. `status`/`is_active` are Trust &
+Safety controls only.
 
-A `Placement` tracks one tenant + one room from first interest to move-in. When
-both parties confirm the move-in, status goes to *Success Fee Due* and a
-`PlacementInvoice` is generated. Fee bands (`Placement.calculate_success_fee`),
-by monthly rent:
+**Founding Landlords** (signed up by `FOUNDING_LANDLORD_SIGNUP_DEADLINE`):
+Pro free until `FOUNDING_LANDLORD_FREE_UNTIL`, then **50% off for life**
+(`founding_discount_percent`), kept while subscribed and for a 30-day grace
+after a paid period lapses.
 
-| Monthly rent      | Success fee |
-|-------------------|-------------|
-| Up to R1,500      | R100        |
-| R1,501 – R2,500   | R150        |
-| R2,501 – R4,000   | R250        |
-| Above R4,000      | R350        |
+### Boosts (`billing.Boost`)
 
-### Success fees — guest-house bookings
+**R29 for 7 days, R79 for 30 days.** Only rooms with a vacancy and a
+recently confirmed listing can be boosted. In the default "best match" sort,
+up to 3 boosted rooms are pinned to the top of the results, labelled
+"Featured", rotating hourly when more are boosted. Boosts never change
+`Room.score`. Switched off until tenant launch (`BOOSTS_ENABLED`).
 
-When a host confirms a booking, a `BookingInvoice` is raised for **8% of the
-estimated booking value, minimum R50** (`Booking.expected_success_fee`).
-Confirmation is the billable signal for a stay (a booked check-in date is
-unambiguous), unlike a room placement which needs the separate dual move-in
-confirmation.
+### Placements — tracked, not billed
 
-> **Guardrail.** Automatic suspension of landlords for overdue success fees
-> exists (`Membership.suspend_for_unpaid_placement_fee`,
-> `flag_overdue_placement_fees`) but is gated behind `PLACEMENT_FEE_AUTO_SUSPEND`,
-> which defaults to off. Until deliberately switched on, the job only reports
-> what it *would* do.
+A `Placement` still tracks one tenant + one room from first interest to a
+dual-confirmed move-in — the platform's traction metric. The room success
+fee is **switched off** (`PLACEMENT_SUCCESS_FEE_ENABLED`, default off): a
+confirmed move-in stays "Moved In" and raises no invoice. The dormant fee
+code (`calculate_success_fee`, `PlacementInvoice`, overdue-fee job) is kept
+and tested so the decision is reversible.
+
+### Guest-house bookings
+
+Unchanged: when a host confirms a booking, a `BookingInvoice` is raised for
+**8% of the estimated booking value, minimum R50**
+(`Booking.expected_success_fee`).
 
 ---
 
@@ -501,7 +509,7 @@ emails users, hides listings or mutates a score does so until run with `--force`
 | `generate_vapid_keys`         | accounts   | One-off VAPID keypair generation for production |
 | `backfill_profiles`           | accounts   | Create missing `Profile` rows |
 | `check_move_ins`              | placements | Trigger dual move-in confirmation when a move-in date passes |
-| `flag_overdue_placement_fees` | placements | Report (or, if `PLACEMENT_FEE_AUTO_SUSPEND`, suspend) landlords with overdue success fees |
+| `flag_overdue_placement_fees` | placements | No-op while the room success fee is off; otherwise reports (or, if `PLACEMENT_FEE_AUTO_SUSPEND`, suspends) overdue fees |
 | `flag_stalled_placements`     | placements | Nudge placements stuck mid-pipeline |
 | `flag_overdue_booking_fees`   | stays      | Report overdue guest-house booking fees |
 | `cleanup_users`               | core       | Maintenance: prune incomplete/abandoned signups |

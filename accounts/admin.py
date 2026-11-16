@@ -1,5 +1,4 @@
 from django.contrib import admin, messages
-from django.utils.html import format_html
 
 from .models import Membership
 
@@ -12,27 +11,16 @@ class MembershipAdmin(admin.ModelAdmin):
         "status",
         "is_founding",
         "trial_end",
-        "requested_tier",
-        "payment_requested",
-        "proof_of_payment",
-        "proof_link",
-        "approved_at",
+        "paid_until",
+        "auto_renew",
     )
-
-    def proof_link(self, obj):
-        if obj.proof_of_payment:
-            return format_html(
-                '<a href="{}" target="_blank">View Proof</a>',
-                obj.proof_of_payment.url
-            )
-        return "-"
 
 
     list_filter = (
         "is_founding",
         "status",
         "tier",
-        "payment_requested",
+        "auto_renew",
     )
 
     search_fields = (
@@ -44,8 +32,7 @@ class MembershipAdmin(admin.ModelAdmin):
     readonly_fields = (
         "membership_id",
         "payment_reference",
-        "approved_at",
-        "payment_requested_at",
+        "payfast_token",
     )
 
     fieldsets = (
@@ -53,37 +40,26 @@ class MembershipAdmin(admin.ModelAdmin):
             "fields": ("user",)
         }),
 
-        ("📦 Membership", {
+        ("📦 Plan", {
             "fields": ("tier", "status", "is_active", "is_trial", "trial_end")
         }),
 
+        ("💳 Pro billing (PayFast)", {
+            "fields": ("paid_until", "pro_band", "billing_cycle", "auto_renew", "payfast_token", "payment_reference")
+        }),
+
         ("🏅 Founding Landlord", {
-            "fields": ("is_founding", "founding_since")
-        }),
-
-        ("💳 Payment Info", {
-            "fields": (
-                "requested_tier",
-                "payment_requested",
-                "payment_requested_at",
-                "proof_of_payment",
-                "payment_reference",
-            )
-        }),
-
-        ("✅ Approval", {
-            "fields": ("approved_by", "approved_at")
+            "fields": ("is_founding", "founding_since", "founding_discount_percent")
         }),
     )
 
     actions = (
         "enrol_founding_landlords",
-        "approve_memberships",
-        "reject_memberships",
+        "grant_one_month_pro",
     )
 
     # 🏅 FOUNDING LANDLORD
-    @admin.action(description="Enrol as Founding Landlord (Gold free + first tenant free)")
+    @admin.action(description="Enrol as Founding Landlord (Pro free until programme date + 50% off for life)")
     def enrol_founding_landlords(self, request, queryset):
         enrolled, skipped = 0, []
 
@@ -97,36 +73,28 @@ class MembershipAdmin(admin.ModelAdmin):
         if skipped:
             self.message_user(
                 request,
-                "Skipped (suspended account or payment under review): " + ", ".join(skipped),
+                "Skipped (suspended account): " + ", ".join(skipped),
                 messages.WARNING,
             )
 
-    # ✅ APPROVE (ONE CLICK)
-    def approve_memberships(self, request, queryset):
-        count = 0
+    # 🎁 Goodwill / manual comp - e.g. a PayFast payment that needs
+    # fixing by hand. Leaves an audit row in billing Payments.
+    @admin.action(description="Grant 1 month of Pro (complimentary)")
+    def grant_one_month_pro(self, request, queryset):
+        from billing.models import Payment
+        from billing.pricing import CYCLE_MONTHLY, band_for_rooms, room_count_for
 
-        for membership in queryset:
-            if membership.requested_tier:
-                membership.activate_membership(admin_user=request.user)
-                count += 1
-
-        self.message_user(
-            request,
-            f"✅ {count} membership(s) approved successfully."
-        )
-
-    approve_memberships.short_description = "Approve selected memberships"
-
-    # ❌ REJECT
-    def reject_memberships(self, request, queryset):
-        count = queryset.count()
-
-        for membership in queryset:
-            membership.reject_payment()
-
-        self.message_user(
-            request,
-            f"❌ {count} payment(s) rejected."
-        )
-
-    reject_memberships.short_description = "Reject selected payments"
+        for membership in queryset.select_related("user"):
+            band = band_for_rooms(room_count_for(membership.user))
+            membership.extend_pro(band=band.code, cycle=CYCLE_MONTHLY, months=1)
+            Payment.objects.create(
+                user=membership.user,
+                kind=Payment.KIND_PRO,
+                status=Payment.STATUS_COMPLETE,
+                amount=0,
+                item_name="Complimentary Pro (1 month)",
+                pro_band=band.code,
+                billing_cycle=CYCLE_MONTHLY,
+                note=f"Granted by {request.user.username} in admin",
+            )
+        self.message_user(request, f"🎁 Granted 1 month of Pro to {queryset.count()} landlord(s).")

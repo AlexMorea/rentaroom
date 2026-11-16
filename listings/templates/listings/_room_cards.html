@@ -58,6 +58,10 @@
 
     <!-- BADGES -->
     <div class="room-badges rc-badges">
+      {% if featured_ids and room.id in featured_ids %}
+        <span class="badge badge-featured rc-badge rc-badge-featured">⭐ Featured</span>
+      {% endif %}
+
       {% if room.is_new %}
         <span class="badge rc-badge rc-badge-new">🆕 New</span>
       {% endif %}

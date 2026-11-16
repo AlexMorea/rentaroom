@@ -77,52 +77,41 @@ Dashboard | Rooms4You
     <div>
       <h3>🏅 You're a Founding Landlord</h3>
       <p>
-        Thank you for joining Rooms4You early.
-        {% if membership.is_trial %}List as many rooms as you like, free until
-        <strong>{{ membership.trial_end|date:"j F Y" }}</strong>.{% endif %}
-        Your first tenant through Rooms4You has no success fee.
+        Thank you for joining Rooms4You early. Listing is free forever, with no success fee.
+        {% if membership.on_pro_trial %}You have <strong>Pro free until {{ membership.trial_end|date:"j F Y" }}</strong>,
+        then {% else %}You keep {% endif %}<strong>{{ membership.founding_discount_percent }}% off Pro for life</strong>
+        while you stay subscribed.
       </p>
     </div>
+    <a href="{% url 'membership' %}" class="btn-primary ld-upgrade-btn">Your plan</a>
   </div>
 </div>
-{% endif %}
-
-{% if membership.tier == "starter" and membership.status == "active" %}
+{% elif not membership.has_pro and membership.status == "active" %}
 <div class="form-card membership-card ld-membership-card">
   <div class="membership-content">
     <div>
-      <h3>Upgrade Your Account 🚀</h3>
-
+      <h3>Fill your rooms faster with Pro 🚀</h3>
       <p>
-        Your {{ membership.get_tier_display }} plan is active. Upgrade to unlock
-        more listings and better visibility.
+        You're on <strong>Free</strong>: unlimited listings, always. Pro adds free monthly
+        boosts and a ranking lift, from R99/month.
       </p>
-
-      <p class="membership-id">
-        Membership ID:
-        <strong>{{ membership.membership_id }}</strong>
-      </p>
-
-      <small> Use this as your payment reference when making a deposit. </small>
     </div>
 
     <a href="{% url 'membership' %}" class="btn-primary ld-upgrade-btn">
-      Upgrade Now
+      See Pro
     </a>
   </div>
 </div>
 {% endif %}
 
-<!-- ================= PLACEMENTS & FEES ================= -->
-<!-- Previously nowhere on this dashboard - a landlord could have a
-     success fee sitting unpaid and never see it. -->
+<!-- ================= PLACEMENTS ================= -->
 
 <a href="{% url 'placements:landlord_dashboard' %}" class="dashboard-link-card ld-link-card">
   <div class="form-card ld-placements-card {% if fees_due_count > 0 %}ld-placements-alert{% endif %}">
     <div class="ld-placements-header">
       <div>
-        <h3 class="ld-placements-title">🤝 Placements &amp; Fees</h3>
-        <p class="ld-placements-sub">Track tenants through to move-in and your success fee</p>
+        <h3 class="ld-placements-title">🤝 Placements</h3>
+        <p class="ld-placements-sub">Track every enquiry through to a confirmed move-in. No success fee, ever.</p>
       </div>
       <span class="ld-placements-count">{{ active_placements_count }} active →</span>
     </div>
@@ -220,6 +209,7 @@ Dashboard | Rooms4You
         <div class="ld-room-links">
           <a href="{% url 'upload_room_images' room.id %}" class="ld-action-link"> Images </a>
           <a href="{% url 'edit_room' room.id %}" class="ld-action-link"> Edit </a>
+          <a href="{% url 'billing:boost_room' room.id %}" class="ld-action-link"> ⭐ Boost </a>
           <a
             href="{% url 'delete_room' room.id %}"
             onclick="return confirm('Delete this room?');"

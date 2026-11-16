@@ -1,0 +1,33 @@
+{% extends "listings/base.html" %}
+{% block title %}Secure payment | Rooms4You{% endblock %}
+{% block content %}
+<div class="form-card bl-redirect">
+  <h1 class="page-title">Taking you to PayFast…</h1>
+  <p>
+    You're paying <strong>R{{ payment.amount|floatformat:2 }}</strong> for
+    <strong>{{ payment.item_name }}</strong>. PayFast handles the payment securely
+    by card, Instant EFT or SnapScan. Rooms4You never sees your card details.
+  </p>
+  {% if sandbox %}
+    <p class="bl-sandbox">Test mode: no real money will move.</p>
+  {% endif %}
+
+  <form id="payfast-form" action="{{ action }}" method="post">
+    {% for name, value in fields %}
+      <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    <button type="submit" class="btn-primary">Continue to PayFast</button>
+  </form>
+  <p class="text-muted bl-small">Your reference: {{ payment.m_payment_id }}</p>
+</div>
+
+<style>
+  .bl-redirect { max-width: 520px; margin: 32px auto; text-align: center; }
+  .bl-sandbox { background: #fef3c7; color: #78350f; padding: 8px 12px; border-radius: 8px; }
+  .bl-small { font-size: 0.85rem; margin-top: 12px; }
+</style>
+<script>
+  // Auto-submit; the button stays as a fallback if scripts are blocked.
+  document.getElementById("payfast-form").submit();
+</script>
+{% endblock %}

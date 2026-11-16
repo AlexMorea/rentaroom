@@ -63,6 +63,7 @@
         <div class="lr-room-links">
           <a href="{% url 'upload_room_images' room.id %}" class="lr-action-link">Images</a>
           <a href="{% url 'edit_room' room.id %}" class="lr-action-link">Edit</a>
+          <a href="{% url 'billing:boost_room' room.id %}" class="lr-action-link">⭐ Boost</a>
           <a
             href="{% url 'delete_room' room.id %}"
             onclick="return confirm('Delete this room?');"

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Q, Sum
 
+from accounts.models import Membership
 from listings.models import Room
 
 
@@ -64,6 +65,12 @@ class Command(BaseCommand):
             )
         )
 
+        pro_owner_ids = {
+            m.user_id
+            for m in Membership.objects.filter(tier=Membership.TIER_PRO)
+            if m.has_pro
+        }
+
         to_update = []
         processed = 0
         stale_count = 0
@@ -98,6 +105,12 @@ class Command(BaseCommand):
             if room.is_stale:
                 stale_count += 1
                 score -= min(room.days_since_confirmed - settings.LISTING_STALE_DAYS, 60) * 2
+
+            # Pro landlords get a small, bounded lift (10%). It only
+            # multiplies real engagement - a listing nobody looks at
+            # gains nothing - so ranking stays earned, not bought.
+            if room.owner_id in pro_owner_ids and score > 0:
+                score += score // 10
 
             # score is a PositiveIntegerField - a room with mostly poor
             # reviews/little engagement, or a heavily stale one, could
