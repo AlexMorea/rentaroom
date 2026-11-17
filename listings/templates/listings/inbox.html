@@ -38,7 +38,7 @@
         📍 {{ conv.room.title }}
       </p>
 
-      <p style="margin:0; font-size:0.9rem; color:#334155; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+      <p style="margin:0; font-size:0.9rem; color:var(--dm-fg-334155, #334155); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
         {% if conv.last_message.sender_id == request.user.id %}You: {% endif %}{{ conv.last_message.body }}
       </p>
     </div>

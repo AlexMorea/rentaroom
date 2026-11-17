@@ -391,7 +391,7 @@
     transition: fill 0.15s ease, stroke 0.15s ease;
   }
   .rc-fav-btn.rc-fav-active {
-    background: rgba(255, 255, 255, 0.92);
+    background: var(--dm-bg-glass, rgba(255, 255, 255, 0.92));
   }
   .rc-fav-btn.rc-fav-active .rc-fav-icon path {
     fill: #ef4444;
@@ -524,20 +524,20 @@
     flex-shrink: 0;
   }
   .rc-status-available {
-    background: #dcfce7;
-    color: #166534;
+    background: var(--dm-bg-dcfce7, #dcfce7);
+    color: var(--dm-fg-166534, #166534);
   }
   .rc-status-available .rc-status-dot { background: #16a34a; }
 
   .rc-status-upcoming {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--dm-bg-fef3c7, #fef3c7);
+    color: var(--dm-fg-92400e, #92400e);
   }
   .rc-status-upcoming .rc-status-dot { background: #d97706; }
 
   .rc-status-occupied {
-    background: #f1f5f9;
-    color: #64748b;
+    background: var(--dm-bg-f1f5f9, #f1f5f9);
+    color: var(--dm-fg-64748b, #64748b);
   }
   .rc-status-occupied .rc-status-dot { background: #94a3b8; }
 
@@ -573,7 +573,7 @@
     border-top: 1px solid var(--border);
     font-size: 0.82rem;
     font-weight: 700;
-    color: #0B6FBF;
+    color: var(--link);
   }
   .rc-cta-arrow {
     flex-shrink: 0;

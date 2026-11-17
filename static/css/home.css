@@ -158,7 +158,7 @@ main.container {
   height: 60px;
   border: none;
   border-radius: 16px;
-  background: white;
+  background: var(--dm-bg-fff, white);
   color: var(--brand);
   font-weight: 800;
   font-size: 1.1rem;
@@ -381,7 +381,7 @@ main.container {
   display:inline-block;
   padding:8px 14px;
   border-radius:999px;
-  background:#eef2ff;
+  background:var(--dm-bg-eef2ff, #eef2ff);
   color:#4338ca;
   font-size:.8rem;
   font-weight:700;
@@ -606,7 +606,7 @@ main.container {
 }
 
 .problem-card {
-  background: #fef2f2;
+  background: var(--dm-bg-fef2f2, #fef2f2);
   border: 1px solid #fecaca;
   border-radius: 18px;
   padding: 22px;
@@ -635,7 +635,7 @@ main.container {
 }
 
 .solution-card {
-  background: #f0fdf4;
+  background: var(--dm-bg-f0fdf4, #f0fdf4);
   border: 1px solid #bbf7d0;
   border-radius: 18px;
   padding: 24px 20px;
@@ -716,8 +716,8 @@ main.container {
    (designed for the dark hero) needs dark text/border here instead
    of white-on-white */
 .audience-card .btn-secondary {
-  color: var(--brand);
-  border-color: var(--brand);
+  color: var(--link, var(--brand));
+  border-color: var(--link, var(--brand));
 }
 
 .audience-card .btn-secondary:hover {
@@ -759,7 +759,7 @@ main.container {
 }
 
 .why-chip {
-  background: #eef2ff;
+  background: var(--dm-bg-eef2ff, #eef2ff);
   color: #4338ca;
   border-radius: 999px;
   padding: 10px 18px;
@@ -840,7 +840,7 @@ main.container {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  background: #ecfdf5;
+  background: var(--dm-bg-ecfdf5, #ecfdf5);
   border: 1px solid #a7f3d0;
   border-radius: 20px;
   padding: 22px 26px;
@@ -1030,3 +1030,14 @@ main.container {
   border: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
+/* Home sections (below the banner): fixed text colours that need a lighter shade in dark mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .section-badge, :root:not([data-theme="light"]) .why-chip { color: #a5b4fc; }
+  :root:not([data-theme="light"]) .problem-card p { color: #fca5a5; }
+  :root:not([data-theme="light"]) .solution-card h4, :root:not([data-theme="light"]) .solution-card p { color: #86efac; }
+  :root:not([data-theme="light"]) .status-banner p { color: #86efac; }
+}
+:root[data-theme="dark"] .section-badge, :root[data-theme="dark"] .why-chip { color: #a5b4fc; }
+:root[data-theme="dark"] .problem-card p { color: #fca5a5; }
+:root[data-theme="dark"] .solution-card h4, :root[data-theme="dark"] .solution-card p { color: #86efac; }
+:root[data-theme="dark"] .status-banner p { color: #86efac; }
