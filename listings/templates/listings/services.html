@@ -1,55 +1,134 @@
 {% extends "listings/base.html" %} {% load static %} {% block title %}Our Services | Rooms4You{% endblock %}
-{% block meta_description %}How Rooms4You helps tenants find verified rooms and helps landlords find reliable tenants across South Africa, with no hidden fees.{% endblock %}
+{% block meta_description %}What Rooms4You offers: free room search for tenants, free unlimited listings for landlords, optional Pro and Boosts, verified landlords, safety tools, moving help and guest houses.{% endblock %}
 {% block content %}
 
-<h1 class="page-title">Our Services</h1>
+<div class="sv-wrap">
+  <h1 class="page-title">Our Services</h1>
+  <p class="sv-lead">
+    Everything you need to rent a room safely, whether you're looking for one or have one to fill.
+    <strong>Free for tenants, free to list</strong>, and no commission on rent, ever.
+  </p>
 
-<div class="form-shell" style="margin-top: 22px">
-  <div class="form-card">
-    <h3 style="margin: 0 0 10px">What we do</h3>
+  <div class="sv-grid">
+    <!-- TENANTS -->
+    <section class="form-card sv-card">
+      <div class="sv-card-head">
+        <span class="sv-icon" aria-hidden="true">🔎</span>
+        <div>
+          <h2>For tenants</h2>
+          <p class="sv-price">Always free</p>
+        </div>
+      </div>
+      <ul class="sv-list">
+        <li><strong>Search and filter</strong> rooms by area, price and room type</li>
+        <li><strong>Verified landlords</strong>: a badge only after our own checks</li>
+        <li><strong>Contact directly</strong> by call, WhatsApp or in-app chat, with no middleman fees</li>
+        <li><strong>Real response times</strong>: see how fast a landlord actually replies</li>
+        <li><strong>Save rooms and join waitlists</strong> for full rooms, and get notified when they open</li>
+        <li><strong>Guardian4You</strong>: share your live location with someone you trust during a viewing</li>
+      </ul>
+      <a class="btn-primary sv-btn" href="{% url 'room_list' %}">Browse rooms</a>
+    </section>
 
-    <ul style="margin: 0; padding-left: 18px; line-height: 1.8">
-      <li>Help tenants discover safe and affordable rooms faster.</li>
-      <li>
-        Help landlords attract verified tenants and fill vacancies quickly.
-      </li>
-      <li>Verify landlords to reduce scams and build marketplace trust.</li>
-      <li>Provide one-click contact via call, WhatsApp, and email.</li>
-      <li>Offer safety tools like Guardian4You for secure room visits.</li>
-      <li>Build a smarter, more transparent rental ecosystem.</li>
-    </ul>
+    <!-- LANDLORDS -->
+    <section class="form-card sv-card sv-card-accent">
+      <div class="sv-card-head">
+        <span class="sv-icon" aria-hidden="true">🏠</span>
+        <div>
+          <h2>For landlords</h2>
+          <p class="sv-price">Free to list · optional extras</p>
+        </div>
+      </div>
+      <ul class="sv-list">
+        <li><strong>Unlimited free listings</strong>, with no success fee and no commission on rent</li>
+        <li><strong>Enquiries and placement tracking</strong> from first contact to a confirmed move-in</li>
+        <li><strong>Verified Landlord badge</strong> to build tenant trust</li>
+        <li><strong>Listing analytics</strong>: views, contacts and how your rooms perform</li>
+        <li><strong>Pro</strong> from R{{ pro_from }}/month: free monthly Boosts, a ranking lift and new tools</li>
+        <li><strong>Boosts</strong> from R{{ boost_from }}: put a room at the top of its area, labelled "Featured"</li>
+      </ul>
+      <div class="sv-btn-row">
+        <a class="btn-primary sv-btn" href="{% url 'register' %}">List your room free</a>
+        <a class="btn-secondary sv-btn" href="{% url 'pricing_refunds' %}">See pricing</a>
+      </div>
+    </section>
+  </div>
 
-    <h3 style="margin-top: 22px">Why it matters</h3>
+  <!-- MORE -->
+  <h2 class="sv-subtitle">More from Rooms4You</h2>
+  <div class="sv-grid sv-grid-3">
+    <a class="form-card sv-mini" href="{% url 'services:bakkie_home' %}">
+      <span class="sv-icon" aria-hidden="true">🚚</span>
+      <h3>Bakkie4You</h3>
+      <p>Book a verified bakkie driver for moving day.</p>
+    </a>
+    <a class="form-card sv-mini" href="{% url 'stays:guesthouse_list' %}">
+      <span class="sv-icon" aria-hidden="true">🛏️</span>
+      <h3>Guest houses</h3>
+      <p>Short stays with real availability calendars.</p>
+    </a>
+    <a class="form-card sv-mini" href="{% url 'trust:home' %}">
+      <span class="sv-icon" aria-hidden="true">🛡️</span>
+      <h3>Trust Centre</h3>
+      <p>Safety guidance, scam warnings and fraud reporting.</p>
+    </a>
+  </div>
 
+  <!-- STATS -->
+  <div class="stat-grid sv-stats">
+    <div class="stat-card" data-count="{{ rooms_available }}">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Rooms available right now</div>
+    </div>
+    <div class="stat-card" data-count="{{ contacts_made }}">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Tenant connections made</div>
+    </div>
+    <div class="stat-card" data-count="{{ move_ins }}">
+      <div class="stat-number">0</div>
+      <div class="stat-label">Confirmed move-ins</div>
+    </div>
+  </div>
+
+  <section class="form-card sv-why">
+    <h2>Why it matters</h2>
     <p>
-      Thousands of South Africans still rely on unsafe, informal channels to
-      find rental accommodation. Rooms4You brings order, safety, and trust to
-      this underserved market.
+      Too many South Africans still find rooms through unsafe, informal channels, and pay agents or "finders"
+      just to get a phone number. Rooms4You brings order, safety and trust to renting: free for tenants,
+      free to list, and built around verified landlords.
     </p>
-
-    <p style="font-weight: 700; color: #0B6FBF">
-      Trusted rentals. Verified landlords. Safer communities.
-    </p>
-  </div>
+    <p class="sv-tagline">Trusted rentals. Verified landlords. Safer communities.</p>
+  </section>
 </div>
 
-<!-- Stats -->
-<div class="stat-grid" style="margin-top: 22px">
-  <div class="stat-card" data-count="{{ rooms_available }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Rooms Available Right Now</div>
-  </div>
-
-  <div class="stat-card" data-count="{{ contacts_made }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Tenant Connections Made</div>
-  </div>
-
-  <div class="stat-card" data-count="{{ success_matches }}">
-    <div class="stat-number">0</div>
-    <div class="stat-label">Successful Matches</div>
-  </div>
-</div>
+<style>
+  .sv-wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px 40px; }
+  .sv-lead { text-align: center; max-width: 680px; margin: 0 auto 24px; line-height: 1.7; color: var(--text-muted); }
+  .sv-lead strong { color: var(--text); }
+  .sv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .sv-grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .sv-card { display: flex; flex-direction: column; }
+  .sv-card-accent { border: 2px solid #FF8000; }
+  .sv-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .sv-card-head h2 { margin: 0; font-size: 1.25rem; }
+  .sv-price { margin: 2px 0 0; font-weight: 700; color: #0B6FBF; font-size: 0.9rem; }
+  .sv-icon { font-size: 1.8rem; line-height: 1; }
+  .sv-list { list-style: none; padding: 0; margin: 8px 0 16px; line-height: 1.6; flex: 1; }
+  .sv-list li { padding: 7px 0 7px 26px; position: relative; border-bottom: 1px solid var(--border); }
+  .sv-list li:last-child { border-bottom: none; }
+  .sv-list li::before { content: "✓"; position: absolute; left: 2px; color: #16a34a; font-weight: 900; }
+  .sv-btn-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sv-btn { text-align: center; }
+  .sv-subtitle { text-align: center; font-size: 1.3rem; margin: 8px 0 14px; }
+  .sv-mini { display: block; text-decoration: none; color: inherit; transition: transform .15s ease; }
+  .sv-mini:hover { transform: translateY(-2px); }
+  .sv-mini h3 { margin: 8px 0 4px; font-size: 1.05rem; }
+  .sv-mini p { margin: 0; color: var(--text-muted); font-size: 0.92rem; line-height: 1.5; }
+  .sv-stats { margin: 8px 0 24px; }
+  .sv-why h2 { margin-top: 0; font-size: 1.2rem; }
+  .sv-why p { line-height: 1.7; }
+  .sv-tagline { font-weight: 700; color: #0B6FBF; margin-bottom: 0; }
+</style>
 
 {% endblock %} {% block extra_js %}
 <script src="{% static 'js/counter.js' %}"></script>

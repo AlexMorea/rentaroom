@@ -1,43 +1,67 @@
 {# Company disclosures (ECTA s43). Blank settings are simply left out. #}
 <dl class="cd-list">
-  <dt>Business</dt>
-  <dd>{{ COMPANY.trading_name }} is owned and operated by <strong>{{ COMPANY.legal_name }}</strong>, a private company registered in South Africa.</dd>
+  <div class="cd-item cd-item-wide">
+    <dt>Business</dt>
+    <dd>{{ COMPANY.trading_name }} is owned and operated by <strong>{{ COMPANY.legal_name }}</strong>, a private company registered in South Africa.</dd>
+  </div>
 
   {% if COMPANY.reg_number %}
-  <dt>Registration number</dt>
-  <dd>{{ COMPANY.reg_number }}</dd>
+  <div class="cd-item">
+    <dt>Registration number</dt>
+    <dd>{{ COMPANY.reg_number }}</dd>
+  </div>
   {% endif %}
 
   {% if COMPANY.vat_number %}
-  <dt>VAT number</dt>
-  <dd>{{ COMPANY.vat_number }}</dd>
+  <div class="cd-item">
+    <dt>VAT number</dt>
+    <dd>{{ COMPANY.vat_number }}</dd>
+  </div>
   {% endif %}
 
   {% if COMPANY.directors %}
-  <dt>Director(s)</dt>
-  <dd>{{ COMPANY.directors }}</dd>
+  <div class="cd-item">
+    <dt>Director(s)</dt>
+    <dd>{{ COMPANY.directors }}</dd>
+  </div>
   {% endif %}
 
   {% if COMPANY.address %}
-  <dt>Physical address (and address for legal notices)</dt>
-  <dd>{{ COMPANY.address|linebreaksbr }}</dd>
+  <div class="cd-item">
+    <dt>Physical &amp; legal address</dt>
+    <dd>{{ COMPANY.address|linebreaksbr }}</dd>
+  </div>
   {% endif %}
 
   {% if COMPANY.phone %}
-  <dt>Phone</dt>
-  <dd><a href="tel:{{ COMPANY.phone|cut:' ' }}">{{ COMPANY.phone }}</a></dd>
+  <div class="cd-item">
+    <dt>Phone</dt>
+    <dd><a href="tel:{{ COMPANY.phone|cut:' ' }}">{{ COMPANY.phone }}</a></dd>
+  </div>
   {% endif %}
 
-  <dt>Email</dt>
-  <dd>
-    General: <a href="mailto:{{ COMPANY.email }}">{{ COMPANY.email }}</a><br>
-    Support &amp; billing: <a href="mailto:{{ COMPANY.billing_email }}">{{ COMPANY.billing_email }}</a><br>
-    Privacy: <a href="mailto:{{ COMPANY.privacy_email }}">{{ COMPANY.privacy_email }}</a>
-  </dd>
+  <div class="cd-item">
+    <dt>General enquiries</dt>
+    <dd><a href="mailto:{{ COMPANY.email }}">{{ COMPANY.email }}</a></dd>
+  </div>
 
-  <dt>Website</dt>
-  <dd><a href="{{ COMPANY.website }}">{{ COMPANY.website }}</a></dd>
+  <div class="cd-item">
+    <dt>Support &amp; billing</dt>
+    <dd><a href="mailto:{{ COMPANY.billing_email }}">{{ COMPANY.billing_email }}</a></dd>
+  </div>
 
-  <dt>Support hours</dt>
-  <dd>{{ COMPANY.support_hours }}</dd>
+  <div class="cd-item">
+    <dt>Privacy</dt>
+    <dd><a href="mailto:{{ COMPANY.privacy_email }}">{{ COMPANY.privacy_email }}</a></dd>
+  </div>
+
+  <div class="cd-item">
+    <dt>Website</dt>
+    <dd><a href="{{ COMPANY.website }}">{{ COMPANY.website|cut:"https://" }}</a></dd>
+  </div>
+
+  <div class="cd-item">
+    <dt>Support hours</dt>
+    <dd>{{ COMPANY.support_hours }}</dd>
+  </div>
 </dl>

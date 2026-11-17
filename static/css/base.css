@@ -3664,8 +3664,22 @@ display: none;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 18px;
+  margin: 0 auto 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+}
+.legal-toc-label {
+  width: 100%;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 .legal-toc a {
   padding: 6px 12px;
@@ -3676,6 +3690,12 @@ display: none;
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
+}
+.legal-toc a:hover,
+.legal-toc a:focus-visible {
+  border-color: #0B6FBF;
+  color: #0B6FBF;
 }
 .legal-section {
   margin-bottom: 16px;
@@ -3718,25 +3738,36 @@ display: none;
 }
 .cd-list {
   display: grid;
-  grid-template-columns: minmax(140px, 220px) 1fr;
-  gap: 8px 16px;
-  margin: 12px 0;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0;
+  margin: 14px 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-sunken);
+  overflow: hidden;
 }
-.cd-list dt {
-  font-weight: 700;
+.cd-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  /* overlap the list's own bottom edge so the last row has one line, not two */
+  margin-bottom: -1px;
 }
-.cd-list dd {
+.cd-item dt {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.cd-item dd {
   margin: 0;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
-@media (max-width: 560px) {
-  .cd-list {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
-  .cd-list dd {
-    margin-bottom: 10px;
-  }
+.cd-item-wide {
+  grid-column: 1 / -1;
 }
 
 /* Small print shown next to every "pay" button. */
@@ -3745,4 +3776,26 @@ display: none;
   color: var(--text-muted);
   line-height: 1.5;
   margin-top: 8px;
+}
+
+/* Links inside legal text must look like links (light + dark). */
+.legal-section a,
+.cd-item dd a {
+  color: #0B6FBF;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .legal-section a,
+  :root:not([data-theme="light"]) .cd-item dd a {
+    color: #60a5fa;
+  }
+}
+:root[data-theme="dark"] .legal-section a,
+:root[data-theme="dark"] .cd-item dd a {
+  color: #60a5fa;
+}
+.legal-toc a,
+.legal-section .legal-toc a {
+  text-decoration: none;
 }
