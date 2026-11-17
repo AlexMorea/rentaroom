@@ -398,3 +398,38 @@ class MigrationTests(TestCase):
         self.assertEqual(founder.tier, "pro")
         self.assertTrue(founder.on_pro_trial)
         self.assertEqual(founder.founding_discount_percent, 50)
+
+
+class AdminPagesLoadTests(TestCase):
+    """Every billing-related admin page must render (a stray % in an
+    action description once crashed the Memberships list)."""
+
+    def test_admin_pages(self):
+        staff = User.objects.create_superuser("staff", "staff@example.com", "password123")
+        landlord = make_landlord()
+        membership, _ = Membership.objects.get_or_create(user=landlord)
+        room = make_room(landlord)
+        payment = Payment.objects.create(user=landlord, kind=Payment.KIND_BOOST, amount=29, item_name="x", room=room)
+        boost = Boost.objects.create(room=room, landlord=landlord, source=Boost.SOURCE_STAFF,
+                                     starts_at=timezone.now(), ends_at=timezone.now() + timedelta(days=1))
+        self.client.force_login(staff)
+        for url in [
+            reverse("admin:accounts_membership_changelist"),
+            reverse("admin:accounts_membership_change", args=[membership.pk]),
+            reverse("admin:billing_payment_changelist"),
+            reverse("admin:billing_payment_change", args=[payment.pk]),
+            reverse("admin:billing_boost_changelist"),
+            reverse("admin:billing_boost_change", args=[boost.pk]),
+        ]:
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+
+    def test_membership_admin_actions(self):
+        staff = User.objects.create_superuser("staff", "staff@example.com", "password123")
+        landlord = make_landlord()
+        membership, _ = Membership.objects.get_or_create(user=landlord)
+        self.client.force_login(staff)
+        url = reverse("admin:accounts_membership_changelist")
+        self.client.post(url, {"action": "grant_one_month_pro", "_selected_action": [membership.pk]})
+        membership.refresh_from_db()
+        self.assertTrue(membership.on_paid_pro)
+        self.assertEqual(Payment.objects.filter(user=landlord, amount=0).count(), 1)
