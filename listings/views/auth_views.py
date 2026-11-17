@@ -40,6 +40,8 @@ from .helpers import get_display_name, get_or_create_membership
 logger = logging.getLogger(__name__)
 
 OTP_RESEND_SECONDS = 90
+# How long an emailed code stays valid.
+OTP_VALID_MINUTES = 15
 DEVICE_OTP_PURPOSE = "device_verification"
 # Deliberately distinct from the plain "otp_resend_{id}" key used by the
 # signup/email-change OTP flows - sharing one key would mean triggering a
@@ -177,6 +179,24 @@ def register(request):
     )
 
 
+
+def _otp_timer_context(user, purpose=None):
+    """Seconds until the newest code expires and until another can be
+    sent - worked out on the server so a wrong phone clock can't skew
+    the countdowns on the verify pages."""
+    records = PhoneOTP.objects.filter(user=user, is_verified=False)
+    if purpose:
+        records = records.filter(phone_number=purpose)
+    record = records.order_by("-created_at").first()
+    if record is None:
+        return {"otp_expires_in": 0, "otp_resend_in": 0}
+    age = (timezone.now() - record.created_at).total_seconds()
+    return {
+        "otp_expires_in": max(0, int(OTP_VALID_MINUTES * 60 - age)),
+        "otp_resend_in": max(0, int(OTP_RESEND_SECONDS - age)),
+    }
+
+
 def verify_account(request):
     user_id = request.session.get("pending_user_id")
 
@@ -194,16 +214,16 @@ def verify_account(request):
 
         if attempts >= 5:
             messages.error(request, "Too many attempts. Try again later.")
-            return render(request, "listings/verify_account.html")
+            return render(request, "listings/verify_account.html", _otp_timer_context(user))
 
         if not otp_input:
             messages.error(request, "Enter OTP.")
-            return render(request, "listings/verify_account.html")
+            return render(request, "listings/verify_account.html", _otp_timer_context(user))
 
         record = PhoneOTP.objects.filter(
             user=user,
             is_verified=False,
-            created_at__gte=timezone.now() - timedelta(minutes=15)
+            created_at__gte=timezone.now() - timedelta(minutes=OTP_VALID_MINUTES)
         ).order_by("-created_at").first()
 
         if record and compare_digest(record.otp, otp_input):
@@ -251,7 +271,7 @@ def verify_account(request):
 
         cache.set(attempt_key, attempts + 1, timeout=900)
 
-    return render(request, "listings/verify_account.html")
+    return render(request, "listings/verify_account.html", _otp_timer_context(user))
 
 
 @never_cache
@@ -417,17 +437,17 @@ def verify_device(request):
 
         if attempts >= 5:
             messages.error(request, "Too many attempts. Try logging in again later.")
-            return render(request, "listings/verify_device.html")
+            return render(request, "listings/verify_device.html", _otp_timer_context(user, DEVICE_OTP_PURPOSE))
 
         if not otp_input:
             messages.error(request, "Enter the code.")
-            return render(request, "listings/verify_device.html")
+            return render(request, "listings/verify_device.html", _otp_timer_context(user, DEVICE_OTP_PURPOSE))
 
         record = PhoneOTP.objects.filter(
             user=user,
             phone_number=DEVICE_OTP_PURPOSE,
             is_verified=False,
-            created_at__gte=timezone.now() - timedelta(minutes=15),
+            created_at__gte=timezone.now() - timedelta(minutes=OTP_VALID_MINUTES),
         ).order_by("-created_at").first()
 
         if record and compare_digest(record.otp, otp_input):
@@ -454,7 +474,7 @@ def verify_device(request):
         messages.error(request, "Invalid or expired code.")
         cache.set(attempt_key, attempts + 1, timeout=900)
 
-    return render(request, "listings/verify_device.html")
+    return render(request, "listings/verify_device.html", _otp_timer_context(user, DEVICE_OTP_PURPOSE))
 
 
 def resend_device_otp(request):
@@ -504,8 +524,9 @@ def resend_device_otp(request):
 
     return JsonResponse({
         "level": "success",
-        "message": "Code sent successfully.",
-        "cooldown": OTP_RESEND_SECONDS
+        "message": "We've sent you a new code.",
+        "cooldown": OTP_RESEND_SECONDS,
+        "expires_in": OTP_VALID_MINUTES * 60,
     })
 
 
@@ -565,8 +586,9 @@ def resend_account_otp(request):
 
     return JsonResponse({
         "level": "success",
-        "message": "OTP sent successfully.",
-        "cooldown": OTP_RESEND_SECONDS
+        "message": "We've sent you a new code.",
+        "cooldown": OTP_RESEND_SECONDS,
+        "expires_in": OTP_VALID_MINUTES * 60,
     })
 
 
@@ -593,7 +615,7 @@ def confirm_email_change(request):
             user=request.user,
             phone_number="email_change",
             otp=otp,
-            created_at__gte=timezone.now() - timedelta(minutes=15)
+            created_at__gte=timezone.now() - timedelta(minutes=OTP_VALID_MINUTES)
         ).last()
         
         if record and compare_digest(record.otp, otp):
@@ -607,7 +629,7 @@ def confirm_email_change(request):
 
             PhoneOTP.objects.filter(
                 user=request.user,
-                created_at__gte=timezone.now() - timedelta(minutes=15)
+                created_at__gte=timezone.now() - timedelta(minutes=OTP_VALID_MINUTES)
             ).delete()
 
             request.session.pop("pending_email", None)
@@ -736,7 +758,7 @@ def confirm_phone_change(request):
             user=request.user,
             phone_number=pending_phone,
             otp=otp,
-            created_at__gte=timezone.now() - timedelta(minutes=15)
+            created_at__gte=timezone.now() - timedelta(minutes=OTP_VALID_MINUTES)
         ).last()
 
         if record:
