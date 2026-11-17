@@ -49,3 +49,39 @@ class OtpTimerTests(TestCase):
         resp = self.client.get(reverse("verify_device"))
         self.assertTrue(770 <= resp.context["otp_expires_in"] <= 780)
         self.assertEqual(resp.context["otp_resend_in"], 0)
+
+
+class EmailChangeTests(TestCase):
+    """The code goes to the NEW address, the confirm page renders, and
+    the old address is told once the change is made."""
+
+    def setUp(self):
+        from listings.models import Profile
+
+        self.user = User.objects.create_user("old@example.com", "old@example.com", "x")
+        Profile.objects.filter(user=self.user).update(role="tenant")
+        self.client.force_login(self.user)
+
+    def test_full_change(self):
+        from django.core import mail
+
+        resp = self.client.post(reverse("change_email"), {"email": "new@example.com"})
+        self.assertRedirects(resp, reverse("confirm_email_change"))
+        self.assertEqual(mail.outbox[-1].to, ["new@example.com"])
+
+        page = self.client.get(reverse("confirm_email_change"))
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "new@example.com")
+
+        code = PhoneOTP.objects.get(user=self.user, phone_number="email_change").otp
+        self.client.post(reverse("confirm_email_change"), {"otp": code})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "new@example.com")
+        self.assertEqual(mail.outbox[-1].to, ["old@example.com"])
+        self.assertIn("was changed", mail.outbox[-1].subject)
+
+    def test_wrong_code_changes_nothing(self):
+        self.client.post(reverse("change_email"), {"email": "new@example.com"})
+        self.client.post(reverse("confirm_email_change"), {"otp": "000000"})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "old@example.com")

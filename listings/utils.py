@@ -68,7 +68,7 @@ def generate_otp():
 
 def send_otp_email(user, otp):
     send_template_email(
-        subject="Your Rooms4You OTP Code",
+        subject="Your Rooms4You verification code",
         to_email=user.email,
         template="emails/otp.html",
         context={
@@ -89,7 +89,7 @@ def send_otp_whatsapp(user, otp):
 
 def send_new_device_otp_email(user, otp, *, device_label=""):
     send_template_email(
-        subject="Confirm it's you - new sign-in to Rooms4You",
+        subject="Confirm it's you: a new sign-in to Rooms4You",
         to_email=user.email,
         template="emails/new_device_otp.html",
         context={

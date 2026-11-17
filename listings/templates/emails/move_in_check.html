@@ -1,0 +1,33 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>Did the move-in go ahead?</h1>
+
+<p>Hello {{ person.first_name|default:"there" }},</p>
+
+{% if is_tenant %}
+<p>
+Your move-in date for "{{ room.title }}" was {{ placement.move_in_date|date:"j F Y" }}. Please let us know
+whether you moved in. It only takes a moment, and it builds your rental history on Rooms4You.
+</p>
+{% else %}
+<p>
+The move-in date for {{ placement.tenant.first_name|default:"your tenant" }} at "{{ room.title }}" was
+{{ placement.move_in_date|date:"j F Y" }}. Please confirm whether they moved in. Confirmed move-ins build your
+track record and show tenants that your rooms really get filled.
+</p>
+{% endif %}
+
+<div class="info-card">
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p style="margin:0;"><strong>Move-in date:</strong> {{ placement.move_in_date|date:"j F Y" }}</p>
+</div>
+
+<p style="text-align:center;">
+  <a href="https://www.rooms4you.co.za/placements/{{ placement.id }}/confirm-move-in/" class="btn">Confirm the move-in</a>
+</p>
+
+<p class="muted">There's no fee when a tenant moves in. We only ask both sides so the record is accurate.</p>
+
+{% endblock %}

@@ -82,7 +82,7 @@ class Command(BaseCommand):
 
         if placement.landlord.email:
             send_template_email(
-                subject=f'An enquiry on "{placement.room.title}" needs an update',
+                subject=f'An enquiry about "{placement.room.title}" is waiting on you',
                 to_email=placement.landlord.email,
                 template="emails/placement_stalled_landlord.html",
                 context=context,

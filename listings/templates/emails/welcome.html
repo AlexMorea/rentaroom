@@ -2,87 +2,88 @@
 
 {% block content %}
 
-<h1>Welcome to Rooms4You 🎉</h1>
-
-<p>
-Hello {{ user.first_name|default:user.email }},
-</p>
-
-<p>
-Thank you for joining Rooms4You.
-</p>
-
-<p>
-Our mission is simple:
-<strong>make finding accommodation easier, safer, and more accessible for everyone in South Africa.</strong>
-</p>
-
-<p>
-Whether you're looking for your next room or advertising available accommodation, you're now part of a growing community connecting tenants and landlords across the country.
-</p>
-
 {% if user.profile.role == "landlord" %}
 
-<h3>For Landlords</h3>
+<h1>Welcome to Rooms4You, {{ user.first_name|default:"and thank you for joining" }}</h1>
 
 <p>
-You can now create listings, upload photos, manage enquiries, and reach prospective tenants faster from a single platform.
+Your landlord account is ready. Listing on Rooms4You is free, with no limit on the number of rooms
+and no commission on your rent, so you can start showing your rooms to tenants straight away.
 </p>
+
+{% if user.membership.is_founding %}
+<div class="info-card">
+  <p style="margin:0;">
+    <strong>You're a Founding Landlord.</strong> Because you joined early, you have Pro free until
+    {{ user.membership.trial_end|date:"j F Y" }}, and after that you keep 50% off Pro for as long as you
+    stay subscribed. You don't need to do anything to claim it.
+  </p>
+</div>
+{% endif %}
+
+<h2>Getting your first room seen</h2>
+<ol class="steps">
+  <li><strong>Add your room</strong> with the price, what's included and the area. Tenants see the suburb, never your street address.</li>
+  <li><strong>Upload clear photos</strong> of the room, the bathroom and the entrance. Listings with good photos get far more enquiries.</li>
+  <li><strong>Reply quickly.</strong> Your average reply time shows on your profile, and fast replies earn a "Fast responder" badge.</li>
+  <li><strong>Confirm your listing every two weeks</strong> when we remind you, so tenants know the room is really available.</li>
+</ol>
+
+<p style="text-align:center;">
+  <a href="https://www.rooms4you.co.za/rooms/new/" class="btn">Add your first room</a>
+</p>
+
+<div class="info-card">
+  <p style="margin:0 0 10px;"><strong>Keeping yourself safe</strong></p>
+  <p style="margin:0 0 10px;">
+    Arrange viewings at a time when someone else is home, and ask to see a tenant's ID before you sign a lease
+    or hand over keys.
+  </p>
+  <p style="margin:0;">
+    Rooms4You will never ask you to pay us over WhatsApp or into a personal bank account. The only place you
+    can pay us is the Plans page on our website, through PayFast.
+  </p>
+</div>
 
 {% else %}
 
-<h3>For Tenants</h3>
+<h1>Welcome to Rooms4You, {{ user.first_name|default:"and thank you for joining" }}</h1>
 
 <p>
-You can now browse available rooms, save favourites, contact landlords directly, and discover accommodation opportunities in your area and beyond.
+Your account is ready. Searching for a room and contacting landlords on Rooms4You is free, and it always will be.
 </p>
+
+<h2>Finding the right room</h2>
+<ol class="steps">
+  <li><strong>Search by area and budget</strong>, then save the rooms you like so you can compare them later.</li>
+  <li><strong>Look for the Verified badge.</strong> It means our team has checked that landlord.</li>
+  <li><strong>Contact landlords directly</strong> by call, WhatsApp or in-app message. There's no middleman and no finder's fee.</li>
+  <li><strong>Join the waitlist</strong> on a full room and we'll let you know the moment it opens up.</li>
+</ol>
+
+<p style="text-align:center;">
+  <a href="https://www.rooms4you.co.za/rooms/" class="btn">Browse rooms</a>
+</p>
+
+<div class="info-card">
+  <p style="margin:0 0 10px;"><strong>Keeping yourself safe</strong></p>
+  <p style="margin:0;">
+    Always view a room in person, and make sure you're dealing with the real landlord, before you pay a deposit
+    or any money at all. If someone pushes you to pay before a viewing, please report the listing to us.
+  </p>
+</div>
 
 {% endif %}
 
-<div class="info-card">
-
-<p style="margin:0;">
-<strong>Safety First:</strong><br>
-Always verify a property in person before making any payment, and avoid sending money without confirming the legitimacy of the listing and landlord.
-</p>
-
-</div>
-
 <p>
-We're just getting started.
-</p>
-
-<p>
-Imagine a future where every available room in every township, suburb, and city across South Africa can be discovered instantly from anywhere, at any time.
-</p>
-
-<p>
-That is the vision we're building toward - and we're excited to have you with us from the beginning.
-</p>
-
-<p>
-Tell your friends. Tell your family. Tell your neighbours.
-</p>
-
-<p>
-The more people who join Rooms4You, the easier it becomes for everyone to find accommodation and fill vacancies.
-</p>
-
-<p style="text-align:center;">
-<a href="{{ app_url }}" class="btn">
-Explore Rooms4You
-</a>
-</p>
-
-<p>
-Thank you for being part of the journey.
+If you get stuck or have a question, email us at
+<a href="mailto:support@rooms4you.co.za">support@rooms4you.co.za</a> and we'll be glad to help.
 </p>
 
 <p>
 Warm regards,<br>
-<strong>Alex "MathMetiX" Morea</strong><br>
-Founder & CEO<br>
-Rooms4You
+<strong>Alex Morea</strong><br>
+Founder, Rooms4You
 </p>
 
 {% endblock %}

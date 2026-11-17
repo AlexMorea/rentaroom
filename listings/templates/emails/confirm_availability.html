@@ -4,35 +4,30 @@
 
 <h1>Is "{{ room.title }}" still available?</h1>
 
-<p>
-Hello {{ room.owner.first_name|default:"there" }},
-</p>
+<p>Hello {{ room.owner.first_name|default:"there" }},</p>
 
 <p>
-It's been {{ days }} days since you last confirmed this listing, and tenants
-are still seeing it as available. A quick confirmation keeps it accurate —
-and keeps it ranking well in search.
+It's been {{ days }} days since you last confirmed this listing, and tenants are still seeing it as available.
+Please let us know whether that's still true. Listings that are kept up to date rank higher in search.
 </p>
 
 <div class="info-card">
   <p><strong>Listing:</strong> {{ room.title }}</p>
-  <p><strong>Location:</strong> {{ room.location }}</p>
-  <p><strong>Price:</strong> R{{ room.price }}</p>
+  <p><strong>Area:</strong> {{ room.location }}</p>
+  <p style="margin:0;"><strong>Rent:</strong> R{{ room.price|floatformat:0 }} a month</p>
 </div>
 
-<a href="{{ confirm_url }}" class="btn">
-  ✅ Yes, still available
-</a>
+<p style="text-align:center;">
+  <a href="{{ confirm_url }}" class="btn">Yes, it's still available</a>
+</p>
+<p style="text-align:center;">
+  <a href="{{ vacate_url }}" class="btn btn-secondary">It's been rented, mark it occupied</a>
+</p>
 
-<a href="{{ vacate_url }}" class="btn btn-secondary">
-  It's rented — mark occupied
-</a>
-
-<p style="margin-top: 24px;">
-If we don't hear back within {{ auto_hide_days }} days of your last
-confirmation, we'll temporarily hide this listing so tenants don't waste a
-trip on a room that might no longer be free — you can turn it back on
-any time from your dashboard.
+<p class="muted" style="margin-top:24px;">
+Both buttons work without logging in. If we don't hear from you within {{ auto_hide_days }} days of your last
+confirmation, we'll hide the listing for now so tenants don't make a trip to a room that's already taken. You can
+switch it back on at any time.
 </p>
 
 {% endblock %}

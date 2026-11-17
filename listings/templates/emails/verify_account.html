@@ -2,27 +2,21 @@
 
 {% block content %}
 
-<h1>Verify Your Account</h1>
+<h1>Verify your account</h1>
 
-<p>
-Use the verification code below to complete your Rooms4You account setup.
-</p>
+<p>Hello {{ user.first_name|default:"there" }},</p>
+
+<p>Enter this code on Rooms4You to finish setting up your account:</p>
 
 <div class="otp-box">{{ otp }}</div>
 
-<p>
-This verification code will expire in 15 minutes.
-</p>
+<p>The code stays valid for 15 minutes.</p>
 
 <div class="info-card">
   <p style="margin:0;">
-    For your security, never share this code with anyone. Rooms4You will never
-    ask for your verification code by phone, email, or WhatsApp.
+    Please don't share this code with anyone. Rooms4You will never ask for it by phone, email or WhatsApp.
+    If you didn't create a Rooms4You account, you can ignore this email.
   </p>
 </div>
-
-<p>
-If you did not create a Rooms4You account, you can safely ignore this email.
-</p>
 
 {% endblock %}

@@ -1,21 +1,23 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "emails/base_email.html" %}
 
-<h2>Confirm your new email</h2>
+{% block content %}
 
-<p>Hi {{ user.first_name|default:"there" }},</p>
+<h1>Confirm your new email address</h1>
+
+<p>Hello {{ user.first_name|default:"there" }},</p>
 
 <p>
-  We received a request to update the email address linked to your Rooms4You
-  account.
+You asked to use this address, {{ new_email }}, for your Rooms4You account. Enter this code on Rooms4You to
+confirm the change:
 </p>
 
-<p>Click the button below to confirm this change.</p>
+<div class="otp-box">{{ otp }}</div>
 
-<a href="{{ confirm_link }}" class="btn"> Confirm Email Change </a>
+<p>The code stays valid for 15 minutes.</p>
 
 <div class="info-card">
-  <p style="margin: 0">
-    If you did not request this change, you can safely ignore this email.
+  <p style="margin:0;">
+    If you didn't ask for this, you can ignore this email. Nothing will change unless the code is entered.
   </p>
 </div>
 

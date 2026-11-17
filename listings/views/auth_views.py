@@ -22,6 +22,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from accounts.devices import is_known_device, remember_device
+from utils.email import send_template_email
 from accounts.state_engine import get_user_state
 
 from ..forms import GoogleCompleteProfileForm, UserRegisterForm
@@ -620,8 +621,22 @@ def confirm_email_change(request):
         
         if record and compare_digest(record.otp, otp):
 
+            old_email = request.user.email
             request.user.email = pending_email
             request.user.save()
+
+            # Tell the OLD address, so the owner would notice a change
+            # they didn't make.
+            if old_email and old_email != pending_email:
+                try:
+                    send_template_email(
+                        subject="Your Rooms4You email address was changed",
+                        to_email=old_email,
+                        template="emails/confirm_email_change.html",
+                        context={"user": request.user, "new_email": pending_email},
+                    )
+                except Exception:
+                    logger.exception("Failed to send email-changed notice for user %s", request.user.pk)
 
             profile = request.user.profile
             profile.is_email_verified = True
@@ -641,9 +656,11 @@ def confirm_email_change(request):
 
             return redirect("profile")
 
-        messages.error(request, "Invalid OTP.")
+        messages.error(request, "That code isn't right, or it has expired. Please check it and try again.")
 
-    return render(request, "listings/confirm_email.html")
+    return render(request, "listings/confirm_email.html", {
+        "pending_email": request.session.get("pending_email", ""),
+    })
 
 
 @login_required
@@ -684,14 +701,27 @@ def change_email(request):
             otp=otp
         )
 
-        send_otp_email(user, otp)
-        send_otp_whatsapp(user, otp)
+        # The code goes to the NEW address: entering it proves the person
+        # actually owns that inbox before we switch the account over (a
+        # typo would otherwise lock them out, and a hijacked session could
+        # quietly move the account to an attacker's address).
+        try:
+            send_template_email(
+                subject="Your code to confirm your new email address",
+                to_email=new_email,
+                template="emails/change_email.html",
+                context={"user": user, "otp": otp, "new_email": new_email},
+            )
+        except Exception:
+            logger.exception("Failed to send email-change code for user %s", user.pk)
+            messages.error(request, "We couldn't send a code to that address. Please check it and try again.")
+            return redirect("change_email")
 
         request.session["pending_email"] = new_email
 
         messages.success(
             request,
-            "OTP sent to your current email."
+            f"We've sent a 6-digit code to {new_email}. Enter it below to confirm the change."
         )
 
         return redirect("confirm_email_change")

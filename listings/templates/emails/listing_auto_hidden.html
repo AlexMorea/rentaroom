@@ -2,33 +2,29 @@
 
 {% block content %}
 
-<h1>We've paused "{{ room.title }}"</h1>
+<h1>We've hidden "{{ room.title }}" for now</h1>
+
+<p>Hello {{ room.owner.first_name|default:"there" }},</p>
 
 <p>
-Hello {{ room.owner.first_name|default:"there" }},
-</p>
-
-<p>
-We hadn't heard back after a few reminders, so we've temporarily hidden this
-listing from search — nobody likes turning up to a room that's already gone.
-This protects both your reputation with tenants and theirs' with you.
+We sent a few reminders asking whether this room is still available but didn't hear back, so we've taken the
+listing out of search for the time being. That way tenants won't travel to see a room that may already be taken.
 </p>
 
 <div class="info-card">
   <p><strong>Listing:</strong> {{ room.title }}</p>
-  <p><strong>Location:</strong> {{ room.location }}</p>
-  <p><strong>Last confirmed:</strong> {{ days }} days ago</p>
+  <p><strong>Area:</strong> {{ room.location }}</p>
+  <p style="margin:0;"><strong>Last confirmed:</strong> {{ days }} days ago</p>
 </div>
 
-<p>Still available? One click brings it straight back:</p>
+<p>If the room is still available, one tap puts it straight back:</p>
 
-<a href="{{ reactivate_url }}" class="btn">
-  ✅ Yes, it's still available — reactivate
-</a>
+<p style="text-align:center;">
+  <a href="{{ reactivate_url }}" class="btn">It's available, show it again</a>
+</p>
 
-<p style="margin-top: 24px;">
-Nothing else about your listing was changed — your photos, description and
-price are exactly as you left them.
+<p class="muted" style="margin-top:24px;">
+Nothing else has changed. Your photos, description and price are exactly as you left them.
 </p>
 
 {% endblock %}

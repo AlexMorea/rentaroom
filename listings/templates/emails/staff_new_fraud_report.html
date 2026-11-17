@@ -3,14 +3,14 @@
 {% block content %}
 
 {% if is_repeat_offender %}
-<h1>🚨 Repeat report — {{ report.get_category_display }}</h1>
+<h1>🚨 Repeat report: {{ report.get_category_display }}</h1>
 <p>
 This is at least the second <strong>open</strong> report against the same
-{% if report.room %}listing{% else %}account{% endif %} — worth reviewing
+{% if report.room %}listing{% else %}account{% endif %}: worth reviewing
 ahead of the queue.
 </p>
 {% else %}
-<h1>New fraud report — {{ report.get_category_display }}</h1>
+<h1>New fraud report: {{ report.get_category_display }}</h1>
 {% endif %}
 
 <div class="info-card">

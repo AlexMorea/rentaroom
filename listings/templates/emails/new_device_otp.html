@@ -2,25 +2,22 @@
 
 {% block content %}
 
-<h1>New sign-in to your account</h1>
+<h1>Confirm it's you</h1>
+
+<p>Hello {{ user.first_name|default:"there" }},</p>
 
 <p>
-Hello {{ user.first_name|default:user.email }},
-</p>
-
-<p>
-We noticed a sign-in to your Rooms4You account from a device we don't
-recognise{% if device_label %} ({{ device_label }}){% endif %}. Enter the
-code below to confirm it's you and finish signing in.
+Someone just signed in to your Rooms4You account from a device we haven't seen
+before{% if device_label %} ({{ device_label }}){% endif %}. If that was you, enter this code to finish signing in:
 </p>
 
 <div class="otp-box">{{ otp }}</div>
 
-<p>This code expires in 15 minutes.</p>
+<p>The code stays valid for 15 minutes.</p>
 
 <div class="info-card">
-  <p style="margin: 0;">
-    If this wasn't you, don't enter this code - and consider changing your
+  <p style="margin:0;">
+    If this wasn't you, don't enter the code. Your account is still protected, but we recommend changing your
     password from a device you trust.
   </p>
 </div>

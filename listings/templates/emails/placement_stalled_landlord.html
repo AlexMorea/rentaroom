@@ -2,34 +2,28 @@
 
 {% block content %}
 
-<h1>An enquiry needs an update</h1>
+<h1>An enquiry is waiting on you</h1>
+
+<p>Hello {{ placement.landlord.first_name|default:"there" }},</p>
 
 <p>
-Hello {{ placement.landlord.first_name|default:"there" }},
-</p>
-
-<p>
-{{ placement.tenant.first_name|default:"A tenant" }}'s enquiry on
-<strong>{{ room.title }}</strong> has been sitting at
-"{{ placement.get_status_display }}" for {{ days }} days with no update.
+{{ placement.tenant.first_name|default:"A tenant" }} asked about "{{ room.title }}" and the enquiry has been
+at "{{ placement.get_status_display }}" for {{ days }} days. A quick update keeps things moving and helps you
+fill the room sooner.
 </p>
 
 <div class="info-card">
   <p><strong>Listing:</strong> {{ room.title }}</p>
-  <p><strong>Tenant:</strong> {{ placement.tenant.get_full_name|default:placement.tenant.email }}</p>
-  <p><strong>Status:</strong> {{ placement.get_status_display }}</p>
+  <p><strong>Tenant:</strong> {{ placement.tenant.get_full_name|default:placement.tenant.first_name|default:"Tenant" }}</p>
+  <p style="margin:0;"><strong>Status:</strong> {{ placement.get_status_display }}</p>
 </div>
 
 <p>
-Following up keeps the rental process moving and helps you fill the room
-faster - schedule a viewing, confirm a decision, or mark the placement as
-cancelled if it's no longer going ahead.
+You could arrange a viewing, record a decision, or mark the enquiry as cancelled if it isn't going ahead.
 </p>
 
 <p style="text-align:center;">
-<a href="https://rooms4you.co.za/dashboard/" class="btn">
-Go to dashboard
-</a>
+  <a href="https://www.rooms4you.co.za/placements/landlord/" class="btn">Update the enquiry</a>
 </p>
 
 {% endblock %}
