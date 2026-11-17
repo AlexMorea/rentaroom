@@ -699,3 +699,27 @@ class ScheduledJobRun(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class BlockedUser(models.Model):
+    """One person blocking another from messaging them. Checked in both
+    directions when a message is sent, so a blocked person can't keep
+    writing and the blocker isn't left with a one-sided thread."""
+
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocks_made")
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(fields=["blocker", "blocked"], name="uniq_block_pair"),
+        ]
+
+    def __str__(self):
+        return f"{self.blocker} blocked {self.blocked}"
+
+    @classmethod
+    def between(cls, a, b) -> bool:
+        return cls.objects.filter(
+            models.Q(blocker=a, blocked=b) | models.Q(blocker=b, blocked=a)
+        ).exists()

@@ -45,3 +45,14 @@ def company_details(request):
             "legal_last_updated": settings.LEGAL_LAST_UPDATED,
         }
     }
+
+
+def unread_messages(request):
+    """Unread message count for the menu badges (one indexed count query,
+    only for signed-in users)."""
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
+        return {"unread_messages_count": 0}
+    from listings.models import Message
+
+    return {"unread_messages_count": Message.objects.filter(recipient=user, is_read=False).count()}

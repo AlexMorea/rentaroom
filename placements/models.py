@@ -523,7 +523,7 @@ class Waitlist(models.Model):
             notify_user(
                 entry.tenant,
                 title="A room you're waiting for is available!",
-                body=f'"{room.title}" just opened up - contact the landlord now.',
+                body=f'"{room.title}" has just opened up. Contact the landlord soon, before someone else does.',
                 url=reverse("room_detail", args=[room.id]),
             )
             notified += 1

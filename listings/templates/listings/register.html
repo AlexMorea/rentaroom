@@ -187,9 +187,9 @@
               </li>
             </ul>
             <small class="pr-hint pr-pw-tip">
-              💡 Tip: avoid your name, birthday, or common words - a short
-              unrelated phrase (e.g. "Blue7Taxi!Rain") is both strong and easy
-              to remember.
+              💡 Tip: avoid your name, your birthday and common words. A few
+              unrelated words joined together, such as "Blue7Taxi!Rain", are
+              strong and easy to remember.
             </small>
 
             {{ form.password1.errors }}
@@ -857,7 +857,7 @@
         label.textContent = "Weak password";
       } else if (metCount <= 2) {
         fill.style.background = "#f59e0b";
-        label.textContent = "Okay - a little further to go";
+        label.textContent = "Okay, a little further to go";
       } else if (metCount === 3) {
         fill.style.background = "#f59e0b";
         label.textContent = "Good password";

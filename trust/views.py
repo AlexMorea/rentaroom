@@ -48,8 +48,8 @@ def report_fraud(request):
             report = form.save(user=request.user)
             messages.success(
                 request,
-                f"Report received — reference {report.reference_code}. "
-                "Our Trust & Safety team will review it and may reach out "
+                f"Thank you. Your report reference is {report.reference_code}. "
+                "Our Trust & Safety team will review it and may contact you "
                 "if you left contact details."
             )
             return redirect("trust:report_fraud")

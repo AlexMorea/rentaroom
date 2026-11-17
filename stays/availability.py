@@ -93,15 +93,15 @@ def confirm_booking(booking):
     Returns (success: bool, error_message: str | None).
     """
     if booking.status != Booking.STATUS_REQUESTED:
-        return False, "This booking is no longer pending - it may have already been decided."
+        return False, "This booking has already been accepted or declined."
 
     if not is_range_available(
         booking.guesthouse, booking.check_in, booking.check_out,
         exclude_booking_id=booking.id,
     ):
         return False, (
-            "These dates are no longer available - another booking was "
-            "confirmed for an overlapping date range."
+            "These dates are no longer available because another booking "
+            "was confirmed for some of the same nights."
         )
 
     booking.status = Booking.STATUS_CONFIRMED

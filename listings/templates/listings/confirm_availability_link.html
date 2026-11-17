@@ -14,7 +14,7 @@
 
     {% elif action == "confirm" %}
 
-      <h2 class="auth-title">✅ Thanks — confirmed</h2>
+      <h2 class="auth-title">✅ Thanks, your listing is confirmed</h2>
       <p style="opacity: 0.8; margin: 0 0 14px">
         "{{ room.title }}" is confirmed up to date and will keep showing as available.
       </p>
@@ -22,7 +22,7 @@
 
     {% elif action == "vacate" %}
 
-      <h2 class="auth-title">Got it — marked occupied</h2>
+      <h2 class="auth-title">Got it, we've marked the room as occupied</h2>
       <p style="opacity: 0.8; margin: 0 0 14px">
         "{{ room.title }}" has been marked as no longer available. You can switch it back
         to available any time from your dashboard.

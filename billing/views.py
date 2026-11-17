@@ -67,7 +67,7 @@ def _render_checkout(request, payment: Payment, extra: dict):
 @require_POST
 def pro_checkout(request):
     if not payfast.payments_enabled():
-        messages.info(request, "Online payments open soon - nothing is due right now.")
+        messages.info(request, "Online payments open soon, and nothing is due right now.")
         return redirect("membership")
 
     membership, _ = Membership.objects.get_or_create(user=request.user)
@@ -75,8 +75,8 @@ def pro_checkout(request):
     if membership.on_pro_trial:
         messages.info(
             request,
-            f"Pro is free for you until {_day(membership.trial_end)} - "
-            "there's nothing to pay yet.",
+            f"Pro is free for you until {_day(membership.trial_end)}, "
+            "so there's nothing to pay yet.",
         )
         return redirect("membership")
 
@@ -199,9 +199,9 @@ def payment_return(request, payment_id):
     landlord what's happening."""
     payment = get_object_or_404(Payment, pk=payment_id, user=request.user)
     if payment.status == Payment.STATUS_COMPLETE:
-        messages.success(request, "Payment received - thank you!")
+        messages.success(request, "Payment received. Thank you!")
     else:
-        messages.info(request, "Thanks! We're confirming your payment with PayFast - this usually takes under a minute.")
+        messages.info(request, "Thanks! We're confirming your payment with PayFast, which usually takes less than a minute.")
     return redirect("membership" if payment.kind == Payment.KIND_PRO else "landlord_rooms")
 
 
@@ -211,7 +211,7 @@ def payment_cancelled(request, payment_id):
     if payment.status == Payment.STATUS_PENDING:
         payment.status = Payment.STATUS_CANCELLED
         payment.save(update_fields=["status"])
-    messages.info(request, "Payment cancelled - you haven't been charged.")
+    messages.info(request, "Payment cancelled. You haven't been charged.")
     return redirect("membership" if payment.kind == Payment.KIND_PRO else "landlord_rooms")
 
 

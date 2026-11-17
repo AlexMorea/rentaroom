@@ -144,16 +144,16 @@ def contact(request):
                 ).send()
                 messages.success(
                     request,
-                    "Thanks for reaching out - we'll get back to you shortly.",
+                    "Thanks for getting in touch. We'll reply as soon as we can.",
                 )
                 return redirect("contact")
             except BadHeaderError:
-                messages.error(request, "Invalid header found - please try again.")
+                messages.error(request, "Part of your message couldn't be sent. Please check it and try again.")
             except Exception:
                 logger.exception("Failed to send contact form email")
                 messages.error(
                     request,
-                    "Something went wrong sending your message - please email "
+                    "We couldn't send your message just now. Please email "
                     f"{CONTACT_RECIPIENT_EMAIL} directly instead.",
                 )
         else:

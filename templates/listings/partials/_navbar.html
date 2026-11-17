@@ -54,6 +54,11 @@
 
     {% endif %}
 
+    <a href="{% url 'inbox' %}" class="nav-messages">
+      Messages
+      <span class="nav-badge" data-unread-badge {% if not unread_messages_count %}hidden{% endif %}>{{ unread_messages_count }}</span>
+    </a>
+
     <a href="{% url 'profile' %}">
       Profile
     </a>
@@ -117,6 +122,7 @@
   <span class="burger-bar"></span>
   <span class="burger-bar"></span>
   <span class="burger-bar"></span>
+  {% if user.is_authenticated %}<span class="burger-dot" data-unread-dot {% if not unread_messages_count %}hidden{% endif %} aria-label="You have unread messages"></span>{% endif %}
 </button>
 
 

@@ -77,14 +77,14 @@ def report_tenant_unreachable(request, placement_id):
         return redirect("placements:landlord_dashboard")
 
     if placement.tenant_flagged_unreachable_at:
-        messages.info(request, "You've already reported this - our Trust & Safety team has it.")
+        messages.info(request, "You've already reported this, and our Trust & Safety team is looking into it.")
         return redirect("placements:landlord_dashboard")
 
     placement.flag_tenant_unreachable(reported_by=request.user)
 
     messages.success(
         request,
-        "Thanks - we've flagged this for our Trust & Safety team to follow up.",
+        "Thank you. We've passed this to our Trust & Safety team to follow up.",
     )
     return redirect("placements:landlord_dashboard")
 
@@ -105,7 +105,7 @@ def join_waitlist(request, room_id):
     if _room_has_vacancy(room):
         messages.info(
             request,
-            "This room already has vacancies - no need to wait, contact the landlord directly.",
+            "This room has a vacancy right now, so there's no need to wait. Contact the landlord directly.",
         )
         return redirect("room_detail", pk=room.id)
 
@@ -125,8 +125,8 @@ def join_waitlist(request, room_id):
     if created:
         messages.success(
             request,
-            f"You're #{entry.position} in line for \"{room.title}\" - "
-            "we'll email and notify you the moment it opens up.",
+            f"You're number {entry.position} in line for \"{room.title}\". "
+            "We'll email you and send a notification as soon as it opens up.",
         )
     else:
         messages.info(request, "You're already on the waitlist for this room.")
@@ -293,7 +293,7 @@ def confirm_move_in(request, placement_id):
                 as_tenant=is_this_tenant,
                 confirmed=form.confirmed_bool(),
             )
-            messages.success(request, "Thanks - your response has been recorded.")
+            messages.success(request, "Thanks, we've recorded your answer.")
             return redirect(
                 "placements:tenant_dashboard" if is_this_tenant else "placements:landlord_dashboard"
             )

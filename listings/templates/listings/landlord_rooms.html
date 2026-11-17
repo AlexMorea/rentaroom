@@ -37,7 +37,7 @@
             <div class="lr-completeness-fill" style="width: {{ room.completeness_percent }}%;"></div>
           </div>
           <span class="lr-completeness-text">
-            {{ room.completeness_percent }}% complete — {{ room.completeness_missing|first }}
+            {{ room.completeness_percent }}% complete. Next: {{ room.completeness_missing|first }}
           </span>
         </div>
         {% endif %}

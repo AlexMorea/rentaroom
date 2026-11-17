@@ -145,8 +145,8 @@ class UserRegisterForm(forms.Form):
 
         if is_disposable_email(email):
             raise ValidationError(
-                "Please sign up with a permanent email address - "
-                "temporary/disposable inboxes aren't accepted."
+                "Please sign up with an email address you'll keep using. "
+                "We don't accept temporary or disposable inboxes."
             )
 
         return email

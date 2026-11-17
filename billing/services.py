@@ -46,7 +46,7 @@ def _apply_pro(payment: Payment):
     notify_user(
         payment.user,
         title="You're on Rooms4You Pro",
-        body=f"Payment of R{payment.amount} received - thank you!",
+        body=f"We've received your payment of R{payment.amount}. Thank you!",
         url=reverse("membership"),
     )
 

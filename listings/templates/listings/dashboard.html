@@ -11,63 +11,124 @@ Dashboard | Rooms4You
 
 <div class="ld-page">
 
-<!-- ================= DASHBOARD HEADER ================= -->
+<!-- ================= GREETING ================= -->
+<div class="ld-hello">
+  <div>
+    <h1 class="ld-hello-title">{{ greeting }}, {{ user.first_name|default:"there" }}</h1>
+    <p class="ld-hello-sub">
+      {% if rooms %}
+        {{ rooms|length }} room listing{{ rooms|length|pluralize }} · {{ week_views }} view{{ week_views|pluralize }} and {{ week_contacts }} contact{{ week_contacts|pluralize }} in the last 7 days
+      {% else %}
+        Welcome to your dashboard. Let's get your first room in front of tenants.
+      {% endif %}
+    </p>
+  </div>
+  <a href="{{ create_room_url }}" class="btn-primary ld-hello-btn">+ Add a room</a>
+</div>
 
-{% include "listings/partials/_dashboard_header.html" with title="Landlord Dashboard" button_url=create_room_url button_text="List Your Room in 2 Minutes" %}
+{% if rooms %}
+<!-- ================= NEEDS YOUR ATTENTION ================= -->
+<section class="form-card ld-attention" aria-labelledby="ld-attention-title">
+  <h2 id="ld-attention-title" class="ld-attention-title">Needs your attention</h2>
+  {% for item in attention %}
+    <a href="{{ item.url }}" class="ld-todo">
+      <span class="ld-todo-icon" aria-hidden="true">{{ item.icon }}</span>
+      <span class="ld-todo-text">{{ item.text }}</span>
+      <span class="ld-todo-action">{{ item.action }} →</span>
+    </a>
+  {% empty %}
+    <p class="ld-allclear">✓ You're all caught up. We'll let you know when a tenant gets in touch.</p>
+  {% endfor %}
+</section>
 
-<!-- ================= TWO WAYS TO EARN ================= -->
+<!-- ================= STATS ================= -->
+<div class="ld-kpis">
+  <div class="ld-kpi"><span class="ld-kpi-num">{{ week_views }}</span><span class="ld-kpi-label">Views, 7 days</span></div>
+  <div class="ld-kpi"><span class="ld-kpi-num">{{ week_contacts }}</span><span class="ld-kpi-label">Contacts, 7 days</span></div>
+  <a class="ld-kpi" href="{% url 'inbox' %}"><span class="ld-kpi-num">{{ unread_messages_count }}</span><span class="ld-kpi-label">Unread messages</span></a>
+  <a class="ld-kpi" href="{% url 'contacts_analytics' %}"><span class="ld-kpi-num">{{ contact_count }}</span><span class="ld-kpi-label">Contacts, all time</span></a>
+</div>
+{% else %}
+<!-- ================= FIRST LISTING (no rooms yet) ================= -->
 <div class="ld-choice-section">
-  <h2 class="ld-choice-title">Two ways to earn on Rooms4You</h2>
+  <h2 class="ld-choice-title">What would you like to list?</h2>
   <div class="ld-choice-grid">
     <div class="ld-choice-card">
       <span class="ld-choice-icon">🏠</span>
-      <h3 class="ld-choice-card-title">List a Room</h3>
-      <p class="ld-choice-card-desc">Monthly rentals - tenants find and message you directly.</p>
-      <a href="{% url 'create_room' %}" class="btn-primary ld-choice-btn">List a Room</a>
+      <h3 class="ld-choice-card-title">A room to rent</h3>
+      <p class="ld-choice-card-desc">Monthly rentals. Tenants find your room and contact you directly.</p>
+      <a href="{% url 'create_room' %}" class="btn-primary ld-choice-btn">List a room</a>
     </div>
     <div class="ld-choice-card">
       <span class="ld-choice-icon">🏡</span>
-      <h3 class="ld-choice-card-title">List a Guest House or BnB</h3>
-      <p class="ld-choice-card-desc">Nightly stays - guests request dates, you accept or decline.</p>
-      <a href="{% url 'stays:create_guesthouse' %}" class="btn-primary ld-choice-btn">List a Guest House</a>
+      <h3 class="ld-choice-card-title">A guest house or BnB</h3>
+      <p class="ld-choice-card-desc">Nightly stays. Guests request dates and you accept or decline.</p>
+      <a href="{% url 'stays:create_guesthouse' %}" class="btn-primary ld-choice-btn">List a guest house</a>
     </div>
   </div>
 </div>
-
-<!-- ================= PROFILE WARNING ================= -->
-
-{% if show_profile_warning %}
-<div class="scam-warning">
-  <strong>Complete your profile</strong>
-
-  <p>
-    Add at least one room listing and ensure your contact details are properly
-    configured so tenants can contact you smoothly.
-  </p>
-</div>
 {% endif %}
 
-<!-- ================= STATS ================= -->
+{% if rooms %}
+<!-- ================= YOUR ROOMS ================= -->
 
-<div class="dashboard-grid ld-stats-grid">
-  <a href="{% url 'landlord_rooms' %}" class="stat-card stat-link ld-stat-card">
-    <div class="ld-stat-icon">🏠</div>
-    <div class="stat-number ld-stat-number">{{ rooms.count }}</div>
-    <div class="stat-label ld-stat-label">Rooms</div>
-  </a>
+<div class="dashboard-section ld-section">
+  <div class="section-header ld-listings-head">
+    <h2>Your listings</h2>
+    {% if rooms %}<a href="{% url 'landlord_rooms' %}" class="ld-see-all">Manage all →</a>{% endif %}
+  </div>
 
-  <a href="{% url 'landlord_images_hub' %}" class="stat-card stat-link ld-stat-card">
-    <div class="ld-stat-icon">🖼️</div>
-    <div class="stat-number ld-stat-number">{{ image_count }}</div>
-    <div class="stat-label ld-stat-label">Images</div>
-  </a>
+  <div class="dashboard-rooms ld-rooms" id="your-rooms">
+    {% for room in rooms %}
 
-  <a href="{% url 'contacts_analytics' %}" class="stat-card stat-link ld-stat-card">
-    <div class="ld-stat-icon">💬</div>
-    <div class="stat-number ld-stat-number">{{ contact_count }}</div>
-    <div class="stat-label ld-stat-label">Contacts</div>
-  </a>
+    <div class="room-row ld-room-row">
+      <div class="room-row-content ld-room-content">
+        <strong class="room-row-title ld-room-title"> {{ room.title }} </strong>
+
+        <div class="room-row-location ld-room-location">📍 {{ room.location }}</div>
+
+        <div class="ld-room-badge-row">
+          <span class="availability-badge {{ room.availability_state }} ld-availability ld-availability-{{ room.availability_state }}">
+            {{ room.availability_badge_text }}
+          </span>
+        </div>
+
+        <div class="room-row-stats ld-room-stats">
+          👁 {{ room.view_count }} views &nbsp;·&nbsp; 💬 {{ room.contact_total }} contacts &nbsp;·&nbsp; {{ room.ctr }}% CTR
+        </div>
+      </div>
+
+      <div class="room-actions ld-room-actions">
+        <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form ld-vacancy-form">
+          {% csrf_token %}
+          {% if room.is_available and room.available_units > 0 %}
+            <button type="submit" class="vacancy-toggle-btn mark-occupied ld-vacancy-btn ld-vacancy-btn-occupied">Mark Occupied</button>
+          {% else %}
+            <button type="submit" class="vacancy-toggle-btn mark-available ld-vacancy-btn ld-vacancy-btn-available">Mark Available</button>
+          {% endif %}
+        </form>
+
+        <div class="ld-room-links">
+          <a href="{% url 'upload_room_images' room.id %}" class="ld-action-link"> Images </a>
+          <a href="{% url 'edit_room' room.id %}" class="ld-action-link"> Edit </a>
+          <a href="{% url 'billing:boost_room' room.id %}" class="ld-action-link"> ⭐ Boost </a>
+          <a
+            href="{% url 'delete_room' room.id %}"
+            onclick="return confirm('Delete this room?');"
+            class="danger-link ld-action-link ld-danger-link"
+          >
+            Delete
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% empty %}
+    {% include "listings/partials/_empty_state.html" with title="No listings yet" message="Start by creating your first room listing and make it visible to tenants." button_url=create_room_url button_text="List Your First Room in 2 Minutes" %} {% endfor %}
+  </div>
 </div>
+
+{% endif %}
 
 <!-- ================= MEMBERSHIP CTA ================= -->
 
@@ -135,7 +196,7 @@ Dashboard | Rooms4You
         <p>Tenant enquiries (click to view all)</p>
       </div>
 
-      <span class="inbox-count ld-inbox-count"> {{ messages_received|length }} recent → </span>
+      <span class="inbox-count ld-inbox-count">{% if unread_messages_count %}<strong class="ld-unread">{{ unread_messages_count }} unread</strong>{% else %}All read{% endif %} →</span>
     </div>
 
     <div class="inbox-preview-list ld-inbox-list">
@@ -169,66 +230,42 @@ Dashboard | Rooms4You
   </div>
 </a>
 
-<!-- ================= YOUR ROOMS ================= -->
-
-<div class="dashboard-section ld-section">
-  <div class="section-header">
-    <h2>Your Listings</h2>
-  </div>
-
-  <div class="dashboard-rooms ld-rooms" id="your-rooms">
-    {% for room in rooms %}
-
-    <div class="room-row ld-room-row">
-      <div class="room-row-content ld-room-content">
-        <strong class="room-row-title ld-room-title"> {{ room.title }} </strong>
-
-        <div class="room-row-location ld-room-location">📍 {{ room.location }}</div>
-
-        <div class="ld-room-badge-row">
-          <span class="availability-badge {{ room.availability_state }} ld-availability ld-availability-{{ room.availability_state }}">
-            {{ room.availability_badge_text }}
-          </span>
-        </div>
-
-        <div class="room-row-stats ld-room-stats">
-          👁 {{ room.view_count }} views &nbsp;·&nbsp; 💬 {{ room.contact_total }} contacts &nbsp;·&nbsp; {{ room.ctr }}% CTR
-        </div>
-      </div>
-
-      <div class="room-actions ld-room-actions">
-        <form method="post" action="{% url 'toggle_room_vacancy' room.id %}" class="vacancy-toggle-form ld-vacancy-form">
-          {% csrf_token %}
-          {% if room.is_available and room.available_units > 0 %}
-            <button type="submit" class="vacancy-toggle-btn mark-occupied ld-vacancy-btn ld-vacancy-btn-occupied">Mark Occupied</button>
-          {% else %}
-            <button type="submit" class="vacancy-toggle-btn mark-available ld-vacancy-btn ld-vacancy-btn-available">Mark Available</button>
-          {% endif %}
-        </form>
-
-        <div class="ld-room-links">
-          <a href="{% url 'upload_room_images' room.id %}" class="ld-action-link"> Images </a>
-          <a href="{% url 'edit_room' room.id %}" class="ld-action-link"> Edit </a>
-          <a href="{% url 'billing:boost_room' room.id %}" class="ld-action-link"> ⭐ Boost </a>
-          <a
-            href="{% url 'delete_room' room.id %}"
-            onclick="return confirm('Delete this room?');"
-            class="danger-link ld-action-link ld-danger-link"
-          >
-            Delete
-          </a>
-        </div>
-      </div>
-    </div>
-
-    {% empty %}
-    {% include "listings/partials/_empty_state.html" with title="No listings yet" message="Start by creating your first room listing and make it visible to tenants." button_url=create_room_url button_text="List Your First Room in 2 Minutes" %} {% endfor %}
-  </div>
-</div>
-
 </div><!-- /.ld-page -->
 
 <style>
+  /* ===== Greeting, to-do list and KPIs ===== */
+  .ld-hello { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin: 8px 0 18px; }
+  .ld-hello-title { margin: 0; font-size: 1.6rem; }
+  .ld-hello-sub { margin: 4px 0 0; color: var(--text-muted); }
+  .ld-hello-btn { white-space: nowrap; }
+  .ld-attention { margin-bottom: 16px; }
+  .ld-attention-title { margin: 0 0 8px; font-size: 1.1rem; }
+  .ld-todo {
+    display: flex; align-items: center; gap: 12px; padding: 12px 4px;
+    border-top: 1px solid var(--border); color: var(--text); text-decoration: none;
+  }
+  .ld-todo:first-of-type { border-top: none; }
+  .ld-todo-icon { font-size: 1.25rem; }
+  .ld-todo-text { flex: 1; line-height: 1.45; }
+  .ld-todo-action { color: var(--link); font-weight: 700; white-space: nowrap; font-size: 0.9rem; }
+  .ld-allclear { margin: 0; color: var(--text-muted); }
+  .ld-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+  .ld-kpi {
+    display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--border); color: var(--text); text-decoration: none;
+  }
+  .ld-kpi-num { font-size: 1.5rem; font-weight: 800; }
+  .ld-kpi-label { font-size: 0.8rem; color: var(--text-muted); }
+  .ld-listings-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .ld-see-all { color: var(--link); font-weight: 700; text-decoration: none; }
+  @media (max-width: 640px) {
+    .ld-kpis { grid-template-columns: repeat(2, 1fr); }
+    .ld-hello-title { font-size: 1.35rem; }
+    .ld-todo { display: grid; grid-template-columns: 30px 1fr; row-gap: 4px; align-items: start; }
+    .ld-todo-action { grid-column: 2; }
+    .ld-hello-btn { width: 100%; text-align: center; }
+  }
+
   /* ===================================================================
      LANDLORD DASHBOARD - functional additions + visual pass
      Same defensive approach validated tonight: new ld- prefixed classes
@@ -386,6 +423,9 @@ Dashboard | Rooms4You
     font-weight: 700;
     color: var(--link);
     white-space: nowrap;
+  }
+  .ld-unread {
+    color: #dc2626;
   }
   .ld-fees-due-banner {
     margin-top: 14px;

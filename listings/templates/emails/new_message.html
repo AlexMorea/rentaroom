@@ -1,0 +1,24 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+
+<h1>You have a new message</h1>
+
+<p>Hello {{ recipient.first_name|default:"there" }},</p>
+
+<p>{{ sender_name }} sent you a message about "{{ room.title }}":</p>
+
+<div class="info-card">
+  <p style="margin:0; white-space:pre-wrap;">{{ excerpt }}</p>
+</div>
+
+<p style="text-align:center;">
+  <a href="{{ thread_url }}" class="btn">Read and reply</a>
+</p>
+
+<p class="muted">
+We only email you about the first unread message in a conversation, so you won't get a flood of emails.
+Open the conversation to catch up on anything else that's been said.
+</p>
+
+{% endblock %}

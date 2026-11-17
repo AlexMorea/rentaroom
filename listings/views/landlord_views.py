@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
@@ -6,6 +7,8 @@ from django.core.paginator import Paginator
 from django.db.models import Avg, Count, Prefetch, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils import timezone
 
 from placements.models import Placement, Waitlist
 
@@ -171,6 +174,91 @@ def landlord_images_hub(request):
     )
 
 
+def _greeting():
+    hour = timezone.localtime().hour
+    if hour < 12:
+        return "Good morning"
+    if hour < 17:
+        return "Good afternoon"
+    return "Good evening"
+
+
+def _dashboard_attention(user, rooms):
+    """The short to-do list at the top of the dashboard, most urgent
+    first, plus this week's views and contacts. Each item says what to do
+    and links straight to where it's done."""
+    week_ago = timezone.now() - timedelta(days=7)
+    week = RoomStat.objects.filter(room__owner=user, created_at__gte=week_ago)
+    week_views = week.filter(stat_type="view").count()
+    week_contacts = week.filter(stat_type__startswith="contact").count()
+
+    items = []
+    unread = Message.objects.filter(recipient=user, is_read=False).count()
+    if unread:
+        items.append({
+            "icon": "💬",
+            "text": f"You have {unread} unread message{'s' if unread != 1 else ''} from tenants.",
+            "url": reverse("inbox"),
+            "action": "Read and reply",
+        })
+
+    awaiting = Placement.objects.filter(
+        landlord=user, landlord_confirmed_move_in__isnull=True, move_in_date__lte=timezone.localdate(),
+    ).exclude(status__in=Placement.TERMINAL_STATUSES).count()
+    if awaiting:
+        items.append({
+            "icon": "🏠",
+            "text": f"{awaiting} tenant move-in{'s' if awaiting != 1 else ''} to confirm.",
+            "url": reverse("placements:landlord_dashboard"),
+            "action": "Confirm",
+        })
+
+    new_enquiries = Placement.objects.filter(
+        landlord=user, status=Placement.STATUS_INTERESTED, created_at__gte=timezone.now() - timedelta(days=14),
+    ).count()
+    if new_enquiries:
+        items.append({
+            "icon": "🤝",
+            "text": f"{new_enquiries} new enquir{'ies' if new_enquiries != 1 else 'y'} in the last two weeks. "
+                    "Arrange a viewing or update where things stand.",
+            "url": reverse("placements:landlord_dashboard"),
+            "action": "View enquiries",
+        })
+
+    stale = [r for r in rooms if r.is_stale]
+    if stale:
+        items.append({
+            "icon": "⏰",
+            "text": (f'"{stale[0].title}" needs confirming so tenants know it\'s still available.'
+                     if len(stale) == 1 else f"{len(stale)} listings need confirming so tenants know they're still available."),
+            "url": reverse("landlord_rooms"),
+            "action": "Confirm",
+        })
+
+    no_photos = [r for r in rooms if not r.images.exists()]
+    if no_photos:
+        room = no_photos[0]
+        items.append({
+            "icon": "📷",
+            "text": (f'"{room.title}" has no photos. Listings with photos get far more enquiries.'
+                     if len(no_photos) == 1 else f"{len(no_photos)} listings have no photos yet."),
+            "url": reverse("upload_room_images", args=[room.id]),
+            "action": "Add photos",
+        })
+
+    profile = getattr(user, "profile", None)
+    if rooms and profile is not None and not profile.is_verified_landlord:
+        items.append({
+            "icon": "✅",
+            "text": "Get the Verified Landlord badge. Tenants trust verified landlords and contact them more often.",
+            "url": reverse("trust:verification"),
+            "action": "How it works",
+        })
+
+    return items, week_views, week_contacts
+
+
+
 @login_required
 @user_passes_test(is_landlord)
 def dashboard(request):
@@ -215,6 +303,8 @@ def dashboard(request):
         status=Placement.STATUS_SUCCESS_FEE_DUE,
     ).count()
 
+    attention, week_views, week_contacts = _dashboard_attention(request.user, rooms)
+
     return render(
         request,
         "listings/dashboard.html",
@@ -224,6 +314,10 @@ def dashboard(request):
             "contact_count": contact_count,
             "show_profile_warning": show_profile_warning,
             "membership": membership,
+            "attention": attention,
+            "week_views": week_views,
+            "week_contacts": week_contacts,
+            "greeting": _greeting(),
 
             # CRM inbox
             "messages_received": messages_received,

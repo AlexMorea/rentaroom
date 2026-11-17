@@ -74,6 +74,6 @@ class Command(BaseCommand):
         notify_user(
             user,
             title="Add your first listing",
-            body="You haven't posted a room yet - we're advertising listings free during pre-launch.",
+            body="You haven't added a room yet. Listing is free and only takes about two minutes.",
             url="/rooms/new/",
         )

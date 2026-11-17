@@ -1,58 +1,83 @@
 {% extends "listings/base.html" %}
-{% block title %}Messages{% endblock %}
+{% block title %}Messages | Rooms4You{% endblock %}
 {% block content %}
 
-<h1 class="page-title">Messages</h1>
+<div class="ib-wrap">
+  <h1 class="page-title">Messages</h1>
+  <p class="text-muted ib-lead">
+    {% if user.profile.role == "landlord" %}
+      Conversations with tenants about your rooms. Replying quickly helps you fill rooms sooner and earns you a "Fast responder" badge.
+    {% else %}
+      Your conversations with landlords. Your email address isn't shared through messages.
+    {% endif %}
+  </p>
 
-<p class="text-muted" style="text-align:center; margin-bottom:20px;">
-  All conversations happen here, inside Rooms4You - no phone numbers or
-  emails are ever shown between tenants and landlords.
-</p>
-
-<div style="display:flex; flex-direction:column; gap:10px; max-width:720px; margin:0 auto;">
-  {% for conv in conversations %}
-
-  <a
-    href="{% url 'conversation_thread' conv.room.id conv.other_user.id %}"
-    class="form-card"
-    style="display:flex; gap:14px; align-items:center; text-decoration:none; color:inherit;"
-  >
-    <div
-      style="
-        width:48px; height:48px; min-width:48px; border-radius:50%;
-        background:linear-gradient(135deg, #0B6FBF, #002A5C);
-        color:#fff; display:flex; align-items:center; justify-content:center;
-        font-weight:800; font-size:1.1rem;
-      "
-    >
-      {{ conv.other_user.first_name|default:conv.other_user.username|slice:":1"|upper }}
-    </div>
-
-    <div style="flex:1; min-width:0;">
-      <div style="display:flex; justify-content:space-between; gap:10px;">
-        <strong>{{ conv.other_user.get_full_name|default:conv.other_user.username }}</strong>
-        <small class="text-muted" style="white-space:nowrap;">{{ conv.last_message.created_at|timesince }} ago</small>
+  <div class="ib-list">
+    {% for conv in conversations %}
+    <a href="{% url 'conversation_thread' conv.room.id conv.other_user.id %}"
+       class="form-card ib-row {% if conv.unread_count %}ib-unread{% endif %}">
+      <div class="ib-avatar">
+        {{ conv.other_user.first_name|default:conv.other_user.username|slice:":1"|upper }}
       </div>
 
-      <p class="text-muted" style="margin:2px 0 4px; font-size:0.85rem;">
-        📍 {{ conv.room.title }}
-      </p>
+      <div class="ib-body">
+        <div class="ib-top">
+          <strong class="ib-name">{{ conv.other_user.get_full_name|default:conv.other_user.first_name|default:conv.other_user.username }}</strong>
+          <small class="text-muted ib-time">{{ conv.last_message.created_at|timesince }} ago</small>
+        </div>
+        <p class="text-muted ib-room">About {{ conv.room.title }}</p>
+        <p class="ib-preview">
+          {% if conv.last_message.sender_id == request.user.id %}You: {% endif %}{{ conv.last_message.body }}
+        </p>
+      </div>
 
-      <p style="margin:0; font-size:0.9rem; color:var(--dm-fg-334155, #334155); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-        {% if conv.last_message.sender_id == request.user.id %}You: {% endif %}{{ conv.last_message.body }}
-      </p>
+      {% if conv.unread_count %}
+        <span class="ib-count" aria-label="{{ conv.unread_count }} unread">{{ conv.unread_count }}</span>
+      {% endif %}
+    </a>
+    {% empty %}
+    <div class="form-card ib-empty">
+      <div class="ib-empty-icon">💬</div>
+      {% if user.profile.role == "landlord" %}
+        <p><strong>No messages yet.</strong></p>
+        <p class="text-muted">When a tenant writes to you about one of your rooms, the conversation will appear here and we'll let you know by email.</p>
+        <a href="{% url 'landlord_rooms' %}" class="btn-primary">Check my listings</a>
+      {% else %}
+        <p><strong>No messages yet.</strong></p>
+        <p class="text-muted">Found a room you like? Open the listing and tap "Message landlord" to ask a question or arrange a viewing.</p>
+        <a href="{% url 'room_list' %}" class="btn-primary">Browse rooms</a>
+      {% endif %}
     </div>
-
-    {% if conv.unread_count %}
-    <span class="badge" style="background:#0B6FBF; color:#fff;">{{ conv.unread_count }}</span>
-    {% endif %}
-  </a>
-
-  {% empty %}
-  <div class="form-card" style="text-align:center;">
-    <p class="text-muted">No conversations yet.</p>
+    {% endfor %}
   </div>
-  {% endfor %}
 </div>
+
+<style>
+  .ib-wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 32px; }
+  .ib-lead { text-align: center; margin: -6px auto 20px; max-width: 560px; line-height: 1.6; }
+  .ib-list { display: flex; flex-direction: column; gap: 10px; }
+  .ib-row { display: flex; gap: 14px; align-items: center; text-decoration: none; color: inherit; transition: transform .15s ease; }
+  .ib-row:hover { transform: translateY(-1px); }
+  .ib-unread { border-left: 4px solid var(--link); }
+  .ib-avatar {
+    width: 48px; height: 48px; min-width: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, #0B6FBF, #002A5C); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;
+  }
+  .ib-body { flex: 1; min-width: 0; }
+  .ib-top { display: flex; justify-content: space-between; gap: 10px; }
+  .ib-time { white-space: nowrap; }
+  .ib-room { margin: 2px 0 4px; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ib-preview { margin: 0; font-size: 0.9rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ib-unread .ib-preview, .ib-unread .ib-name { color: var(--text); font-weight: 700; }
+  .ib-count {
+    min-width: 24px; padding: 3px 8px; border-radius: 999px; background: #dc2626; color: #fff;
+    font-size: 0.75rem; font-weight: 800; text-align: center;
+  }
+  .ib-empty { text-align: center; }
+  .ib-empty-icon { font-size: 2rem; }
+  .ib-empty p { margin: 6px 0; }
+  .ib-empty .btn-primary { display: inline-block; margin-top: 10px; }
+</style>
 
 {% endblock %}

@@ -90,7 +90,7 @@ class Command(BaseCommand):
         notify_user(
             placement.landlord,
             title="An enquiry needs an update",
-            body=f'"{placement.room.title}" has a stalled enquiry - tap to follow up.',
+            body=f'"{placement.room.title}" has an enquiry waiting on you. Tap to follow up.',
             url=reverse("placements:landlord_dashboard"),
         )
         if hasattr(placement.landlord, "profile"):
