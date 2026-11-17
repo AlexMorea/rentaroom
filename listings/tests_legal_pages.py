@@ -61,3 +61,19 @@ class PayConsentTests(TestCase):
         self.assertIn("Go Pro", body)
         self.assertIn("By paying you agree", body)
         self.assertIn(reverse("pricing_refunds"), body)
+
+
+class TimezoneTests(TestCase):
+    def test_site_runs_on_south_african_time(self):
+        from datetime import datetime, timezone as dt_tz
+
+        from django.conf import settings
+        from django.template import Context, Template
+        from django.utils import timezone
+
+        self.assertEqual(settings.TIME_ZONE, "Africa/Johannesburg")
+        self.assertTrue(settings.USE_TZ)
+        # 22:30 UTC is 00:30 the next day in South Africa.
+        moment = datetime(2026, 11, 17, 22, 30, tzinfo=dt_tz.utc)
+        self.assertEqual(Template('{{ m|date:"j M H:i" }}').render(Context({"m": moment})), "18 Nov 00:30")
+        self.assertEqual(timezone.localtime(moment).date().day, 18)

@@ -756,7 +756,7 @@ def create_room(request):
             subject="Your room is now live on Rooms4You",
             to_email=request.user.email,
             template="emails/room_live.html",
-            context={"room": room, "year": 2026}
+            context={"room": room}
         ))
 
         transaction.on_commit(lambda: auto_flag_if_scammy(

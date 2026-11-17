@@ -225,8 +225,7 @@ def track_contact(request, room_id, method):
                 template="emails/new_inquiry.html",
                 context={
                     "room": room,
-                    "user": request.user,
-                    "year": 2026
+                    "user": request.user
                 }
             )
         except (SMTPException, OSError):

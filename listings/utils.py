@@ -73,8 +73,7 @@ def send_otp_email(user, otp):
         template="emails/otp.html",
         context={
             "user": user,
-            "otp": otp,
-            "year": 2026
+            "otp": otp
         }
     )
 
@@ -113,8 +112,7 @@ def send_welcome_email(user):
         template="emails/welcome.html",
         context={
             "user": user,
-            "app_url": "https://rooms4you.co.za",
-            "year": 2026,
+            "app_url": "https://rooms4you.co.za"
         }
     )
 
