@@ -112,13 +112,11 @@ Dashboard | Rooms4You
           <a href="{% url 'upload_room_images' room.id %}" class="ld-action-link"> Images </a>
           <a href="{% url 'edit_room' room.id %}" class="ld-action-link"> Edit </a>
           <a href="{% url 'billing:boost_room' room.id %}" class="ld-action-link"> ⭐ Boost </a>
-          <a
-            href="{% url 'delete_room' room.id %}"
-            onclick="return confirm('Delete this room?');"
-            class="danger-link ld-action-link ld-danger-link"
-          >
-            Delete
-          </a>
+          <form method="post" action="{% url 'delete_room' room.id %}" class="inline-delete-form"
+                onsubmit="return confirm('Delete this listing? This can\'t be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="danger-link ld-action-link ld-danger-link">Delete</button>
+          </form>
         </div>
       </div>
     </div>

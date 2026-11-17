@@ -3907,3 +3907,13 @@ display: none;
 .nav-badge[hidden] {
   display: none;
 }
+
+/* Delete buttons that sit in a row of links. */
+.inline-delete-form {
+  display: inline;
+  margin: 0;
+}
+.inline-delete-form button {
+  font: inherit;
+  cursor: pointer;
+}

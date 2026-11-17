@@ -48,6 +48,15 @@
 
         <form method="post" class="pr-form">
           {% csrf_token %} {{ form.non_field_errors }}
+          {% if form.errors %}
+          <div class="pr-error-summary" role="alert" id="prErrorSummary" tabindex="-1">
+            <strong>Please check the following and try again:</strong>
+            <ul>
+              {% for field in form %}{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}{% endfor %}
+              {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+          {% endif %}
 
           <!-- HONEYPOT: invisible to real users, only a bot fills this -->
           <div class="pr-hp-field" aria-hidden="true">
@@ -84,17 +93,17 @@
           <div class="pr-row">
             <div class="pr-field">
               <label>First name</label>
-              {{ form.first_name }}
+              {{ form.first_name }}{% if form.first_name.errors %}<div class="pr-field-error" role="alert">{{ form.first_name.errors.0 }}</div>{% endif %}
             </div>
             <div class="pr-field">
               <label>Last name</label>
-              {{ form.last_name }}
+              {{ form.last_name }}{% if form.last_name.errors %}<div class="pr-field-error" role="alert">{{ form.last_name.errors.0 }}</div>{% endif %}
             </div>
           </div>
 
           <div class="pr-field">
             <label>Email</label>
-            {{ form.email }}
+            {{ form.email }}{% if form.email.errors %}<div class="pr-field-error" role="alert">{{ form.email.errors.0 }}</div>{% endif %}
             <small class="pr-hint"
               >📧 We'll send a verification code here</small
             >
@@ -113,20 +122,20 @@
             <label>Phone Number</label>
             <div class="pr-phone-row">
               <div class="pr-phone-code">{{ form.country_code }}</div>
-              <div class="pr-phone-number">{{ form.phone_number }}</div>
+              <div class="pr-phone-number">{{ form.phone_number }}{% if form.phone_number.errors %}<div class="pr-field-error" role="alert">{{ form.phone_number.errors.0 }}</div>{% endif %}</div>
             </div>
           </div>
 
           <div class="pr-field">
             <label>WhatsApp Number (optional)</label>
-            {{ form.whatsapp_number }}
+            {{ form.whatsapp_number }}{% if form.whatsapp_number.errors %}<div class="pr-field-error" role="alert">{{ form.whatsapp_number.errors.0 }}</div>{% endif %}
           </div>
 
           <!-- TENANT ONLY -->
           <div id="tenantFields">
             <div class="pr-field">
               <label>Persona</label>
-              {{ form.persona }}
+              {{ form.persona }}{% if form.persona.errors %}<div class="pr-field-error" role="alert">{{ form.persona.errors.0 }}</div>{% endif %}
             </div>
           </div>
 
@@ -134,15 +143,15 @@
           <div id="landlordFields" class="pr-hidden-fields">
             <div class="pr-field">
               <label>Alternative number</label>
-              {{ form.alt_no }}
+              {{ form.alt_no }}{% if form.alt_no.errors %}<div class="pr-field-error" role="alert">{{ form.alt_no.errors.0 }}</div>{% endif %}
             </div>
             <div class="pr-field">
               <label>Home address</label>
-              {{ form.home_address }}
+              {{ form.home_address }}{% if form.home_address.errors %}<div class="pr-field-error" role="alert">{{ form.home_address.errors.0 }}</div>{% endif %}
             </div>
             <div class="pr-field">
               <label>Postal code</label>
-              {{ form.postal_code }}
+              {{ form.postal_code }}{% if form.postal_code.errors %}<div class="pr-field-error" role="alert">{{ form.postal_code.errors.0 }}</div>{% endif %}
             </div>
           </div>
 
@@ -450,6 +459,23 @@
     text-decoration: underline;
   }
 
+
+  .pr-field-error {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #dc2626;
+  }
+  .pr-error-summary {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    background: var(--dm-bg-fef2f2, #fef2f2);
+    color: var(--dm-fg-991b1b, #991b1b);
+    font-size: 0.9rem;
+  }
+  .pr-error-summary ul { margin: 6px 0 0; padding-left: 18px; }
   .pr-role-cards {
     display: flex;
     gap: 12px;
@@ -778,6 +804,12 @@
 </script>
 
 {% if GOOGLE_OAUTH_CLIENT_ID %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var summary = document.getElementById("prErrorSummary");
+    if (summary) { summary.scrollIntoView({ block: "center" }); summary.focus({ preventScroll: true }); }
+  });
+</script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
   function handleGoogleCredential(response) {

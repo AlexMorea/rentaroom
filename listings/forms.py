@@ -168,33 +168,24 @@ class UserRegisterForm(forms.Form):
             self.add_error("phone_number", "Phone number is required.")
 
 
-        # ================= GOOGLE ADDRESS VALIDATION =================
-        # only validate for landlords
+        # ================= LANDLORD ADDRESS =================
+        # Used for landlord verification only, never shown publicly. Many
+        # township addresses aren't in Google's suggestions, so a typed
+        # address is fine as long as it has enough detail to verify.
         if role == "landlord":
-            home_address = cleaned.get("home_address")
-
+            home_address = (cleaned.get("home_address") or "").strip()
             if not home_address:
-                self.add_error(
-                    "home_address",
-                    "Please select a valid address from Google suggestions."
-                )
+                self.add_error("home_address", "Please enter your home address. We use it to verify landlords and never show it publicly.")
+            elif len(home_address) < 10:
+                self.add_error("home_address", "Please add a bit more detail to your address, such as the street and the area.")
 
-            elif len(home_address.strip()) < 10:
-                self.add_error(
-                    "home_address",
-                    "Address looks too short. Please select a valid Google address."
-                )
-
-                
         # ================= ROLE RULES =================
         if role == "tenant" and not cleaned.get("persona"):
             self.add_error("persona", "Select your persona.")
 
         if role == "landlord":
-            if not cleaned.get("home_address"):
-                self.add_error("home_address", "Address required.")
             if not cleaned.get("postal_code"):
-                self.add_error("postal_code", "Postal code required.")
+                self.add_error("postal_code", "Please enter your postal code.")
 
             # POPIA CONSENT ENFORCEMENT (GLOBAL RULE)
             if not cleaned.get("terms_accepted"):
@@ -317,9 +308,9 @@ class GoogleCompleteProfileForm(forms.Form):
 
         if role == "landlord":
             if not cleaned.get("home_address"):
-                self.add_error("home_address", "Address required.")
+                self.add_error("home_address", "Please enter your home address. We use it to verify landlords and never show it publicly.")
             if not cleaned.get("postal_code"):
-                self.add_error("postal_code", "Postal code required.")
+                self.add_error("postal_code", "Please enter your postal code.")
             if not cleaned.get("terms_accepted"):
                 self.add_error(
                     "terms_accepted",
@@ -554,7 +545,7 @@ class RoomForm(forms.ModelForm):
 
             "contact_whatsapp": forms.TextInput(attrs={
                 "class": "input",
-                "placeholder": "optional",
+                "placeholder": "Leave blank if it's the same number",
                 "inputmode": "tel",
                 "autocomplete": "tel"
             }),
@@ -616,10 +607,21 @@ class RoomForm(forms.ModelForm):
             role = None
 
         if role == "landlord":
-            for fld in ("contact_phone", "contact_whatsapp"):
-                if fld in self.fields:
-                    self.fields[fld].required = True
-                    self.fields[fld].widget.attrs.setdefault("required", "required")
+            # The call number is required. WhatsApp is optional: when it's
+            # blank, the listing's WhatsApp button uses the call number
+            # (see track_contact), so asking twice only slows landlords down.
+            self.fields["contact_phone"].required = True
+            self.fields["contact_phone"].widget.attrs.setdefault("required", "required")
+
+            # New listing: start from the number the landlord signed up with.
+            profile = getattr(self.user, "profile", None)
+            if not self.is_bound and not getattr(self.instance, "pk", None) and profile is not None:
+                number = (getattr(profile, "phone_number", "") or "").strip()
+                if number:
+                    self.initial.setdefault("contact_phone", number)
+                whatsapp = (getattr(profile, "whatsapp_number", "") or "").strip()
+                if whatsapp:
+                    self.initial.setdefault("contact_whatsapp", whatsapp)
 
     def clean(self):
         cleaned = super().clean()
@@ -666,7 +668,7 @@ class RoomForm(forms.ModelForm):
             else:
                 cleaned["contact_whatsapp"] = ""
 
-        # Landlord must provide both contact phone and WhatsApp for listings
+        # Landlords must give a number tenants can call (WhatsApp falls back to it)
         try:
             role = getattr(self.user, "profile", None) and self.user.profile.role
         except AttributeError:
@@ -677,11 +679,6 @@ class RoomForm(forms.ModelForm):
                 self.add_error(
                     "contact_phone",
                     "Landlords must provide a contact phone number."
-                )
-            if not cleaned.get("contact_whatsapp"):
-                self.add_error(
-                    "contact_whatsapp",
-                    "Landlords must provide a WhatsApp number."
                 )
 
         # availability

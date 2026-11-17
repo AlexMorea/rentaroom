@@ -134,14 +134,14 @@
       <div class="form-section-title">📞 Contact Details</div>
 
       <div class="form-field">
-        <label for="id_contact_phone">Call Phone</label>
+        <label for="id_contact_phone">Phone number for calls</label>
         {{ form.contact_phone }} {% if form.contact_phone.errors %}
         <div class="field-error">{{ form.contact_phone.errors }}</div>
         {% endif %}
       </div>
 
       <div class="form-field">
-        <label for="id_contact_whatsapp">WhatsApp Number</label>
+        <label for="id_contact_whatsapp">WhatsApp number (if different)</label>
         {{ form.contact_whatsapp }} {% if form.contact_whatsapp.errors %}
         <div class="field-error">{{ form.contact_whatsapp.errors }}</div>
         {% endif %}

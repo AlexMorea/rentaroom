@@ -139,3 +139,21 @@ class LandlordDashboardTests(TestCase):
         body = self.client.get(reverse("create_room")).content.decode()
         self.assertEqual(body.count('class="cr-step form-grid"'), 4)
         self.assertIn("room-steps", body)
+
+
+class DeleteRoomTests(TestCase):
+    def test_delete_button_posts_and_link_cannot_delete(self):
+        landlord = User.objects.create_user("del@example.com", "del@example.com", "x")
+        Profile.objects.filter(user=landlord).update(role="landlord")
+        room = Room.objects.create(
+            owner=landlord, title="To delete", description="d", location="Soweto", suburb="Orlando",
+            town="Soweto", city="Johannesburg", full_address="1 St", postal_code="1804",
+            room_type="Backroom", contact_phone="0821234567", price=1500,
+        )
+        self.client.force_login(landlord)
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn(f'<form method="post" action="{reverse("delete_room", args=[room.id])}"', page)
+        self.assertEqual(self.client.get(reverse("delete_room", args=[room.id])).status_code, 405)
+        self.assertTrue(Room.objects.filter(pk=room.pk).exists())
+        self.client.post(reverse("delete_room", args=[room.id]))
+        self.assertFalse(Room.objects.filter(pk=room.pk).exists())

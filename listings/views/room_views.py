@@ -42,6 +42,7 @@ from ..models import Favorite, Room, RoomImage, RoomStat
 from ..seo import ld_json
 from ..utils import clear_room_list_cache
 from .helpers import get_or_create_membership, is_landlord
+from .room_image_views import is_valid_room_image, skipped_images_message
 
 POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 
@@ -738,16 +739,20 @@ def create_room(request):
             return render(request, "listings/create_room.html", {"form": form})
 
         # IMAGES
-        uploaded_images = request.FILES.getlist("images")
-        if uploaded_images:
-            uploaded_images = uploaded_images[:10]
-
-            for f in uploaded_images:
+        uploaded_images = request.FILES.getlist("images")[:10]
+        added = 0
+        for f in uploaded_images:
+            if not is_valid_room_image(f):
+                continue
+            try:
                 RoomImage.objects.create(room=room, image=f)
+                added += 1
+            except Exception:  # noqa: BLE001 - storage hiccup on one photo must not lose the listing
+                logger.exception("Could not store photo for new room %s", room.id)
 
-            messages.success(request, "Room created successfully with images.")
-        else:
-            messages.success(request, "Room created successfully.")
+        messages.success(request, "Your room is live. Add or change photos below.")
+        if len(uploaded_images) > added:
+            messages.warning(request, skipped_images_message(len(uploaded_images) - added))
 
         clear_room_list_cache(request.user.id)
 

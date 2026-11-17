@@ -620,7 +620,6 @@ environment variables; `python-dotenv` loads a local `.env` in development.
 | Install | `pip install -r requirements.txt` |
 | Dev tools (optional) | `pip install -r requirements-dev.txt` |
 | Migrate | `python manage.py migrate` |
-| Seed data (optional) | `python manage.py loaddata data.json` |
 | Superuser | `python manage.py createsuperuser` |
 | Run | `python manage.py runserver` |
 
