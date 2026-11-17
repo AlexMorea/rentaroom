@@ -69,14 +69,20 @@ def _apply_boost(payment: Payment):
 @transaction.atomic
 def handle_notification(data: dict) -> str:
     """Returns a short outcome string (logged / used in tests)."""
-    payment = _payment_from_reference(data.get("m_payment_id", ""))
-    if payment is None:
-        return "unknown-payment"
-
-    payment = Payment.objects.select_for_update().get(pk=payment.pk)
     status = (data.get("payment_status") or "").upper()
     pf_payment_id = (data.get("pf_payment_id") or "").strip() or None
     token = (data.get("token") or "").strip()
+
+    payment = _payment_from_reference(data.get("m_payment_id", ""))
+    if payment is None:
+        # A cancellation may arrive without our reference - match the
+        # subscription by its token instead.
+        if status == "CANCELLED" and token:
+            Membership.objects.filter(payfast_token=token).update(auto_renew=False, payfast_token="")
+            return "cancelled"
+        return "unknown-payment"
+
+    payment = Payment.objects.select_for_update().get(pk=payment.pk)
 
     if status == "CANCELLED":
         # Subscription cancelled (by the landlord in PayFast, or via our

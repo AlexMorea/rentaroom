@@ -216,6 +216,50 @@ class ProCheckoutAndNotifyTests(TestCase):
         self.assertFalse(self.membership.auto_renew)
         self.assertTrue(self.membership.has_pro)
 
+    def test_cancellation_is_accepted_without_payfast_validation(self):
+        # PayFast's validate endpoint says "not valid" for cancellations.
+        payment = self.checkout()
+        self.notify(payment)
+        fields = {"m_payment_id": payment.m_payment_id, "payment_status": "CANCELLED",
+                  "token": "tok-abc", "merchant_id": "10000100"}
+        with mock.patch("billing.payfast.itn_confirmed_by_payfast", return_value=False):
+            resp = self.client.post(reverse("billing:payfast_notify"), signed_itn(fields),
+                                    content_type="application/x-www-form-urlencoded")
+        self.assertEqual(resp.status_code, 200)
+        self.membership.refresh_from_db()
+        self.assertFalse(self.membership.auto_renew)
+        self.assertTrue(self.membership.has_pro)
+
+    def test_cancellation_matched_by_token_alone(self):
+        self.notify(self.checkout())
+        fields = {"payment_status": "CANCELLED", "token": "tok-abc"}
+        with mock.patch("billing.payfast.itn_confirmed_by_payfast", return_value=False):
+            resp = self.client.post(reverse("billing:payfast_notify"), signed_itn(fields),
+                                    content_type="application/x-www-form-urlencoded")
+        self.assertEqual(resp.status_code, 200)
+        self.membership.refresh_from_db()
+        self.assertFalse(self.membership.auto_renew)
+
+    def test_unsigned_cancellation_is_rejected(self):
+        self.notify(self.checkout())
+        body = urlencode({"payment_status": "CANCELLED", "token": "tok-abc", "signature": "nope"})
+        resp = self.client.post(reverse("billing:payfast_notify"), body,
+                                content_type="application/x-www-form-urlencoded")
+        self.assertEqual(resp.status_code, 400)
+        self.membership.refresh_from_db()
+        self.assertTrue(self.membership.auto_renew)
+
+    def test_payment_still_needs_payfast_validation(self):
+        payment = self.checkout()
+        fields = {"m_payment_id": payment.m_payment_id, "pf_payment_id": "9", "payment_status": "COMPLETE",
+                  "amount_gross": "99.00", "merchant_id": "10000100"}
+        with mock.patch("billing.payfast.itn_confirmed_by_payfast", return_value=False):
+            resp = self.client.post(reverse("billing:payfast_notify"), signed_itn(fields),
+                                    content_type="application/x-www-form-urlencoded")
+        self.assertEqual(resp.status_code, 400)
+        self.membership.refresh_from_db()
+        self.assertFalse(self.membership.has_pro)
+
     def test_cancel_button_calls_payfast(self):
         self.notify(self.checkout())
         with mock.patch("billing.payfast.cancel_subscription", return_value=True) as cancel:
