@@ -224,12 +224,19 @@ def payfast_notify(request):
         logger.warning("PayFast ITN rejected: bad signature")
         return HttpResponseBadRequest("bad signature")
 
-    if not payfast.itn_confirmed_by_payfast(pairs):
+    data = dict(pairs)
+    is_cancellation = (data.get("payment_status") or "").upper() == "CANCELLED"
+
+    # PayFast's validate endpoint only confirms *payments* - it answers
+    # "not valid" for a subscription-cancelled notification. A
+    # cancellation can only switch auto-renew off (it never grants Pro or
+    # money), so for those the passphrase signature above is enough.
+    # Anything that could activate a purchase must pass both checks.
+    if not is_cancellation and not payfast.itn_confirmed_by_payfast(pairs):
         logger.warning("PayFast ITN rejected: not confirmed by PayFast")
         return HttpResponseBadRequest("not confirmed")
 
-    data = dict(pairs)
-    if data.get("merchant_id") != settings.PAYFAST_MERCHANT_ID:
+    if data.get("merchant_id", settings.PAYFAST_MERCHANT_ID) != settings.PAYFAST_MERCHANT_ID:
         logger.warning("PayFast ITN rejected: merchant mismatch")
         return HttpResponseBadRequest("merchant mismatch")
 

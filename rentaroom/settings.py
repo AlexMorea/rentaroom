@@ -100,6 +100,12 @@ INSTALLED_APPS = [
     "billing",
 ]
 
+# All users are in South Africa. Without this Django falls back to its
+# built-in default (US Central), so admin times, emails and "paid until"
+# dates displayed 8 hours off. Datetimes are still stored in UTC.
+TIME_ZONE = "Africa/Johannesburg"
+USE_TZ = True
+
 # Use BigAutoField by default to silence model warnings about AutoField
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
