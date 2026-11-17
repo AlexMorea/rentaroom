@@ -315,7 +315,7 @@ def user_login(request):
     if not user_obj:
         cache.set(login_key, attempts + 1, timeout=900)
         cache.set(account_key, account_attempts + 1, timeout=ACCOUNT_LOGIN_LOCKOUT_SECONDS)
-        messages.error(request, "Invalid credentials.")
+        messages.error(request, "That email and password don't match. Please try again, or use \"Forgot password?\" to reset it.")
         return _redirect_to_login(next_url)
 
 
@@ -324,7 +324,7 @@ def user_login(request):
     if not user:
         cache.set(login_key, attempts + 1, timeout=900)
         cache.set(account_key, account_attempts + 1, timeout=ACCOUNT_LOGIN_LOCKOUT_SECONDS)
-        messages.error(request, "Invalid credentials.")
+        messages.error(request, "That email and password don't match. Please try again, or use \"Forgot password?\" to reset it.")
         return _redirect_to_login(next_url)
 
     cache.delete(account_key)

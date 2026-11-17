@@ -13,6 +13,36 @@ from ..models import Room, RoomImage
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
+
+
+def is_valid_room_image(img) -> bool:
+    """A real JPG/PNG/WebP photo under 10 MB. Shared by the photo page and
+    the Add Room form, so a bad file is skipped rather than breaking the
+    upload after the room has been saved."""
+    if not (img.name or "").lower().endswith(ALLOWED_IMAGE_EXTENSIONS):
+        return False
+    if img.size > MAX_IMAGE_BYTES:
+        return False
+    try:
+        Image.open(img).verify()
+    except (UnidentifiedImageError, OSError) as exc:
+        logger.warning("Invalid image upload %s: %s", img.name, exc)
+        return False
+    finally:
+        img.seek(0)
+    return True
+
+
+def skipped_images_message(skipped: int) -> str:
+    return (
+        f"{skipped} file{'s' if skipped != 1 else ''} couldn't be added. "
+        "Please use JPG or PNG photos smaller than 10 MB."
+    )
+
+
+
 from .helpers import is_landlord
 
 MAX_IMAGES_PER_ROOM = 10
@@ -51,59 +81,36 @@ def upload_room_images(request, room_id):
 
         uploads = uploads[:remaining]
 
-        allowed_extensions = [".jpg", ".jpeg", ".png", ".webp"]
-
         uploaded_count = 0
+        skipped = 0
 
         with transaction.atomic():
-
             for img in uploads:
-
-                filename = img.name.lower()
-
-                # Invalid file type
-                if not any(filename.endswith(ext) for ext in allowed_extensions):
+                if not is_valid_room_image(img):
+                    skipped += 1
                     continue
-                
-                try:
-                    Image.open(img).verify()
-                    img.seek(0)
-
-                except (UnidentifiedImageError, OSError) as exc:
-                    logger.warning(
-                        "Invalid image upload %s: %s",
-                        img.name,
-                        exc,
-                    )
-                    continue
-
-                # Large file protection (10MB)
-                if img.size > 10 * 1024 * 1024:
-                    continue
-
-                RoomImage.objects.create(
-                    room=room,
-                    image=img
-                )
-
+                RoomImage.objects.create(room=room, image=img)
                 uploaded_count += 1
+
+        if skipped:
+            messages.warning(request, skipped_images_message(skipped))
 
         if uploaded_count:
             messages.success(
                 request,
-                f"{uploaded_count} image(s) uploaded successfully."
+                f"{uploaded_count} photo{'s' if uploaded_count != 1 else ''} added."
             )
 
         else:
             messages.error(
                 request,
-                "No valid images were uploaded."
+                "No photos were added."
             )
 
         if len(request.FILES.getlist("images")) > remaining:
             messages.warning(
                 request,
-                f"Only {remaining} image(s) allowed."
+                f"A listing can have up to 10 photos, so only {remaining} more could be added."
             )
 
         return redirect("edit_room_images", pk=room.id)
