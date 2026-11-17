@@ -56,9 +56,8 @@
       {% endif %}
     </div>
 
-    <!-- STATUS BADGE: one at most, so the photo stays visible.
-         Priority: Featured (paid boost) > Popular > New. Landlord trust
-         signals live under the location instead (rc-trust-row). -->
+    <!-- STATUS BADGE (top-left): one at most, so the photo stays
+         visible. Priority: Featured (paid boost) > Popular > New. -->
     {% if featured_ids and room.id in featured_ids %}
       <div class="room-badges rc-badges"><span class="badge rc-badge rc-badge-featured">⭐ Featured</span></div>
     {% elif popular_ids and room.id in popular_ids %}
@@ -66,6 +65,14 @@
     {% elif room.is_new %}
       <div class="room-badges rc-badges"><span class="badge rc-badge rc-badge-new">New</span></div>
     {% endif %}
+
+    <!-- TRUST BADGE: always on the photo (bottom-left) for a verified
+         landlord - its own corner, so a status badge can never hide it. -->
+    {% with owner_profile=room.owner|profile %}
+      {% if owner_profile and owner_profile.is_verified_landlord %}
+        <span class="rc-verified-pill" title="Rooms4You has checked this landlord">✓ Verified</span>
+      {% endif %}
+    {% endwith %}
 
     <!-- SAVE / FAVORITE -->
     <button
@@ -113,14 +120,9 @@
       <p class="room-location rc-location">📍 {{ room.location }}</p>
 
       {% with owner_profile=room.owner|profile %}
-        {% if owner_profile and owner_profile.is_verified_landlord or owner_profile and owner_profile.is_fast_responder %}
+        {% if owner_profile and owner_profile.is_fast_responder %}
           <div class="rc-trust-row">
-            {% if owner_profile.is_verified_landlord %}
-              <span class="rc-trust-chip rc-trust-verified"><span class="rc-trust-icon" aria-hidden="true">✓</span> Verified landlord</span>
-            {% endif %}
-            {% if owner_profile.is_fast_responder %}
-              <span class="rc-trust-chip rc-trust-fast"><span class="rc-trust-icon" aria-hidden="true">⚡</span> Fast responder</span>
-            {% endif %}
+            <span class="rc-trust-chip rc-trust-fast"><span class="rc-trust-icon" aria-hidden="true">⚡</span> Fast responder</span>
           </div>
         {% endif %}
       {% endwith %}
@@ -337,6 +339,28 @@
     color: #fff !important;
   }
 
+  /* ===== Verified landlord pill (photo, bottom-left) =====
+     Trust signal: always shown for a verified landlord, in a corner no
+     other badge uses (status = top-left, heart = top-right). White on
+     green ~4.6:1 at this weight; dark text would read as "warning". */
+  .rc-verified-pill {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(21, 128, 61, 0.94);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    white-space: nowrap;
+  }
+
   /* ===== Save / favorite heart ===== */
   .rc-fav-btn {
     position: absolute !important;
@@ -472,7 +496,6 @@
     border: 1px solid var(--border);
     white-space: nowrap;
   }
-  .rc-trust-verified .rc-trust-icon { color: #16a34a; font-weight: 900; }
   .rc-trust-fast .rc-trust-icon { color: #f59e0b; }
 
   .rc-meta-row {
