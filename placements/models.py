@@ -503,7 +503,7 @@ class Waitlist(models.Model):
 
             if entry.tenant.email:
                 send_template_email(
-                    subject=f'"{room.title}" is available again!',
+                    subject=f'"{room.title}" is available again',
                     to_email=entry.tenant.email,
                     template="emails/waitlist_room_available.html",
                     context={

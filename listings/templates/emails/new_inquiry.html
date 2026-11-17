@@ -1,27 +1,28 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "emails/base_email.html" %}
 
-<h2>New enquiry on your listing</h2>
+{% block content %}
+
+<h1>Someone is interested in your room</h1>
 
 <p>Hello {{ room.owner.first_name|default:"there" }},</p>
 
 <p>
-  {{ user.first_name|default:"A tenant" }} is interested in your room listing.
+{{ user.first_name|default:"A tenant" }} has just asked about "{{ room.title }}" and will be emailing you
+directly. Tenants usually contact a few landlords at once, so a quick reply gives you the best chance of
+filling the room.
 </p>
 
 <div class="info-card">
-  <p>
-    <strong>Listing:</strong>
-    {{ room.title }}
-  </p>
-
-  <p>
-    <strong>Location:</strong>
-    {{ room.location }}
-  </p>
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p style="margin:0;"><strong>Area:</strong> {{ room.location }}</p>
 </div>
 
-<p>Log in to your dashboard to manage enquiries and respond to tenants.</p>
+<p>
+We've added this enquiry to your placements so you can keep track of it through to a viewing and a move-in.
+</p>
 
-<a href="https://rooms4you.co.za/dashboard/" class="btn"> Open Dashboard </a>
+<p style="text-align:center;">
+  <a href="https://www.rooms4you.co.za/placements/landlord/" class="btn">View your enquiries</a>
+</p>
 
 {% endblock %}

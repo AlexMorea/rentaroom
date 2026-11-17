@@ -753,7 +753,7 @@ def create_room(request):
 
         # EMAIL AFTER COMMIT
         transaction.on_commit(lambda: send_template_email(
-            subject="Your listing is now live 🎉",
+            subject="Your room is now live on Rooms4You",
             to_email=request.user.email,
             template="emails/room_live.html",
             context={"room": room, "year": 2026}

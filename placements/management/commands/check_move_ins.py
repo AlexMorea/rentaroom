@@ -1,10 +1,10 @@
 from django.conf import settings
-from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.push import notify_user
+from utils.email import send_template_email
 from placements.models import Placement
 from utils.whatsapp import send_whatsapp_template
 
@@ -60,35 +60,26 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Sent {sent} move-in confirmation nudge(s)."))
 
     def _send_nudge(self, placement, *, to_tenant, to_landlord):
-        subject = "Rooms4You: please confirm your move-in"
-        recipients = []
-
-        if to_tenant and placement.tenant.email:
-            recipients.append(placement.tenant.email)
-        if to_landlord and placement.landlord.email:
-            recipients.append(placement.landlord.email)
-
-        if not recipients:
-            return
-
-        message = (
-            f"Hi,\n\n"
-            f"Your move-in date for \"{placement.room.title}\" has passed. "
-            f"Please log in to Rooms4You and confirm whether the move-in "
-            f"happened, so we can finalise this placement.\n\n"
-            f"- The Rooms4You Team"
-        )
-
-        # Fails silently on purpose: a misconfigured email backend
-        # shouldn't crash the whole cron run and skip every other
-        # placement in the batch.
-        send_mail(
-            subject,
-            message,
-            None,  # uses DEFAULT_FROM_EMAIL
-            recipients,
-            fail_silently=True,
-        )
+        # One branded email per person, worded for their side of the
+        # move-in. Failures are logged and skipped so one bad address
+        # doesn't stop the rest of the batch.
+        for is_tenant, person in ((True, placement.tenant), (False, placement.landlord)):
+            if not (to_tenant if is_tenant else to_landlord) or not person.email:
+                continue
+            try:
+                send_template_email(
+                    subject=f'Did the move-in for "{placement.room.title}" go ahead?',
+                    to_email=person.email,
+                    template="emails/move_in_check.html",
+                    context={
+                        "placement": placement,
+                        "room": placement.room,
+                        "person": person,
+                        "is_tenant": is_tenant,
+                    },
+                )
+            except Exception:  # noqa: BLE001
+                self.stderr.write(f"Could not email {person.pk} about placement {placement.pk}")
 
         push_body = f'Please confirm your move-in for "{placement.room.title}".'
         if to_tenant:

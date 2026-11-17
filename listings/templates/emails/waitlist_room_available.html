@@ -2,32 +2,26 @@
 
 {% block content %}
 
-<h1>Good news - it's available! 🎉</h1>
+<h1>A room you're waiting for is available</h1>
+
+<p>Hello {{ tenant.first_name|default:"there" }},</p>
 
 <p>
-Hello {{ tenant.first_name|default:"there" }},
-</p>
-
-<p>
-You asked to be notified when <strong>{{ room.title }}</strong> opened up - it just did. You're one
-of the first to know, before it's back to being seen by everyone browsing Rooms4You.
+You joined the waitlist for "{{ room.title }}", and it has just opened up. We're letting everyone on the
+waitlist know first, in the order they joined.
 </p>
 
 <div class="info-card">
   <p><strong>Listing:</strong> {{ room.title }}</p>
-  <p><strong>Location:</strong> {{ room.location }}</p>
-  <p><strong>Price:</strong> R{{ room.price }}</p>
-  <p><strong>Status:</strong> {{ room.availability_badge_text }}</p>
+  <p><strong>Area:</strong> {{ room.location }}</p>
+  <p><strong>Rent:</strong> R{{ room.price|floatformat:0 }} a month</p>
+  <p style="margin:0;"><strong>Status:</strong> {{ room.availability_badge_text }}</p>
 </div>
 
-<p>
-Contact the landlord as soon as you can - rooms can fill up fast once they're back on the market.
-</p>
+<p>Rooms that reopen tend to fill quickly, so it's worth contacting the landlord soon.</p>
 
 <p style="text-align:center;">
-<a href="https://rooms4you.co.za/rooms/{{ room.id }}/" class="btn">
-View room &amp; contact landlord
-</a>
+  <a href="https://www.rooms4you.co.za/rooms/{{ room.id }}/" class="btn">View the room</a>
 </p>
 
 {% endblock %}

@@ -1,15 +1,22 @@
-{% extends "emails/base_email.html" %} {% block content %}
+{% extends "emails/base_email.html" %}
 
-<h1>Your Verification Code</h1>
+{% block content %}
 
-<p>Use the OTP below to continue securely.</p>
+<h1>Your Rooms4You code</h1>
+
+<p>Hello {{ user.first_name|default:"there" }},</p>
+
+<p>Enter this code on Rooms4You to verify your account:</p>
 
 <div class="otp-box">{{ otp }}</div>
 
-<p>This code expires in 15 minutes.</p>
+<p>The code stays valid for 15 minutes.</p>
 
 <div class="info-card">
-  <p style="margin: 0">Never share this code with anyone.</p>
+  <p style="margin:0;">
+    Please don't share this code with anyone. Rooms4You will never ask for it by phone, email or WhatsApp.
+    If you didn't sign up for Rooms4You, you can ignore this email.
+  </p>
 </div>
 
 {% endblock %}

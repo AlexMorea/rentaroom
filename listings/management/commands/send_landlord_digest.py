@@ -12,25 +12,24 @@ from utils.email import send_template_email
 # track, and it means "did you see this week's tip?" is a coherent
 # question if support ever needs to reference one.
 LANDLORD_TIPS = [
-    "Listings with 3+ clear photos get significantly more contacts than "
-    "text-only listings - even a few phone photos in good light make a "
-    "real difference.",
-    "Reply within a few hours where you can. Tenants message several "
-    "landlords at once, and the fastest reply usually wins the viewing.",
-    "Keep your price and deposit exactly accurate. A mismatch between "
-    "what's listed and what you say at viewing is the #1 reason tenants "
-    "report a listing as misleading.",
-    "Confirm your listing's availability regularly from your dashboard - "
-    "it takes one tap, and it's what keeps your room ranking well and "
-    "looking trustworthy to tenants.",
-    "Add your WhatsApp number if you haven't - most tenants in this "
-    "market prefer it over calls or email for that first message.",
-    "A full street address (not just the suburb) helps tenants judge "
-    "distance to work, transport and shops before they even message you "
-    "- fewer wasted viewings for both sides.",
-    "Mention what's included (water, electricity, WiFi) directly in the "
-    "description. It's the single most common follow-up question tenants "
-    "ask, so answering it upfront saves everyone time.",
+    "Listings with at least three clear photos get far more enquiries than "
+    "listings without them. Photos taken on a phone in daylight are all you need.",
+    "Try to reply within a few hours. Tenants usually contact several "
+    "landlords at once, and the first landlord to reply is often the one "
+    "who gets the viewing.",
+    "Make sure the rent and deposit on your listing match what you ask for "
+    "at the viewing. A difference between the two is the most common reason "
+    "tenants report a listing as misleading.",
+    "Confirming that your room is still available takes one tap from your "
+    "dashboard, and it keeps your listing ranking well in search.",
+    "If you use WhatsApp, add your number to the listing. Most tenants prefer "
+    "it to a phone call for their first message.",
+    "Name the suburb and nearby landmarks, such as a taxi rank, mall or "
+    "school, in your description. Tenants can judge the distance to work "
+    "without you sharing your street address.",
+    "Say what the rent includes, such as water, electricity or Wi-Fi, in the "
+    "description. It's the question tenants ask most, so answering it upfront "
+    "saves everyone time.",
 ]
 
 
@@ -116,7 +115,7 @@ class Command(BaseCommand):
 
         if user.email:
             send_template_email(
-                subject="Your weekly Rooms4You listing summary",
+                subject="Your week on Rooms4You",
                 to_email=user.email,
                 template="emails/landlord_weekly_digest.html",
                 context=context,

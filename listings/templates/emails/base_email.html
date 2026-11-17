@@ -85,6 +85,20 @@
         background: linear-gradient(135deg, #111827, #1f2937);
       }
 
+      .steps {
+        margin: 0 0 18px;
+        padding-left: 20px;
+      }
+      .steps li {
+        margin-bottom: 10px;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #475569;
+      }
+      .muted {
+        font-size: 13px;
+        color: #94a3b8;
+      }
       .info-card {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -167,7 +181,7 @@
         <!-- HEADER -->
         <div class="email-header">
           <img
-            src="https://rooms4you.co.za/static/images/logo-reversed.png"
+            src="https://www.rooms4you.co.za/static/images/logo-reversed.png"
             alt="Rooms4You"
             class="logo"
           />
@@ -179,47 +193,22 @@
         <!-- FOOTER -->
         <div class="email-footer">
           <p>
-            © {{year}} Rooms4You™. All rights reserved.
-            Rooms4You™ is owned and operated by 4You (Pty) Ltd.
+            You're receiving this because you have an account on Rooms4You.
           </p>
-
+          <p>
+            &copy; {% now "Y" %} Rooms4You&trade;, owned and operated by 4You (Pty) Ltd.
+          </p>
           <div class="footer-links">
-
-            <a href="https://rooms4you.co.za/contact/"> Contact Us </a>
-
-            <a href="https://rooms4you.co.za/support/"> Support Centre </a>
-
-            <a href="https://rooms4you.co.za/safety/"> Safety Centre </a>
-
-            <a href="https://rooms4you.co.za/terms/"> Terms of Service </a>
-
-            <a href="https://rooms4you.co.za/privacy/"> Privacy Policy </a>
-
-            <div
-              style="
-                display:flex;
-                justify-content:center;
-                gap:16px;
-                margin:18px 0;
-              "
-            >
-              <a href="https://instagram.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style="color:inherit;font-size:22px;">
-                <i class="fab fa-instagram"></i>
-              </a>
-
-              <a href="https://facebook.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="Facebook" style="color:inherit;font-size:22px;">
-                <i class="fab fa-facebook"></i>
-              </a>
-
-              <a href="https://x.com/rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="X" style="color:inherit;font-size:22px;">
-                <i class="fab fa-x-twitter"></i>
-              </a>
-
-              <a href="https://tiktok.com/@rooms4youza" target="_blank" rel="noopener noreferrer" aria-label="TikTok" style="color:inherit;font-size:22px;">
-                <i class="fab fa-tiktok"></i>
-              </a>
-            </div>
-
+            <a href="https://www.rooms4you.co.za/support/">Help Centre</a>
+            <a href="https://www.rooms4you.co.za/trust/stay-safe/">Staying safe</a>
+            <a href="https://www.rooms4you.co.za/pricing/">Pricing</a>
+            <a href="https://www.rooms4you.co.za/privacy/">Privacy</a>
+          </div>
+          <div class="footer-links">
+            <a href="https://instagram.com/rooms4youza">Instagram</a>
+            <a href="https://facebook.com/rooms4youza">Facebook</a>
+            <a href="https://x.com/rooms4youza">X</a>
+            <a href="https://tiktok.com/@rooms4youza">TikTok</a>
           </div>
         </div>
       </div>

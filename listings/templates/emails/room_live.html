@@ -2,40 +2,31 @@
 
 {% block content %}
 
-<h1>Your Listing Is Now Live 🎉</h1>
+<h1>Your listing is live</h1>
+
+<p>Hello {{ room.owner.first_name|default:"there" }},</p>
 
 <p>
-Hello {{ room.owner.first_name|default:"there" }},
-</p>
-
-<p>
-Your room listing has been successfully published and is now visible to
-prospective tenants on Rooms4You.
+"{{ room.title }}" is now on Rooms4You, and tenants searching in {{ room.location }} can find it and contact you.
 </p>
 
 <div class="info-card">
-  <p><strong>Title:</strong> {{ room.title }}</p>
-  <p><strong>Location:</strong> {{ room.location }}</p>
-  <p><strong>Price:</strong> R{{ room.price }}</p>
-  <p><strong>Status:</strong> {{ room.availability_badge_text }}</p>
+  <p><strong>Listing:</strong> {{ room.title }}</p>
+  <p><strong>Area:</strong> {{ room.location }}</p>
+  <p><strong>Rent:</strong> R{{ room.price|floatformat:0 }} a month</p>
+  <p style="margin:0;"><strong>Status:</strong> {{ room.availability_badge_text }}</p>
 </div>
 
 <p>
-Listings with high-quality photos, accurate pricing, and detailed descriptions
-typically receive more enquiries and engagement.
+To get the most enquiries, make sure the listing has at least four clear photos and a description that says
+what's included, such as electricity, Wi-Fi or parking. When someone gets in touch, you'll see it on your
+dashboard and we'll let you know.
 </p>
 
-<p>
-You can manage your listing, view enquiries, and monitor performance from your
-dashboard.
+<p style="text-align:center;">
+  <a href="https://www.rooms4you.co.za/rooms/{{ room.id }}/" class="btn">See your listing</a>
 </p>
 
-<a href="https://rooms4you.co.za/dashboard/" class="btn">
-  Open Dashboard
-</a>
-
-<p>
-Thank you for choosing Rooms4You.
-</p>
+<p class="muted">You can edit the listing, add photos or mark the room as occupied at any time from your dashboard.</p>
 
 {% endblock %}

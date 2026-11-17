@@ -220,7 +220,7 @@ def track_contact(request, room_id, method):
 
         try:
             send_template_email(
-                subject="New inquiry on your listing",
+                subject=f'Someone is interested in "{room.title}"',
                 to_email=room.owner.email,
                 template="emails/new_inquiry.html",
                 context={

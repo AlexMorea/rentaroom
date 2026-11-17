@@ -166,16 +166,16 @@
      these two never had a modifier class, so they rendered as
      invisible white text on white/near-white pills. */
   .badge-email-verified {
-    background: #eff6ff;
-    color: #1d4ed8 !important;
+    background: var(--dm-bg-eff6ff, #eff6ff);
+    color: var(--dm-fg-1d4ed8, #1d4ed8) !important;
   }
   .badge-fast-responder {
-    background: #fff7ed;
-    color: #9a3412 !important;
+    background: var(--dm-bg-fff7ed, #fff7ed);
+    color: var(--dm-fg-9a3412, #9a3412) !important;
   }
   .badge-founding {
-    background: #fef3c7;
-    color: #78350f !important;
+    background: var(--dm-bg-fef3c7, #fef3c7);
+    color: var(--dm-fg-78350f, #78350f) !important;
   }
 
   .landlord-stats {
@@ -185,7 +185,7 @@
     justify-content: center;
   }
   .landlord-stat-card {
-    background: rgba(255,255,255,0.85);
+    background: var(--dm-bg-glass, rgba(255,255,255,0.85));
     border: 1px solid rgba(99,102,241,0.12);
     border-radius: 16px;
     padding: 16px 26px;
@@ -209,7 +209,7 @@
     text-align: center;
   }
   .landlord-trust-link {
-    color: var(--blue);
+    color: var(--link);
     font-weight: 600;
   }
 

@@ -62,7 +62,7 @@ class Command(BaseCommand):
         user = profile.user
         if user.email:
             send_template_email(
-                subject="Complete Your Rooms4You Listing - Free Pre-Launch Advertising",
+                subject="Ready to add your first room to Rooms4You?",
                 to_email=user.email,
                 template="emails/complete_listing_nudge.html",
                 context={

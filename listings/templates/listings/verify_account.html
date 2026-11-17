@@ -1,4 +1,5 @@
 {% extends "listings/base.html" %}
+{% load static %}
 
 {% block title %}
 Verify Account | Rooms4You
@@ -43,7 +44,7 @@ auth-page
           required
           inputmode="numeric"
           autocomplete="one-time-code"
-          placeholder="Enter 6-digit OTP"
+          placeholder="6-digit code"
           class="input va-otp-input"
         />
 
@@ -58,27 +59,23 @@ auth-page
 
     </form>
 
-    <div class="va-resend-zone">
+    <div class="va-resend-zone"
+         data-otp-timer
+         data-resend-url="{% url 'resend_account_otp' %}"
+         data-expires-in="{{ otp_expires_in|default:0 }}"
+         data-resend-in="{{ otp_resend_in|default:0 }}">
+
+      <p class="va-expiry" data-otp-expiry aria-live="polite"></p>
 
       <p class="auth-hint va-resend-label">
-        Didn't receive the code?
+        Didn't get the email? Check your spam folder, or ask for a new code.
       </p>
 
-      <button
-        type="button"
-        id="resend-btn"
-        class="btn-secondary va-resend-btn"
-      >
-        <span id="resend-text">
-          Resend OTP
-        </span>
+      <button type="button" class="btn-secondary va-resend-btn" data-otp-resend>
+        <span data-otp-resend-text>Send a new code</span>
       </button>
 
-      <div
-        id="resend-message"
-        aria-live="polite"
-        class="va-resend-message"
-      ></div>
+      <div class="va-resend-message" data-otp-message aria-live="polite"></div>
 
     </div>
 
@@ -104,6 +101,12 @@ auth-page
   }
   .va-form {
     text-align: left;
+    margin-top: 20px;
+  }
+  .va-otp-input::placeholder {
+    letter-spacing: normal;
+    font-size: 1rem;
+    font-weight: 500;
   }
   .va-field label {
     display: block;
@@ -135,6 +138,18 @@ auth-page
   .va-resend-btn {
     width: 100%;
   }
+  .va-expiry {
+    margin: 0 0 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .va-expiry[data-state="soon"] { color: #d97706; }
+  .va-expiry[data-state="expired"] { color: #dc2626; }
+  .va-resend-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+  .va-resend-message[data-level="success"] { color: #16a34a; }
+  .va-resend-message[data-level="warning"] { color: #d97706; }
+  .va-resend-message[data-level="error"] { color: #dc2626; }
   .va-resend-message {
     margin-top: 12px;
     text-align: center;
@@ -145,190 +160,5 @@ auth-page
 {% endblock %}
 
 {% block extra_js %}
-
-<script>
-(function () {
-
-  const BTN_ID = "resend-btn";
-  const TEXT_ID = "resend-text";
-  const MSG_ID = "resend-message";
-  const STORAGE_KEY = "otp_resend_until";
-  const DEFAULT_COOLDOWN = 90;
-
-  const btn = document.getElementById(BTN_ID);
-  const txt = document.getElementById(TEXT_ID);
-  const msg = document.getElementById(MSG_ID);
-
-  function setMessage(text, level) {
-
-    if (!msg) return;
-
-    msg.textContent = text || "";
-
-    if (level === "success") {
-      msg.style.color = "#16a34a";
-    } else if (level === "warning") {
-      msg.style.color = "#d97706";
-    } else if (level === "error") {
-      msg.style.color = "#dc2626";
-    } else {
-      msg.style.color = "#64748b";
-    }
-
-  }
-
-  function disableButton() {
-    if (!btn) return;
-
-    btn.disabled = true;
-    btn.style.opacity = ".7";
-    btn.style.cursor = "not-allowed";
-  }
-
-  function enableButton() {
-    if (!btn) return;
-
-    btn.disabled = false;
-    btn.style.opacity = "1";
-    btn.style.cursor = "pointer";
-
-    if (txt) {
-      txt.textContent = "Resend OTP";
-    }
-  }
-
-  function startCountdown(seconds) {
-
-    const until = Date.now() + (seconds * 1000);
-
-    try {
-      sessionStorage.setItem(
-        STORAGE_KEY,
-        String(until)
-      );
-    } catch (e) {}
-
-    updateCountdown();
-
-  }
-
-  function updateCountdown() {
-
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-
-    if (!raw) {
-      enableButton();
-      return;
-    }
-
-    const until = parseInt(raw, 10);
-
-    const remaining = Math.max(
-      0,
-      Math.ceil((until - Date.now()) / 1000)
-    );
-
-    if (remaining <= 0) {
-
-      sessionStorage.removeItem(STORAGE_KEY);
-
-      enableButton();
-
-      return;
-    }
-
-    disableButton();
-
-    if (txt) {
-      txt.textContent = `Resend in ${remaining}s`;
-    }
-
-    setTimeout(updateCountdown, 1000);
-
-  }
-
-  async function handleResend() {
-
-    disableButton();
-
-    if (txt) {
-      txt.textContent = "Sending...";
-    }
-
-    setMessage("");
-
-    try {
-
-      const res = await fetch(
-        "/resend-account-otp/",
-        {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
-        }
-      );
-
-      const data = await res.json().catch(
-        () => ({})
-      );
-
-      const cooldown =
-        data.cooldown || DEFAULT_COOLDOWN;
-
-      if (res.ok) {
-
-        setMessage(
-          data.message || "Verification code sent.",
-          "success"
-        );
-
-        startCountdown(cooldown);
-
-        return;
-      }
-
-      if (res.status === 429) {
-
-        setMessage(
-          data.message ||
-          "Please wait before requesting another code.",
-          "warning"
-        );
-
-        startCountdown(cooldown);
-
-        return;
-      }
-
-      setMessage(
-        data.message ||
-        "Failed to resend OTP.",
-        "error"
-      );
-
-      enableButton();
-
-    } catch (err) {
-
-      setMessage(
-        "Failed to resend OTP.",
-        "error"
-      );
-
-      enableButton();
-
-    }
-
-  }
-
-  btn?.addEventListener(
-    "click",
-    handleResend
-  );
-
-  updateCountdown();
-
-})();
-</script>
-
+<script src="{% static 'js/otp-timer.js' %}" defer></script>
 {% endblock %}

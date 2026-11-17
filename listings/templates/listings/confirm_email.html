@@ -1,0 +1,88 @@
+{% extends "listings/base.html" %}
+
+{% block title %}Confirm New Email | Rooms4You{% endblock %}
+
+{% block content %}
+
+<div class="sf-shell">
+  <div class="form-card sf-card">
+    <div class="sf-icon">📬</div>
+    <h2 class="sf-title">Check your new inbox</h2>
+    <p class="sf-sub">
+      {% if pending_email %}We've sent a 6-digit code to <strong>{{ pending_email }}</strong>.{% else %}We've sent a 6-digit code to your new email address.{% endif %}
+      Enter it below to finish changing your email. The code stays valid for 15 minutes.
+    </p>
+
+    <form method="POST" class="sf-form">
+      {% csrf_token %}
+      <div class="sf-field">
+        <label for="otp">Code</label>
+        <input
+          type="text"
+          id="otp"
+          name="otp"
+          class="input"
+          maxlength="6"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          placeholder="6-digit code"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-primary sf-submit">
+        Confirm my new email
+      </button>
+    </form>
+
+    <p class="sf-sub" style="margin-top:16px;">
+      Didn't get it? Check your spam folder, or
+      <a href="{% url 'change_email' %}">go back and send a new code</a>.
+    </p>
+  </div>
+</div>
+
+<style>
+  .sf-shell {
+    max-width: 460px;
+    margin: 40px auto;
+  }
+  .sf-card {
+    text-align: center;
+  }
+  .sf-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+  .sf-title {
+    margin: 0 0 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--dm-fg-0f172a, #0f172a);
+  }
+  .sf-sub {
+    margin: 0 0 22px;
+    color: var(--dm-fg-64748b, #64748b);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .sf-form {
+    text-align: left;
+  }
+  .sf-field {
+    margin-bottom: 16px;
+  }
+  .sf-field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.88rem;
+    color: var(--dm-fg-0f172a, #0f172a);
+  }
+  .sf-submit {
+    width: 100%;
+    margin-top: 4px;
+  }
+</style>
+
+{% endblock %}

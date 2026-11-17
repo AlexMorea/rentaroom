@@ -2,45 +2,35 @@
 
 {% block content %}
 
-<h1>Complete Your Rooms4You Listing 🏠</h1>
+<h1>Ready to add your first room?</h1>
+
+<p>Hello {{ user.first_name|default:"there" }},</p>
 
 <p>
-Hello {{ user.first_name|default:"there" }},
+Thanks again for joining Rooms4You. Your landlord account is set up, but you haven't added a room yet. It takes
+about two minutes, and listing is free with no limit on the number of rooms and no commission on your rent.
 </p>
 
-<p>
-Welcome to Rooms4You. We noticed your account has been created, but you
-haven't posted a property listing yet.
-</p>
-
-<p>
-We'd love to help you take the next step. You can add your available rooms
-to the platform, and we'll advertise your listings for <strong>FREE</strong>
-during our pre-launch period.
-</p>
+<p>Here's what helps a listing get enquiries:</p>
+<ul class="steps">
+  <li>The monthly rent and what it includes, such as water, electricity or Wi-Fi</li>
+  <li>The suburb or area (your street address is never shown publicly)</li>
+  <li>A few clear photos of the room, the bathroom and the entrance</li>
+</ul>
 
 <p style="text-align:center;">
-<a href="{{ app_url }}" class="btn">
-List your room
-</a>
+  <a href="{{ app_url }}" class="btn">Add your room</a>
 </p>
 
 <p>
-If you need any assistance with creating your listing, uploading photos, or
-have any questions, please feel free to contact us - we're here to help
-make the process as easy as possible.
-</p>
-
-<p>
-Thank you for being part of the early Rooms4You community. We look forward
-to helping you reach genuine tenants.
+If you'd like help with the listing or the photos, email us at
+<a href="mailto:support@rooms4you.co.za">support@rooms4you.co.za</a> and we'll walk you through it.
 </p>
 
 <p>
 Kind regards,<br>
 <strong>Alex Morea</strong><br>
-Founder &amp; CEO<br>
-Rooms4You
+Founder, Rooms4You
 </p>
 
 {% endblock %}
