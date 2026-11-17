@@ -75,3 +75,30 @@ class RoomDetailVerifiedBadgeTests(TestCase):
         body = resp.content.decode()
 
         self.assertNotIn("Phone verified", body)
+
+
+class CardBadgeLayoutTests(TestCase):
+    """A status badge (Popular/Featured/New) must never hide the
+    Verified badge - they live in different corners of the photo."""
+
+    def test_popular_room_still_shows_verified(self):
+        from django.contrib.auth.models import User
+        from django.test import override_settings
+        from django.urls import reverse
+
+        from listings.models import Profile, Room
+
+        owner = User.objects.create_user("verified-owner@example.com", password="x")
+        Profile.objects.filter(user=owner).update(role="landlord", is_verified_landlord=True)
+        room = Room.objects.create(
+            owner=owner, title="Popular verified", description="d", location="Soweto",
+            suburb="Orlando", town="Soweto", city="Johannesburg", full_address="1 St",
+            postal_code="1804", room_type="Backroom", contact_phone="0821234567", price=1500,
+        )
+        Room.objects.filter(pk=room.pk).update(score=999)
+
+        with override_settings(POPULAR_SCORE_THRESHOLD=1):
+            body = self.client.get(reverse("room_list")).content.decode()
+
+        self.assertIn("rc-badge-popular", body)
+        self.assertIn('class="rc-verified-pill"', body)
