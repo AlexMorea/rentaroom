@@ -19,6 +19,10 @@
     <button type="submit" class="btn-primary">Continue to PayFast</button>
   </form>
   <p class="text-muted bl-small">Your reference: {{ payment.m_payment_id }}</p>
+  <p class="pay-consent">
+    {% if payment.kind == "pro" %}Pro renews automatically until you cancel. {% endif %}
+    See our <a href="{% url 'pricing_refunds' %}">Pricing &amp; Refunds</a> policy and <a href="{% url 'terms' %}">Terms</a>.
+  </p>
 </div>
 
 <style>

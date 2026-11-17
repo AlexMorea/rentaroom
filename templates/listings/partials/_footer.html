@@ -62,7 +62,8 @@
       <h4>Legal</h4>
       <a href="{% url 'privacy' %}">Privacy Policy</a>
       <a href="{% url 'terms' %}">Terms of Service</a>
-      <span class="footer-soon">Cookie Policy (Coming Soon)</span>
+      <a href="{% url 'pricing_refunds' %}">Pricing &amp; Refunds</a>
+      <a href="{% url 'privacy' %}#cookies">Cookies</a>
       <a href="{% url 'trust:home' %}">Community Guidelines</a>
     </div>
 
@@ -78,6 +79,7 @@
       <h4>Contact</h4>
       <a href="mailto:hello@rooms4you.co.za">hello@rooms4you.co.za</a>
       <a href="mailto:support@rooms4you.co.za">support@rooms4you.co.za</a>
+      {% if COMPANY.phone %}<a href="tel:{{ COMPANY.phone|cut:' ' }}">{{ COMPANY.phone }}</a>{% endif %}
       <a href="https://rooms4you.co.za">rooms4you.co.za</a>
     </div>
 
@@ -262,7 +264,17 @@
 
   Owned and operated by
 
-  <strong>4You (Pty) Ltd</strong>
+  <strong>{{ COMPANY.legal_name }}</strong>{% if COMPANY.reg_number %} · Reg. no. {{ COMPANY.reg_number }}{% endif %}{% if COMPANY.vat_number %} · VAT no. {{ COMPANY.vat_number }}{% endif %}
+
+  </p>
+
+  {% if COMPANY.address %}
+  <p style="opacity:.8;">{{ COMPANY.address }}</p>
+  {% endif %}
+
+  <p style="opacity:.8;">
+
+  🔒 Secure payments by PayFast. We never see or store your card details.
 
   </p>
 

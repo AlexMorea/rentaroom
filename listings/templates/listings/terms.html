@@ -1,66 +1,119 @@
 {% extends "listings/base.html" %}
 {% block title %}Terms of Service | Rooms4You{% endblock %}
-{% block meta_description %}Read the Rooms4You terms of service covering account use, listings, and the responsibilities of tenants and landlords on the platform.{% endblock %}
+{% block meta_description %}Rooms4You terms of service: who we are, how the platform works, paid services for landlords, payments, cancellation, and the responsibilities of tenants and landlords.{% endblock %}
 {% block content %}
+{# Lawyer review pending - see docs/pricing_terms_draft.md. Bump LEGAL_LAST_UPDATED when this changes materially. #}
+<div class="legal-page">
+  <h1 class="page-title">Terms of Service</h1>
+  <p class="legal-updated">Last updated {{ COMPANY.legal_last_updated|date:"j F Y" }}</p>
 
-<h1 class="page-title">Terms of Service</h1>
-
-<div class="form-shell">
-  <div class="form-card">
-
+  <div class="form-card legal-section">
     <p>
-      Welcome to <strong>Rooms4You</strong>, operated by <strong>4You (Pty) Ltd</strong>.
-      By using this platform, you agree to these Terms of Service.
+      Welcome to <strong>{{ COMPANY.trading_name }}</strong>, operated by <strong>{{ COMPANY.legal_name }}</strong>
+      ("we", "us"). By creating an account or using the platform you agree to these Terms. If you don't agree,
+      please don't use Rooms4You.
     </p>
 
-    <h3>1. Platform Role</h3>
+    <h2>1. Who we are</h2>
+    <p>Our full company details are listed in section 15 and on our <a href="{% url 'contact' %}">Contact page</a>.</p>
+
+    <h2>2. What Rooms4You is</h2>
     <p>
-      Rooms4You is a digital marketplace that connects tenants and landlords.
-      We do not own, manage, inspect, or guarantee any listed properties.
+      Rooms4You is an online marketplace that connects people looking for a room with landlords and hosts.
+      We are not a party to any rental agreement. We do not own, manage, inspect or guarantee listed properties,
+      and we do not collect rent or deposits on anyone's behalf.
     </p>
 
-    <h3>2. User Responsibility</h3>
+    <h2>3. Your account</h2>
+    <ul>
+      <li>You must be 18 or older and give accurate, up-to-date information.</li>
+      <li>You're responsible for keeping your login details safe and for activity on your account.</li>
+      <li>One person or business per account. Don't create accounts for others without their consent.</li>
+    </ul>
+
+    <h2>4. Landlords and listings</h2>
+    <ul>
+      <li>Listings must be accurate, honest and about a room you're entitled to rent out.</li>
+      <li>Listing is free, with no limit on the number of rooms.</li>
+      <li>We ask landlords to confirm regularly that a listing is still available. Listings that aren't confirmed may be shown lower in search and eventually hidden until confirmed again.</li>
+      <li>We may edit, hide or remove listings that break these Terms or our community guidelines.</li>
+    </ul>
+
+    <h2>5. Tenants: stay safe</h2>
     <p>
-      Users are responsible for verifying listings, landlords, and rental agreements before making any commitments or payments.
+      Always view a room (in person or verified) and confirm the landlord before paying anything.
+      Never send a deposit for a room you haven't seen. Rooms4You will never ask you to pay a deposit to us.
+      See our <a href="{% url 'trust:stay_safe' %}">Safety Centre</a>.
     </p>
 
-    <h3>3. Listings</h3>
+    <h2>6. Paid services for landlords</h2>
+    <ul>
+      <li>Rooms4You offers optional paid services: <strong>Pro</strong> (a monthly or yearly subscription priced by number of rooms) and <strong>Boosts</strong> (once-off paid visibility, labelled "Featured"). Current prices, what's included, and our cancellation and refund policy are on the <a href="{% url 'pricing_refunds' %}">Pricing &amp; Refunds</a> page, which forms part of these Terms.</li>
+      <li>Payments are processed by PayFast. We never see or store card details.</li>
+      <li>Pro renews automatically until you cancel. You can cancel at any time from the Plans page; you keep Pro until the end of the paid period.</li>
+      <li>Paid services improve visibility and add tools. They don't guarantee enquiries or tenants, and they never affect verification.</li>
+      <li>We'll give at least 30 days' notice by email before changing the price of an active subscription.</li>
+    </ul>
+
+    <h2>7. Founding Landlords</h2>
     <p>
-      All listings are created by users. Rooms4You does not guarantee accuracy, completeness, or availability of listings.
+      Landlords who registered on or before 31 January 2027 get Pro free until 30 April 2027, then a lifetime
+      discount on Pro while their subscription stays active, as described on the
+      <a href="{% url 'pricing_refunds' %}#pro">Pricing &amp; Refunds</a> page.
     </p>
 
-    <h3>4. Safety Notice</h3>
+    <h2>8. Prohibited use</h2>
+    <p>You may not:</p>
+    <ul>
+      <li>post false, misleading or duplicate listings, or listings for rooms you can't rent out;</li>
+      <li>scam, harass, threaten or discriminate against other users;</li>
+      <li>ask anyone to pay outside a proper, viewed and agreed rental arrangement;</li>
+      <li>scrape, copy or misuse the platform or other users' information; or</li>
+      <li>use Rooms4You for anything illegal.</li>
+    </ul>
+
+    <h2>9. Suspension</h2>
     <p>
-      Always verify a property and landlord before making any payment.
-      Avoid sending deposits without physical or verified viewing.
+      We may suspend or close accounts that break these Terms, put others at risk, or are reported for fraud
+      after review by our Trust &amp; Safety team. Suspension is never used to collect payment.
     </p>
 
-    <h3>5. Prohibited Use</h3>
+    <h2>10. Privacy</h2>
     <p>
-      Users may not post false listings, scam others, or use the platform for illegal activity. We reserve the right to suspend accounts that violate these rules.
+      We process personal information in line with the Protection of Personal Information Act (POPIA).
+      See our <a href="{% url 'privacy' %}">Privacy Policy</a>.
     </p>
 
-    <h3>6. POPIA Compliance</h3>
+    <h2>11. Content and intellectual property</h2>
     <p>
-      We process personal information in accordance with the Protection of Personal Information Act (POPIA) of South Africa.
+      You keep ownership of the photos and text you upload, and give us permission to display them on Rooms4You
+      and in our marketing of your listing. The Rooms4You name, logo and platform belong to {{ COMPANY.legal_name }}.
     </p>
 
-    <h3>7. Limitation of Liability</h3>
+    <h2>12. Limitation of liability</h2>
     <p>
-      Rooms4You is not liable for disputes, losses, fraud, or damages between users.
-      All transactions are at your own risk.
+      Rental agreements are between tenants and landlords. To the extent the law allows, we're not liable for
+      disputes, losses or damage arising between users, or from relying on a listing. Nothing in these Terms
+      limits rights you have under the Consumer Protection Act or other South African law.
     </p>
 
-    <h3>8. Changes</h3>
+    <h2>13. Complaints and disputes</h2>
     <p>
-      We may update these Terms as the platform evolves. Continued use means acceptance of updates.
+      Contact us first at <a href="mailto:{{ COMPANY.support_email }}">{{ COMPANY.support_email }}</a> and we'll try to resolve
+      it quickly. If we can't, you may approach the National Consumer Commission or the Consumer Goods and
+      Services Ombud. These Terms are governed by the laws of the Republic of South Africa.
     </p>
 
-    <p style="margin-top: 20px; font-weight: 700;">
-      Connecting spaces to faces.
+    <h2>14. Changes to these Terms</h2>
+    <p>
+      We may update these Terms as Rooms4You grows. We'll tell you about material changes by email or on the
+      site before they take effect. Continuing to use the platform after that means you accept the updated Terms.
     </p>
 
+    <h2>15. Contact and company details</h2>
+    {% include "listings/partials/_company_details.html" %}
+
+    <p class="legal-tagline">Connecting spaces to faces.</p>
   </div>
 </div>
-
 {% endblock %}

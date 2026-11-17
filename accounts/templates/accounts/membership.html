@@ -89,6 +89,11 @@
           <button class="btn-secondary" name="cycle" value="annual">Pay yearly: R{{ annual_price|intcomma }} (2 months free)</button>
         </form>
         <p class="mp-small text-muted">Secure checkout by PayFast: card, Instant EFT or SnapScan.</p>
+        <p class="pay-consent">
+          By paying you agree to our <a href="{% url 'terms' %}">Terms</a> and
+          <a href="{% url 'pricing_refunds' %}">Pricing &amp; Refunds</a> policy. Pro renews automatically
+          every month (or year) until you cancel; cancel any time on this page.
+        </p>
       {% else %}
         <p class="mp-note">Online payments open soon. Nothing is due right now.</p>
       {% endif %}
@@ -137,6 +142,7 @@
       <li>Trust is never for sale: the Verified badge comes only from our checks.</li>
       <li>Tenants never pay to search or contact you.</li>
     </ul>
+    <p class="mp-small"><a href="{% url 'pricing_refunds' %}">Full pricing, cancellation &amp; refund policy →</a></p>
   </div>
 
   {% if payments %}

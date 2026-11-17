@@ -1,9 +1,12 @@
 # Landlord pricing & billing terms — DRAFT
 
-> ⚠️ **Not legal advice and not yet reviewed by a lawyer.** This is a
-> starting draft for the Terms of Service, written to match how the app
-> actually works (Nov 2026). Have it reviewed before publishing it on
-> `/terms/`. Questions for the lawyer are at the end.
+> ⚠️ **Not legal advice and not yet reviewed by a lawyer.**
+> **Update 17 Nov 2026:** a version of this is now **published** so the
+> site meets PayFast's website review: `/pricing/` (Pricing & Refunds),
+> `/terms/` and `/privacy/` were rewritten, and company details come from
+> the `COMPANY_*` settings. Have the lawyer review those live pages and
+> the questions at the end; then update the templates and bump
+> `LEGAL_LAST_UPDATED`.
 
 ## 1. Listing is free
 1.1 Creating an account and listing rooms on Rooms4You is free, with no

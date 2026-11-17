@@ -1,77 +1,93 @@
 {% extends "listings/base.html" %}
 {% block title %}Privacy Policy | Rooms4You{% endblock %}
-{% block meta_description %}Rooms4You's privacy policy: what personal data we collect, how it's used, and how tenants and landlords can control their information.{% endblock %}
+{% block meta_description %}Rooms4You's privacy policy: what personal data we collect, how it's used, who processes it (including payments), and how tenants and landlords can control their information under POPIA.{% endblock %}
 {% block content %}
+{# Lawyer review pending. Bump LEGAL_LAST_UPDATED when this changes materially. #}
+<div class="legal-page">
+  <h1 class="page-title">Privacy Policy</h1>
+  <p class="legal-updated">Last updated {{ COMPANY.legal_last_updated|date:"j F Y" }}</p>
 
-<h1 class="page-title">Privacy Policy</h1>
-
-<div class="form-shell">
-  <div class="form-card">
-
+  <div class="form-card legal-section">
     <p>
-      At <strong>Rooms4You</strong>, operated by <strong>4You (Pty) Ltd</strong>,
-      we respect your privacy and comply with the Protection of Personal Information Act (POPIA).
+      At <strong>{{ COMPANY.trading_name }}</strong>, operated by <strong>{{ COMPANY.legal_name }}</strong>,
+      we respect your privacy and process personal information in line with the Protection of Personal
+      Information Act (POPIA).
     </p>
 
-    <h3>1. Information We Collect</h3>
+    <h2>1. Information we collect</h2>
     <ul>
-      <li>Full name, email address, and phone number</li>
-      <li>Account credentials</li>
-      <li>Profile and listing information</li>
-      <li>Messages between users</li>
-      <li>Location data (if enabled)</li>
-      <li>Uploaded images and documents</li>
+      <li>Full name, email address and phone number</li>
+      <li>Account credentials (passwords are stored encrypted, never in plain text)</li>
+      <li>Profile and listing information, including photos you upload</li>
+      <li>Messages between users on the platform</li>
+      <li>Location data, only if you enable it (for example Guardian safety mode)</li>
+      <li>Documents you upload for verification</li>
+      <li><strong>Payment records</strong> for paid services: amount, date, what was bought and the PayFast reference. <strong>We never receive or store card or bank details</strong>; those are entered on PayFast's secure page.</li>
+      <li>Basic technical data such as device and browser type and pages visited, used for security and to improve the service</li>
     </ul>
 
-    <h3>2. How We Use Your Data</h3>
+    <h2>2. How we use your information</h2>
     <ul>
-      <li>To create and manage user accounts</li>
-      <li>To display listings and enable platform functionality</li>
-      <li>To improve safety and detect fraud</li>
-      <li>To send important service notifications</li>
+      <li>To create and manage accounts</li>
+      <li>To show listings and connect tenants with landlords</li>
+      <li>To provide paid services, confirm payments and keep financial records</li>
+      <li>To keep the platform safe: verifying landlords, detecting fraud and handling reports</li>
+      <li>To send service messages, such as enquiry alerts, listing reminders and payment receipts</li>
     </ul>
 
-    <h3>3. Data Sharing</h3>
-    <p>
-      We do not sell personal data. Data is only shared when required to operate the platform
-      (e.g. hosting, email services) or when legally required.
-    </p>
-
-    <h3>4. Data Storage</h3>
-    <p>
-      Your data is stored securely using trusted third-party service providers.
-      We take reasonable technical and organisational measures to protect it.
-    </p>
-
-    <h3>5. Your Rights</h3>
+    <h2>3. Who we share it with</h2>
+    <p>We do not sell personal information. We share it only with service providers we need to run Rooms4You, or when the law requires it:</p>
     <ul>
-      <li>Access your personal information</li>
-      <li>Request correction of inaccurate data</li>
-      <li>Request deletion of your account (subject to legal obligations)</li>
+      <li><strong>PayFast</strong>: processes payments for Pro and Boosts</li>
+      <li><strong>Hosting and database providers</strong>: run the website and store data</li>
+      <li><strong>Cloudinary</strong>: stores listing and profile photos</li>
+      <li><strong>Brevo</strong>: sends our emails</li>
+      <li><strong>Google</strong>: maps, site analytics, and sign-in if you choose "Continue with Google"</li>
     </ul>
+    <p>Some providers store data outside South Africa. We only use providers that protect personal information to a standard comparable to POPIA.</p>
+    <p>Other users see what you choose to publish, such as your listing, first name and public profile. A landlord's full street address is not shown publicly.</p>
 
-    <h3>6. Security</h3>
+    <h2 id="cookies">4. Cookies</h2>
+    <p>We use essential cookies to keep you logged in and protect forms, and remember preferences such as dark mode. We also use Google Analytics to understand, in aggregate, how the site is used.</p>
+
+    <h2>5. How long we keep it</h2>
     <p>
-      We implement security measures to reduce unauthorised access, but no system is 100% secure.
+      We keep your information while your account is active. If you close your account we delete or anonymise
+      it, except records we must keep by law, such as payment records, which are kept for at least 5 years
+      for tax purposes, and information needed to deal with fraud reports or disputes.
     </p>
 
-    <h3>7. Information Officer</h3>
+    <h2>6. Your rights</h2>
+    <ul>
+      <li>Access the personal information we hold about you</li>
+      <li>Ask us to correct or delete inaccurate information</li>
+      <li>Close your account and ask us to delete your information (subject to legal obligations)</li>
+      <li>Object to direct marketing at any time</li>
+    </ul>
+    <p>Email <a href="mailto:{{ COMPANY.privacy_email }}">{{ COMPANY.privacy_email }}</a> and we'll respond within 30 days.</p>
+
+    <h2>7. Security</h2>
+    <p>
+      We use encrypted connections (HTTPS), encrypted passwords, access controls and a licensed payment provider
+      to protect your information. No system is 100% secure, and we'll notify you and the Information Regulator
+      if a breach puts your information at risk.
+    </p>
+
+    <h2>8. Information Officer</h2>
     <p>
       Alex 'MathMetiX' Morea<br>
-      4You (Pty) Ltd<br>
-      privacy@rooms4you.co.za
+      {{ COMPANY.legal_name }}<br>
+      <a href="mailto:{{ COMPANY.privacy_email }}">{{ COMPANY.privacy_email }}</a>
     </p>
-
-    <h3>8. Updates</h3>
     <p>
-      This policy may be updated as the platform evolves. Continued use indicates acceptance.
+      If you're not happy with how we've handled your information, you can complain to the
+      <strong>Information Regulator (South Africa)</strong>: <a href="https://inforegulator.org.za" rel="noopener">inforegulator.org.za</a>.
     </p>
 
-    <p style="margin-top: 20px; font-weight: 700;">
-      Your trust is our infrastructure.
-    </p>
+    <h2>9. Updates</h2>
+    <p>We may update this policy as the platform evolves. We'll tell you about material changes before they take effect.</p>
 
+    <p class="legal-tagline">Your trust is our infrastructure.</p>
   </div>
 </div>
-
 {% endblock %}

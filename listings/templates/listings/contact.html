@@ -219,6 +219,15 @@
 
     <hr style="margin:24px 0;opacity:.2;">
 
+    <h3 id="company">Company details</h3>
+    {% include "listings/partials/_company_details.html" %}
+    <p style="opacity:.9;">
+      Prices, cancellation and refunds for landlord services:
+      <a href="{% url 'pricing_refunds' %}" class="auth-link">Pricing &amp; Refunds</a>.
+    </p>
+
+    <hr style="margin:24px 0;opacity:.2;">
+
     <div
       style="
         background: var(--card-sunken);
