@@ -308,7 +308,7 @@ def call_landlord(request, room_id):
         if not settings.TWILIO_VOICE_ENABLED:
             messages.info(
                 request,
-                "In-app calling isn't switched on yet - we've sent the landlord "
+                "In-app calling isn't available yet, so we've sent the landlord "
                 "a message asking them to arrange a call with you.",
             )
         elif not tenant_phone:
@@ -320,7 +320,7 @@ def call_landlord(request, room_id):
         else:
             messages.info(
                 request,
-                "This landlord hasn't added a phone number yet - we've sent "
+                "This landlord hasn't added a phone number yet, so we've sent "
                 "them a message instead.",
             )
         return redirect("conversation_thread", room_id=room.id, other_user_id=room.owner_id)
@@ -340,7 +340,7 @@ def call_landlord(request, room_id):
         )
         messages.success(
             request,
-            "Calling you now - stay on the line and we'll connect you to the landlord.",
+            "We're calling you now. Stay on the line and we'll connect you to the landlord.",
         )
     except (TwilioException, OSError, ValueError):
         logger.exception("Failed to place masked call for room %s", room.id)
@@ -348,7 +348,7 @@ def call_landlord(request, room_id):
             room=room,
             sender=request.user,
             recipient=room.owner,
-            body="Hi, I tried to call about this room but the call didn't go through - could you reach out?",
+            body="Hi, I tried to call about this room but the call didn't go through. Could you get in touch?",
         )
         messages.error(
             request,

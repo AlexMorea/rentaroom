@@ -20,7 +20,7 @@ class PaymentAdmin(admin.ModelAdmin):
         complete = Payment.objects.filter(status=Payment.STATUS_COMPLETE)
         extra_context = {
             **(extra_context or {}),
-            "title": f"Payments - R{complete.aggregate(t=Sum('amount'))['t'] or 0} collected in total",
+            "title": f"Payments: R{complete.aggregate(t=Sum('amount'))['t'] or 0} collected in total",
         }
         return super().changelist_view(request, extra_context=extra_context)
 

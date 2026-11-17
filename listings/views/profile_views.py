@@ -25,7 +25,7 @@ def profile(request):
 
     def dash(value):
         value = (value or "").strip() if isinstance(value, str) else value
-        return value if value else "—"
+        return value if value else "Not added"
 
     # ---------------- TENANT DATA ----------------
     favorites_qs = (

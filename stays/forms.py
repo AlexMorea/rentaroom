@@ -162,7 +162,7 @@ class BookingForm(forms.ModelForm):
             "message": forms.Textarea(attrs={
                 "class": "input",
                 "rows": 3,
-                "placeholder": "Optional - anything the host should know (arrival time, number of kids, etc.)"
+                "placeholder": "Optional. Anything the host should know, such as your arrival time or how many children are coming."
             }),
         }
 

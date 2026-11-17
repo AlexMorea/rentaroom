@@ -105,7 +105,7 @@ def auto_flag_if_scammy(*, text, source_key, category, room=None, reported_user=
             snippet = snippet[:400] + "…"
 
         detail = (
-            "Auto-flagged by the scam-language scanner — matched: "
+            "Auto-flagged by the scam-language scanner. Matched: "
             f"{', '.join(signals)}.\n\nText: {snippet}"
         )
 

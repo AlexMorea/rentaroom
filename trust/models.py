@@ -94,7 +94,7 @@ class FraudReport(models.Model):
     detail = models.TextField(
         blank=True,
         default="",
-        help_text="What happened - names/numbers used, dates, payment details requested, etc.",
+        help_text="Tell us what happened, including any names, phone numbers, dates and payment details you were asked for.",
     )
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_NEW)
