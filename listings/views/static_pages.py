@@ -8,6 +8,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from billing import pricing
+from placements.models import Placement
+
 from ..forms import ContactMessageForm
 from ..models import Contact, Profile, Review, Room, RoomStat
 
@@ -110,7 +113,13 @@ def services(request):
         "rooms_available": Room.objects.filter(is_available=True).count(),
         "total_rooms": Room.objects.count(),
         "contacts_made": RoomStat.objects.filter(stat_type__startswith="contact").count(),
-        "success_matches": RoomStat.objects.filter(stat_type="success").count(),
+        # Real, dual-confirmed move-ins (the old "success" RoomStat type
+        # was never written anywhere, so this always showed 0).
+        "move_ins": Placement.objects.filter(
+            status__in=[Placement.STATUS_MOVED_IN, Placement.STATUS_SUCCESS_FEE_DUE, Placement.STATUS_PAID]
+        ).count(),
+        "pro_from": pricing.PRO_BANDS[0].monthly_price,
+        "boost_from": pricing.BOOST_OPTIONS[0].price,
     }
     return render(request, "listings/services.html", context)
 
