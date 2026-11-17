@@ -90,6 +90,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/edit/", views.edit_profile, name="edit_profile"),
     path("inbox/", views.inbox, name="inbox"),
+    path("inbox/unread.json", views.unread_summary, name="unread_summary"),
 
     # SETTINGS
     path("settings/", views.account_settings, name="account_settings"),
@@ -119,6 +120,9 @@ urlpatterns = [
     path("rooms/<int:room_id>/review/", views.add_review, name="add_review"),
     path("rooms/<int:room_id>/message/", views.send_message, name="send_message"),
     path("rooms/<int:room_id>/conversation/<int:other_user_id>/", views.conversation_thread, name="conversation_thread"),
+    path("rooms/<int:room_id>/conversation/<int:other_user_id>/poll/", views.conversation_poll, name="conversation_poll"),
+    path("rooms/<int:room_id>/conversation/<int:other_user_id>/block/", views.toggle_block, name="toggle_block"),
+    path("rooms/<int:room_id>/conversation/<int:other_user_id>/report/", views.report_conversation, name="report_conversation"),
 
     path("rooms/<int:room_id>/favorite/", views.toggle_favorite, name="toggle_favorite"),
     path("rooms/<int:room_id>/contact/<str:method>/", views.track_contact, name="track_contact"),

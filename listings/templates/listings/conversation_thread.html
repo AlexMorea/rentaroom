@@ -1,66 +1,124 @@
 {% extends "listings/base.html" %}
-{% block title %}Conversation | {{ room.title }}{% endblock %}
+{% load static humanize %}
+{% block title %}Messages with {{ other_user.first_name|default:"user" }} | Rooms4You{% endblock %}
 {% block content %}
 
-<div class="conversation-wrap">
+<div class="conversation-wrap"
+     data-conversation
+     data-poll-url="{% url 'conversation_poll' room.id other_user.id %}"
+     data-send-url="{% url 'conversation_thread' room.id other_user.id %}"
+     data-other-initial="{{ other_user.first_name|default:other_user.username|slice:':1'|upper }}">
 
-  <a href="{% url 'inbox' %}" class="text-muted conv-back-link">
-    ← Back to Messages
-  </a>
+  <a href="{% url 'inbox' %}" class="text-muted conv-back-link">← All messages</a>
 
   <div class="form-card conv-header">
     <div class="conv-avatar">
       {{ other_user.first_name|default:other_user.username|slice:":1"|upper }}
     </div>
-    <div>
+    <div class="conv-header-main">
       <h2 class="conv-header-name">
-        {{ other_user.get_full_name|default:other_user.username }}
+        {{ other_user.get_full_name|default:other_user.first_name|default:other_user.username }}
+        {% if not is_owner and other_user.profile.is_verified_landlord %}<span class="conv-verified">✓ Verified landlord</span>{% endif %}
       </h2>
       <p class="text-muted conv-header-room">
-        📍 <a href="{% url 'room_detail' room.id %}" class="conv-header-room-link">{{ room.title }}</a>
+        About <a href="{% url 'room_detail' room.id %}" class="conv-header-room-link">{{ room.title }}</a>
+        · R{{ room.price|floatformat:0|intcomma }} a month
       </p>
     </div>
+    <details class="conv-menu">
+      <summary aria-label="Conversation options">⋯</summary>
+      <div class="conv-menu-panel">
+        <a href="{% url 'room_detail' room.id %}">View the listing</a>
+        {% if is_owner %}<a href="{% url 'placements:landlord_dashboard' %}">Update this enquiry</a>{% endif %}
+        <form method="post" action="{% url 'report_conversation' room.id other_user.id %}"
+              onsubmit="return confirm('Report this conversation to our Trust & Safety team? They will see the recent messages.');">
+          {% csrf_token %}
+          <input type="hidden" name="kind" value="scam">
+          <button type="submit">Report this conversation</button>
+        </form>
+        <form method="post" action="{% url 'toggle_block' room.id other_user.id %}"
+              onsubmit="return confirm('{% if i_blocked %}Unblock this person?{% else %}Block this person? They will no longer be able to message you.{% endif %}');">
+          {% csrf_token %}
+          <button type="submit" class="conv-menu-danger">{% if i_blocked %}Unblock{% else %}Block{% endif %} {{ other_user.first_name|default:"this person" }}</button>
+        </form>
+      </div>
+    </details>
   </div>
 
-  <div class="form-card conv-thread" id="convThread">
+  <div class="form-card conv-thread" id="convThread" aria-live="polite">
+    {% if not is_owner %}
+    <p class="conv-safety">
+      🛡 Never pay a deposit or any money before you've viewed the room and met the landlord.
+      If someone pressures you to pay first, please report the conversation from the ⋯ menu.
+    </p>
+    {% endif %}
     {% for msg in thread %}
+      {% ifchanged msg.created_at|date:"Y-m-d" %}
+        <div class="conv-day" data-day="{{ msg.created_at|date:'Y-m-d' }}">
+          {% if msg.created_at|date:"Y-m-d" == today_iso %}Today{% else %}{{ msg.created_at|date:"j F Y" }}{% endif %}
+        </div>
+      {% endifchanged %}
       {% if msg.sender_id == request.user.id %}
-        <div class="bubble-row bubble-row-out">
+        <div class="bubble-row bubble-row-out" data-msg-id="{{ msg.id }}">
           <div class="bubble bubble-out">
             <p class="bubble-text">{{ msg.body }}</p>
-            <small class="bubble-time bubble-time-out">{{ msg.created_at|date:"d M, H:i" }}</small>
+            <small class="bubble-time bubble-time-out">{{ msg.created_at|date:"H:i" }}</small>
           </div>
         </div>
       {% else %}
-        <div class="bubble-row bubble-row-in">
+        <div class="bubble-row bubble-row-in" data-msg-id="{{ msg.id }}">
           <div class="bubble-avatar">{{ other_user.first_name|default:other_user.username|slice:":1"|upper }}</div>
           <div class="bubble bubble-in">
             <p class="bubble-text">{{ msg.body }}</p>
-            <small class="text-muted bubble-time">{{ msg.created_at|date:"d M, H:i" }}</small>
+            <small class="text-muted bubble-time">{{ msg.created_at|date:"H:i" }}</small>
           </div>
         </div>
       {% endif %}
     {% empty %}
-      <p class="text-muted conv-empty">No messages yet - say hello!</p>
+      <p class="text-muted conv-empty" data-conv-empty>
+        {% if is_owner %}No messages yet.{% else %}Say hello and ask anything you'd like to know about the room.{% endif %}
+      </p>
     {% endfor %}
+    <p class="conv-seen" data-conv-seen {% if not last_mine_read %}hidden{% endif %}>Seen</p>
   </div>
 
-  <form method="post" class="form-card conv-composer" id="convComposer">
-    {% csrf_token %}
-    <textarea
-      name="body"
-      class="input conv-textarea"
-      placeholder="Type your message…"
-      required
-      rows="2"
-      id="convTextarea"
-    ></textarea>
-    <button type="submit" class="btn-primary conv-send-btn">Send</button>
-  </form>
+  {% if blocked %}
+    <div class="form-card conv-blocked">
+      {% if i_blocked %}
+        You've blocked {{ other_user.first_name|default:"this person" }}, so neither of you can send messages here.
+        You can unblock them from the ⋯ menu above.
+      {% else %}
+        You can't send messages in this conversation.
+      {% endif %}
+    </div>
+  {% else %}
+    <form method="post" class="form-card conv-composer" id="convComposer">
+      {% csrf_token %}
+      <div class="conv-quick" aria-label="Quick replies">
+        {% for reply in quick_replies %}
+          <button type="button" class="conv-quick-btn" data-quick-reply>{{ reply }}</button>
+        {% endfor %}
+      </div>
+      <label for="convTextarea" class="sr-only">Your message</label>
+      <textarea
+        name="body"
+        class="input conv-textarea"
+        placeholder="Write a message"
+        required
+        rows="1"
+        maxlength="{{ max_length }}"
+        id="convTextarea"
+      ></textarea>
+      <div class="conv-composer-foot">
+        <small class="text-muted conv-hint">Press Enter to send, Shift + Enter for a new line</small>
+        <button type="submit" class="btn-primary conv-send-btn">Send</button>
+      </div>
+      <p class="conv-error" data-conv-error hidden></p>
+    </form>
+  {% endif %}
 
   <p class="text-muted conv-privacy-note">
-    🔒 Messages stay inside Rooms4You. We never share your number or email
-    with the other person.
+    🔒 Your email address isn't shared through messages. Only share your phone number if you're comfortable doing so.
   </p>
 
 </div>
@@ -110,7 +168,11 @@
      universally reliable than nesting flex-in-flex, which is exactly
      the pattern that was ambiguous to verify in testing. */
   .conv-thread {
-    max-height: 55vh;
+    /* Fit the screen: header card + composer stay visible with the
+       conversation between them. */
+    max-height: calc(100vh - 440px);
+    max-height: calc(100dvh - 440px);
+    min-height: 200px;
     overflow-y: auto;
     margin-bottom: 16px;
     scroll-behavior: smooth;
@@ -132,7 +194,7 @@
     height: 30px;
     min-width: 30px;
     border-radius: 50%;
-    background: #e2e8f0;
+    background: var(--border);
     color: var(--text);
     display: flex;
     align-items: center;
@@ -174,16 +236,17 @@
      sidesteps the whole "flex item shrinks to near-zero width" bug
      class entirely, rather than just patching one symptom of it. */
   .conv-composer {
-    position: sticky;
-    bottom: 12px;
     display: block;
-    z-index: 5;
   }
   .conv-textarea {
     width: 100%;
     display: block;
     resize: none;
-    min-height: 64px;
+    min-height: 46px !important;
+    height: 46px;
+    font: inherit;
+    max-height: 160px;
+    overflow-y: auto;
   }
   .conv-send-btn {
     display: block;
@@ -199,35 +262,62 @@
   }
 
   @media (max-width: 480px) {
-    .conv-thread { max-height: 50vh; }
+    .conv-thread { max-height: calc(100dvh - 430px); }
     .conv-send-btn { width: 100%; }
   }
+
+  .conv-header { position: relative; }
+  .conv-header-main { flex: 1; min-width: 0; }
+  .conv-verified {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; color: #fff; background: #15803d; vertical-align: middle;
+  }
+  .conv-menu { position: relative; }
+  .conv-menu summary {
+    list-style: none; cursor: pointer; font-size: 1.4rem; line-height: 1; padding: 6px 10px;
+    border-radius: 10px; color: var(--text);
+  }
+  .conv-menu summary::-webkit-details-marker { display: none; }
+  .conv-menu summary:hover { background: var(--card-sunken); }
+  .conv-menu-panel {
+    position: absolute; right: 0; top: 110%; z-index: 20; min-width: 230px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); padding: 6px;
+  }
+  .conv-menu-panel a, .conv-menu-panel button {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px;
+    background: none; border: none; font: inherit; color: var(--text); text-decoration: none; cursor: pointer;
+  }
+  .conv-menu-panel a:hover, .conv-menu-panel button:hover { background: var(--card-sunken); }
+  .conv-menu-panel form { margin: 0; }
+  .conv-menu-danger { color: #dc2626 !important; }
+  .conv-safety {
+    margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; line-height: 1.5;
+    background: var(--dm-bg-fff7ed, #fff7ed); color: var(--dm-fg-9a3412, #9a3412);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+  .conv-day {
+    text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+    margin: 6px 0 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .conv-seen { text-align: right; font-size: 0.72rem; color: var(--text-muted); margin: 4px 2px 0; }
+  .conv-blocked { text-align: center; color: var(--text-muted); }
+  .conv-quick { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; }
+  .conv-quick-btn {
+    flex: 0 0 auto; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--card-sunken); color: var(--text); font: inherit; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+  }
+  .conv-quick-btn:hover { border-color: var(--link); color: var(--link); }
+  .conv-composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .conv-composer-foot .conv-send-btn { margin: 0; }
+  .conv-hint { font-size: 0.75rem; }
+  .conv-error { color: #dc2626; font-size: 0.85rem; margin: 8px 0 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  @media (max-width: 480px) { .conv-hint { display: none; } }
 </style>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Auto-scroll to the latest message so the conversation opens
-    // where you left off, not at the very first message.
-    const thread = document.getElementById("convThread");
-    if (thread) {
-      thread.scrollTop = thread.scrollHeight;
-    }
+{% endblock %}
 
-    // Enter sends, Shift+Enter makes a new line - desktop convenience,
-    // harmless on mobile where the on-screen keyboard handles this itself.
-    const textarea = document.getElementById("convTextarea");
-    const form = document.getElementById("convComposer");
-    if (textarea && form) {
-      textarea.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          if (textarea.value.trim()) {
-            form.submit();
-          }
-        }
-      });
-    }
-  });
-</script>
-
+{% block extra_js %}
+<script src="{% static 'js/conversation.js' %}" defer></script>
 {% endblock %}

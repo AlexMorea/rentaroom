@@ -147,6 +147,7 @@ TEMPLATES = [
                 "listings.context_processors.vapid_public_key",
                 "listings.context_processors.google_oauth_client_id",
                 "listings.context_processors.company_details",
+                "listings.context_processors.unread_messages",
             ],
         },
     },

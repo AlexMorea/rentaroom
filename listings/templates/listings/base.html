@@ -129,6 +129,7 @@
     data-auth="{% if user.is_authenticated %}1{% else %}0{% endif %}"
     data-role="{% if user.is_authenticated and user.profile %}{{ user.profile.role|default:'guest' }}{% else %}guest{% endif %}"
     data-persona="{% if user.is_authenticated and user.profile and user.profile.role == 'tenant' %}{{ user.profile.persona }}{% endif %}"
+    {% if user.is_authenticated %}data-unread-url="{% url 'unread_summary' %}"{% endif %}
   >
     <!-- GLOBAL LOGOUT FORM -->
     <form
@@ -182,6 +183,7 @@
     <script src="{% static 'js/theme-toggle.js' %}?v=1" defer></script>
     <script src="{% static 'js/nav-active-link.js' %}?v=1" defer></script>
     <script src="{% static 'js/toast.js' %}?v=2" defer></script>
+    {% if user.is_authenticated %}<script src="{% static 'js/messages-live.js' %}" defer></script>{% endif %}
     <script src="{% static 'js/idle.js' %}?v=1" defer></script>
     <script src="{% static 'js/slider.js' %}?v=1" defer></script>
     <script src="{% static 'js/room-card.js' %}?v=1" defer></script>

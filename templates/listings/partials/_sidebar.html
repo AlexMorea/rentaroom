@@ -111,6 +111,7 @@
 
         <a href="{% url 'inbox' %}">
             💬 Messages
+            <span class="sidebar-badge-count" data-unread-badge {% if not unread_messages_count %}hidden{% endif %}>{{ unread_messages_count }}</span>
         </a>
 
         <a href="{% url 'services:bakkie_home' %}">
@@ -135,6 +136,7 @@
 
         <a href="{% url 'inbox' %}">
             💬 Messages
+            <span class="sidebar-badge-count" data-unread-badge {% if not unread_messages_count %}hidden{% endif %}>{{ unread_messages_count }}</span>
         </a>
 
         <a href="{% url 'services:bakkie_home' %}">

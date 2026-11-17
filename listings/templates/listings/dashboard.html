@@ -135,7 +135,7 @@ Dashboard | Rooms4You
         <p>Tenant enquiries (click to view all)</p>
       </div>
 
-      <span class="inbox-count ld-inbox-count"> {{ messages_received|length }} recent → </span>
+      <span class="inbox-count ld-inbox-count">{% if unread_messages_count %}<strong class="ld-unread">{{ unread_messages_count }} unread</strong>{% else %}All read{% endif %} →</span>
     </div>
 
     <div class="inbox-preview-list ld-inbox-list">
@@ -386,6 +386,9 @@ Dashboard | Rooms4You
     font-weight: 700;
     color: var(--link);
     white-space: nowrap;
+  }
+  .ld-unread {
+    color: #dc2626;
   }
   .ld-fees-due-banner {
     margin-top: 14px;
