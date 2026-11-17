@@ -493,8 +493,19 @@ emails users, hides listings or mutates a score does so until run with `--force`
 | `compute_response_stats_task` | daily 06:30 | Recompute landlord response-time signal from Message threads |
 
 > **Current state.** `CELERY_BROKER_URL` is unset, so `CELERY_BEAT_SCHEDULE` is
-> effectively inert. Until a broker + worker + beat are deployed, these must be
-> run as cron / one-off `manage.py` invocations.
+> effectively inert. To keep search ranking working anyway,
+> `listings/scheduler.py` runs `compute_scores --force` **hourly** and
+> `compute_response_stats --force` **daily** from inside the web process (a
+> middleware notices a job is due and runs it in a background thread;
+> `RUN_SCHEDULED_JOBS_IN_PROCESS`, on by default). Jobs that email users
+> (stale-listing nudges, digest, move-in checks, overdue fees) are **not**
+> scheduled there and still need cron / one-off `manage.py` runs.
+
+**Ranking formula** (`compute_scores`): hits×3 + views×1 + contacts×8 +
+favourites×2 + (review stars − 3 per review)×3, minus a capped staleness
+penalty, plus a new-listing head start (40 points fading to 0 over 14 days),
+then +10% for Pro landlords. Boosts never change the score; they pin up to
+3 rooms as "Featured" at query time.
 
 ### Management commands
 

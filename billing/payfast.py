@@ -154,18 +154,46 @@ def _api_headers(body: dict | None = None) -> dict:
     return headers
 
 
+def _api_params():
+    return {"testing": "true"} if settings.PAYFAST_SANDBOX else None
+
+
+def subscription_is_cancelled(token: str) -> bool:
+    """Asks PayFast for the subscription's current state. Used when the
+    cancel call itself didn't give a clear answer."""
+    url = f"{API_BASE}/subscriptions/{token}/fetch"
+    try:
+        response = requests.get(url, headers=_api_headers(), params=_api_params(), timeout=15)
+        payload = response.json()
+    except (requests.RequestException, ValueError):
+        logger.exception("PayFast subscription fetch failed for token %s", token)
+        return False
+    details = (payload.get("data") or {}).get("response") or {}
+    if not isinstance(details, dict):
+        return False
+    status_text = str(details.get("status_text", "")).upper()
+    return status_text == "CANCELLED" or details.get("status") == 2
+
+
 def cancel_subscription(token: str) -> bool:
     """Stops future debits. Pro carries on until the period already paid
-    for runs out. Returns False (and logs) if PayFast refused or was
-    unreachable - the caller tells the landlord and staff follow up."""
+    for runs out.
+
+    PayFast notifies our ITN endpoint *while* handling this call; on a
+    server with a single worker that notification queues behind this very
+    request, so the call can time out even though PayFast went on to
+    cancel. Whenever the answer isn't a clear success, we check the
+    subscription's actual status before reporting failure."""
     url = f"{API_BASE}/subscriptions/{token}/cancel"
-    params = {"testing": "true"} if settings.PAYFAST_SANDBOX else None
     try:
-        response = requests.put(url, headers=_api_headers(), params=params, timeout=15)
+        response = requests.put(url, headers=_api_headers(), params=_api_params(), timeout=20)
+        if 200 <= response.status_code < 300:
+            return True
+        logger.warning("PayFast subscription cancel answered %s: %s", response.status_code, response.text[:300])
     except requests.RequestException:
-        logger.exception("PayFast subscription cancel failed for token %s", token)
-        return False
-    if response.status_code != 200:
-        logger.error("PayFast subscription cancel refused (%s): %s", response.status_code, response.text[:300])
-        return False
-    return True
+        logger.warning("PayFast subscription cancel got no answer for token %s - checking status", token)
+
+    if subscription_is_cancelled(token):
+        return True
+    logger.error("PayFast subscription %s still not cancelled - needs staff follow-up", token)
+    return False

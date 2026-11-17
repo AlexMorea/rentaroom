@@ -477,3 +477,36 @@ class AdminPagesLoadTests(TestCase):
         membership.refresh_from_db()
         self.assertTrue(membership.on_paid_pro)
         self.assertEqual(Payment.objects.filter(user=landlord, amount=0).count(), 1)
+
+
+@PAYFAST
+class CancelSubscriptionApiTests(TestCase):
+    """payfast.cancel_subscription must not report failure when PayFast
+    actually cancelled (e.g. the call timed out on a 1-worker server)."""
+
+    def test_clear_success(self):
+        with mock.patch("billing.payfast.requests.put", return_value=mock.Mock(status_code=200)):
+            self.assertTrue(payfast.cancel_subscription("tok"))
+
+    def test_timeout_but_cancelled(self):
+        import requests
+
+        fetched = mock.Mock(json=lambda: {"data": {"response": {"status": 2, "status_text": "CANCELLED"}}})
+        with mock.patch("billing.payfast.requests.put", side_effect=requests.Timeout), \
+             mock.patch("billing.payfast.requests.get", return_value=fetched):
+            self.assertTrue(payfast.cancel_subscription("tok"))
+
+    def test_timeout_and_still_active(self):
+        import requests
+
+        fetched = mock.Mock(json=lambda: {"data": {"response": {"status": 1, "status_text": "ACTIVE"}}})
+        with mock.patch("billing.payfast.requests.put", side_effect=requests.Timeout), \
+             mock.patch("billing.payfast.requests.get", return_value=fetched):
+            self.assertFalse(payfast.cancel_subscription("tok"))
+
+    def test_refused_and_unreachable(self):
+        import requests
+
+        with mock.patch("billing.payfast.requests.put", return_value=mock.Mock(status_code=400, text="bad")), \
+             mock.patch("billing.payfast.requests.get", side_effect=requests.ConnectionError):
+            self.assertFalse(payfast.cancel_subscription("tok"))

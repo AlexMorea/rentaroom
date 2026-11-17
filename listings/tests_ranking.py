@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.management import call_command
@@ -36,6 +38,11 @@ class RankingTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="u", password="p")
         cache.clear()
+        # These tests check exact engagement arithmetic; the new-listing
+        # head start is covered separately in ScoringRunsAndRanksTests.
+        boost_off = mock.patch("listings.management.commands.compute_scores.NEW_LISTING_BOOST_POINTS", 0)
+        boost_off.start()
+        self.addCleanup(boost_off.stop)
 
     def test_backfill_hits_and_compute_scores(self):
         r1 = make_room(self.user, title="A", price=100)
@@ -156,6 +163,11 @@ class ComputeScoresAggregationTests(TestCase):
 
     def setUp(self):
         self.owner = User.objects.create_user(username="owner", password="p")
+        # These tests check exact engagement arithmetic; the new-listing
+        # head start is covered separately in ScoringRunsAndRanksTests.
+        boost_off = mock.patch("listings.management.commands.compute_scores.NEW_LISTING_BOOST_POINTS", 0)
+        boost_off.start()
+        self.addCleanup(boost_off.stop)
 
     def test_favorites_not_inflated_by_unrelated_roomstat_rows(self):
         room = make_room(self.owner, title="Fanout")
@@ -226,3 +238,84 @@ class ComputeScoresAggregationTests(TestCase):
         room.refresh_from_db()
 
         self.assertEqual(room.score, 8)  # just the one contact, no penalty
+
+
+class ScoringRunsAndRanksTests(TestCase):
+    """The ranking pipeline end to end: engagement -> compute_scores ->
+    best-match order, plus the in-process scheduler that runs it."""
+
+    def make_room(self, owner, title, days_old=30):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        room = Room.objects.create(
+            owner=owner, title=title, description="d", location="Soweto", suburb="Orlando",
+            town="Soweto", city="Johannesburg", full_address="1 St", postal_code="1804",
+            room_type="Backroom", contact_phone="0821234567", price=1500,
+        )
+        Room.objects.filter(pk=room.pk).update(created_at=timezone.now() - timedelta(days=days_old))
+        return Room.objects.get(pk=room.pk)
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.owner = User.objects.create_user("owner-rank@example.com", password="x")
+        self.tenant = User.objects.create_user("tenant-rank@example.com", password="x")
+
+    def test_contacted_room_outranks_ignored_one(self):
+        from django.core.management import call_command
+
+        from listings.models import RoomStat
+
+        quiet = self.make_room(self.owner, "Quiet room")
+        wanted = self.make_room(self.owner, "Wanted room")
+        RoomStat.objects.create(room=wanted, user=self.tenant, stat_type="contact_whatsapp")
+        Room.objects.filter(pk=wanted.pk).update(hits=5)
+
+        call_command("compute_scores", "--force", verbosity=0)
+
+        quiet.refresh_from_db()
+        wanted.refresh_from_db()
+        self.assertGreater(wanted.score, quiet.score)
+        ordered = list(Room.objects.filter(is_available=True).order_by("-score", "-created_at"))
+        self.assertEqual(ordered[0].pk, wanted.pk)
+
+    def test_new_listing_gets_a_fading_head_start(self):
+        from django.core.management import call_command
+
+        brand_new = self.make_room(self.owner, "Brand new", days_old=0)
+        week_old = self.make_room(self.owner, "Week old", days_old=7)
+        old = self.make_room(self.owner, "Old", days_old=30)
+
+        call_command("compute_scores", "--force", verbosity=0)
+        for r in (brand_new, week_old, old):
+            r.refresh_from_db()
+
+        self.assertGreater(brand_new.score, week_old.score)
+        self.assertGreater(week_old.score, old.score)
+        self.assertEqual(old.score, 0)
+
+    def test_scheduler_runs_due_jobs_once_per_period(self):
+        from unittest import mock
+
+        from django.core.cache import cache
+
+        from listings import scheduler
+
+        cache.delete_many([key for key, *_ in scheduler.JOBS])
+        with mock.patch("listings.scheduler.threading.Thread") as thread:
+            scheduler.run_due_jobs()
+            scheduler.run_due_jobs()
+        commands = [c.kwargs["args"][0] for c in thread.call_args_list]
+        self.assertEqual(sorted(commands), ["compute_response_stats", "compute_scores"])
+
+    def test_middleware_is_off_in_tests_and_never_breaks_requests(self):
+        from unittest import mock
+
+        from django.test import override_settings
+
+        with override_settings(RUN_SCHEDULED_JOBS_IN_PROCESS=True), \
+             mock.patch("listings.scheduler.run_due_jobs", side_effect=RuntimeError("cache down")):
+            resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)

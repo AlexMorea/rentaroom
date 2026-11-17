@@ -123,6 +123,7 @@ MIDDLEWARE = [
     "accounts.middleware.MembershipMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "listings.middleware.DisableCacheMiddleware",
+    "listings.scheduler.ScheduledJobsMiddleware",
 ]
 
 
@@ -438,6 +439,14 @@ LANDLORD_NO_LISTING_NUDGE_DAYS = int(os.environ.get("LANDLORD_NO_LISTING_NUDGE_D
 # placements/management/commands/flag_stalled_placements.py and
 # Placement.STALLABLE_STATUSES/is_stalled().
 PLACEMENT_STALL_DAYS = int(os.environ.get("PLACEMENT_STALL_DAYS", "7"))
+
+# ----------------- In-process scheduled jobs -----------------
+# Recompute search ranking (hourly) and landlord response stats (daily)
+# from inside the web app - see listings/scheduler.py. On by default
+# because no Celery worker is deployed; off during tests.
+RUN_SCHEDULED_JOBS_IN_PROCESS = env_bool(
+    "RUN_SCHEDULED_JOBS_IN_PROCESS", "False" if "test" in sys.argv[1:2] else "True"
+)
 
 # ----------------- Pricing & payments (see billing/) -----------------
 # The room success fee is switched OFF: Rooms4You earns from Pro and

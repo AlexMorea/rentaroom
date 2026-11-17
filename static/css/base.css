@@ -429,16 +429,6 @@ body.nav-open {
      navy text against this gradient measures ~7:1. */
   color: #002A5C;
 }
-.badge-featured {
-  /* Paid placement - bottom-left so it never hides the trust badges
-     (Verified, Popular) and always reads as "Featured", not "trusted".
-     Gold on navy measures ~9:1. */
-  top: auto;
-  bottom: 10px;
-  left: 10px;
-  background: #002A5C;
-  color: #FFD166;
-}
 .badge-verified {
   right: 10px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -807,6 +797,30 @@ body.nav-open .nav-links * {
 .toast.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.toast-text {
+  flex: 1;
+}
+.toast-close {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.toast-close:hover,
+.toast-close:focus-visible {
+  opacity: 1;
 }
 
 .toast.hide {
