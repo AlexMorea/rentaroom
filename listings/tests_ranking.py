@@ -296,20 +296,6 @@ class ScoringRunsAndRanksTests(TestCase):
         self.assertGreater(week_old.score, old.score)
         self.assertEqual(old.score, 0)
 
-    def test_scheduler_runs_due_jobs_once_per_period(self):
-        from unittest import mock
-
-        from django.core.cache import cache
-
-        from listings import scheduler
-
-        cache.delete_many([key for key, *_ in scheduler.JOBS])
-        with mock.patch("listings.scheduler.threading.Thread") as thread:
-            scheduler.run_due_jobs()
-            scheduler.run_due_jobs()
-        commands = [c.kwargs["args"][0] for c in thread.call_args_list]
-        self.assertEqual(sorted(commands), ["compute_response_stats", "compute_scores"])
-
     def test_middleware_is_off_in_tests_and_never_breaks_requests(self):
         from unittest import mock
 
@@ -319,3 +305,86 @@ class ScoringRunsAndRanksTests(TestCase):
              mock.patch("listings.scheduler.run_due_jobs", side_effect=RuntimeError("cache down")):
             resp = self.client.get("/")
         self.assertEqual(resp.status_code, 200)
+
+
+
+class SchedulerTests(TestCase):
+    """listings/scheduler.py: each job runs once per slot, at SAST times,
+    and email jobs never fire at deploy time or twice in one slot."""
+
+    def sast(self, *args):
+        from datetime import datetime
+
+        from accounts.founding import SAST
+
+        return datetime(*args, tzinfo=SAST)
+
+    def job(self, name):
+        from listings import scheduler
+
+        return next(j for j in scheduler.JOBS if j.name == name)
+
+    def test_slots(self):
+        stale = self.job("flag_stale_listings")  # daily 06:00
+        self.assertEqual(stale.latest_slot(self.sast(2026, 11, 17, 5, 59)), self.sast(2026, 11, 16, 6, 0))
+        self.assertEqual(stale.latest_slot(self.sast(2026, 11, 17, 6, 0)), self.sast(2026, 11, 17, 6, 0))
+
+        digest = self.job("send_landlord_digest")  # Monday 08:00
+        # Tue 17 Nov 2026 -> Mon 16 Nov; Mon 07:00 -> previous Monday.
+        self.assertEqual(digest.latest_slot(self.sast(2026, 11, 17, 12, 0)), self.sast(2026, 11, 16, 8, 0))
+        self.assertEqual(digest.latest_slot(self.sast(2026, 11, 16, 7, 0)), self.sast(2026, 11, 9, 8, 0))
+
+        scores = self.job("compute_scores")
+        self.assertEqual(scores.latest_slot(self.sast(2026, 11, 17, 10, 42)), self.sast(2026, 11, 17, 10, 0))
+
+    def names(self, jobs):
+        return sorted(j.name for j in jobs)
+
+    def test_quiet_jobs_run_now_email_jobs_wait_for_next_slot(self):
+        from listings.scheduler import claim_due_jobs
+
+        first = claim_due_jobs(self.sast(2026, 11, 17, 10, 5))
+        self.assertEqual(self.names(first), ["compute_response_stats", "compute_scores"])
+
+        # Same hour again: nothing (another worker or a restart).
+        self.assertEqual(claim_due_jobs(self.sast(2026, 11, 17, 10, 30)), [])
+
+        # Next hour: ranking only.
+        self.assertEqual(self.names(claim_due_jobs(self.sast(2026, 11, 17, 11, 1))), ["compute_scores"])
+
+        # Next morning after 07:15: the daily email jobs run for the first time.
+        tomorrow = self.names(claim_due_jobs(self.sast(2026, 11, 18, 7, 20)))
+        for name in ("flag_stale_listings", "flag_landlords_without_listing", "check_move_ins",
+                     "flag_stalled_placements", "compute_response_stats", "compute_scores"):
+            self.assertIn(name, tomorrow)
+        self.assertNotIn("send_landlord_digest", tomorrow)
+
+    def test_digest_runs_once_on_monday(self):
+        from listings.scheduler import claim_due_jobs
+
+        claim_due_jobs(self.sast(2026, 11, 17, 10, 0))  # enable (Tue): waits
+        monday = self.sast(2026, 11, 23, 8, 5)
+        self.assertIn("send_landlord_digest", self.names(claim_due_jobs(monday)))
+        # A second process / a redeploy minutes later must not resend it.
+        self.assertNotIn("send_landlord_digest", self.names(claim_due_jobs(self.sast(2026, 11, 23, 9, 0))))
+        self.assertNotIn("send_landlord_digest", self.names(claim_due_jobs(self.sast(2026, 11, 29, 23, 0))))
+        self.assertIn("send_landlord_digest", self.names(claim_due_jobs(self.sast(2026, 11, 30, 8, 1))))
+
+    def test_email_jobs_can_be_paused(self):
+        from listings.scheduler import claim_due_jobs
+
+        with override_settings(SCHEDULED_EMAIL_JOBS_ENABLED=False):
+            claim_due_jobs(self.sast(2026, 11, 17, 10, 0))
+            claimed = self.names(claim_due_jobs(self.sast(2026, 11, 23, 9, 0)))
+        self.assertEqual(claimed, ["compute_response_stats", "compute_scores"])
+
+    def test_job_outcome_is_recorded(self):
+        from listings.models import ScheduledJobRun
+        from listings.scheduler import _run, claim_due_jobs
+
+        claim_due_jobs(self.sast(2026, 11, 17, 10, 0))
+        with mock.patch("listings.scheduler.call_command", side_effect=RuntimeError("boom")):
+            _run(self.job("compute_scores"))
+        run = ScheduledJobRun.objects.get(name="compute_scores")
+        self.assertFalse(run.last_ok)
+        self.assertIn("boom", run.last_error)

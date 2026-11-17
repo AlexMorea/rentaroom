@@ -441,12 +441,17 @@ LANDLORD_NO_LISTING_NUDGE_DAYS = int(os.environ.get("LANDLORD_NO_LISTING_NUDGE_D
 PLACEMENT_STALL_DAYS = int(os.environ.get("PLACEMENT_STALL_DAYS", "7"))
 
 # ----------------- In-process scheduled jobs -----------------
-# Recompute search ranking (hourly) and landlord response stats (daily)
-# from inside the web app - see listings/scheduler.py. On by default
-# because no Celery worker is deployed; off during tests.
+# Runs the recurring jobs from inside the web app - see
+# listings/scheduler.py for the list and times. On by default because no
+# Celery worker is deployed; off during tests.
 RUN_SCHEDULED_JOBS_IN_PROCESS = env_bool(
     "RUN_SCHEDULED_JOBS_IN_PROCESS", "False" if "test" in sys.argv[1:2] else "True"
 )
+# The jobs that email/push landlords and tenants (listing-confirm nudges,
+# "add your first listing", move-in checks, stalled placements, Monday
+# digest). Set SCHEDULED_EMAIL_JOBS_ENABLED=0 to pause them all at once
+# without touching ranking.
+SCHEDULED_EMAIL_JOBS_ENABLED = env_bool("SCHEDULED_EMAIL_JOBS_ENABLED", "True")
 
 # ----------------- Pricing & payments (see billing/) -----------------
 # The room success fee is switched OFF: Rooms4You earns from Pro and

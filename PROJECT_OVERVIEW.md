@@ -493,13 +493,27 @@ emails users, hides listings or mutates a score does so until run with `--force`
 | `compute_response_stats_task` | daily 06:30 | Recompute landlord response-time signal from Message threads |
 
 > **Current state.** `CELERY_BROKER_URL` is unset, so `CELERY_BEAT_SCHEDULE` is
-> effectively inert. To keep search ranking working anyway,
-> `listings/scheduler.py` runs `compute_scores --force` **hourly** and
-> `compute_response_stats --force` **daily** from inside the web process (a
-> middleware notices a job is due and runs it in a background thread;
-> `RUN_SCHEDULED_JOBS_IN_PROCESS`, on by default). Jobs that email users
-> (stale-listing nudges, digest, move-in checks, overdue fees) are **not**
-> scheduled there and still need cron / one-off `manage.py` runs.
+> inert. Instead `listings/scheduler.py` runs every recurring job from inside
+> the web process (`RUN_SCHEDULED_JOBS_IN_PROCESS`, on by default). A
+> middleware checks at most once a minute whether a job's latest slot has
+> passed; each slot is claimed with one conditional UPDATE on a
+> `ScheduledJobRun` row, so a job runs exactly once per slot across workers,
+> restarts and redeploys, in a background thread. Last run / outcome per job is
+> visible in Django admin → Scheduled job runs. Jobs run with the first request
+> after their time.
+>
+> | Job | When (SAST) | Emails? |
+> |-----|-------------|---------|
+> | `compute_scores` | hourly | no |
+> | `compute_response_stats` | daily 06:30 | no |
+> | `flag_stale_listings` | daily 06:00 | yes, landlords |
+> | `flag_landlords_without_listing` | daily 06:15 | yes, landlords |
+> | `check_move_ins` | daily 07:00 | yes, both sides |
+> | `flag_stalled_placements` | daily 07:15 | yes, both sides |
+> | `send_landlord_digest` | Monday 08:00 | yes, landlords |
+>
+> Email jobs start from their *next* slot when first switched on, and can all
+> be paused with `SCHEDULED_EMAIL_JOBS_ENABLED=0`.
 
 **Ranking formula** (`compute_scores`): hits×3 + views×1 + contacts×8 +
 favourites×2 + (review stars − 3 per review)×3, minus a capped staleness
