@@ -56,29 +56,16 @@
       {% endif %}
     </div>
 
-    <!-- BADGES -->
-    <div class="room-badges rc-badges">
-      {% if featured_ids and room.id in featured_ids %}
-        <span class="badge badge-featured rc-badge rc-badge-featured">⭐ Featured</span>
-      {% endif %}
-
-      {% if room.is_new %}
-        <span class="badge rc-badge rc-badge-new">🆕 New</span>
-      {% endif %}
-
-      {% if popular_ids and room.id in popular_ids %}
-        <span class="badge badge-popular rc-badge rc-badge-popular">🔥 Popular</span>
-      {% endif %}
-
-      {% with owner_profile=room.owner|profile %}
-        {% if owner_profile and owner_profile.is_verified_landlord %}
-          <span class="badge badge-verified rc-badge rc-badge-verified">★ Verified</span>
-        {% endif %}
-        {% if owner_profile and owner_profile.is_fast_responder %}
-          <span class="badge rc-badge rc-badge-fast">⚡ Fast responder</span>
-        {% endif %}
-      {% endwith %}
-    </div>
+    <!-- STATUS BADGE: one at most, so the photo stays visible.
+         Priority: Featured (paid boost) > Popular > New. Landlord trust
+         signals live under the location instead (rc-trust-row). -->
+    {% if featured_ids and room.id in featured_ids %}
+      <div class="room-badges rc-badges"><span class="badge rc-badge rc-badge-featured">⭐ Featured</span></div>
+    {% elif popular_ids and room.id in popular_ids %}
+      <div class="room-badges rc-badges"><span class="badge rc-badge rc-badge-popular">🔥 Popular</span></div>
+    {% elif room.is_new %}
+      <div class="room-badges rc-badges"><span class="badge rc-badge rc-badge-new">New</span></div>
+    {% endif %}
 
     <!-- SAVE / FAVORITE -->
     <button
@@ -124,6 +111,19 @@
       <h3 class="room-title rc-title">{{ room.title }}</h3>
 
       <p class="room-location rc-location">📍 {{ room.location }}</p>
+
+      {% with owner_profile=room.owner|profile %}
+        {% if owner_profile and owner_profile.is_verified_landlord or owner_profile and owner_profile.is_fast_responder %}
+          <div class="rc-trust-row">
+            {% if owner_profile.is_verified_landlord %}
+              <span class="rc-trust-chip rc-trust-verified"><span class="rc-trust-icon" aria-hidden="true">✓</span> Verified landlord</span>
+            {% endif %}
+            {% if owner_profile.is_fast_responder %}
+              <span class="rc-trust-chip rc-trust-fast"><span class="rc-trust-icon" aria-hidden="true">⚡</span> Fast responder</span>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
       <div class="room-meta-row rc-meta-row">
         <span class="availability-badge {{ room.availability_state }} rc-status rc-status-{{ room.availability_state }}">
@@ -326,13 +326,11 @@
     /* white-on-orange fails WCAG contrast (~2.5:1); navy passes (~7:1) */
     color: #002A5C !important;
   }
-  .rc-badge-verified {
-    background: rgba(255, 255, 255, 0.92) !important;
-    color: #002A5C !important;
-  }
-  .rc-badge-fast {
-    background: rgba(255, 247, 237, 0.95) !important;
-    color: #9a3412 !important;
+  .rc-badge-featured {
+    /* Paid placement: navy + gold so it reads as "promoted", never as
+       a trust signal. Gold on navy ~9:1. */
+    background: rgba(0, 42, 92, 0.94) !important;
+    color: #FFD166 !important;
   }
   .rc-badge-new {
     background: rgba(22, 163, 74, 0.92) !important;
@@ -451,6 +449,31 @@
     font-size: 0.85rem;
     color: var(--text-muted);
   }
+
+  /* ===== Landlord trust chips (Verified / Fast replies) =====
+     About the landlord, not the photo - so they sit with the text,
+     using theme tokens so they read in light and dark mode. */
+  .rc-trust-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: -4px 0 12px;
+  }
+  .rc-trust-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--card-sunken);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .rc-trust-verified .rc-trust-icon { color: #16a34a; font-weight: 900; }
+  .rc-trust-fast .rc-trust-icon { color: #f59e0b; }
 
   .rc-meta-row {
     display: flex;

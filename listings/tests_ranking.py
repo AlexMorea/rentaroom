@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.management import call_command
@@ -36,6 +38,11 @@ class RankingTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="u", password="p")
         cache.clear()
+        # These tests check exact engagement arithmetic; the new-listing
+        # head start is covered separately in ScoringRunsAndRanksTests.
+        boost_off = mock.patch("listings.management.commands.compute_scores.NEW_LISTING_BOOST_POINTS", 0)
+        boost_off.start()
+        self.addCleanup(boost_off.stop)
 
     def test_backfill_hits_and_compute_scores(self):
         r1 = make_room(self.user, title="A", price=100)
@@ -156,6 +163,11 @@ class ComputeScoresAggregationTests(TestCase):
 
     def setUp(self):
         self.owner = User.objects.create_user(username="owner", password="p")
+        # These tests check exact engagement arithmetic; the new-listing
+        # head start is covered separately in ScoringRunsAndRanksTests.
+        boost_off = mock.patch("listings.management.commands.compute_scores.NEW_LISTING_BOOST_POINTS", 0)
+        boost_off.start()
+        self.addCleanup(boost_off.stop)
 
     def test_favorites_not_inflated_by_unrelated_roomstat_rows(self):
         room = make_room(self.owner, title="Fanout")
@@ -226,3 +238,153 @@ class ComputeScoresAggregationTests(TestCase):
         room.refresh_from_db()
 
         self.assertEqual(room.score, 8)  # just the one contact, no penalty
+
+
+class ScoringRunsAndRanksTests(TestCase):
+    """The ranking pipeline end to end: engagement -> compute_scores ->
+    best-match order, plus the in-process scheduler that runs it."""
+
+    def make_room(self, owner, title, days_old=30):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        room = Room.objects.create(
+            owner=owner, title=title, description="d", location="Soweto", suburb="Orlando",
+            town="Soweto", city="Johannesburg", full_address="1 St", postal_code="1804",
+            room_type="Backroom", contact_phone="0821234567", price=1500,
+        )
+        Room.objects.filter(pk=room.pk).update(created_at=timezone.now() - timedelta(days=days_old))
+        return Room.objects.get(pk=room.pk)
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.owner = User.objects.create_user("owner-rank@example.com", password="x")
+        self.tenant = User.objects.create_user("tenant-rank@example.com", password="x")
+
+    def test_contacted_room_outranks_ignored_one(self):
+        from django.core.management import call_command
+
+        from listings.models import RoomStat
+
+        quiet = self.make_room(self.owner, "Quiet room")
+        wanted = self.make_room(self.owner, "Wanted room")
+        RoomStat.objects.create(room=wanted, user=self.tenant, stat_type="contact_whatsapp")
+        Room.objects.filter(pk=wanted.pk).update(hits=5)
+
+        call_command("compute_scores", "--force", verbosity=0)
+
+        quiet.refresh_from_db()
+        wanted.refresh_from_db()
+        self.assertGreater(wanted.score, quiet.score)
+        ordered = list(Room.objects.filter(is_available=True).order_by("-score", "-created_at"))
+        self.assertEqual(ordered[0].pk, wanted.pk)
+
+    def test_new_listing_gets_a_fading_head_start(self):
+        from django.core.management import call_command
+
+        brand_new = self.make_room(self.owner, "Brand new", days_old=0)
+        week_old = self.make_room(self.owner, "Week old", days_old=7)
+        old = self.make_room(self.owner, "Old", days_old=30)
+
+        call_command("compute_scores", "--force", verbosity=0)
+        for r in (brand_new, week_old, old):
+            r.refresh_from_db()
+
+        self.assertGreater(brand_new.score, week_old.score)
+        self.assertGreater(week_old.score, old.score)
+        self.assertEqual(old.score, 0)
+
+    def test_middleware_is_off_in_tests_and_never_breaks_requests(self):
+        from unittest import mock
+
+        from django.test import override_settings
+
+        with override_settings(RUN_SCHEDULED_JOBS_IN_PROCESS=True), \
+             mock.patch("listings.scheduler.run_due_jobs", side_effect=RuntimeError("cache down")):
+            resp = self.client.get("/")
+        self.assertEqual(resp.status_code, 200)
+
+
+
+class SchedulerTests(TestCase):
+    """listings/scheduler.py: each job runs once per slot, at SAST times,
+    and email jobs never fire at deploy time or twice in one slot."""
+
+    def sast(self, *args):
+        from datetime import datetime
+
+        from accounts.founding import SAST
+
+        return datetime(*args, tzinfo=SAST)
+
+    def job(self, name):
+        from listings import scheduler
+
+        return next(j for j in scheduler.JOBS if j.name == name)
+
+    def test_slots(self):
+        stale = self.job("flag_stale_listings")  # daily 06:00
+        self.assertEqual(stale.latest_slot(self.sast(2026, 11, 17, 5, 59)), self.sast(2026, 11, 16, 6, 0))
+        self.assertEqual(stale.latest_slot(self.sast(2026, 11, 17, 6, 0)), self.sast(2026, 11, 17, 6, 0))
+
+        digest = self.job("send_landlord_digest")  # Monday 08:00
+        # Tue 17 Nov 2026 -> Mon 16 Nov; Mon 07:00 -> previous Monday.
+        self.assertEqual(digest.latest_slot(self.sast(2026, 11, 17, 12, 0)), self.sast(2026, 11, 16, 8, 0))
+        self.assertEqual(digest.latest_slot(self.sast(2026, 11, 16, 7, 0)), self.sast(2026, 11, 9, 8, 0))
+
+        scores = self.job("compute_scores")
+        self.assertEqual(scores.latest_slot(self.sast(2026, 11, 17, 10, 42)), self.sast(2026, 11, 17, 10, 0))
+
+    def names(self, jobs):
+        return sorted(j.name for j in jobs)
+
+    def test_quiet_jobs_run_now_email_jobs_wait_for_next_slot(self):
+        from listings.scheduler import claim_due_jobs
+
+        first = claim_due_jobs(self.sast(2026, 11, 17, 10, 5))
+        self.assertEqual(self.names(first), ["compute_response_stats", "compute_scores"])
+
+        # Same hour again: nothing (another worker or a restart).
+        self.assertEqual(claim_due_jobs(self.sast(2026, 11, 17, 10, 30)), [])
+
+        # Next hour: ranking only.
+        self.assertEqual(self.names(claim_due_jobs(self.sast(2026, 11, 17, 11, 1))), ["compute_scores"])
+
+        # Next morning after 07:15: the daily email jobs run for the first time.
+        tomorrow = self.names(claim_due_jobs(self.sast(2026, 11, 18, 7, 20)))
+        for name in ("flag_stale_listings", "flag_landlords_without_listing", "check_move_ins",
+                     "flag_stalled_placements", "compute_response_stats", "compute_scores"):
+            self.assertIn(name, tomorrow)
+        self.assertNotIn("send_landlord_digest", tomorrow)
+
+    def test_digest_runs_once_on_monday(self):
+        from listings.scheduler import claim_due_jobs
+
+        claim_due_jobs(self.sast(2026, 11, 17, 10, 0))  # enable (Tue): waits
+        monday = self.sast(2026, 11, 23, 8, 5)
+        self.assertIn("send_landlord_digest", self.names(claim_due_jobs(monday)))
+        # A second process / a redeploy minutes later must not resend it.
+        self.assertNotIn("send_landlord_digest", self.names(claim_due_jobs(self.sast(2026, 11, 23, 9, 0))))
+        self.assertNotIn("send_landlord_digest", self.names(claim_due_jobs(self.sast(2026, 11, 29, 23, 0))))
+        self.assertIn("send_landlord_digest", self.names(claim_due_jobs(self.sast(2026, 11, 30, 8, 1))))
+
+    def test_email_jobs_can_be_paused(self):
+        from listings.scheduler import claim_due_jobs
+
+        with override_settings(SCHEDULED_EMAIL_JOBS_ENABLED=False):
+            claim_due_jobs(self.sast(2026, 11, 17, 10, 0))
+            claimed = self.names(claim_due_jobs(self.sast(2026, 11, 23, 9, 0)))
+        self.assertEqual(claimed, ["compute_response_stats", "compute_scores"])
+
+    def test_job_outcome_is_recorded(self):
+        from listings.models import ScheduledJobRun
+        from listings.scheduler import _run, claim_due_jobs
+
+        claim_due_jobs(self.sast(2026, 11, 17, 10, 0))
+        with mock.patch("listings.scheduler.call_command", side_effect=RuntimeError("boom")):
+            _run(self.job("compute_scores"))
+        run = ScheduledJobRun.objects.get(name="compute_scores")
+        self.assertFalse(run.last_ok)
+        self.assertIn("boom", run.last_error)

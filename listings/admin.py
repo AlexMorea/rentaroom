@@ -4,7 +4,7 @@ from django.db.models import Count, Q
 from accounts.moderation import suspend_account
 from trust.models import FraudReport
 
-from .models import Profile, Review, Room, RoomImage
+from .models import Profile, Review, Room, RoomImage, ScheduledJobRun
 
 _OPEN_REPORT_STATUSES = (FraudReport.STATUS_NEW, FraudReport.STATUS_INVESTIGATING)
 
@@ -122,3 +122,13 @@ class ReviewAdmin(admin.ModelAdmin):
         "created_at",
     )
     
+
+@admin.register(ScheduledJobRun)
+class ScheduledJobRunAdmin(admin.ModelAdmin):
+    """Read-only view of when each scheduled job last ran."""
+
+    list_display = ("name", "last_started_at", "last_finished_at", "last_ok")
+    readonly_fields = ("name", "last_started_at", "last_finished_at", "last_ok", "last_error")
+
+    def has_add_permission(self, request):
+        return False

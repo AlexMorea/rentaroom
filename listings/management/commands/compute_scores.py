@@ -1,9 +1,17 @@
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Q, Sum
+from django.utils import timezone
 
 from accounts.models import Membership
 from listings.models import Room
+
+
+# Head start for brand-new listings (see below). 40 points is roughly ten
+# real views - enough to surface a new room, not enough to bury a room
+# tenants are actually contacting (each contact is worth 8).
+NEW_LISTING_BOOST_DAYS = 14
+NEW_LISTING_BOOST_POINTS = 40
 
 
 class Command(BaseCommand):
@@ -105,6 +113,14 @@ class Command(BaseCommand):
             if room.is_stale:
                 stale_count += 1
                 score -= min(room.days_since_confirmed - settings.LISTING_STALE_DAYS, 60) * 2
+
+            # New listings have had no time to earn views, so without help
+            # they'd always sit under older rooms. A head start that fades
+            # to nothing over NEW_LISTING_BOOST_DAYS gives every new room a
+            # fair first look, then real engagement takes over.
+            age_days = (timezone.now() - room.created_at).days
+            if age_days < NEW_LISTING_BOOST_DAYS:
+                score += NEW_LISTING_BOOST_POINTS * (NEW_LISTING_BOOST_DAYS - age_days) // NEW_LISTING_BOOST_DAYS
 
             # Pro landlords get a small, bounded lift (10%). It only
             # multiplies real engagement - a listing nobody looks at

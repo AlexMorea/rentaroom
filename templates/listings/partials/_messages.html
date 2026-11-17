@@ -1,8 +1,10 @@
 {% if messages %}
 <div class="toast-wrap">
   {% for message in messages %}
-  <div class="toast toast-{{ message.tags|default:'info' }} show">
-    {{ message }}
+  <div class="toast toast-{{ message.tags|default:'info' }} show"
+       role="{% if 'error' in message.tags or 'warning' in message.tags %}alert{% else %}status{% endif %}">
+    <span class="toast-text">{{ message }}</span>
+    <button type="button" class="toast-close" aria-label="Dismiss message">×</button>
   </div>
   {% endfor %}
 </div>

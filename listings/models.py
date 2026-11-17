@@ -678,3 +678,24 @@ class PhoneOTP(models.Model):
 
     def __str__(self):
         return f"{self.phone_number} (verified={self.is_verified})"
+
+class ScheduledJobRun(models.Model):
+    """
+    One row per scheduled job (see listings/scheduler.py): when it last
+    started and how it ended. Living in the database - not the cache -
+    means a restart or redeploy can never make a job (like the weekly
+    digest email) run twice for the same slot, and staff can see in the
+    admin when each job last ran.
+    """
+
+    name = models.CharField(max_length=60, unique=True)
+    last_started_at = models.DateTimeField(null=True, blank=True)
+    last_finished_at = models.DateTimeField(null=True, blank=True)
+    last_ok = models.BooleanField(null=True, blank=True)
+    last_error = models.TextField(blank=True)
+
+    class Meta:
+        ordering: ClassVar[list[str]] = ["name"]
+
+    def __str__(self):
+        return self.name

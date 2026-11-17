@@ -20,7 +20,7 @@
       <span class="badge badge-email-verified">✓ Email Verified</span>
     {% endif %}
     {% if tenant.profile.persona %}
-      <span class="badge badge-verified">{{ tenant.profile.get_persona_display }}</span>
+      <span class="badge tp-persona" title="Chosen by the tenant, not verified by Rooms4You">{{ tenant.profile.get_persona_display }}</span>
     {% endif %}
   </div>
 
@@ -112,6 +112,14 @@
     position: static !important;
     flex-shrink: 0;
     white-space: nowrap;
+  }
+  /* Self-described ("Student", "Working professional"), so it must not
+     borrow the green "verified" look. */
+  .tp-badges .tp-persona {
+    background: var(--card-sunken);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: none;
   }
   .tp-note {
     margin: 0;
