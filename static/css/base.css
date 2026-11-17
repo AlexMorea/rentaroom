@@ -3645,3 +3645,104 @@ display: none;
 .vacancy-toggle-btn.mark-available:hover {
   background: #f0fdf4;
 }
+
+/* =====================================================================
+   LEGAL PAGES (Terms, Privacy, Pricing & Refunds) + company details
+   ===================================================================== */
+.legal-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+.legal-updated {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: -8px 0 18px;
+}
+.legal-toc {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.legal-toc a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-sunken);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.legal-section {
+  margin-bottom: 16px;
+  line-height: 1.7;
+  scroll-margin-top: 90px;
+}
+.legal-section h2 {
+  font-size: 1.15rem;
+  margin: 22px 0 8px;
+}
+.legal-section h2:first-child {
+  margin-top: 0;
+}
+.legal-section ul {
+  padding-left: 20px;
+}
+.legal-section li {
+  margin-bottom: 6px;
+}
+.legal-table-wrap {
+  overflow-x: auto;
+}
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 12px;
+}
+.legal-table th,
+.legal-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.legal-tagline {
+  margin-top: 20px;
+  font-weight: 700;
+}
+.legal-links {
+  margin-top: 14px;
+}
+.cd-list {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr;
+  gap: 8px 16px;
+  margin: 12px 0;
+}
+.cd-list dt {
+  font-weight: 700;
+}
+.cd-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 560px) {
+  .cd-list {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .cd-list dd {
+    margin-bottom: 10px;
+  }
+}
+
+/* Small print shown next to every "pay" button. */
+.pay-consent {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 8px;
+}

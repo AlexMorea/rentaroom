@@ -146,6 +146,7 @@ TEMPLATES = [
                 "listings.context_processors.seo_settings",
                 "listings.context_processors.vapid_public_key",
                 "listings.context_processors.google_oauth_client_id",
+                "listings.context_processors.company_details",
             ],
         },
     },
@@ -439,6 +440,27 @@ LANDLORD_NO_LISTING_NUDGE_DAYS = int(os.environ.get("LANDLORD_NO_LISTING_NUDGE_D
 # placements/management/commands/flag_stalled_placements.py and
 # Placement.STALLABLE_STATUSES/is_stalled().
 PLACEMENT_STALL_DAYS = int(os.environ.get("PLACEMENT_STALL_DAYS", "7"))
+
+# ----------------- Company details (legal / payment compliance) -----------------
+# Shown on Terms, Pricing & Refunds, Contact and the footer - the
+# disclosures South African e-commerce law (ECTA s43) and PayFast expect
+# from an online business. Anything left blank is simply not shown;
+# never put a placeholder here.
+COMPANY_LEGAL_NAME = os.environ.get("COMPANY_LEGAL_NAME", "4You (Pty) Ltd").strip()
+COMPANY_TRADING_NAME = os.environ.get("COMPANY_TRADING_NAME", "Rooms4You").strip()
+COMPANY_REG_NUMBER = os.environ.get("COMPANY_REG_NUMBER", "").strip()
+COMPANY_VAT_NUMBER = os.environ.get("COMPANY_VAT_NUMBER", "").strip()
+COMPANY_ADDRESS = os.environ.get("COMPANY_ADDRESS", "").strip()
+COMPANY_PHONE = os.environ.get("COMPANY_PHONE", "").strip()
+COMPANY_DIRECTORS = os.environ.get("COMPANY_DIRECTORS", "").strip()
+COMPANY_EMAIL = os.environ.get("COMPANY_EMAIL", "hello@rooms4you.co.za").strip()
+COMPANY_SUPPORT_EMAIL = os.environ.get("COMPANY_SUPPORT_EMAIL", "support@rooms4you.co.za").strip()
+COMPANY_BILLING_EMAIL = os.environ.get("COMPANY_BILLING_EMAIL", "support@rooms4you.co.za").strip()
+COMPANY_PRIVACY_EMAIL = os.environ.get("COMPANY_PRIVACY_EMAIL", "privacy@rooms4you.co.za").strip()
+COMPANY_SUPPORT_HOURS = os.environ.get("COMPANY_SUPPORT_HOURS", "Monday to Friday, 08:00-17:00 (SAST)").strip()
+COMPANY_WEBSITE = os.environ.get("COMPANY_WEBSITE", "https://www.rooms4you.co.za").strip()
+# Bump when Terms / Pricing & Refunds / Privacy change materially.
+LEGAL_LAST_UPDATED = date.fromisoformat(os.environ.get("LEGAL_LAST_UPDATED", "2026-11-17"))
 
 # ----------------- In-process scheduled jobs -----------------
 # Runs the recurring jobs from inside the web app - see

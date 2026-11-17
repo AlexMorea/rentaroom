@@ -17,6 +17,7 @@ urlpatterns = [
 
     path("terms/", views.terms, name="terms"),
     path("privacy/", views.privacy, name="privacy"),
+    path("pricing/", views.pricing_refunds, name="pricing_refunds"),
     path("safety/", views.safety, name="safety"),
     path("support/", views.support, name="support"),
 

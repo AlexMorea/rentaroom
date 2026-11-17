@@ -222,3 +222,26 @@ def assetlinks_json(request):
         }
     ], safe=False)
 
+
+
+def pricing_refunds(request):
+    """Public Pricing & Refunds page - prices come from billing.pricing,
+    the same source checkout charges from, so they can't drift."""
+    from billing import pricing
+
+    return render(request, "listings/pricing_refunds.html", {
+        "bands": [
+            {
+                "band": band,
+                "monthly": pricing.pro_price(band, pricing.CYCLE_MONTHLY),
+                "annual": pricing.pro_price(band, pricing.CYCLE_ANNUAL),
+                "founding_monthly": pricing.pro_price(band, pricing.CYCLE_MONTHLY, pricing.FOUNDING_DISCOUNT_PERCENT),
+            }
+            for band in pricing.PRO_BANDS
+        ],
+        "boost_options": pricing.BOOST_OPTIONS,
+        "free_boosts_per_month": pricing.PRO_FREE_BOOSTS_PER_MONTH,
+        "founding_discount": pricing.FOUNDING_DISCOUNT_PERCENT,
+        "founding_grace_days": pricing.FOUNDING_LOCK_GRACE_DAYS,
+        "annual_months_charged": pricing.ANNUAL_MONTHS_CHARGED,
+    })

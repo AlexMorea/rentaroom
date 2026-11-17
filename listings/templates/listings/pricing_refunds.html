@@ -1,0 +1,137 @@
+{% extends "listings/base.html" %}
+{% load humanize %}
+{% block title %}Pricing &amp; Refunds | Rooms4You{% endblock %}
+{% block meta_description %}Rooms4You pricing for landlords: free listings, optional Pro membership and Boosts, how payment works, cancellation and our refund policy.{% endblock %}
+{% block content %}
+{# Lawyer review pending - see docs/pricing_terms_draft.md. Bump LEGAL_LAST_UPDATED when this changes materially. #}
+<div class="legal-page">
+  <h1 class="page-title">Pricing &amp; Refunds</h1>
+  <p class="legal-updated">Last updated {{ COMPANY.legal_last_updated|date:"j F Y" }}</p>
+
+  <nav class="legal-toc" aria-label="On this page">
+    <a href="#free">Free for everyone</a>
+    <a href="#pro">Pro membership</a>
+    <a href="#boosts">Boosts</a>
+    <a href="#payment">Payment &amp; security</a>
+    <a href="#delivery">When you get access</a>
+    <a href="#cancel">Cancelling</a>
+    <a href="#refunds">Refunds</a>
+    <a href="#contact">Billing questions</a>
+  </nav>
+
+  <section id="free" class="form-card legal-section">
+    <h2>1. Free for everyone</h2>
+    <ul>
+      <li><strong>Tenants never pay</strong> to search, view listings or contact a landlord on Rooms4You.</li>
+      <li><strong>Landlords list for free</strong>, with no limit on the number of rooms.</li>
+      <li>We do <strong>not</strong> charge a success fee, placement fee or commission on rent, and we never collect rent or deposits.</li>
+    </ul>
+    <p>The paid services below are optional extras for landlords who want to fill rooms faster.</p>
+  </section>
+
+  <section id="pro" class="form-card legal-section">
+    <h2>2. Pro membership (optional, for landlords)</h2>
+    <p>
+      Pro is a subscription. The price depends on how many rooms you have listed
+      (a listing with several identical rooms counts each room). The Plans page shows
+      your exact price before you pay.
+    </p>
+    <div class="legal-table-wrap">
+      <table class="legal-table">
+        <thead><tr><th>Rooms listed</th><th>Monthly</th><th>Yearly</th></tr></thead>
+        <tbody>
+          {% for row in bands %}
+          <tr>
+            <td>{{ row.band.label }}</td>
+            <td>R{{ row.monthly|intcomma }}</td>
+            <td>R{{ row.annual|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p>Yearly billing charges {{ annual_months_charged }} months for 12 months of Pro.</p>
+    <p><strong>Pro includes:</strong> {{ free_boosts_per_month }} free 7-day Boosts every calendar month, a ranking lift in search results, and new Pro tools as they are released. Unused free Boosts don't carry over.</p>
+    <p>
+      <strong>Founding Landlords</strong> (registered on or before 31 January 2027) get Pro free until
+      30 April 2027, and then {{ founding_discount }}% off the prices above for as long as their subscription
+      stays active. If a paid subscription ends and isn't renewed within {{ founding_grace_days }} days, the
+      founding discount ends.
+    </p>
+  </section>
+
+  <section id="boosts" class="form-card legal-section">
+    <h2>3. Boosts (optional, once-off)</h2>
+    <div class="legal-table-wrap">
+      <table class="legal-table">
+        <thead><tr><th>Boost</th><th>Price</th></tr></thead>
+        <tbody>
+          {% for option in boost_options %}
+          <tr><td>{{ option.label }}</td><td>R{{ option.price|intcomma }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p>
+      A Boost shows one listing near the top of matching search results, clearly labelled <strong>"Featured"</strong>,
+      for the period bought. It's a once-off payment, not a subscription. A Boost increases visibility; it does
+      not guarantee enquiries or a tenant. Only listings with a vacancy that have been recently confirmed as
+      accurate can be boosted.
+    </p>
+    <p>Paid services never affect verification: the Verified badge is awarded only after our own checks and can't be bought.</p>
+  </section>
+
+  <section id="payment" class="form-card legal-section">
+    <h2>4. Payment &amp; security</h2>
+    <ul>
+      <li>All prices are in South African Rand (ZAR) and are the full amount you pay{% if COMPANY.vat_number %}, including VAT{% endif %}. There are no setup or hidden fees.</li>
+      <li>Payments are processed securely by <strong>PayFast</strong>, a licensed South African payment provider. You can pay by credit or debit card, Instant EFT, and other methods PayFast offers at checkout.</li>
+      <li>Card details are entered on PayFast's secure page. <strong>Rooms4You never sees or stores your card details.</strong> We keep only a record of the payment (amount, date and PayFast reference).</li>
+      <li>Pro subscriptions are collected automatically by PayFast each month or year on the same date, until you cancel. PayFast emails you a receipt for every payment.</li>
+      <li>We'll give at least 30 days' notice by email before changing the price of an active subscription.</li>
+    </ul>
+  </section>
+
+  <section id="delivery" class="form-card legal-section">
+    <h2>5. When you get access</h2>
+    <p>
+      Pro and Boosts are digital services with nothing to post or collect. They switch on automatically as soon as
+      PayFast confirms your payment, usually within a minute. If a service isn't active within an hour of paying,
+      email <a href="mailto:{{ COMPANY.billing_email }}">{{ COMPANY.billing_email }}</a> with your payment reference and we'll sort it out.
+    </p>
+  </section>
+
+  <section id="cancel" class="form-card legal-section">
+    <h2>6. Cancelling</h2>
+    <ul>
+      <li>You can cancel Pro at any time from the <a href="{% url 'membership' %}">Plans page</a> (or the link in any PayFast subscription email). There's no contract and no cancellation fee.</li>
+      <li>Cancelling stops future payments. You keep Pro until the end of the period you've already paid for, then your account moves to the free plan.</li>
+      <li>Your listings are never removed because a subscription ends.</li>
+      <li>Boosts are once-off and end automatically; there's nothing to cancel.</li>
+    </ul>
+  </section>
+
+  <section id="refunds" class="form-card legal-section">
+    <h2>7. Refunds</h2>
+    <ul>
+      <li><strong>Charged in error or service not delivered:</strong> if you were charged twice, charged after cancelling, or a paid service didn't switch on and we can't fix it, we'll refund the payment in full. Contact us within 14 days of the payment.</li>
+      <li><strong>Pro:</strong> payments for a period that has already started aren't refunded for the unused part, but you can cancel at any time so you're never charged again.</li>
+      <li><strong>Boosts:</strong> a Boost starts immediately when you buy it, so it isn't refundable once it has started, unless it was charged in error or didn't work.</li>
+      <li>Nothing in this policy limits any rights you have under South African law, including the Consumer Protection Act and the Electronic Communications and Transactions Act.</li>
+      <li>Approved refunds are paid back through PayFast to the original payment method, normally within 5–10 working days depending on your bank.</li>
+    </ul>
+  </section>
+
+  <section id="contact" class="form-card legal-section">
+    <h2>8. Billing questions &amp; complaints</h2>
+    <p>
+      Email <a href="mailto:{{ COMPANY.billing_email }}">{{ COMPANY.billing_email }}</a> with your name, the email on your
+      Rooms4You account and the payment reference. We aim to reply within 2 working days and to resolve billing
+      complaints within 10 working days. If you're not happy with the outcome, you can contact the National Consumer
+      Commission or the Consumer Goods and Services Ombud.
+    </p>
+    {% include "listings/partials/_company_details.html" %}
+    <p class="legal-links">See also our <a href="{% url 'terms' %}">Terms of Service</a> and <a href="{% url 'privacy' %}">Privacy Policy</a>.</p>
+  </section>
+</div>
+{% endblock %}
