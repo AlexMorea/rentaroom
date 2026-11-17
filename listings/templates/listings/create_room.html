@@ -1,8 +1,11 @@
 {% extends "listings/base.html" %} {% load static %} {% block title %}Add New Room | Rooms4You{% endblock %} {% block content %}
 
-<h1 class="page-title">Add New Room</h1>
+<h1 class="page-title">Add a room</h1>
+<p class="cr-lead">It takes about two minutes. Listing is free, and tenants never see your street address.</p>
 
 <div class="form-shell">
+  <details class="cr-tips">
+    <summary>💡 Tips for a listing that gets enquiries</summary>
   <!-- Guidance tabs -->
   <div class="guide-box" aria-label="Landlord form guide">
     <div class="guide-head">
@@ -157,7 +160,9 @@
     </div>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="form-card">
+  </details>
+
+  <form method="post" enctype="multipart/form-data" class="form-card" data-room-steps>
     {% csrf_token %}
 
     <!-- Non-field errors -->
@@ -168,7 +173,15 @@
     </div>
     {% endif %}
 
-    <div class="form-grid">
+    <ol class="cr-progress" data-cr-progress hidden aria-label="Progress">
+      <li data-cr-dot="1">The room</li>
+      <li data-cr-dot="2">Where</li>
+      <li data-cr-dot="3">Contact &amp; availability</li>
+      <li data-cr-dot="4">Photos</li>
+    </ol>
+
+    <fieldset class="cr-step form-grid" data-step="1" data-title="The room">
+      <legend class="cr-step-legend">Step 1 of 4 · The room</legend>
       <div class="form-section-title">🏡 Basic Info</div>
 
       <div class="form-field">
@@ -201,6 +214,17 @@
         {% endif %}
       </div>
 
+      <div class="form-field full">
+        <label for="id_description">Description</label>
+        {{ form.description }} {% if form.description.errors %}
+        <div class="field-error">{{ form.description.errors }}</div>
+        {% endif %}
+      </div>
+
+    </fieldset>
+
+    <fieldset class="cr-step form-grid" data-step="2" data-title="Where it is">
+      <legend class="cr-step-legend">Step 2 of 4 · Where it is</legend>
       <div class="form-section-title">📍 Location</div>
 
       <div class="form-field">
@@ -254,6 +278,10 @@
         {% endif %}
       </div>
 
+    </fieldset>
+
+    <fieldset class="cr-step form-grid" data-step="3" data-title="Contact and availability">
+      <legend class="cr-step-legend">Step 3 of 4 · Contact and availability</legend>
       <div class="form-section-title">📞 Contact Details</div>
 
       <div class="form-field">
@@ -340,13 +368,10 @@
         </div>
       </details>
 
-      <div class="form-field full">
-        <label for="id_description">Description</label>
-        {{ form.description }} {% if form.description.errors %}
-        <div class="field-error">{{ form.description.errors }}</div>
-        {% endif %}
-      </div>
+    </fieldset>
 
+    <fieldset class="cr-step form-grid" data-step="4" data-title="Photos">
+      <legend class="cr-step-legend">Step 4 of 4 · Photos</legend>
       <div class="form-field full">
         <label>Room images (max 10)</label>
 
@@ -371,11 +396,13 @@
           aria-label="Selected images preview"
         ></div>
       </div>
-    </div>
+    </fieldset>
 
-    <div class="form-actions">
-      <a href="{% url 'dashboard' %}" class="btn-secondary">Cancel</a>
-      <button type="submit" class="btn-primary">Save Room</button>
+    <div class="form-actions cr-actions">
+      <a href="{% url 'dashboard' %}" class="btn-secondary" data-cr-cancel>Cancel</a>
+      <button type="button" class="btn-secondary" data-cr-back hidden>← Back</button>
+      <button type="button" class="btn-primary" data-cr-next hidden>Next →</button>
+      <button type="submit" class="btn-primary" data-cr-submit>Publish my room</button>
     </div>
   </form>
 </div>
@@ -431,7 +458,40 @@
   }
 </style>
 
+
+<style>
+  .cr-lead { text-align: center; color: var(--text-muted); margin: -8px auto 18px; max-width: 560px; }
+  .cr-tips { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+  .cr-tips > summary { cursor: pointer; padding: 14px 16px; font-weight: 700; color: var(--text); }
+  .cr-tips[open] > summary { border-bottom: 1px solid var(--border); }
+  .cr-tips .guide-box { margin: 0; border: none; box-shadow: none; }
+  .cr-step { border: none; margin: 0; padding: 0; min-width: 0; }
+  .cr-step[hidden] { display: none !important; }
+  /* The step legend already names the section, so the old label right under it is redundant. */
+  .cr-step > .cr-step-legend + .form-section-title { display: none; }
+  .cr-step-legend { font-weight: 800; font-size: 1.05rem; padding: 0; margin-bottom: 4px; color: var(--text); grid-column: 1 / -1; }
+  .cr-stepped .cr-step + .cr-step { margin-top: 0; }
+  .cr-progress {
+    list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    padding: 0; margin: 0 0 18px; counter-reset: crstep;
+  }
+  .cr-progress[hidden] { display: none; }
+  .cr-progress li {
+    counter-increment: crstep; font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+    padding-top: 10px; border-top: 4px solid var(--border); text-align: center; line-height: 1.3;
+  }
+  .cr-progress li::before { content: counter(crstep) ". "; }
+  .cr-progress li.is-done { border-top-color: #16a34a; color: var(--text); }
+  .cr-progress li.is-current { border-top-color: var(--link); color: var(--link); }
+  .cr-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .cr-actions [hidden] { display: none !important; }
+  @media (max-width: 520px) {
+    .cr-progress li { font-size: 0.68rem; }
+    .cr-actions > * { flex: 1; text-align: center; }
+  }
+</style>
 {% endblock %} {% block extra_js %}
+<script src="{% static 'js/room-steps.js' %}" defer></script>
 <script>
   // ✅ Guide tabs
   (function () {

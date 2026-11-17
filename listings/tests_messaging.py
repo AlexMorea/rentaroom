@@ -106,3 +106,36 @@ class MessagingTests(TestCase):
         self.assertEqual(self.client.get(other_thread).status_code, 403)
         poll = reverse("conversation_poll", args=[self.room.id, self.tenant.id])
         self.assertEqual(self.client.get(poll).status_code, 403)
+
+
+class LandlordDashboardTests(TestCase):
+    def setUp(self):
+        self.landlord = User.objects.create_user("dash@example.com", "dash@example.com", "x", first_name="Thandi")
+        Profile.objects.filter(user=self.landlord).update(role="landlord")
+        self.client.force_login(self.landlord)
+
+    def test_new_landlord_sees_first_listing_choices(self):
+        body = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn("What would you like to list?", body)
+        self.assertNotIn("Needs your attention", body)
+
+    def test_attention_list_points_at_real_work(self):
+        room = Room.objects.create(
+            owner=self.landlord, title="Room with no photos", description="d", location="Soweto",
+            suburb="Orlando", town="Soweto", city="Johannesburg", full_address="1 St", postal_code="1804",
+            room_type="Backroom", contact_phone="0821234567", price=1500,
+        )
+        tenant = User.objects.create_user("t2@example.com", "t2@example.com", "x", first_name="Lerato")
+        Message.objects.create(room=room, sender=tenant, recipient=self.landlord, body="Hi")
+        body = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn("Needs your attention", body)
+        self.assertIn("1 unread message", body)
+        self.assertIn("has no photos", body)
+        self.assertIn(reverse("upload_room_images", args=[room.id]), body)
+        # Listings come before the membership/placements cards.
+        self.assertLess(body.index("Your listings"), body.index("ld-placements-card"))
+
+    def test_add_room_page_is_stepped(self):
+        body = self.client.get(reverse("create_room")).content.decode()
+        self.assertEqual(body.count('class="cr-step form-grid"'), 4)
+        self.assertIn("room-steps", body)
