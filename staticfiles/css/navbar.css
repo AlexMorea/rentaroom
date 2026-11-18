@@ -4,14 +4,32 @@
    Uses its own nb- classes so the older .nav-links rules in base.css
    don't apply. */
 
+/* The navbar's own border colour: pages like the home page redefine
+   --border for their own sections, which shouldn't change the navbar. */
+:root {
+  --nb-line: #e2e8f0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --nb-line: #334155;
+  }
+}
+:root[data-theme="dark"] {
+  --nb-line: #334155;
+}
+
 /* Above the sticky search bar on the Rooms page, so the account menu
    isn't covered. */
 .site-header {
   z-index: 1100;
 }
 
-/* The floating WhatsApp button would cover the drawer's last row. */
-body.nav-open .support-fab {
+/* While the phone menu is open: the floating WhatsApp button and the
+   sidebar tab would sit on top of it, and the unread dot belongs on the
+   closed menu icon, not the close button. */
+body.nav-open .support-fab,
+body.nav-open .sidebar-tab,
+.burger.active .burger-dot {
   display: none !important;
 }
 
@@ -162,7 +180,7 @@ body.nav-open .support-fab {
   align-items: center;
   gap: 8px;
   padding: 4px 10px 4px 4px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--nb-line);
   border-radius: 999px;
   background: var(--card);
   color: var(--text);
@@ -213,7 +231,7 @@ body.nav-open .support-fab {
   right: 0;
   width: 250px;
   padding: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--nb-line);
   border-radius: 14px;
   background: var(--card);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
@@ -230,7 +248,7 @@ body.nav-open .support-fab {
   flex-direction: column;
   gap: 2px;
   padding: 8px 10px 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--nb-line);
   margin-bottom: 6px;
 }
 
@@ -253,7 +271,7 @@ body.nav-open .support-fab {
 }
 
 .nb-menu .nb-section + .nb-section {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--nb-line);
 }
 
 .nb-menu a,
@@ -330,7 +348,7 @@ body.nav-open .support-fab {
     justify-content: flex-start;
     gap: 0;
     padding: 10px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--nb-line);
     border-radius: 16px;
     background: var(--card);
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
@@ -400,7 +418,7 @@ body.nav-open .support-fab {
     height: auto;
     justify-content: flex-start;
     gap: 10px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--nb-line);
     border-radius: 0;
     margin-top: 6px;
     padding-top: 14px;
@@ -454,7 +472,7 @@ body.nav-open .support-fab {
   .nb-menu-foot .nb-logout {
     flex: 1;
     justify-content: center;
-    border: 1px solid var(--border);
+    border: 1px solid var(--nb-line);
   }
 
   /* Logged-out visitors: Log in and Sign up side by side at the bottom. */
@@ -462,7 +480,7 @@ body.nav-open .support-fab {
     order: 1;
     margin-top: 10px;
     padding: 12px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--nb-line);
     text-align: center;
     font-size: 1rem;
   }
