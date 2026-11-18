@@ -31,3 +31,30 @@ backdrop?.addEventListener("click", closeMenu);
 nav?.querySelectorAll("a").forEach((link) => {
   link.addEventListener("click", closeMenu);
 });
+
+// Account menu (desktop dropdown). On phones it's shown inside the drawer.
+const accountBtn = document.getElementById("accountToggle");
+const accountMenu = document.getElementById("accountMenu");
+
+function setAccountMenu(open) {
+  accountMenu?.classList.toggle("open", open);
+  accountBtn?.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+accountBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setAccountMenu(!accountMenu.classList.contains("open"));
+});
+
+document.addEventListener("click", (e) => {
+  if (accountMenu?.classList.contains("open") && !accountMenu.contains(e.target)) setAccountMenu(false);
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (accountMenu?.classList.contains("open")) {
+    setAccountMenu(false);
+    accountBtn?.focus();
+  }
+  if (nav?.classList.contains("show")) closeMenu();
+});

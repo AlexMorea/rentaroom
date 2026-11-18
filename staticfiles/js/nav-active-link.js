@@ -20,6 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  markActive(".nav-links a[href]");
+  markActive(".nb a[href]");
   markActive(".sidebar a[href]");
 });
