@@ -38,6 +38,11 @@ class ContactMessageForm(forms.Form):
             "class": "input", "rows": 5, "placeholder": "How can we help?",
         }),
     )
+    # Honeypot, same as UserRegisterForm.website: hidden from people,
+    # filled in by bots that complete every field they find.
+    website = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        "class": "ct-hp-input", "tabindex": "-1", "autocomplete": "off",
+    }))
 
 
 class UserRegisterForm(forms.Form):

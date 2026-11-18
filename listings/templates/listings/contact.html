@@ -173,6 +173,11 @@
         {{ form.message }} {{ form.message.errors }}
       </div>
 
+      <div class="ct-hp-field" aria-hidden="true">
+        <label for="{{ form.website.id_for_label }}">Leave this field empty</label>
+        {{ form.website }}
+      </div>
+
       <div class="form-actions" style="justify-content:center;">
         <button type="submit" class="btn-primary">Send Message</button>
       </div>
@@ -186,6 +191,14 @@
       }
       .ct-field {
         margin-bottom: 16px;
+      }
+      .ct-hp-field {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        height: 0;
+        width: 0;
+        overflow: hidden;
       }
       .ct-field label {
         display: block;
