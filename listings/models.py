@@ -250,7 +250,13 @@ class Room(models.Model):
         quiet for another full LISTING_STALE_DAYS."""
         self.last_confirmed_at = timezone.now()
         self.last_nudge_sent_at = None
-        self.save(update_fields=["last_confirmed_at", "last_nudge_sent_at"])
+        fields = ["last_confirmed_at", "last_nudge_sent_at"]
+        # Confirming a room the stale check paused puts it back in search
+        # (never for a suspended account, whose rooms stay hidden).
+        if not self.is_available and self.owner.is_active:
+            self.is_available = True
+            fields.append("is_available")
+        self.save(update_fields=fields)
 
     # ----------------- Completeness -----------------
     # Deliberately computed rather than stored - it only ever needs to be
