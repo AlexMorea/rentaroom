@@ -430,6 +430,10 @@ LISTING_STALE_DAYS = int(os.environ.get("LISTING_STALE_DAYS", "14"))
 # this is a soft hide, not a delete.
 LISTING_AUTO_HIDE_DAYS = int(os.environ.get("LISTING_AUTO_HIDE_DAYS", "30"))
 
+# ...and only after the landlord has ignored a "please confirm" nudge for
+# at least this many days, so nobody is ever hidden without warning.
+LISTING_HIDE_GRACE_DAYS = int(os.environ.get("LISTING_HIDE_GRACE_DAYS", "7"))
+
 # A landlord who signed up but still has zero rooms after this many days
 # gets the one-time "complete your listing" nudge - see
 # flag_landlords_without_listing. Kept short (a few days), since this is

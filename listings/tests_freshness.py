@@ -264,8 +264,9 @@ class FlagStaleListingsCommandTests(TestCase):
 
     @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30)
     def test_force_auto_hides_past_hide_threshold(self):
-        room = make_room(self.owner)
+        room = make_room(self.owner, total_units=2, available_units=2)
         age_room(room, 40)
+        Room.objects.filter(pk=room.pk).update(last_nudge_sent_at=timezone.now() - timezone.timedelta(days=8))
 
         with patch("listings.management.commands.flag_stale_listings.send_template_email") as mail, \
              patch("listings.management.commands.flag_stale_listings.notify_user") as push:
@@ -275,6 +276,54 @@ class FlagStaleListingsCommandTests(TestCase):
         push.assert_called_once()
         room.refresh_from_db()
         self.assertFalse(room.is_available)
+        self.assertEqual(room.available_units, 2)  # kept, so reactivating restores it
+
+        # The "reactivate" link in the email puts it straight back in search.
+        token = signing.dumps({"room_id": room.id, "action": "confirm"}, salt="room-availability-confirm")
+        self.client.get(reverse("confirm_availability_via_link", args=[token]))
+        room.refresh_from_db()
+        self.assertTrue(room.is_available)
+        self.assertEqual(room.available_units, 2)
+
+    @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30)
+    def test_old_room_never_nudged_is_warned_not_hidden(self):
+        room = make_room(self.owner)
+        age_room(room, 90)
+
+        with patch("listings.management.commands.flag_stale_listings.send_template_email") as mail, \
+             patch("listings.management.commands.flag_stale_listings.notify_user"):
+            call_command("flag_stale_listings", "--force")
+
+        room.refresh_from_db()
+        self.assertTrue(room.is_available)
+        self.assertIsNotNone(room.last_nudge_sent_at)
+        self.assertEqual(mail.call_args.kwargs["template"], "emails/confirm_availability.html")
+
+    @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30)
+    def test_recently_nudged_room_is_not_hidden_yet(self):
+        room = make_room(self.owner)
+        age_room(room, 40)
+        Room.objects.filter(pk=room.pk).update(last_nudge_sent_at=timezone.now() - timezone.timedelta(days=3))
+
+        with patch("listings.management.commands.flag_stale_listings.send_template_email") as mail:
+            call_command("flag_stale_listings", "--force")
+
+        mail.assert_not_called()
+        room.refresh_from_db()
+        self.assertTrue(room.is_available)
+
+    @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30)
+    def test_full_room_is_never_nudged_or_hidden(self):
+        room = make_room(self.owner, available_units=0)
+        age_room(room, 90)
+        Room.objects.filter(pk=room.pk).update(last_nudge_sent_at=timezone.now() - timezone.timedelta(days=20))
+
+        with patch("listings.management.commands.flag_stale_listings.send_template_email") as mail:
+            call_command("flag_stale_listings", "--force")
+
+        mail.assert_not_called()
+        room.refresh_from_db()
+        self.assertTrue(room.is_available)
 
     @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30)
     def test_fresh_room_untouched(self):
