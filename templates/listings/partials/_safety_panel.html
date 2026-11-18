@@ -1,0 +1,81 @@
+{% comment %} Safety & Services: a side panel opened from the "Safety" tab on the
+   left edge. Holds only the tools that keep people safe and help them
+   move, plus a short personal note. Navigation lives in the header. {% endcomment %}
+{% with role=user.profile.role %}
+
+<button type="button" class="sp-tab" id="safetyToggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="safetyPanel">
+  <span class="sp-tab-icon" aria-hidden="true">🛡️</span>
+  <span class="sp-tab-label">Safety</span>
+</button>
+
+<aside class="sp" id="safetyPanel" role="dialog" aria-labelledby="safetyTitle">
+  <div class="sp-head">
+    <div>
+      {% if user.is_authenticated %}
+        <p class="sp-hello">Hi {{ user.first_name|default:"there" }} 👋</p>
+        <p class="sp-note">
+          {% if role == "landlord" %}Growing your rental business one tenant at a time.
+          {% elif role == "driver" %}Helping move South Africa, one trip at a time.
+          {% else %}Finding trusted rooms across South Africa.{% endif %}
+        </p>
+      {% else %}
+        <p class="sp-hello">Stay safe while you search</p>
+      {% endif %}
+    </div>
+    <button type="button" class="sp-close" data-safety-close aria-label="Close safety panel">✕</button>
+  </div>
+
+  <h2 class="sp-title" id="safetyTitle">Safety &amp; Services</h2>
+  <p class="sp-intro">Tools to keep you safe at viewings and help you move in.</p>
+
+  <nav class="sp-cards" aria-label="Safety and services">
+    <a class="sp-card" href="{% url 'services:guardian_home' %}">
+      <span class="sp-card-icon" aria-hidden="true">🛡</span>
+      <span class="sp-card-text">
+        <strong>Guardian4You</strong>
+        <small>Going to a viewing? Share your live location with someone you trust, with a panic button if you need it.</small>
+      </span>
+    </a>
+
+    {% if role == "driver" %}
+      <a class="sp-card" href="{% url 'services:driver_dashboard' %}">
+        <span class="sp-card-icon" aria-hidden="true">🚚</span>
+        <span class="sp-card-text">
+          <strong>Driver dashboard</strong>
+          <small>Your trips, bookings and availability for Bakkie4You.</small>
+        </span>
+      </a>
+    {% else %}
+      <a class="sp-card" href="{% url 'services:bakkie_home' %}">
+        <span class="sp-card-icon" aria-hidden="true">🚚</span>
+        <span class="sp-card-text">
+          <strong>Bakkie4You</strong>
+          <small>Book a bakkie and a driver to move your things into your new room.</small>
+        </span>
+      </a>
+    {% endif %}
+
+    <a class="sp-card" href="{% url 'trust:home' %}">
+      <span class="sp-card-icon" aria-hidden="true">🔎</span>
+      <span class="sp-card-text">
+        <strong>Trust Center</strong>
+        <small>How to spot rental scams and how we check landlords.</small>
+      </span>
+    </a>
+
+    <a class="sp-card sp-card-alert" href="{% url 'trust:report_fraud' %}">
+      <span class="sp-card-icon" aria-hidden="true">🚩</span>
+      <span class="sp-card-text">
+        <strong>Report a scam</strong>
+        <small>Something feel off? Tell us and our safety team will look into it.</small>
+      </span>
+    </a>
+  </nav>
+
+  <p class="sp-foot">
+    Need help? <a href="{% url 'support' %}">Help &amp; support</a> ·
+    <a href="https://wa.me/27717243852" target="_blank" rel="noopener noreferrer">WhatsApp us</a>
+  </p>
+</aside>
+
+{% endwith %}

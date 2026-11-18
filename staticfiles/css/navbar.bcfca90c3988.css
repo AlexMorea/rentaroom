@@ -1,0 +1,874 @@
+/* ================= NAVBAR =================
+   Desktop: logo · Browse links · Dashboard, Messages, Account menu.
+   Phones (<= 860px): the same items in a grouped drawer.
+   Uses its own nb- classes so the older .nav-links rules in base.css
+   don't apply. */
+
+/* The navbar's own border colour: pages like the home page redefine
+   --border for their own sections, which shouldn't change the navbar. */
+:root {
+  --nb-line: #e2e8f0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --nb-line: #334155;
+  }
+}
+:root[data-theme="dark"] {
+  --nb-line: #334155;
+}
+
+/* Above the sticky search bar on the Rooms page, so the account menu
+   isn't covered. */
+.site-header {
+  z-index: 1100;
+}
+
+/* While the phone menu is open: the floating WhatsApp button would sit
+   on top of it, and the unread dot belongs on the closed menu icon, not
+   the close button. */
+body.nav-open .support-fab,
+.burger.active .burger-dot {
+  display: none !important;
+}
+
+.nb {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.nb a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nb-heading,
+.nb-menu-head {
+  display: none;
+}
+
+.nb-section {
+  display: flex;
+  align-items: center;
+}
+
+.nb-primary {
+  gap: 4px;
+  margin-right: auto;
+  margin-left: 28px;
+}
+
+.nb-primary a {
+  position: relative;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nb-primary a:hover {
+  background: var(--card-sunken);
+  color: var(--link);
+}
+
+.nb-primary a.active {
+  color: var(--link);
+}
+
+.nb-primary a.active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--link);
+}
+
+.nb-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nb-cta {
+  padding: 9px 16px;
+  border-radius: 10px;
+  background: #0b6fbf;
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+}
+
+.nb-cta:hover {
+  filter: brightness(1.08);
+}
+
+.nb-login {
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.nb-login:hover {
+  background: var(--card-sunken);
+  color: var(--link);
+}
+
+.nb-messages {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.nb-messages:hover,
+.nb-messages.active {
+  background: var(--card-sunken);
+  color: var(--link);
+}
+
+.nb-messages-label {
+  display: none;
+}
+
+.nb-badge {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+.nb-badge[hidden] {
+  display: none;
+}
+
+/* ---------- Account menu ---------- */
+
+.nb-account {
+  position: relative;
+}
+
+.nb-account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--nb-line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.nb-account-btn:hover,
+.nb-account-btn[aria-expanded="true"] {
+  box-shadow: var(--shadow);
+}
+
+.nb-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--orange, #ff8000);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.nb-account-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nb-caret {
+  opacity: 0.6;
+  transition: transform 0.15s ease;
+}
+
+.nb-account-btn[aria-expanded="true"] .nb-caret {
+  transform: rotate(180deg);
+}
+
+.nb-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 250px;
+  padding: 8px;
+  border: 1px solid var(--nb-line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+  display: none;
+  z-index: 3000;
+}
+
+.nb-menu.open {
+  display: block;
+}
+
+.nb-menu .nb-menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--nb-line);
+  margin-bottom: 6px;
+}
+
+.nb-menu-head strong {
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nb-menu-head span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.nb-menu .nb-section {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 4px 0;
+}
+
+.nb-menu .nb-section + .nb-section {
+  border-top: 1px solid var(--nb-line);
+}
+
+.nb-menu a,
+.nb-theme,
+.nb-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nb-menu a:hover,
+.nb-theme:hover,
+.nb-logout:hover {
+  background: var(--card-sunken);
+}
+
+.nb-menu a.active {
+  color: var(--link);
+  font-weight: 600;
+}
+
+.nb-theme .theme-toggle-icon-light,
+.nb-theme.is-dark .theme-toggle-icon-dark {
+  display: none;
+}
+
+.nb-theme.is-dark .theme-toggle-icon-light {
+  display: inline;
+}
+
+.nb-logout {
+  color: #dc2626;
+}
+
+/* Phone-only pieces (signed-in status, account card), hidden on desktop. */
+.nb-sheet,
+.nb-mobile-avatar,
+.nb-mobile-login {
+  display: none;
+}
+
+/* Laptops: tighten spacing before the drawer takes over. */
+@media (max-width: 1100px) {
+  .nb-primary {
+    margin-left: 12px;
+  }
+  .nb-primary a {
+    padding: 8px 9px;
+  }
+  .nb-account-name {
+    display: none;
+  }
+  .nb-account-btn {
+    padding: 4px 8px 4px 4px;
+  }
+}
+
+/* ---------- Phones: grouped drawer ---------- */
+@media (max-width: 860px) {
+  .nb {
+    position: fixed;
+    top: 76px;
+    left: 12px;
+    right: 12px;
+    max-height: calc(100vh - 92px);
+    max-height: calc(100dvh - 92px);
+    overflow-y: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 10px;
+    border: 1px solid var(--nb-line);
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+    display: none;
+    z-index: 3500;
+  }
+
+  .nb.show {
+    display: flex;
+  }
+
+  .nb-heading {
+    display: block;
+    padding: 10px 10px 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .nb-section,
+  .nb-primary {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+    gap: 0;
+  }
+
+  .nb-primary a,
+  .nb-menu a,
+  .nb-theme,
+  .nb-logout,
+  .nb-messages {
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+  }
+
+  /* The drawer is for getting around. Account links live on the avatar
+     card, and the info links sit in a compact two-column grid, so the
+     whole menu fits on screen without scrolling. */
+  .nb-menu .nb-account-links {
+    display: none !important;
+  }
+
+  .nb-menu .nb-info {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 4px;
+  }
+
+  .nb-menu .nb-info .nb-heading {
+    grid-column: 1 / -1;
+  }
+
+  .nb-menu .nb-info a {
+    padding: 8px 10px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .nb-primary a.active::after {
+    display: none;
+  }
+
+  .nb-primary a.active,
+  .nb-menu a.active {
+    background: var(--card-sunken);
+  }
+
+  /* Let Dashboard, Messages and the account items sit directly in the
+     drawer column, so Dashboard can move to the top on its own. */
+  .nb-actions {
+    display: contents;
+  }
+
+  /* Landlords: Dashboard first. */
+  .nb-cta {
+    order: -1;
+    margin: 4px 0 6px;
+    padding: 12px;
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  .nb-messages {
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    gap: 10px;
+    border-top: 1px solid var(--nb-line);
+    border-radius: 0;
+    margin-top: 6px;
+    padding-top: 14px;
+  }
+
+  .nb-messages-label {
+    display: inline;
+  }
+
+  .nb-badge {
+    position: static;
+    margin-left: auto;
+    box-shadow: none;
+  }
+
+  /* The account menu is always open inside the drawer. */
+  .nb-account-btn {
+    display: none;
+  }
+
+  .nb-menu {
+    position: static;
+    display: block;
+    width: auto;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  .nb-menu .nb-menu-head {
+    display: none;
+  }
+
+  .nb-menu .nb-section {
+    padding: 0;
+  }
+
+  .nb-menu .nb-section + .nb-section {
+    margin-top: 6px;
+    padding-top: 4px;
+  }
+
+  .nb-menu-foot {
+    flex-direction: row !important;
+    gap: 8px;
+    padding-top: 10px !important;
+  }
+
+  .nb-menu-foot .nb-theme,
+  .nb-menu-foot .nb-logout {
+    flex: 1;
+    justify-content: center;
+    border: 1px solid var(--nb-line);
+  }
+
+  /* Logged-out visitors: Log in and Sign up side by side at the bottom. */
+  .nb-login {
+    order: 1;
+    margin-top: 10px;
+    padding: 12px;
+    border: 1px solid var(--nb-line);
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  .nb-login ~ .nb-cta {
+    order: 2;
+    margin: 8px 0 0;
+  }
+
+  .nb-actions .theme-toggle-btn {
+    order: 3;
+    align-self: center;
+    margin-top: 12px;
+  }
+
+  .burger {
+    display: flex;
+  }
+
+  /* Header: logo on the left, signed-in status and menu on the right. */
+  .nav-container {
+    gap: 8px;
+  }
+
+  .brand {
+    margin-right: auto;
+  }
+
+  .nb-mobile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 2px solid var(--card);
+    border-radius: 50%;
+    background: var(--orange, #ff8000);
+    color: #fff;
+    font: inherit;
+    font-weight: 800;
+    font-size: 0.95rem;
+    box-shadow: 0 0 0 1px var(--nb-line);
+    cursor: pointer;
+  }
+
+  .nb-mobile-login {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #0b6fbf;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+  }
+
+  /* Avatar account card. */
+  .nb-sheet {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    width: min(320px, calc(100vw - 24px));
+    padding: 14px;
+    border: 1px solid var(--nb-line);
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+    z-index: 3500;
+  }
+
+  .nb-sheet.open {
+    display: block;
+  }
+
+  .nb-sheet-who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nb-sheet-who .nb-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    flex: 0 0 auto;
+  }
+
+  .nb-sheet-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  .nb-sheet-text small {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .nb-sheet-text strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nb-role-chip {
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--card-sunken);
+    border: 1px solid var(--nb-line);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .nb-sheet-note {
+    margin: 12px 0 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--card-sunken);
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .nb-sheet-links {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--nb-line);
+    margin-bottom: 8px;
+  }
+
+  .nb-sheet-links a {
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nb-sheet-links a:hover,
+  .nb-sheet-links a.active {
+    background: var(--card-sunken);
+  }
+
+  .nb-sheet-logout {
+    justify-content: center;
+    border: 1px solid var(--nb-line) !important;
+  }
+}
+
+/* ================= SAFETY & SERVICES PANEL =================
+   Opened from a small labelled tab on the left edge. */
+
+.sp-tab {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border: 1px solid var(--nb-line);
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  font: inherit;
+  cursor: pointer;
+  transition: padding 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sp-tab:hover,
+.sp-tab:focus-visible {
+  padding-left: 10px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
+}
+
+.sp-tab-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sp-tab-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sp {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(340px, 88vw);
+  z-index: 3600;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px;
+  background: var(--card);
+  border-right: 1px solid var(--nb-line);
+  box-shadow: 18px 0 40px rgba(15, 23, 42, 0.2);
+  transform: translateX(-105%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0.22s;
+}
+
+.sp.open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.sp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--nb-line);
+}
+
+.sp-hello {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.sp-note {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.sp-close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--nb-line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.sp-title {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sp-intro {
+  margin: -4px 0 2px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.sp-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--nb-line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text) !important;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sp-card:hover {
+  border-color: #0b6fbf;
+  background: var(--card-sunken);
+}
+
+.sp-card-icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--card-sunken);
+  font-size: 1.1rem;
+}
+
+.sp-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sp-card-text strong {
+  font-size: 0.95rem;
+}
+
+.sp-card-text small {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.sp-card-alert .sp-card-icon {
+  background: var(--dm-bg-fef2f2, #fef2f2);
+}
+
+.sp-foot {
+  margin: auto 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--nb-line);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.sp-foot a {
+  color: var(--link);
+  font-weight: 600;
+}
+
+/* Keep the tab out of the way while another panel is open. */
+body.nav-open .sp-tab {
+  visibility: hidden;
+}
+
+/* Short phones: tighter cards so everything still fits without scrolling. */
+@media (max-height: 640px) {
+  .sp { gap: 8px; padding: 14px; }
+  .sp-card { padding: 9px 10px; }
+  .sp-card-text small { font-size: 0.76rem; }
+  .sp-intro { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp { transition: none; }
+}

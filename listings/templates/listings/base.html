@@ -69,7 +69,7 @@
     />
 
     <link rel="stylesheet" href="{% static 'css/base.css' %}?v=16" />
-    <link rel="stylesheet" href="{% static 'css/navbar.css' %}?v=2" />
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}?v=3" />
 
     <link rel="stylesheet" href="{% static 'css/trust.css' %}?v=1" />
 
@@ -146,6 +146,7 @@
 
     <!-- HEADER -->
     {% include "listings/partials/_navbar.html" %}
+    {% include "listings/partials/_safety_panel.html" %}
 
     <!-- MAIN -->
     <main class="container">
@@ -177,7 +178,7 @@
     </script>
 
     <!-- CORE JS -->
-    <script src="{% static 'js/navbar.js' %}?v=2" defer></script>
+    <script src="{% static 'js/navbar.js' %}?v=3" defer></script>
     <script src="{% static 'js/auth-modal.js' %}?v=1" defer></script>
     <script src="{% static 'js/theme-toggle.js' %}?v=1" defer></script>
     <script src="{% static 'js/nav-active-link.js' %}?v=3" defer></script>

@@ -12,18 +12,6 @@
     {# One menu for every screen: a single row on desktop, a drawer on phones. #}
     <nav class="nb" id="navLinks" aria-label="Main">
 
-      {% if user.is_authenticated %}
-      {# Phones only: who is signed in, at the top of the menu. #}
-      <div class="nb-who">
-        <span class="nb-avatar" aria-hidden="true">{{ user.first_name|default:user.email|first|upper }}</span>
-        <span class="nb-who-text">
-          <small>Signed in as</small>
-          <strong>{{ user.get_full_name|default:user.email }}</strong>
-          <small>{% if user.profile.role == "landlord" %}Landlord account{% elif user.profile.role == "driver" %}Driver partner account{% else %}Tenant account{% endif %}</small>
-        </span>
-      </div>
-      {% endif %}
-
       <div class="nb-section nb-primary">
         <span class="nb-heading">Browse</span>
         <a href="{% url 'room_list' %}">Rooms</a>
@@ -64,7 +52,7 @@
                 <span>{% if user.profile.role == "landlord" %}Landlord account{% elif user.profile.role == "driver" %}Driver partner account{% else %}Tenant account{% endif %}</span>
               </div>
 
-              <div class="nb-section">
+              <div class="nb-section nb-account-links">
                 <span class="nb-heading">Your account</span>
                 {% if user.profile.role == "landlord" %}<a href="{% url 'placements:landlord_dashboard' %}">Tenant enquiries</a>
                 {% elif user.profile.role == "tenant" %}<a href="{% url 'placements:tenant_dashboard' %}">My enquiries</a>{% endif %}
@@ -73,7 +61,7 @@
                 <a href="{% url 'account_settings' %}">Settings</a>
               </div>
 
-              <div class="nb-section">
+              <div class="nb-section nb-info">
                 <span class="nb-heading">Rooms4You</span>
                 <a href="{% url 'about' %}">About Us</a>
                 <a href="{% url 'trust:home' %}">Trust Center</a>
@@ -111,11 +99,38 @@
       </div>
     </nav>
 
-    {# Phones only: shows at a glance whether you're signed in. #}
+    {% comment %} Phones only. The avatar shows you're signed in and opens your
+       account card; the menu button is for getting around the site. {% endcomment %}
     {% if user.is_authenticated %}
-      <button type="button" class="nb-mobile-avatar" data-open-menu aria-label="Signed in as {{ user.first_name|default:user.email }}. Open menu">
+      {% with role=user.profile.role %}
+      <button type="button" class="nb-mobile-avatar" id="accountSheetToggle" aria-haspopup="dialog" aria-expanded="false" aria-controls="accountSheet" aria-label="Your account, signed in as {{ user.first_name|default:user.email }}">
         {{ user.first_name|default:user.email|first|upper }}
       </button>
+
+      <div class="nb-sheet" id="accountSheet" role="dialog" aria-label="Your account">
+        <div class="nb-sheet-who">
+          <span class="nb-avatar" aria-hidden="true">{{ user.first_name|default:user.email|first|upper }}</span>
+          <span class="nb-sheet-text">
+            <small>Signed in as</small>
+            <strong>{{ user.get_full_name|default:user.email }}</strong>
+            <span class="nb-role-chip">{% if role == "landlord" %}🏠 Landlord{% elif role == "driver" %}🚚 Driver partner{% else %}🏡 Tenant{% endif %}</span>
+          </span>
+        </div>
+        <p class="nb-sheet-note">
+          {% if role == "landlord" %}Growing your rental business one tenant at a time.
+          {% elif role == "driver" %}Helping move South Africa, one trip at a time.
+          {% else %}Finding trusted rooms across South Africa.{% endif %}
+        </p>
+        <div class="nb-sheet-links">
+          {% if role == "landlord" %}<a href="{% url 'placements:landlord_dashboard' %}">Tenant enquiries</a>
+          {% elif role == "tenant" %}<a href="{% url 'placements:tenant_dashboard' %}">My enquiries</a>{% endif %}
+          <a href="{% url 'profile' %}">Profile</a>
+          {% if role == "landlord" %}<a href="{% url 'membership' %}">Plans &amp; billing</a>{% endif %}
+          <a href="{% url 'account_settings' %}">Settings</a>
+        </div>
+        <button type="button" class="nb-logout nb-sheet-logout" onclick="document.getElementById('logout-form').submit();">Log out</button>
+      </div>
+      {% endwith %}
     {% else %}
       <a href="{% url 'login' %}" class="nb-mobile-login">Log in</a>
     {% endif %}
