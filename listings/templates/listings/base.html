@@ -146,7 +146,7 @@
 
     <!-- HEADER -->
     {% include "listings/partials/_navbar.html" %}
-    {% include "listings/partials/_safety_panel.html" %}
+    {% if user.is_authenticated %}{% include "listings/partials/_safety_panel.html" %}{% endif %}
 
     <!-- MAIN -->
     <main class="container">
