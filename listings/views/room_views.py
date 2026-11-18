@@ -339,28 +339,35 @@ def room_list(request):
     # ================= SORTING =================
     featured_ids = []
 
+    # Rooms with a vacancy always come before fully occupied ones, so a
+    # tenant sees what they can move into first and waitlist rooms after.
+    rooms_qs = rooms_qs.annotate(
+        is_full=Case(When(available_units__lte=0, then=1), default=0, output_field=IntegerField())
+    )
+
     # accept both 'new' and 'newest' from templates
     if sort in {"new", "newest"}:
-        rooms = rooms_qs.order_by("-created_at")
+        rooms = rooms_qs.order_by("is_full", "-created_at")
 
     elif sort == "oldest":
-        rooms = rooms_qs.order_by("created_at")
+        rooms = rooms_qs.order_by("is_full", "created_at")
 
     elif sort == "price_low":
-        rooms = rooms_qs.order_by("price", "-created_at")
+        rooms = rooms_qs.order_by("is_full", "price", "-created_at")
 
     elif sort == "price_high":
-        rooms = rooms_qs.order_by("-price", "-created_at")
+        rooms = rooms_qs.order_by("is_full", "-price", "-created_at")
 
     else:
         # Default 'best match' -- order by composite score then newest,
         # with up to FEATURED_SLOTS boosted rooms pinned on top. Boosts
         # never touch Room.score, so the organic ranking stays honest.
-        rooms = rooms_qs.order_by("-score", "-created_at")
+        rooms = rooms_qs.order_by("is_full", "-score", "-created_at")
         featured_ids = featured_room_ids(rooms.values_list("id", flat=True))
         if featured_ids:
             rooms = rooms_qs.order_by(
                 Case(When(id__in=featured_ids, then=0), default=1, output_field=IntegerField()),
+                "is_full",
                 "-score",
                 "-created_at",
             )
@@ -894,10 +901,12 @@ def toggle_room_vacancy(request, room_id):
         return redirect("landlord_rooms")
 
     if room.is_available and room.available_units > 0:
-        room.is_available = False
+        # Occupied rooms stay listed (shown as "Fully occupied") so
+        # tenants can still find them and join the waitlist. Only the
+        # stale-listing job and account suspension hide a room.
         room.available_units = 0
         room.availability_status = "now"
-        messages.success(request, f'"{room.title}" marked as occupied.')
+        messages.success(request, f'"{room.title}" marked as occupied. It stays listed as full so tenants can join your waitlist.')
     else:
         room.is_available = True
         room.available_units = max(room.total_units, 1)
@@ -910,6 +919,7 @@ def toggle_room_vacancy(request, room_id):
     room.last_confirmed_at = timezone.now()
     room.last_nudge_sent_at = None
     room.save()
+    clear_room_list_cache(request.user.id)
     return redirect("landlord_rooms")
 
 
@@ -955,11 +965,13 @@ def confirm_availability_via_link(request, signed_token):
     if action == "confirm":
         room.confirm_availability()
     elif action == "vacate":
-        room.is_available = False
+        # Taken, but still listed as full (see toggle_room_vacancy).
+        room.is_available = True
         room.available_units = 0
         room.last_confirmed_at = timezone.now()
         room.last_nudge_sent_at = None
         room.save()
+        clear_room_list_cache(room.owner_id)
     else:
         return render(request, "listings/confirm_availability_link.html", {"error": "invalid"})
 

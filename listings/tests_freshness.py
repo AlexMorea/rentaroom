@@ -162,6 +162,25 @@ class ConfirmRoomAvailabilityViewTests(TestCase):
         self.room.refresh_from_db()
         self.assertFalse(self.room.is_stale)
 
+    def test_marked_occupied_room_stays_in_search_after_vacant_rooms(self):
+        vacant = make_room(self.owner, title="Vacant room")
+        self.client.login(username="landlord", password="p")
+        self.client.post(reverse("toggle_room_vacancy", args=[self.room.id]))
+        self.room.refresh_from_db()
+        self.assertTrue(self.room.is_available)
+        self.assertEqual(self.room.available_units, 0)
+
+        for sort in ("", "new", "price_low", "price_high"):
+            resp = self.client.get(reverse("room_list"), {"sort": sort})
+            ids = [r.id for r in resp.context["rooms"]]
+            self.assertIn(self.room.id, ids, sort)
+            self.assertLess(ids.index(vacant.id), ids.index(self.room.id), sort)
+
+        # Marking it available again flips it straight back.
+        self.client.post(reverse("toggle_room_vacancy", args=[self.room.id]))
+        self.room.refresh_from_db()
+        self.assertGreater(self.room.available_units, 0)
+
 
 class ConfirmAvailabilityLinkTests(TestCase):
     def setUp(self):
@@ -182,7 +201,9 @@ class ConfirmAvailabilityLinkTests(TestCase):
         resp = self.client.get(reverse("confirm_availability_via_link", args=[self._token("vacate")]))
         self.assertEqual(resp.status_code, 200)
         self.room.refresh_from_db()
-        self.assertFalse(self.room.is_available)
+        # Taken rooms stay listed as full so tenants can join the waitlist.
+        self.assertTrue(self.room.is_available)
+        self.assertEqual(self.room.available_units, 0)
 
     def test_garbage_token_shows_error_not_500(self):
         resp = self.client.get(reverse("confirm_availability_via_link", args=["not-a-real-token"]))
