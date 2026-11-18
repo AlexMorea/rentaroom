@@ -58,3 +58,11 @@ document.addEventListener("keydown", (e) => {
   }
   if (nav?.classList.contains("show")) closeMenu();
 });
+
+// Phones: the avatar next to the menu button opens the same menu.
+document.querySelectorAll("[data-open-menu]").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    nav?.classList.contains("show") ? closeMenu() : openMenu();
+  });
+});

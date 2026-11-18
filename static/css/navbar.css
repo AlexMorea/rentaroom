@@ -316,6 +316,13 @@ body.nav-open .support-fab,
   color: #dc2626;
 }
 
+/* Phone-only pieces (signed-in status), hidden on desktop. */
+.nb-who,
+.nb-mobile-avatar,
+.nb-mobile-login {
+  display: none;
+}
+
 /* Laptops: tighten spacing before the drawer takes over. */
 @media (max-width: 1100px) {
   .nb-primary {
@@ -497,5 +504,79 @@ body.nav-open .support-fab,
 
   .burger {
     display: flex;
+  }
+
+  /* Header: logo on the left, signed-in status and menu on the right. */
+  .nav-container {
+    gap: 8px;
+  }
+
+  .brand {
+    margin-right: auto;
+  }
+
+  .nb-mobile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 2px solid var(--card);
+    border-radius: 50%;
+    background: var(--orange, #ff8000);
+    color: #fff;
+    font: inherit;
+    font-weight: 800;
+    font-size: 0.95rem;
+    box-shadow: 0 0 0 1px var(--nb-line);
+    cursor: pointer;
+  }
+
+  .nb-mobile-login {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: #0b6fbf;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+  }
+
+  .nb-who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    order: -2;
+    margin: 0 0 8px;
+    padding: 10px 10px 14px;
+    border-bottom: 1px solid var(--nb-line);
+  }
+
+  .nb-who .nb-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
+    flex: 0 0 auto;
+  }
+
+  .nb-who-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  .nb-who-text strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nb-who-text small {
+    font-size: 0.78rem;
+    color: var(--text-muted);
   }
 }
