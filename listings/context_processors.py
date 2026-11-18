@@ -26,8 +26,10 @@ def google_oauth_client_id(request):
     return {"GOOGLE_OAUTH_CLIENT_ID": settings.GOOGLE_OAUTH_CLIENT_ID}
 
 def company_details(request):
-    """Legal/company disclosures used by the footer and legal pages."""
+    """Legal/company disclosures used by the footer and legal pages,
+    plus the site-wide feature switches templates need."""
     return {
+        "BOOSTS_ENABLED": settings.BOOSTS_ENABLED,
         "COMPANY": {
             "legal_name": settings.COMPANY_LEGAL_NAME,
             "trading_name": settings.COMPANY_TRADING_NAME,

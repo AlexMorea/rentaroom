@@ -2,29 +2,36 @@
 
 {% block content %}
 
-<h1>Are you still interested in "{{ room.title }}"?</h1>
+{% if placements|length == 1 %}
+<h1>Are you still interested in "{{ placements.0.room.title }}"?</h1>
+{% else %}
+<h1>Are you still interested in these rooms?</h1>
+{% endif %}
 
-<p>Hello {{ placement.tenant.first_name|default:"there" }},</p>
+<p>Hello {{ person.first_name|default:"there" }},</p>
 
 <p>
-Your enquiry about this room has been at "{{ placement.get_status_display }}" for {{ days }} days without any
-change.
+You told {% if placements|length == 1 %}this landlord{% else %}these landlords{% endif %} you were interested,
+and nothing has moved forward in the last {{ threshold_days }} days.
 </p>
 
+{% for placement in placements %}
 <div class="info-card">
-  <p><strong>Listing:</strong> {{ room.title }}</p>
-  <p><strong>Area:</strong> {{ room.location }}</p>
-  <p style="margin:0;"><strong>Status:</strong> {{ placement.get_status_display }}</p>
+  <p><strong>{{ placement.room.title }}</strong></p>
+  <p>{{ placement.room.location }}</p>
+  <p style="margin:0;"><a href="https://www.rooms4you.co.za/rooms/{{ placement.room.id }}/">View the listing</a></p>
 </div>
+{% endfor %}
 
 <p>
-If you're still keen, send the landlord a message to arrange a viewing or agree on a move-in date. If you've
-found somewhere else, it would help to let the landlord know so they can offer the room to someone who is
-still looking.
+If you're still keen, send the landlord a message to arrange a viewing or agree on a move-in date. If you've found
+somewhere else, please let the landlord know so they can offer the room to someone who is still looking.
 </p>
 
 <p style="text-align:center;">
-  <a href="https://www.rooms4you.co.za/rooms/{{ room.id }}/" class="btn">Go to the listing</a>
+  <a href="https://www.rooms4you.co.za/inbox/" class="btn">Open my messages</a>
 </p>
+
+<p class="muted">This is the only reminder we'll send about {% if placements|length == 1 %}this enquiry{% else %}these enquiries{% endif %}.</p>
 
 {% endblock %}

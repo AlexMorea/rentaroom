@@ -1,36 +1,9 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from listings.models import Contact, Room
+from listings.models import Room
 
 from .models import Placement, PlacementStatusHistory, Waitlist
-
-
-@receiver(post_save, sender=Contact)
-def create_placement_from_contact(sender, instance: Contact, created, **kwargs):
-    """
-    Every existing entry point that expresses tenant interest - the
-    phone/WhatsApp/email buttons (track_contact) and the in-platform
-    message form (send_message) - already creates a Contact record.
-    Hooking here means Placements appear automatically everywhere a
-    tenant "begins the rental process", with zero changes to those
-    existing views.
-    """
-    if not created:
-        return
-
-    room = instance.room
-    tenant = instance.user
-
-    # A landlord messaging/"contacting" their own room isn't a placement.
-    if tenant.id == room.owner_id:
-        return
-
-    Placement.objects.get_or_create(
-        tenant=tenant,
-        room=room,
-        defaults={"landlord": room.owner},
-    )
 
 
 @receiver(pre_save, sender=Placement)

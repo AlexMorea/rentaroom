@@ -3,128 +3,103 @@
 <header class="site-header">
   <div class="nav-container">
 
-
-<!-- LOGO -->
-<div class="brand">
-
-  <a href="{% url 'home' %}" class="navbar-logo">
-    <img
-      src="{% static 'images/logo.png' %}"
-      alt="Rooms4You Logo"
-    />
-  </a>
-  
-
-</div>
-
-<!-- NAVIGATION -->
-<nav class="nav-links" id="navLinks">
-
-  <a href="{% url 'room_list' %}">Rooms</a>
-
-  <a href="{% url 'stays:guesthouse_list' %}">Guest Houses</a>
-
-  <a href="{% url 'services' %}">
-    Services
-  </a>
-
-  <a href="{% url 'about' %}">
-    About Us
-  </a>
-
-  <a href="{% url 'trust:home' %}">
-    Trust Center
-  </a>
-
-  <a href="{% url 'contact' %}">
-    Contact
-  </a>
-
-  {% if user.is_authenticated %}
-
-    {% if user.profile.role == "landlord" %}
-
-      <a href="{% url 'dashboard' %}" class="dashboard-btn">
-        Dashboard
+    <div class="brand">
+      <a href="{% url 'home' %}" class="navbar-logo">
+        <img src="{% static 'images/logo.png' %}" alt="Rooms4You Logo" />
       </a>
+    </div>
 
-      <a href="{% url 'membership' %}">
-        Plans
-      </a>
+    {# One menu for every screen: a single row on desktop, a drawer on phones. #}
+    <nav class="nb" id="navLinks" aria-label="Main">
 
-    {% endif %}
+      <div class="nb-section nb-primary">
+        <span class="nb-heading">Browse</span>
+        <a href="{% url 'room_list' %}">Rooms</a>
+        <a href="{% url 'stays:guesthouse_list' %}">Guest Houses</a>
+        <a href="{% url 'services' %}">Services</a>
+        {% if not user.is_authenticated %}
+          <a href="{% url 'about' %}">About Us</a>
+          <a href="{% url 'trust:home' %}">Trust Center</a>
+          <a href="{% url 'contact' %}">Contact</a>
+        {% endif %}
+      </div>
 
-    <a href="{% url 'inbox' %}" class="nav-messages">
-      Messages
-      <span class="nav-badge" data-unread-badge {% if not unread_messages_count %}hidden{% endif %}>{{ unread_messages_count }}</span>
-    </a>
+      <div class="nb-actions">
+        {% if user.is_authenticated %}
 
-    <a href="{% url 'profile' %}">
-      Profile
-    </a>
+          {% if user.profile.role == "landlord" %}
+            <a href="{% url 'dashboard' %}" class="nb-cta">Dashboard</a>
+          {% endif %}
 
-    <a href="{% url 'account_settings' %}">
-      Settings
-    </a>
+          <a href="{% url 'inbox' %}" class="nb-messages" aria-label="Messages">
+            <svg class="nb-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+            <span class="nb-messages-label">Messages</span>
+            <span class="nav-badge nb-badge" data-unread-badge {% if not unread_messages_count %}hidden{% endif %}>{{ unread_messages_count }}</span>
+          </a>
 
-    <a
-      href="#"
-      onclick="
-        event.preventDefault();
-        document.getElementById('logout-form').submit();
-      "
-    >
-      Logout
-    </a>
+          <div class="nb-account">
+            <button type="button" class="nb-account-btn" id="accountToggle" aria-haspopup="true" aria-expanded="false" aria-controls="accountMenu">
+              <span class="nb-avatar" aria-hidden="true">{{ user.first_name|default:user.email|first|upper }}</span>
+              <span class="nb-account-name">{{ user.first_name|default:"Account" }}</span>
+              <svg class="nb-caret" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
+            </button>
 
-    <form
-      id="logout-form"
-      method="POST"
-      action="{% url 'logout' %}"
-      class="hidden"
-    >
-      {% csrf_token %}
-    </form>
+            <div class="nb-menu" id="accountMenu">
+              <div class="nb-menu-head">
+                <strong>{{ user.get_full_name|default:user.email }}</strong>
+                <span>{% if user.profile.role == "landlord" %}Landlord account{% else %}Tenant account{% endif %}</span>
+              </div>
 
-  {% else %}
+              <div class="nb-section">
+                <span class="nb-heading">Your account</span>
+                <a href="{% url 'profile' %}">Profile</a>
+                {% if user.profile.role == "landlord" %}<a href="{% url 'membership' %}">Plans &amp; billing</a>{% endif %}
+                <a href="{% url 'account_settings' %}">Settings</a>
+              </div>
 
-    <button
-      id="authToggle"
-      class="auth-avatar-btn"
-      type="button"
-    >
-      <span>☰</span>
-      <span class="avatar">👤</span>
+              <div class="nb-section">
+                <span class="nb-heading">Rooms4You</span>
+                <a href="{% url 'about' %}">About Us</a>
+                <a href="{% url 'trust:home' %}">Trust Center</a>
+                <a href="{% url 'contact' %}">Contact</a>
+              </div>
+
+              <div class="nb-section nb-menu-foot">
+                <button id="themeToggle" class="nb-theme" type="button" aria-label="Switch to dark mode">
+                  <span class="theme-toggle-icon theme-toggle-icon-dark">🌙</span>
+                  <span class="theme-toggle-icon theme-toggle-icon-light">☀️</span>
+                  <span class="theme-toggle-icon-dark">Dark mode</span>
+                  <span class="theme-toggle-icon-light">Light mode</span>
+                </button>
+                <button type="button" class="nb-logout" onclick="document.getElementById('logout-form').submit();">Log out</button>
+              </div>
+            </div>
+          </div>
+
+          <form id="logout-form" method="POST" action="{% url 'logout' %}" class="hidden">
+            {% csrf_token %}
+          </form>
+
+        {% else %}
+
+          <a href="{% url 'login' %}" class="nb-login">Log in</a>
+          <a href="{% url 'register' %}" class="nb-cta">Sign up</a>
+
+          <button id="themeToggle" class="theme-toggle-btn" type="button" aria-label="Switch to dark mode">
+            <span class="theme-toggle-icon theme-toggle-icon-dark">🌙</span>
+            <span class="theme-toggle-icon theme-toggle-icon-light">☀️</span>
+          </button>
+
+        {% endif %}
+      </div>
+    </nav>
+
+    <button class="burger" id="burgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+      <span class="burger-bar"></span>
+      <span class="burger-bar"></span>
+      <span class="burger-bar"></span>
+      {% if user.is_authenticated %}<span class="burger-dot" data-unread-dot {% if not unread_messages_count %}hidden{% endif %} aria-label="You have unread messages"></span>{% endif %}
     </button>
-
-  {% endif %}
-
-  <button
-    id="themeToggle"
-    class="theme-toggle-btn"
-    type="button"
-    aria-label="Switch to dark mode"
-  >
-    <span class="theme-toggle-icon theme-toggle-icon-dark">🌙</span>
-    <span class="theme-toggle-icon theme-toggle-icon-light">☀️</span>
-  </button>
-
-</nav>
-
-<!-- MOBILE BURGER -->
-<button
-  class="burger"
-  id="burgerBtn"
-  type="button"
-  aria-label="Open menu"
-  aria-expanded="false"
->
-  <span class="burger-bar"></span>
-  <span class="burger-bar"></span>
-  <span class="burger-bar"></span>
-  {% if user.is_authenticated %}<span class="burger-dot" data-unread-dot {% if not unread_messages_count %}hidden{% endif %} aria-label="You have unread messages"></span>{% endif %}
-</button>
-
 
   </div>
 </header>

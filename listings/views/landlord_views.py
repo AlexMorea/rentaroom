@@ -317,6 +317,9 @@ def dashboard(request):
             "attention": attention,
             "week_views": week_views,
             "week_contacts": week_contacts,
+            "week_interested": Placement.objects.filter(
+                landlord=request.user, created_at__gte=timezone.now() - timedelta(days=7)
+            ).count(),
             "greeting": _greeting(),
 
             # CRM inbox

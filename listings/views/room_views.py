@@ -31,7 +31,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.utils import require_active_membership
 from billing.boosts import featured_room_ids
-from placements.models import Waitlist
+from placements.models import Placement, Waitlist
 from utils.email import send_template_email
 
 from trust.models import FraudReport
@@ -696,6 +696,10 @@ def room_detail(request, pk):
         {
             "room": room,
             "is_saved": is_saved,
+            "has_shown_interest": (
+                request.user.is_authenticated
+                and Placement.objects.filter(tenant=request.user, room=room).exists()
+            ),
             "room_is_full": room_is_full,
             "waitlist_entry": waitlist_entry,
             "waitlist_count": waitlist_count,

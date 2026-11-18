@@ -229,6 +229,19 @@
           </a>
           {% endwith %}
 
+          {% if request.user.id != room.owner_id %}
+          {% if has_shown_interest %}
+          <p class="rd-interest-done">✅ You've told the landlord you're interested. Their reply will show up in your <a href="{% url 'inbox' %}">messages</a>.</p>
+          {% else %}
+          <form method="post" action="{% url 'conversation_thread' room.id room.owner.id %}" class="rd-interest-form">
+            {% csrf_token %}
+            <input type="hidden" name="body" value="Hi, I'm interested in this room. Is it still available, and when could I come and see it?">
+            <button class="btn-primary rd-contact-btn rd-interest-btn">👋 I'm interested</button>
+            <p class="rd-interest-hint">Sends the landlord a quick message so they know you're keen. You'll only hear from us about rooms you've done this for.</p>
+          </form>
+          {% endif %}
+          {% endif %}
+
           <div class="contact-actions rd-contact-actions">
 
             {% if room.contact_phone %}
@@ -756,6 +769,30 @@
   }
   .rd-contact-btn-whatsapp {
     background: #16a34a;
+  }
+
+  .rd-interest-form {
+    margin-bottom: 14px;
+  }
+  .rd-interest-btn {
+    width: 100%;
+  }
+  .rd-interest-hint {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-muted, #64748b);
+  }
+  .rd-interest-done {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--dm-bg-ecfdf5, #ecfdf5);
+    color: var(--dm-fg-065f46, #065f46);
+    font-size: 0.9rem;
+  }
+  .rd-interest-done a {
+    color: inherit;
+    font-weight: 600;
   }
 
   .rd-message-form {
