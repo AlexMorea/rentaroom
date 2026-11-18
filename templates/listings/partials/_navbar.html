@@ -29,6 +29,8 @@
 
           {% if user.profile.role == "landlord" %}
             <a href="{% url 'dashboard' %}" class="nb-cta">Dashboard</a>
+          {% elif user.profile.role == "driver" %}
+            <a href="{% url 'services:driver_dashboard' %}" class="nb-cta">Driver dashboard</a>
           {% endif %}
 
           <a href="{% url 'inbox' %}" class="nb-messages" aria-label="Messages">
@@ -47,11 +49,13 @@
             <div class="nb-menu" id="accountMenu">
               <div class="nb-menu-head">
                 <strong>{{ user.get_full_name|default:user.email }}</strong>
-                <span>{% if user.profile.role == "landlord" %}Landlord account{% else %}Tenant account{% endif %}</span>
+                <span>{% if user.profile.role == "landlord" %}Landlord account{% elif user.profile.role == "driver" %}Driver partner account{% else %}Tenant account{% endif %}</span>
               </div>
 
               <div class="nb-section">
                 <span class="nb-heading">Your account</span>
+                {% if user.profile.role == "landlord" %}<a href="{% url 'placements:landlord_dashboard' %}">Tenant enquiries</a>
+                {% elif user.profile.role == "tenant" %}<a href="{% url 'placements:tenant_dashboard' %}">My enquiries</a>{% endif %}
                 <a href="{% url 'profile' %}">Profile</a>
                 {% if user.profile.role == "landlord" %}<a href="{% url 'membership' %}">Plans &amp; billing</a>{% endif %}
                 <a href="{% url 'account_settings' %}">Settings</a>
@@ -61,6 +65,7 @@
                 <span class="nb-heading">Rooms4You</span>
                 <a href="{% url 'about' %}">About Us</a>
                 <a href="{% url 'trust:home' %}">Trust Center</a>
+                <a href="{% url 'support' %}">Help &amp; support</a>
                 <a href="{% url 'contact' %}">Contact</a>
               </div>
 

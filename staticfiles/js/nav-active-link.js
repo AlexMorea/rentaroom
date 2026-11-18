@@ -21,5 +21,4 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   markActive(".nb a[href]");
-  markActive(".sidebar a[href]");
 });

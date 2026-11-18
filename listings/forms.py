@@ -2,6 +2,7 @@ import re
 from typing import ClassVar
 
 from django import forms
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -749,3 +750,16 @@ class ListingForm(forms.ModelForm):
     class Meta:
         model = Room
         exclude = ("owner", "created_at")
+
+
+class ResetPasswordForm(SetPasswordForm):
+    """Forgot-password reset: once the new password is saved, every
+    remembered device has to confirm by email again."""
+
+    def save(self, commit=True):
+        from accounts.devices import forget_devices
+
+        user = super().save(commit=commit)
+        if commit:
+            forget_devices(user)
+        return user

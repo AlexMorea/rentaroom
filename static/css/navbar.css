@@ -24,11 +24,10 @@
   z-index: 1100;
 }
 
-/* While the phone menu is open: the floating WhatsApp button and the
-   sidebar tab would sit on top of it, and the unread dot belongs on the
-   closed menu icon, not the close button. */
+/* While the phone menu is open: the floating WhatsApp button would sit
+   on top of it, and the unread dot belongs on the closed menu icon, not
+   the close button. */
 body.nav-open .support-fab,
-body.nav-open .sidebar-tab,
 .burger.active .burger-dot {
   display: none !important;
 }
