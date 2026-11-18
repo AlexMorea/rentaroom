@@ -402,21 +402,45 @@ body.nav-open .support-fab,
     display: none !important;
   }
 
+  /* Rooms4You links look exactly like the Browse links: one column on
+     most phones, two columns only on short screens so nothing scrolls. */
   .nb-menu .nb-info {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 4px;
-  }
-
-  .nb-menu .nb-info .nb-heading {
-    grid-column: 1 / -1;
+    display: flex !important;
+    flex-direction: column;
   }
 
   .nb-menu .nb-info a {
-    padding: 8px 10px;
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: var(--text-muted);
+    color: var(--text);
+  }
+
+  @media (max-height: 620px) {
+    .nb-menu .nb-info {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 4px;
+    }
+
+    .nb-menu .nb-info .nb-heading {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Taller phones: a little more breathing room on every row. */
+  @media (min-height: 760px) {
+    .nb-primary a,
+    .nb-menu a,
+    .nb-messages,
+    .nb-sheet-links a {
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+
+    .nb-menu-foot .nb-theme,
+    .nb-menu-foot .nb-logout,
+    .nb-sheet-logout {
+      padding-top: 13px;
+      padding-bottom: 13px;
+    }
   }
 
   .nb-primary a.active::after {
@@ -501,6 +525,7 @@ body.nav-open .support-fab,
   .nb-menu-foot .nb-theme,
   .nb-menu-foot .nb-logout {
     flex: 1;
+    white-space: nowrap;
     justify-content: center;
     border: 1px solid var(--nb-line);
   }
