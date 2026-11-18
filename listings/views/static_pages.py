@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.cache import cache
 from django.core.mail import BadHeaderError, EmailMessage
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -13,8 +14,14 @@ from placements.models import Placement
 
 from ..forms import ContactMessageForm
 from ..models import Contact, Profile, Review, Room, RoomStat
+from .auth_views import _client_ip
 
 CONTACT_RECIPIENT_EMAIL = "hello@rooms4you.co.za"
+
+# Contact form throttle, mirroring the signup one in auth_views: counts
+# every POST from a network, so a script can't flood the inbox.
+CONTACT_MAX_ATTEMPTS = 5
+CONTACT_WINDOW_SECONDS = 3600
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +132,26 @@ def services(request):
 
 
 def contact(request):
+    if request.method == "POST" and (request.POST.get("website") or "").strip():
+        # Honeypot tripped. Answer exactly as a real send would, so the
+        # bot has no signal that it was caught - nothing is emailed.
+        logger.info("Contact form honeypot triggered from IP %s", _client_ip(request))
+        messages.success(request, "Thanks for getting in touch. We'll reply as soon as we can.")
+        return redirect("contact")
+
     if request.method == "POST":
+        contact_key = f"contact_attempts:{_client_ip(request)}"
+        attempts = cache.get(contact_key, 0)
+
+        if attempts >= CONTACT_MAX_ATTEMPTS:
+            messages.error(
+                request,
+                "Too many messages from this network. Please try again later, or email "
+                f"{CONTACT_RECIPIENT_EMAIL} directly.",
+            )
+            return render(request, "listings/contact.html", {"form": ContactMessageForm(request.POST)})
+
+        cache.set(contact_key, attempts + 1, timeout=CONTACT_WINDOW_SECONDS)
         form = ContactMessageForm(request.POST)
 
         if form.is_valid():
