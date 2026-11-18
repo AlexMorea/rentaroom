@@ -370,7 +370,7 @@ def user_login(request):
 
     # FORCE PASSWORD CHANGE
     if getattr(profile, "must_change_password", False):
-        return redirect("change_password")
+        return remember_device(redirect("change_password"), request, user)
 
     # Someone who clicked "Contact landlord" (or any other
     # @login_required action) while logged out lands back on that exact
@@ -378,7 +378,9 @@ def user_login(request):
     # POST_LOGIN_NEXT_SESSION_KEY for the same handling after the
     # device-verification detour.
     state = get_user_state(user)
-    return redirect(next_url or state["next_route"])
+    # Refreshes the remembered-device cookie, so trust lasts as long as
+    # the person keeps using this device.
+    return remember_device(redirect(next_url or state["next_route"]), request, user)
 
 
 def _start_device_challenge(request, user):
@@ -415,7 +417,7 @@ def _start_device_challenge(request, user):
 
     messages.info(
         request,
-        "We don't recognise this device. Enter the code we just emailed you to continue."
+        "To keep your account safe, we've emailed you a code to confirm it's you signing in on this device."
     )
 
     return redirect("verify_device")
@@ -985,7 +987,7 @@ def google_auth(request):
         login(request, user)
         messages.success(request, f"Welcome back {get_display_name(user)} 👋")
         state = get_user_state(user)
-        return redirect(next_url or state["next_route"])
+        return remember_device(redirect(next_url or state["next_route"]), request, user)
 
     if next_url:
         request.session[POST_LOGIN_NEXT_SESSION_KEY] = next_url

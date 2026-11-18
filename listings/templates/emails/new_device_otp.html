@@ -7,8 +7,8 @@
 <p>Hello {{ user.first_name|default:"there" }},</p>
 
 <p>
-Someone just signed in to your Rooms4You account from a device we haven't seen
-before{% if device_label %} ({{ device_label }}){% endif %}. If that was you, enter this code to finish signing in:
+Someone is signing in to your Rooms4You account on a new phone or browser{% if device_label %} ({{ device_label }}){% endif %}.
+If that's you, enter this code to finish signing in, and we'll remember the device for next time:
 </p>
 
 <div class="otp-box">{{ otp }}</div>

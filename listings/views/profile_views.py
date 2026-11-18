@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from accounts.devices import DEVICE_COOKIE_NAME, hash_token
+from accounts.devices import DEVICE_COOKIE_NAME, forget_devices, hash_token
 from accounts.models import TrustedDevice
 
 from ..forms import ProfileUpdateForm, UserUpdateForm
@@ -333,8 +333,11 @@ def change_password(request):
             # out immediately - changing your own password shouldn't
             # end your current session.
             update_session_auth_hash(request, user)
+            # A new password ends trust on every other device, so anyone
+            # who knew the old one has to confirm by email again.
+            forget_devices(user, keep_request=request)
 
-            messages.success(request, "Password changed successfully.")
+            messages.success(request, "Password changed. Other devices will need to confirm it's you next time they sign in.")
             return redirect("account_settings")
 
         messages.error(request, "Please fix the errors below.")

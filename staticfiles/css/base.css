@@ -2198,152 +2198,6 @@ body.scroll-down .trust-strip {
   }
 }
 
-/* =========================
-   SIDEBAR (TOGGLE DRAWER)
-   ========================= */
-
-.sidebar {
-  position: fixed;
-  top: 70px;
-  left: -200px; /* thinner hidden offset */
-
-  width: 200px; /* 🔥 thinner sidebar */
-  height: calc(100vh - 70px);
-
-  /* 🌊 glassmorphism effect */
-  background: var(--sidebar-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-
-  border-right: 1px solid var(--sidebar-border);
-
-  padding: 16px;
-  overflow-y: auto;
-
-  transition: left 0.3s ease;
-
-  z-index: 2500;
-}
-
-/* Open state */
-.sidebar.open {
-  left: 0;
-}
-
-/* =========================
-   FLOATING ARROW TAB
-   ========================= */
-
-.sidebar-tab {
-  position: fixed;
-  top: 50%;
-  left: 0;
-
-  transform: translateY(-50%);
-
-  width: 20px;
-  height: 70px;
-
-  background: linear-gradient(135deg, #0B6FBF, #002A5C);
-  color: white;
-
-  border: none;
-  border-radius: 0 12px 12px 0;
-
-  cursor: pointer;
-
-  z-index: 3000; /* above sidebar */
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-
-  transition: all 0.25s ease;
-}
-
-/* Hover effect */
-.sidebar-tab:hover {
-  width: 48px;
-}
-
-/* =========================
-   OVERLAY (optional subtle dim)
-   ========================= */
-
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.25);
-
-  opacity: 0;
-  pointer-events: none;
-
-  z-index: 2400;
-
-  transition: opacity 0.2s ease;
-}
-
-.sidebar-overlay.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* =========================
-   MOBILE BEHAVIOR
-   ========================= */
-
-@media (max-width: 768px) {
-  .sidebar {
-    top: 70px;
-    height: calc(100vh - 70px);
-  }
-}
-
-.sidebar a {
-  display: block;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-
-  border-radius: 10px;
-
-  color: var(--sidebar-link-color);
-  font-weight: 700;
-  text-decoration: none;
-
-  background: var(--sidebar-link-bg);
-
-  backdrop-filter: blur(6px);
-
-  transition: all 0.2s ease;
-}
-
-.sidebar a:hover {
-  background: var(--sidebar-link-bg-hover);
-  transform: translateX(3px);
-  color: var(--link);
-}
-
-.sidebar a.active {
-  background: var(--sidebar-link-bg-hover);
-  color: var(--link);
-  box-shadow: inset 3px 0 0 #0B6FBF;
-}
-
-.sidebar-badge-new {
-  float: right;
-  font-size: 0.70rem;
-  background: #0B6FBF;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.sidebar.open ~ .sidebar-tab {
-  left: 260px;
-  left: 200px;
-}
 
 /* hidden always wins */
 .hidden {
@@ -3410,11 +3264,7 @@ display: none;
   opacity: .8;
 }
 
-.sidebar-divider{
-    border:0;
-    border-top:1px solid rgba(0,0,0,.08);
-    margin:18px 0;
-}
+
 
 .search-toolbar-wrapper.scrolled{
 
@@ -3860,19 +3710,7 @@ display: none;
 :root[data-theme="dark"] .scam-warning { color: #fdba74; }
 
 
-/* Unread-message indicators (sidebar count, dot on the mobile menu button). */
-.sidebar-badge-count {
-  float: right;
-  min-width: 22px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-align: center;
-}
-.sidebar-badge-count[hidden],
+/* Unread-message dot on the mobile menu button. */
 .burger-dot[hidden] {
   display: none;
 }

@@ -4,6 +4,7 @@ from django.urls import path
 from accounts.views import membership_view
 
 from . import views
+from .forms import ResetPasswordForm
 from .views import RateLimitedPasswordResetView
 
 urlpatterns = [
@@ -69,6 +70,7 @@ urlpatterns = [
         auth_views.PasswordResetConfirmView.as_view(
             template_name="registration/password_reset_confirm.html",
             success_url="/reset/done/",
+            form_class=ResetPasswordForm,
         ),
         name="password_reset_confirm",
     ),

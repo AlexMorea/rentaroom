@@ -105,7 +105,8 @@
         class="input conv-textarea"
         placeholder="Write a message"
         required
-        rows="1"
+        rows="3"
+        enterkeyhint="enter"
         maxlength="{{ max_length }}"
         id="convTextarea"
       ></textarea>
@@ -241,12 +242,21 @@
   .conv-textarea {
     width: 100%;
     display: block;
-    resize: none;
-    min-height: 46px !important;
-    height: 46px;
+    resize: none !important;
+    min-height: 52px !important;
     font: inherit;
-    max-height: 160px;
+    font-size: 1rem;
+    line-height: 1.45;
+    padding: 12px 14px;
     overflow-y: auto;
+  }
+  /* Phones and tablets: a roomy box (about three lines) that grows as
+     you type; 16px text stops iPhones zooming in on tap. */
+  @media (pointer: coarse) {
+    .conv-textarea {
+      min-height: 88px !important;
+      font-size: 16px;
+    }
   }
   .conv-send-btn {
     display: block;
@@ -262,7 +272,7 @@
   }
 
   @media (max-width: 480px) {
-    .conv-thread { max-height: calc(100dvh - 430px); }
+    .conv-thread { max-height: calc(100dvh - 470px); }
     .conv-send-btn { width: 100%; }
   }
 
@@ -312,8 +322,10 @@
   .conv-composer-foot .conv-send-btn { margin: 0; }
   .conv-hint { font-size: 0.75rem; }
   .conv-error { color: #dc2626; font-size: 0.85rem; margin: 8px 0 0; }
+  /* The floating WhatsApp support button would cover the Send button. */
+  .support-fab { display: none !important; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  @media (max-width: 480px) { .conv-hint { display: none; } }
+  @media (max-width: 480px), (pointer: coarse) { .conv-hint { display: none; } }
 </style>
 
 {% endblock %}

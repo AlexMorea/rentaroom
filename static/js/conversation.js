@@ -102,10 +102,16 @@
     }
   }
 
+  // Phones and tablets have no Shift key, so there Enter makes a new line
+  // and the Send button sends. On a keyboard, Enter sends.
+  const touchKeyboard = window.matchMedia("(pointer: coarse)").matches;
+
   function grow() {
     if (!textarea) return;
-    textarea.style.height = "46px";
-    textarea.style.height = Math.min(Math.max(textarea.scrollHeight, 46), 160) + "px";
+    const min = parseInt(getComputedStyle(textarea).minHeight, 10) || 46;
+    const max = touchKeyboard ? Math.max(160, Math.round(window.innerHeight * 0.35)) : 200;
+    textarea.style.height = "auto";
+    textarea.style.height = Math.min(Math.max(textarea.scrollHeight, min), max) + "px";
   }
 
   function showError(text) {
@@ -158,7 +164,7 @@
     form.addEventListener("submit", send);
     textarea.addEventListener("input", grow);
     textarea.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && !e.shiftKey) send(e);
+      if (e.key === "Enter" && !e.shiftKey && !e.isComposing && !touchKeyboard) send(e);
     });
     root.querySelectorAll("[data-quick-reply]").forEach(function (btn) {
       btn.addEventListener("click", function () {
