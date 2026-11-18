@@ -3,13 +3,109 @@
 {% block meta_description %}Browse rooms to rent across South Africa. Filter by location, price and room type - from single rooms to full apartments, with verified landlords.{% endblock %}
 {% block content %}
 
-<h1 class="page-title">Browse Rooms</h1>
-
-<div class="scam-warning">
-  🛡 Never pay deposits upfront without viewing the property and confirming the landlord's identity.
-</div>
+<section class="rl-hero">
+  <div class="rl-hero-inner">
+    <h1 class="rl-hero-title">Find a room that feels like home</h1>
+    <p class="rl-hero-sub">Trusted rooms to rent in Pretoria, Mamelodi and across South Africa.</p>
+  </div>
+  <a class="rl-hero-credit" href="https://commons.wikimedia.org/wiki/File:Pretoria-Panoramic-001.jpg" target="_blank" rel="noopener noreferrer">Photo: NJR ZA, CC BY-SA 3.0</a>
+</section>
 
 <style>
+/* ===== Hero: Pretoria panorama behind the title; the search card
+   floats over its bottom edge, then becomes the sticky bar on scroll. */
+.rl-hero {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  border-radius: 22px;
+  overflow: hidden;
+  background-color: #0b3a66;
+  background-image:
+    linear-gradient(180deg, rgba(6, 22, 45, 0.25) 0%, rgba(6, 22, 45, 0.55) 55%, rgba(6, 22, 45, 0.78) 100%),
+    url("{% static 'images/hero-pretoria.jpg' %}");
+  background-image:
+    linear-gradient(180deg, rgba(6, 22, 45, 0.25) 0%, rgba(6, 22, 45, 0.55) 55%, rgba(6, 22, 45, 0.78) 100%),
+    image-set(url("{% static 'images/hero-pretoria.webp' %}") type("image/webp"), url("{% static 'images/hero-pretoria.jpg' %}") type("image/jpeg"));
+  background-size: cover;
+  background-position: center 45%;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+.rl-hero-inner {
+  width: 100%;
+  padding: 36px 32px 84px;
+  text-align: center;
+  color: #fff;
+}
+.rl-hero-title {
+  margin: 0;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+.rl-hero-sub {
+  margin: 10px auto 0;
+  max-width: 560px;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+.rl-hero-credit {
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  font-size: 0.66rem;
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-decoration: none;
+}
+.rl-hero-credit:hover { color: #fff !important; text-decoration: underline; }
+
+/* The search card overlaps the photo. Its size and position never
+   change (no jump on scroll); once the page scrolls (.scrolled) the bar
+   behind it turns solid, as before. */
+.search-toolbar-wrapper {
+  margin-top: -64px;
+}
+.search-toolbar-wrapper:not(.scrolled) {
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
+}
+.search-toolbar-wrapper .search-toolbar {
+  max-width: 980px;
+  padding: 18px 18px 6px;
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+}
+.search-toolbar-wrapper.scrolled .search-toolbar {
+  box-shadow: none;
+}
+.rl-scam-warning {
+  max-width: 980px;
+  margin: 6px auto 18px;
+}
+
+@media (max-width: 640px) {
+  .rl-hero {
+    min-height: 220px;
+    border-radius: 18px;
+    background-image:
+      linear-gradient(180deg, rgba(6, 22, 45, 0.3) 0%, rgba(6, 22, 45, 0.6) 55%, rgba(6, 22, 45, 0.8) 100%),
+      url("{% static 'images/hero-pretoria-mobile.webp' %}");
+    background-position: center;
+  }
+  .rl-hero-inner { padding: 26px 18px 76px; }
+  .search-toolbar-wrapper { margin-top: -58px; }
+  .search-toolbar-wrapper .search-toolbar { padding: 14px 12px 4px; margin: 0 8px; }
+}
+
 .search-toolbar {
   max-width: 1100px;
   margin: 0 auto 24px;
@@ -405,6 +501,10 @@
   </div>
     </form>
   </div>
+
+<div class="scam-warning rl-scam-warning">
+  🛡 Never pay deposits upfront without viewing the property and confirming the landlord's identity.
+</div>
 
 {% if values.q or values.location or values.type or values.min_price or values.max_price %}
 <div class="rl-chips">
