@@ -13,6 +13,7 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 
 from accounts.push import notify_user
+from placements.models import Placement
 from trust.models import FraudReport
 from trust.scam_detection import auto_flag_if_scammy
 from utils.email import send_template_email
@@ -175,6 +176,9 @@ def conversation_thread(request, room_id, other_user_id):
 
         # Contact is always attributed to the tenant side of the conversation.
         Contact.objects.get_or_create(room=room, user=request.user if not is_owner else other_user)
+        if not is_owner:
+            # A tenant writing to the landlord is what counts as interest.
+            Placement.record_interest(request.user, room)
         _notify_new_message(msg, room, request.user, other_user, already_unread)
         auto_flag_if_scammy(
             text=body,

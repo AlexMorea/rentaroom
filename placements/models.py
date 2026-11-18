@@ -118,6 +118,22 @@ class Placement(models.Model):
     def __str__(self):
         return f"{self.tenant} → {self.room.title} ({self.get_status_display()})"
 
+    @classmethod
+    def record_interest(cls, tenant, room):
+        """
+        The one place a tenant becomes "interested" in a room: they sent
+        the landlord a message in the app (typed, or the one-tap "I'm
+        interested" button). Viewing a listing or tapping Call/WhatsApp/
+        Email is tracked as a view or contact tap only, so nobody gets
+        follow-up emails about a room they merely looked at.
+        """
+        if tenant.id == room.owner_id:
+            return None
+        placement, _ = cls.objects.get_or_create(
+            tenant=tenant, room=room, defaults={"landlord": room.owner}
+        )
+        return placement
+
     # ---------------------------------------------------------------
     # Success fee calculation
     # ---------------------------------------------------------------

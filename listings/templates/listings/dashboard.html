@@ -17,7 +17,7 @@ Dashboard | Rooms4You
     <h1 class="ld-hello-title">{{ greeting }}, {{ user.first_name|default:"there" }}</h1>
     <p class="ld-hello-sub">
       {% if rooms %}
-        {{ rooms|length }} room listing{{ rooms|length|pluralize }} · {{ week_views }} view{{ week_views|pluralize }} and {{ week_contacts }} contact{{ week_contacts|pluralize }} in the last 7 days
+        {{ rooms|length }} room listing{{ rooms|length|pluralize }} · {{ week_views }} view{{ week_views|pluralize }}, {{ week_contacts }} contact tap{{ week_contacts|pluralize }} and {{ week_interested }} interested tenant{{ week_interested|pluralize }} in the last 7 days
       {% else %}
         Welcome to your dashboard. Let's get your first room in front of tenants.
       {% endif %}
@@ -44,9 +44,10 @@ Dashboard | Rooms4You
 <!-- ================= STATS ================= -->
 <div class="ld-kpis">
   <div class="ld-kpi"><span class="ld-kpi-num">{{ week_views }}</span><span class="ld-kpi-label">Views, 7 days</span></div>
-  <div class="ld-kpi"><span class="ld-kpi-num">{{ week_contacts }}</span><span class="ld-kpi-label">Contacts, 7 days</span></div>
+  <div class="ld-kpi" title="Tenants who tapped Call, WhatsApp or Email on a listing"><span class="ld-kpi-num">{{ week_contacts }}</span><span class="ld-kpi-label">Contact taps, 7 days</span></div>
+  <a class="ld-kpi" href="{% url 'placements:landlord_dashboard' %}" title="Tenants who messaged you or tapped I'm interested"><span class="ld-kpi-num">{{ week_interested }}</span><span class="ld-kpi-label">Interested, 7 days</span></a>
   <a class="ld-kpi" href="{% url 'inbox' %}"><span class="ld-kpi-num">{{ unread_messages_count }}</span><span class="ld-kpi-label">Unread messages</span></a>
-  <a class="ld-kpi" href="{% url 'contacts_analytics' %}"><span class="ld-kpi-num">{{ contact_count }}</span><span class="ld-kpi-label">Contacts, all time</span></a>
+  <a class="ld-kpi" href="{% url 'contacts_analytics' %}"><span class="ld-kpi-num">{{ contact_count }}</span><span class="ld-kpi-label">Contact taps, all time</span></a>
 </div>
 {% else %}
 <!-- ================= FIRST LISTING (no rooms yet) ================= -->
@@ -94,7 +95,7 @@ Dashboard | Rooms4You
         </div>
 
         <div class="room-row-stats ld-room-stats">
-          👁 {{ room.view_count }} views &nbsp;·&nbsp; 💬 {{ room.contact_total }} contacts &nbsp;·&nbsp; {{ room.ctr }}% CTR
+          👁 {{ room.view_count }} views &nbsp;·&nbsp; 📞 {{ room.contact_total }} contact taps &nbsp;·&nbsp; {{ room.ctr }}% CTR
         </div>
       </div>
 
@@ -247,7 +248,7 @@ Dashboard | Rooms4You
   .ld-todo-text { flex: 1; line-height: 1.45; }
   .ld-todo-action { color: var(--link); font-weight: 700; white-space: nowrap; font-size: 0.9rem; }
   .ld-allclear { margin: 0; color: var(--text-muted); }
-  .ld-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px; }
+  .ld-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 22px; }
   .ld-kpi {
     display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 16px;
     background: var(--card); border: 1px solid var(--border); color: var(--text); text-decoration: none;
@@ -258,6 +259,7 @@ Dashboard | Rooms4You
   .ld-see-all { color: var(--link); font-weight: 700; text-decoration: none; }
   @media (max-width: 640px) {
     .ld-kpis { grid-template-columns: repeat(2, 1fr); }
+    .ld-kpis > :last-child { grid-column: span 2; }
     .ld-hello-title { font-size: 1.35rem; }
     .ld-todo { display: grid; grid-template-columns: 30px 1fr; row-gap: 4px; align-items: start; }
     .ld-todo-action { grid-column: 2; }

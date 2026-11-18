@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.urls import reverse
@@ -11,25 +13,20 @@ from utils.whatsapp import send_whatsapp_template
 
 class Command(BaseCommand):
     """
-    Run daily (e.g. a Render cron job, alongside check_move_ins and
-    flag_overdue_placement_fees).
+    Runs daily from the in-process scheduler.
 
-    A Placement that's been sitting in an early status (Interested,
-    Viewing Scheduled/Completed, Approved) for PLACEMENT_STALL_DAYS
-    without moving forward is easy to lose track of - neither side gets
-    told "hey, where are we with this?" anywhere else in the app. This
-    sends one nudge to both tenant and landlord asking them to update
-    the placement's status, so a rental doesn't just quietly go cold.
+    An enquiry that has sat in an early status (Interested, Viewing
+    Scheduled/Completed, Approved) for PLACEMENT_STALL_DAYS is easy to
+    lose track of, so both sides get one "where are we with this?"
+    reminder per stall (stall_nudge_sent_at).
 
-    One-time per stall (stall_nudge_sent_at), same convention as
-    check_move_ins' move_in_check_sent_at - if the status changes, the
-    write_status_history signal resets current_status_since, so a later
-    re-stall in a *different* status would need a manual re-check; this
-    command only clears the flag implicitly by virtue of no longer
-    matching STALLABLE_STATUSES once someone acts on it.
+    Grouped per person: a tenant waiting on four rooms gets ONE email
+    listing all four, not four emails, and the same for landlords. Only
+    real enquiries exist as placements (see Placement.record_interest),
+    so nobody hears about a room they merely viewed or tapped Call on.
     """
 
-    help = "Nudges tenants/landlords about placements stuck in an early status for too long."
+    help = "Sends one grouped reminder per person about enquiries that have gone quiet."
 
     def handle(self, *args, **options):
         threshold = getattr(settings, "PLACEMENT_STALL_DAYS", 7)
@@ -38,64 +35,65 @@ class Command(BaseCommand):
             status__in=Placement.STALLABLE_STATUSES,
             stall_nudge_sent_at__isnull=True,
         ).select_related("tenant", "landlord", "room")
+        stalled = [p for p in candidates if p.is_stalled(threshold)]
 
-        sent = 0
-        for placement in candidates:
-            if not placement.is_stalled(threshold):
-                continue
+        by_tenant, by_landlord = defaultdict(list), defaultdict(list)
+        for placement in stalled:
+            by_tenant[placement.tenant].append(placement)
+            by_landlord[placement.landlord].append(placement)
 
-            self._send_nudge(placement, threshold)
-            placement.stall_nudge_sent_at = timezone.now()
-            placement.save(update_fields=["stall_nudge_sent_at"])
-            sent += 1
+        for tenant, placements in by_tenant.items():
+            self._nudge(tenant, placements, is_tenant=True)
+        for landlord, placements in by_landlord.items():
+            self._nudge(landlord, placements, is_tenant=False)
 
-        self.stdout.write(self.style.SUCCESS(f"Sent stall nudges for {sent} placement(s)."))
+        if stalled:
+            Placement.objects.filter(pk__in=[p.pk for p in stalled]).update(stall_nudge_sent_at=timezone.now())
 
-    def _send_nudge(self, placement, threshold_days):
-        context = {
-            "placement": placement,
-            "room": placement.room,
-            "days": placement.days_in_current_status,
-            "threshold_days": threshold_days,
-            "year": timezone.now().year,
-        }
+        self.stdout.write(self.style.SUCCESS(
+            f"{len(stalled)} stalled enquiry(ies): reminded {len(by_tenant)} tenant(s) "
+            f"and {len(by_landlord)} landlord(s)."
+        ))
 
-        if placement.tenant.email:
-            send_template_email(
-                subject=f'Still interested in "{placement.room.title}"?',
-                to_email=placement.tenant.email,
-                template="emails/placement_stalled_tenant.html",
-                context=context,
-            )
-        notify_user(
-            placement.tenant,
-            title="Still interested?",
-            body=f'Your enquiry on "{placement.room.title}" needs an update.',
-            url=reverse("placements:tenant_dashboard"),
-        )
-        if hasattr(placement.tenant, "profile"):
+    def _nudge(self, person, placements, *, is_tenant):
+        count = len(placements)
+        first = placements[0].room.title
+        if is_tenant:
+            subject = (f'Still interested in "{first}"?' if count == 1
+                       else f"Still interested in these {count} rooms?")
+            template = "emails/placement_stalled_tenant.html"
+            push_title = "Still interested?"
+            push_body = (f'Your enquiry on "{first}" needs an update.' if count == 1
+                         else f"{count} of your enquiries need an update.")
+            url = reverse("placements:tenant_dashboard")
+        else:
+            subject = (f'An enquiry about "{first}" is waiting on you' if count == 1
+                       else f"{count} enquiries are waiting on you")
+            template = "emails/placement_stalled_landlord.html"
+            push_title = "An enquiry needs an update" if count == 1 else "Enquiries need an update"
+            push_body = (f'"{first}" has an enquiry waiting on you. Tap to follow up.' if count == 1
+                         else f"{count} enquiries are waiting on you. Tap to follow up.")
+            url = reverse("placements:landlord_dashboard")
+
+        if person.email:
+            try:
+                send_template_email(
+                    subject=subject,
+                    to_email=person.email,
+                    template=template,
+                    context={
+                        "person": person,
+                        "placements": placements,
+                        "threshold_days": getattr(settings, "PLACEMENT_STALL_DAYS", 7),
+                        "year": timezone.now().year,
+                    },
+                )
+            except Exception:  # noqa: BLE001
+                self.stderr.write(f"Could not email user {person.pk} about stalled enquiries")
+        notify_user(person, title=push_title, body=push_body, url=url)
+        if hasattr(person, "profile"):
             send_whatsapp_template(
-                placement.tenant.profile,
+                person.profile,
                 settings.WHATSAPP_TEMPLATE_PLACEMENT_STALLED,
-                params=[placement.room.title],
-            )
-
-        if placement.landlord.email:
-            send_template_email(
-                subject=f'An enquiry about "{placement.room.title}" is waiting on you',
-                to_email=placement.landlord.email,
-                template="emails/placement_stalled_landlord.html",
-                context=context,
-            )
-        notify_user(
-            placement.landlord,
-            title="An enquiry needs an update",
-            body=f'"{placement.room.title}" has an enquiry waiting on you. Tap to follow up.',
-            url=reverse("placements:landlord_dashboard"),
-        )
-        if hasattr(placement.landlord, "profile"):
-            send_whatsapp_template(
-                placement.landlord.profile,
-                settings.WHATSAPP_TEMPLATE_PLACEMENT_STALLED,
-                params=[placement.room.title],
+                params=[first if count == 1 else f"{count} rooms"],
             )
