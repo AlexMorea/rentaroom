@@ -66,6 +66,8 @@ JOBS = (
     # Search ranking + trust signals (quiet, no emails).
     Job("compute_scores", "compute_scores", ("--force",), every="hourly"),
     Job("compute_response_stats", "compute_response_stats", ("--force",), hour=6, minute=30),
+    # POPIA retention: Guardian location data after 30 days, panic records after 12 months.
+    Job("purge_guardian_data", "purge_guardian_data", ("--force",), hour=3, minute=0),
     # Landlord emails / push, all SAST.
     Job("flag_stale_listings", "flag_stale_listings", ("--force",), hour=6, minute=0, sends_email=True),
     Job("flag_landlords_without_listing", "flag_landlords_without_listing", ("--force",),

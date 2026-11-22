@@ -344,7 +344,7 @@ class SchedulerTests(TestCase):
         from listings.scheduler import claim_due_jobs
 
         first = claim_due_jobs(self.sast(2026, 11, 17, 10, 5))
-        self.assertEqual(self.names(first), ["compute_response_stats", "compute_scores"])
+        self.assertEqual(self.names(first), ["compute_response_stats", "compute_scores", "purge_guardian_data"])
 
         # Same hour again: nothing (another worker or a restart).
         self.assertEqual(claim_due_jobs(self.sast(2026, 11, 17, 10, 30)), [])
@@ -376,7 +376,7 @@ class SchedulerTests(TestCase):
         with override_settings(SCHEDULED_EMAIL_JOBS_ENABLED=False):
             claim_due_jobs(self.sast(2026, 11, 17, 10, 0))
             claimed = self.names(claim_due_jobs(self.sast(2026, 11, 23, 9, 0)))
-        self.assertEqual(claimed, ["compute_response_stats", "compute_scores"])
+        self.assertEqual(claimed, ["compute_response_stats", "compute_scores", "purge_guardian_data"])
 
     def test_job_outcome_is_recorded(self):
         from listings.models import ScheduledJobRun

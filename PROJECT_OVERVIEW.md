@@ -506,6 +506,7 @@ emails users, hides listings or mutates a score does so until run with `--force`
 > |-----|-------------|---------|
 > | `compute_scores` | hourly | no |
 > | `compute_response_stats` | daily 06:30 | no |
+> | `purge_guardian_data` | daily 03:00 | no |
 > | `flag_stale_listings` | daily 06:00 | yes, landlords |
 > | `flag_landlords_without_listing` | daily 06:15 | yes, landlords |
 > | `check_move_ins` | daily 07:00 | yes, both sides |
@@ -538,6 +539,7 @@ then +10% for Pro landlords. Boosts never change the score; they pin up to
 | `flag_stalled_placements`     | placements | Nudge placements stuck mid-pipeline |
 | `flag_overdue_booking_fees`   | stays      | Report overdue guest-house booking fees |
 | `cleanup_users`               | core       | Maintenance: prune incomplete/abandoned signups |
+| `purge_guardian_data`         | services   | POPIA retention: delete Guardian location pings and clear position/emergency-contact details after 30 days; panic sessions, alerts and events after 12 months |
 
 ---
 
