@@ -20,9 +20,12 @@ CYCLES = (CYCLE_MONTHLY, CYCLE_ANNUAL)
 # Annual = pay for 10 months, get 12.
 ANNUAL_MONTHS_CHARGED = 10
 
-# Founding landlords: this % off Pro, for as long as they stay
-# subscribed (see Membership.founding_lock_active).
+# Founding landlords: this % off Pro for their first
+# FOUNDING_DISCOUNT_MONTHS of paid Pro, counted from the end of the free
+# founding period (settings.FOUNDING_LANDLORD_FREE_UNTIL), so 30 April
+# 2027 -> 30 April 2028. See Membership.founding_lock_active.
 FOUNDING_DISCOUNT_PERCENT = 50
+FOUNDING_DISCOUNT_MONTHS = 12
 
 # A founding landlord whose paid Pro lapses keeps their locked price for
 # this many days, so one failed debit order doesn't cost them the lock.
@@ -38,9 +41,9 @@ class ProBand:
 
 
 PRO_BANDS = (
-    ProBand("small", "Up to 5 rooms", 5, Decimal(99)),
-    ProBand("medium", "6 to 15 rooms", 15, Decimal(199)),
-    ProBand("large", "16+ rooms", None, Decimal(349)),
+    ProBand("small", "Up to 5 rooms", 5, Decimal(49)),
+    ProBand("medium", "6 to 15 rooms", 15, Decimal(99)),
+    ProBand("large", "16+ rooms", None, Decimal(199)),
 )
 PRO_BANDS_BY_CODE = {band.code: band for band in PRO_BANDS}
 
@@ -60,7 +63,7 @@ BOOST_OPTIONS = (
 BOOST_OPTIONS_BY_CODE = {option.code: option for option in BOOST_OPTIONS}
 
 # Pro includes this many free 7-day boosts per calendar month.
-PRO_FREE_BOOSTS_PER_MONTH = 2
+PRO_FREE_BOOSTS_PER_MONTH = 1
 PRO_FREE_BOOST_DAYS = 7
 
 # At most this many boosted rooms are pinned to the top of one results
@@ -85,8 +88,8 @@ def band_for_rooms(rooms: int) -> ProBand:
 
 
 def apply_discount(amount: Decimal, percent: int) -> Decimal:
-    """Whole rands, rounded down in the landlord's favour (R349 at 50%
-    is R174, not R174.50)."""
+    """Whole rands, rounded down in the landlord's favour (R49 at 50%
+    is R24, not R24.50)."""
     if not percent:
         return amount
     discounted = amount * (Decimal(100) - Decimal(percent)) / Decimal(100)

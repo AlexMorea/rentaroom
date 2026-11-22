@@ -262,6 +262,7 @@ def assetlinks_json(request):
 def pricing_refunds(request):
     """Public Pricing & Refunds page - prices come from billing.pricing,
     the same source checkout charges from, so they can't drift."""
+    from accounts import founding
     from billing import pricing
 
     return render(request, "listings/pricing_refunds.html", {
@@ -278,5 +279,7 @@ def pricing_refunds(request):
         "free_boosts_per_month": pricing.PRO_FREE_BOOSTS_PER_MONTH,
         "founding_discount": pricing.FOUNDING_DISCOUNT_PERCENT,
         "founding_grace_days": pricing.FOUNDING_LOCK_GRACE_DAYS,
+        "founding_discount_months": pricing.FOUNDING_DISCOUNT_MONTHS,
+        "founding_discount_until": founding.discount_until(),
         "annual_months_charged": pricing.ANNUAL_MONTHS_CHARGED,
     })

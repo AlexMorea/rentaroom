@@ -12,7 +12,7 @@ class LegalPagesTests(TestCase):
 
     def test_pricing_page_shows_real_prices_and_policies(self):
         body = self.client.get(reverse("pricing_refunds")).content.decode()
-        for text in ("R99", "R199", "R349", "R990", "R29", "R79", "PayFast",
+        for text in ("R49", "R99", "R199", "R490", "R29", "R79", "PayFast", "30 April 2028",
                      "never sees or stores your card details", "Cancelling", "Refunds",
                      "charged in error", "Featured"):
             self.assertIn(text, body)

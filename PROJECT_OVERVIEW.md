@@ -97,10 +97,10 @@ call, and an amount check — see `billing/payfast.py` and
 | Plan | Who | What |
 |------|-----|------|
 | **Free** | Everyone, forever | Unlimited listings, verification, enquiries, placement tracking, analytics |
-| **Pro**  | Paid, or founding trial | 2 free 7-day boosts a month, a 10% ranking lift on real engagement (`compute_scores`), and new tools as they launch |
+| **Pro**  | Paid, or founding trial | 1 free 7-day boost a month, a 10% ranking lift on real engagement (`compute_scores`), and new tools as they launch |
 
-Pro pricing by rooms (sum of `Room.total_units`): **R99/month** up to 5,
-**R199** for 6–15, **R349** for 16+. Annual = 10× monthly (2 months free).
+Pro pricing by rooms (sum of `Room.total_units`): **R49/month** up to 5,
+**R99** for 6–15, **R199** for 16+. Annual = 10× monthly (2 months free).
 
 Pro is held as a trial (`is_trial` + `trial_end`) or a paid period
 (`paid_until`, extended by each verified payment). When it runs out,
@@ -109,9 +109,12 @@ blocked or hidden for payment reasons. `status`/`is_active` are Trust &
 Safety controls only.
 
 **Founding Landlords** (signed up by `FOUNDING_LANDLORD_SIGNUP_DEADLINE`):
-Pro free until `FOUNDING_LANDLORD_FREE_UNTIL`, then **50% off for life**
-(`founding_discount_percent`), kept while subscribed and for a 30-day grace
-after a paid period lapses.
+Pro free until `FOUNDING_LANDLORD_FREE_UNTIL`, then **50% off for 12 months**
+(`founding_discount_percent`, window ends at `accounts.founding.discount_until()`,
+i.e. 30 April 2028), kept while subscribed and for a 30-day grace after a paid
+period lapses. Recurring PayFast subscriptions keep the amount of their first
+payment, so a discounted subscription must be re-priced (with 30 days' notice)
+when the window closes.
 
 ### Boosts (`billing.Boost`)
 

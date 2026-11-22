@@ -1,8 +1,9 @@
 """
 Founding Landlord programme - the pre-launch offer the street team sells:
 every landlord who signs up before the tenant launch gets Pro free until
-FOUNDING_LANDLORD_FREE_UNTIL, then Pro at a locked-in founding discount
-(billing.pricing.FOUNDING_DISCOUNT_PERCENT) for as long as they stay
+FOUNDING_LANDLORD_FREE_UNTIL, then Pro at the founding discount
+(billing.pricing.FOUNDING_DISCOUNT_PERCENT) for their first
+billing.pricing.FOUNDING_DISCOUNT_MONTHS months, while they stay
 subscribed. Listing itself is free for everyone, forever.
 
 Dates are whole days in South African time (the settings hold plain
@@ -33,6 +34,22 @@ def signup_deadline():
 
 def free_until():
     return _end_of_day(settings.FOUNDING_LANDLORD_FREE_UNTIL)
+
+
+def discount_until():
+    """End of the founding discount window: FOUNDING_DISCOUNT_MONTHS
+    calendar months after the free founding period ends (30 April 2027
+    -> end of 30 April 2028)."""
+    import calendar
+
+    from billing.pricing import FOUNDING_DISCOUNT_MONTHS
+
+    start = settings.FOUNDING_LANDLORD_FREE_UNTIL
+    month_index = start.month - 1 + FOUNDING_DISCOUNT_MONTHS
+    year = start.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(start.day, calendar.monthrange(year, month)[1])
+    return _end_of_day(start.replace(year=year, month=month, day=day))
 
 
 def programme_open(now=None):

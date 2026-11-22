@@ -15,8 +15,8 @@ and no commission on your rent, so you can start showing your rooms to tenants s
 <div class="info-card">
   <p style="margin:0;">
     <strong>You're a Founding Landlord.</strong> Because you joined early, you have Pro free until
-    {{ user.membership.trial_end|date:"j F Y" }}, and after that you keep 50% off Pro for as long as you
-    stay subscribed. You don't need to do anything to claim it.
+    {{ user.membership.trial_end|date:"j F Y" }}, and after that you get {{ user.membership.founding_discount_percent }}% off Pro until
+    {{ user.membership.founding_discount_ends_at|date:"j F Y" }} while you stay subscribed. You don't need to do anything to claim it.
   </p>
 </div>
 {% endif %}

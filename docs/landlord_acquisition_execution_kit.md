@@ -37,7 +37,7 @@ champion signs up a landlord.
 
 | # | Issue in the app today | What to do now (no code) | Proper fix later (I can build it) |
 |---|---|---|---|
-| 1 | ~~**The free trial ends after 30 days**~~ ✅ **Fixed in the app:** every landlord who signs up by 31 Jan 2027 becomes a **Founding Landlord** automatically, with Pro free until 30 April 2027, then 50% off Pro for life, and a 🏅 badge. Landlords already on a running trial are enrolled when the update is deployed. | Nothing day to day. For an older landlord whose trial already ran out: **Django admin → Memberships → select → "Enrol as Founding Landlord"**. | Done |
+| 1 | ~~**The free trial ends after 30 days**~~ ✅ **Fixed in the app:** every landlord who signs up by 31 Jan 2027 becomes a **Founding Landlord** automatically, with Pro free until 30 April 2027, then 50% off Pro for 12 months (to 30 April 2028), and a 🏅 badge. Landlords already on a running trial are enrolled when the update is deployed. | Nothing day to day. For an older landlord whose trial already ran out: **Django admin → Memberships → select → "Enrol as Founding Landlord"**. | Done |
 | 2 | **Sign-up needs an email address** and sends the verification code (OTP) **by email**. Many township landlords have no email they remember. | Teach champions: **use "Continue with Google"**. Almost every Android phone already has a Google (Gmail) account signed in, even if the owner never uses it. That's one tap and no OTP. If there's no Google account, help them create a Gmail on the spot. | Phone-number sign-up with SMS/WhatsApp OTP (the `sms-otp` branches look like a start) |
 | 3 | **Sign-ups are capped at 8 attempts per hour per network** (anti-fraud). If a champion signs up several landlords on **the champion's own hotspot**, the 9th gets blocked. | Sign landlords up **on the landlord's own phone and data** (best anyway, since they keep the account). If you must use the champion's phone, switch networks between landlords, or don't do more than ~6 per hour on one hotspot. | Raise the limit, or allow-list a "field agent" account |
 | 4 | ~~**Listing cap**~~ ✅ Gone for everyone: Free has unlimited listings. | Champions still group identical rooms into **one listing using total/available units**, which makes search tidier. | Done |
@@ -248,7 +248,7 @@ Everyone, on the street or online, says the same thing:
 
 > **"Listing your room on Rooms4You is free, forever, with no commission and
 > no fee when a tenant moves in. As a Founding Landlord you also get our Pro
-> tools free until the end of April 2027, and half price for life after that.
+> tools free until the end of April 2027, and half price for 12 months after that.
 > Your street address stays private. We launch to tenants in January,
 > which is the busiest month for people looking for rooms."**
 
@@ -256,7 +256,7 @@ If they ask **"So how do you make money?"**:
 
 > "Landlords who want to fill rooms faster can pay for a Boost, which puts
 > your room at the top of search for a week from R29, or for Pro from
-> R99 a month. Both are optional. You'll never pay to be listed."
+> R49 a month. Both are optional. You'll never pay to be listed."
 
 ---
 
@@ -269,9 +269,19 @@ Translate into isiZulu, Sesotho, Setswana etc. as needed. Keep it warm and short
 >
 > ✅ **We've removed the success fee.** There's no fee when a tenant moves in, not on your first tenant and not on any after that.
 > ✅ Listing stays **free forever**, with as many rooms as you like.
-> 🏅 As a **Founding Landlord** you have **Pro free until 30 April 2027**, then **half price for life** (from R49 a month) if you choose to keep it. Pro is optional. If you don't want it, you simply stay on Free and your rooms stay listed.
+> 🏅 As a **Founding Landlord** you have **Pro free until 30 April 2027**, then **half price for 12 months** (from R24 a month) if you choose to keep it. Pro is optional. If you don't want it, you simply stay on Free and your rooms stay listed.
 >
 > We launch to tenants in January. Any questions, just reply here. 🙏
+
+### 7.0a Founding Landlord terms in writing (send to every Founding Landlord, Nov 2026)
+> Hi [name] 👋 It's [your name] from Rooms4You. Thank you for being one of our first **Founding Landlords** 🏅 Here are your Founding Landlord terms in writing:
+>
+> ✅ Listing is **free forever**, with as many rooms as you like.
+> ✅ **Pro is free until 30 April 2027.**
+> ✅ From 1 May 2027, if you choose to keep Pro, you pay **half price for 12 months** (from R24 a month instead of R49), until 30 April 2028. After that, the normal price applies, and we'll remind you at least 30 days before.
+> ✅ Pro is optional. If you don't want it, you stay on Free and your rooms stay listed.
+>
+> Any questions, just reply here. 🙏
 
 ### 7.1 WhatsApp Business auto-reply (greeting message)
 > Sawubona / Dumela! 👋 Welcome to **Rooms4You**: rooms to rent in your area, online and safe.

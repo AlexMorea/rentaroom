@@ -37,13 +37,13 @@
 
   {% if membership.is_founding %}
   <div class="form-card mp-founding">
-    🏅 <strong>Founding Landlord price lock:</strong>
+    🏅 <strong>Founding Landlord discount:</strong>
     {% if discount %}
-      {{ discount }}% off Pro for life, for as long as you stay subscribed.
+      {{ discount }}% off Pro until {{ membership.founding_discount_ends_at|date:"j F Y" }}, while you stay subscribed.
       {% if membership.on_pro_trial %}After {{ membership.trial_end|date:"j F Y" }} your Pro price is
       <strong>R{{ monthly_price|intcomma }}/month</strong>.{% endif %}
     {% else %}
-      your founding discount lapsed when your subscription ended.
+      your founding discount has ended.
     {% endif %}
   </div>
   {% endif %}
@@ -72,7 +72,7 @@
       <p class="mp-band">For your {{ rooms }} room{{ rooms|pluralize }}: {{ band.label|lower }}</p>
       <ul class="mp-list">
         <li>✔ Everything in Free</li>
-        <li>✔ {{ free_boosts_per_month }} free 7-day boosts every month</li>
+        <li>✔ {{ free_boosts_per_month }} free 7-day boost{{ free_boosts_per_month|pluralize }} every month</li>
         <li>✔ Ranking lift in search results</li>
         <li>✔ New Pro tools as they launch: tenant screening, digital leases &amp; inspection reports</li>
         <li>✔ Cancel any time, no contract</li>

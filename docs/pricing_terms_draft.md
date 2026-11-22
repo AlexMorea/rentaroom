@@ -40,9 +40,11 @@ price of an active subscription.
 4.1 Landlords who registered on or before 31 January 2027 receive Pro free
 until 30 April 2027.
 4.2 After that, Founding Landlords may subscribe to Pro at 50% off the
-standard price for as long as the subscription stays active. If a paid
-subscription ends and is not renewed within 30 days, the founding discount
-ends.
+standard price for their first 12 months, until 30 April 2028, while the
+subscription stays active. If a paid subscription ends and is not renewed
+within 30 days, the founding discount ends early.
+4.3 From 1 May 2028 the standard price applies. We will give at least 30
+days' notice by email before a Founding Landlord's price changes (3.4).
 
 ## 5. Refunds
 5.1 [Lawyer to confirm, incl. ECTA cooling-off] Boosts start immediately

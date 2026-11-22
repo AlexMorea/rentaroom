@@ -69,7 +69,7 @@ Plan the work around these segments. Each one needs a different pitch.
 
 | Objection | Response |
 |---|---|
-| "What's the catch? Who pays?" | "Listing is free forever, and there's no success fee or commission on your rent. Landlords who want to fill rooms faster can pay for extras later: a Boost (R29 for a week at the top of search) or Pro (from R99 a month). As a founding landlord you get Pro free until 30 April 2027, then half price for life." *(See §2.)* |
+| "What's the catch? Who pays?" | "Listing is free forever, and there's no success fee or commission on your rent. Landlords who want to fill rooms faster can pay for extras later: a Boost (R29 for a week at the top of search) or Pro (from R49 a month). As a founding landlord you get Pro free until 30 April 2027, then half price for 12 months." *(See §2.)* |
 | "I don't need it, my rooms fill up." | "Great. Then list it for the next time someone moves out. It costs nothing, and you'll have people waiting instead of an empty month." |
 | "Is this SARS / the municipality?" | "No. We're a private company that helps rooms get tenants. We don't share your details with government." *(Only say this if it's true under our privacy policy.)* |
 | "I don't trust apps / I've been scammed." | Show the verified badge, show a real listing, give them your name and team ID card, and leave a printed flyer with the support number. |
@@ -88,14 +88,14 @@ Plan the work around these segments. Each one needs a different pitch.
 - **Landlords pay only for optional extras that help them fill rooms faster:**
   - **Boost:** R29 for 7 days or R79 for 30 days at the top of the area's
     results, labelled "Featured". Boosts open when we launch to tenants.
-  - **Pro:** priced by number of rooms: R99/month (up to 5), R199/month
-    (6–15), R349/month (16+). Pay yearly and get 2 months free. Includes
-    2 free boosts a month, a ranking lift, and new tools as they launch
+  - **Pro:** priced by number of rooms: R49/month (up to 5), R99/month
+    (6–15), R199/month (16+). Pay yearly and get 2 months free. Includes
+    1 free boost a month, a ranking lift, and new tools as they launch
     (tenant screening, digital leases).
 - **Founding Landlords** (signed up by 31 Jan 2027): **Pro free until
-  30 April 2027, then 50% off for life** (R49 / R99 / R174 a month) as long
-  as they stay subscribed. The app enrols them automatically and saves the
-  price lock on their account.
+  30 April 2027, then 50% off for 12 months** (R24 / R49 / R99 a month,
+  until 30 April 2028) as long as they stay subscribed. The app enrols them
+  automatically and saves the discount on their account.
 - **Trust is never for sale.** The Verified badge comes only from our checks.
 - **Tenants never pay** to search or contact a landlord.
 
@@ -239,7 +239,7 @@ Setswana, Xitsonga, etc. according to the zone, and keep it conversational:
 >
 > It's **free to list, forever**. No commission and no fee when a tenant
 > moves in. Because you're joining early, you also get our Pro tools free
-> until the end of April, and half price for life after that.
+> until the end of April, and half price for 12 months after that.
 >
 > Your address stays private: tenants only see your area and photos of the
 > room, and you decide who comes to view.
