@@ -299,7 +299,9 @@ class FoundingPricingTests(TestCase):
 
     def test_discount_ends_twelve_months_after_free_period(self):
         # Free until 30 April 2099 -> discount until the end of 30 April 2100.
-        end = self.membership.founding_discount_ends_at.astimezone(founding.SAST)
+        ends_at = self.membership.founding_discount_ends_at
+        assert ends_at is not None  # narrows the Optional for the type checker
+        end = ends_at.astimezone(founding.SAST)
         self.assertEqual((end.date(), end.hour), (date(2100, 4, 30), 23))
         self.membership.trial_end = timezone.now() - timedelta(days=1)
         self.membership.save()
