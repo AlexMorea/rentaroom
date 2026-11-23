@@ -41,7 +41,7 @@ champion signs up a landlord.
 | 2 | **Sign-up needs an email address** and sends the verification code (OTP) **by email**. Many township landlords have no email they remember. | Teach champions: **use "Continue with Google"**. Almost every Android phone already has a Google (Gmail) account signed in, even if the owner never uses it. That's one tap and no OTP. If there's no Google account, help them create a Gmail on the spot. | Phone-number sign-up with SMS/WhatsApp OTP (the `sms-otp` branches look like a start) |
 | 3 | **Sign-ups are capped at 8 attempts per hour per network** (anti-fraud). If a champion signs up several landlords on **the champion's own hotspot**, the 9th gets blocked. | Sign landlords up **on the landlord's own phone and data** (best anyway, since they keep the account). If you must use the champion's phone, switch networks between landlords, or don't do more than ~6 per hour on one hotspot. | Raise the limit, or allow-list a "field agent" account |
 | 4 | ~~**Listing cap**~~ ✅ Gone for everyone: Free has unlimited listings. | Champions still group identical rooms into **one listing using total/available units**, which makes search tidier. | Done |
-| 5 | ✅ **Success fee removed (16 Nov 2026).** No fee when a tenant moves in, ever. Rooms4You earns from optional Boosts and Pro. Move-ins are still tracked and confirmed. | Champions use the new message (§6). Landlords already told "first tenant free" get the update message in §7. | Done |
+| 5 | ✅ **Success fee switched off (16 Nov 2026).** No fee when a tenant moves in today. Rooms4You earns from optional Boosts and Pro. Move-ins are still tracked and confirmed. **Never say "no fee, ever":** any pricing change comes in writing with at least 30 days' notice. | Champions use the message in §6. Landlords already told "first tenant free" get the update message in §7. | Done |
 | 6 | **WhatsApp notifications** are built but switched off | Optional this week. Follow `docs/whatsapp_setup.md` when there's time. Landlords live on WhatsApp, so enquiry alerts there will matter in January. | — |
 
 **Also today:**
@@ -129,7 +129,7 @@ landlords already **want** tenants, so expect the highest conversion.
 
 - Wear the T-shirt or bib and the ID card. Introduce yourself by name and company.
 - **Never promise tenants, income or dates.** Promise visibility and support.
-- Say the **pricing truth** (§6) every time: listing is free forever; Boosts and Pro are optional and paid. Never "everything is free".
+- Say the **pricing truth** (§6) every time: listing is free forever; Boosts and Pro are optional and paid. Never "everything is free", and never "you'll never pay anything when a tenant moves in". If asked, say: *"Not today. If our pricing ever changes, you'll get it in writing at least 30 days before, and you choose whether to carry on."*
 - Never list a room without the owner's consent. Never take money from anyone.
 - No visits after dark. Stay in pairs. Leave any situation that feels wrong.
 - Greet properly (Ma, Baba, Gogo). Speak the household's language.
@@ -246,8 +246,8 @@ half of leads convert within 48 h. If you're below that, change the pitch, not t
 
 Everyone, on the street or online, says the same thing:
 
-> **"Listing your room on Rooms4You is free, forever, with no commission and
-> no fee when a tenant moves in. As a Founding Landlord you also get our Pro
+> **"Listing your room on Rooms4You is free, forever, and we never take a
+> commission on your rent. As a Founding Landlord you also get our Pro
 > tools free until the end of April 2027, and half price for 12 months after that.
 > Your street address stays private. We launch to tenants in January,
 > which is the busiest month for people looking for rooms."**
@@ -267,7 +267,7 @@ Translate into isiZulu, Sesotho, Setswana etc. as needed. Keep it warm and short
 ### 7.0 Update for landlords already signed up (send this week)
 > Hi [name] 👋 It's [your name] from Rooms4You. Good news about your listing:
 >
-> ✅ **We've removed the success fee.** There's no fee when a tenant moves in, not on your first tenant and not on any after that.
+> ✅ **No success fee:** you pay nothing when a tenant moves in. If our pricing ever changes, we'll tell you in writing at least 30 days before, and you choose whether to carry on.
 > ✅ Listing stays **free forever**, with as many rooms as you like.
 > 🏅 As a **Founding Landlord** you have **Pro free until 30 April 2027**, then **half price for 12 months** (from R24 a month) if you choose to keep it. Pro is optional. If you don't want it, you simply stay on Free and your rooms stay listed.
 >

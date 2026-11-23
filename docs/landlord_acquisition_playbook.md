@@ -69,7 +69,7 @@ Plan the work around these segments. Each one needs a different pitch.
 
 | Objection | Response |
 |---|---|
-| "What's the catch? Who pays?" | "Listing is free forever, and there's no success fee or commission on your rent. Landlords who want to fill rooms faster can pay for extras later: a Boost (R29 for a week at the top of search) or Pro (from R49 a month). As a founding landlord you get Pro free until 30 April 2027, then half price for 12 months." *(See §2.)* |
+| "What's the catch? Who pays?" | "Listing is free forever, and we never take a commission on your rent. Landlords who want to fill rooms faster can pay for extras later: a Boost (R29 for a week at the top of search) or Pro (from R49 a month). As a founding landlord you get Pro free until 30 April 2027, then half price for 12 months." *(See §2.)* |
 | "I don't need it, my rooms fill up." | "Great. Then list it for the next time someone moves out. It costs nothing, and you'll have people waiting instead of an empty month." |
 | "Is this SARS / the municipality?" | "No. We're a private company that helps rooms get tenants. We don't share your details with government." *(Only say this if it's true under our privacy policy.)* |
 | "I don't trust apps / I've been scammed." | Show the verified badge, show a real listing, give them your name and team ID card, and leave a printed flyer with the support number. |
@@ -84,7 +84,11 @@ Plan the work around these segments. Each one needs a different pitch.
 
 - **Listing is free forever, with unlimited rooms.** No trial that runs
   out, no listing cap, no lock-out.
-- **No success fee and no commission.** We never take a cut of rent.
+- **No commission on rent.** We never take a cut of a landlord's rent.
+- **Don't promise that any fee will never exist.** Listing is the only thing
+  that is free forever. If a landlord asks whether they'll ever pay when a
+  tenant moves in, say: *"Not today. If our pricing ever changes, you'll get
+  it in writing at least 30 days before, and you choose whether to carry on."*
 - **Landlords pay only for optional extras that help them fill rooms faster:**
   - **Boost:** R29 for 7 days or R79 for 30 days at the top of the area's
     results, labelled "Featured". Boosts open when we launch to tenants.
@@ -237,8 +241,8 @@ Setswana, Xitsonga, etc. according to the zone, and keep it conversational:
 > We're signing up landlords in [area] before we launch, so when tenants
 > start searching, your rooms are the first they see.
 >
-> It's **free to list, forever**. No commission and no fee when a tenant
-> moves in. Because you're joining early, you also get our Pro tools free
+> It's **free to list, forever**, and we never take a commission on your
+> rent. Because you're joining early, you also get our Pro tools free
 > until the end of April, and half price for 12 months after that.
 >
 > Your address stays private: tenants only see your area and photos of the
@@ -351,8 +355,9 @@ about 4 interested, 2–3 listed on the spot, plus 1 more on follow-up.
 
 - **Consent first.** Never list a room without the owner's agreement. Never
   scrape adverts.
-- **Be honest about pricing.** Free to list forever, no commission. Boosts and
-  Pro are optional and paid. Never promise "guaranteed" tenants or income.
+- **Be honest about pricing.** Free to list forever, no commission on rent.
+  Boosts and Pro are optional and paid. Never promise "guaranteed" tenants or
+  income, and never promise that a fee will never be charged.
 - **Safety for the team.** Work in pairs, carry ID cards, keep a WhatsApp
   location share on, no visits after dark, and leave any situation that
   feels wrong.
