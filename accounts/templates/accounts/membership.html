@@ -82,6 +82,11 @@
         <p class="mp-note">Pro is free for you until {{ membership.trial_end|date:"j F Y" }}.</p>
       {% elif membership.has_pro and membership.auto_renew %}
         <p class="mp-note">You're subscribed. Thank you!</p>
+      {% elif payments_enabled and not is_verified %}
+        <p class="mp-note">
+          Pro and Boosts are only for verified landlords, so scammers can't pay to be seen.
+          Verification is free: <a href="{% url 'trust:verification' %}">see how it works</a>.
+        </p>
       {% elif payments_enabled %}
         <form method="post" action="{% url 'billing:pro_checkout' %}" class="mp-buy">
           {% csrf_token %}

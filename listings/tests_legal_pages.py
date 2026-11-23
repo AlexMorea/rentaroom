@@ -55,7 +55,8 @@ class PayConsentTests(TestCase):
         from listings.models import Profile
 
         user = User.objects.create_user("consent@example.com", "consent@example.com", "x")
-        Profile.objects.filter(user=user).update(role="landlord")
+        # Pay buttons only show for verified landlords.
+        Profile.objects.filter(user=user).update(role="landlord", is_verified_landlord=True)
         self.client.force_login(user)
         body = self.client.get(reverse("membership")).content.decode()
         self.assertIn("Go Pro", body)

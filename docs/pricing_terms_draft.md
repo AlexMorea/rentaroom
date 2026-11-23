@@ -24,7 +24,9 @@ unit) and is shown on the Plans page before you pay.
 A boost does not guarantee enquiries or tenants. Only listings with a
 vacancy that have been recently confirmed as accurate can be boosted.
 2.3 Paid services never affect verification. The Verified badge is awarded
-only after Rooms4You's own checks and cannot be bought.
+only after Rooms4You's own checks and cannot be bought. Only verified
+landlords can buy Pro or Boosts, and a landlord whose verification is
+withdrawn stops being Featured straight away.
 
 ## 3. Payment and renewal
 3.1 Payments are processed by PayFast. Rooms4You does not store card details.

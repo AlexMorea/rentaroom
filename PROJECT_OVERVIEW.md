@@ -118,8 +118,11 @@ when the window closes.
 
 ### Boosts (`billing.Boost`)
 
-**R29 for 7 days, R79 for 30 days.** Only rooms with a vacancy and a
-recently confirmed listing can be boosted. In the default "best match" sort,
+**R29 for 7 days, R79 for 30 days.** Only verified landlords
+(`Profile.is_verified_landlord`) can buy Pro or Boosts or use Pro's free
+Boost, and a landlord whose verification is withdrawn drops out of the
+Featured slots at once. Only rooms with a vacancy and a recently confirmed
+listing can be boosted. In the default "best match" sort,
 up to 3 boosted rooms are pinned to the top of the results, labelled
 "Featured", rotating hourly when more are boosted. Boosts never change
 `Room.score`. Switched off until tenant launch (`BOOSTS_ENABLED`).

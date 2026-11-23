@@ -26,9 +26,9 @@ PAYFAST = override_settings(
 PROGRAMME_CLOSED = override_settings(FOUNDING_LANDLORD_SIGNUP_DEADLINE=date(2020, 1, 1))
 
 
-def make_landlord(username="landlord@example.com"):
+def make_landlord(username="landlord@example.com", verified=True):
     user = User.objects.create_user(username=username, email=username, password="password123")
-    Profile.objects.filter(user=user).update(role="landlord")
+    Profile.objects.filter(user=user).update(role="landlord", is_verified_landlord=verified)
     return user
 
 
@@ -525,3 +525,51 @@ class CancelSubscriptionApiTests(TestCase):
         with mock.patch("billing.payfast.requests.put", return_value=mock.Mock(status_code=400, text="bad")), \
              mock.patch("billing.payfast.requests.get", side_effect=requests.ConnectionError):
             self.assertFalse(payfast.cancel_subscription("tok"))
+
+
+@PAYFAST
+@PROGRAMME_CLOSED
+@override_settings(BOOSTS_ENABLED=True)
+class VerifiedOnlyTests(TestCase):
+    """Only verified landlords can buy Pro or Boosts, so a scammer can't
+    pay to be seen - and losing verification ends Featured placement."""
+
+    def setUp(self):
+        self.landlord = make_landlord(verified=False)
+        self.room = make_room(self.landlord)
+        self.client.force_login(self.landlord)
+        self.membership, _ = Membership.objects.get_or_create(user=self.landlord)
+
+    def test_unverified_landlord_cannot_buy_pro(self):
+        resp = self.client.post(reverse("billing:pro_checkout"), {"cycle": "monthly"})
+        self.assertRedirects(resp, reverse("membership"), fetch_redirect_response=False)
+        self.assertFalse(Payment.objects.exists())
+
+    def test_plans_page_explains_verification_instead_of_checkout(self):
+        resp = self.client.get(reverse("membership"))
+        self.assertContains(resp, "only for verified landlords")
+        self.assertNotContains(resp, reverse("billing:pro_checkout"))
+
+    def test_unverified_landlord_cannot_buy_or_use_free_boost(self):
+        self.membership.extend_pro(band="small", cycle="monthly", months=1)
+        url = reverse("billing:boost_room", args=[self.room.pk])
+        self.assertContains(self.client.get(url), "Only verified landlords can buy Pro or Boosts")
+        self.client.post(url, {"option": "week"})
+        self.client.post(url, {"option": "pro_credit"})
+        self.assertFalse(Payment.objects.exists())
+        self.assertFalse(Boost.objects.exists())
+
+    def test_verified_landlord_can_buy_pro(self):
+        Profile.objects.filter(user=self.landlord).update(is_verified_landlord=True)
+        self.client.post(reverse("billing:pro_checkout"), {"cycle": "monthly"})
+        self.assertEqual(Payment.objects.get().amount, Decimal(49))
+
+    def test_losing_verification_ends_featured_placement(self):
+        Profile.objects.filter(user=self.landlord).update(is_verified_landlord=True)
+        Boost.objects.create(
+            room=self.room, landlord=self.landlord, source=Boost.SOURCE_PAID,
+            starts_at=timezone.now() - timedelta(hours=1), ends_at=timezone.now() + timedelta(days=6),
+        )
+        self.assertEqual(featured_room_ids([self.room.pk]), [self.room.pk])
+        Profile.objects.filter(user=self.landlord).update(is_verified_landlord=False)
+        self.assertEqual(featured_room_ids([self.room.pk]), [])

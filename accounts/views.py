@@ -41,6 +41,7 @@ def membership_view(request):
     """The Plans page: Free (what everyone has) and Pro, priced for this
     landlord's actual room count, with their founding discount applied."""
     from billing import pricing
+    from billing.boosts import is_verified_landlord
     from billing.payfast import payments_enabled
 
     denied = landlord_only(request)
@@ -73,6 +74,7 @@ def membership_view(request):
         "monthly_price": pricing.pro_price(band, pricing.CYCLE_MONTHLY, discount),
         "annual_price": pricing.pro_price(band, pricing.CYCLE_ANNUAL, discount),
         "payments_enabled": payments_enabled(),
+        "is_verified": is_verified_landlord(request.user),
         "boosts_enabled": settings.BOOSTS_ENABLED,
         "boost_options": pricing.BOOST_OPTIONS,
         "free_boosts_per_month": pricing.PRO_FREE_BOOSTS_PER_MONTH,
