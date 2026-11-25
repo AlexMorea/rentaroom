@@ -142,9 +142,23 @@
 
       <p class="room-posted rc-posted">Posted {{ room.created_at|timesince }} ago</p>
 
+      <!-- The landlord's call/WhatsApp live inside the room, so the card
+           says so (phone + WhatsApp icons) instead of an arrow pointing
+           off toward the floating support button. -->
       <div class="rc-cta">
-        View details &amp; contact landlord
-        <span class="rc-cta-arrow" aria-hidden="true">→</span>
+        <span class="rc-cta-btn">
+          <span class="rc-cta-text">View room &amp; contact landlord</span>
+          <span class="rc-cta-icons" aria-hidden="true">
+            <i class="fa-solid fa-phone"></i>
+            <i class="fa-brands fa-whatsapp"></i>
+            <i class="fa-solid fa-chevron-right rc-cta-arrow"></i>
+          </span>
+        </span>
+        {% if user.is_authenticated %}
+          <span class="rc-cta-note">Tap for all photos, details and the landlord's number</span>
+        {% else %}
+          <span class="rc-cta-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> Landlord's number &amp; WhatsApp unlock with a free account</span>
+        {% endif %}
       </div>
     </div>
   </a>
@@ -565,22 +579,59 @@
      styled row rather than a second/nested link. */
   .rc-cta {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    flex-direction: column;
+    gap: 7px;
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid var(--border);
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--link);
+  }
+  .rc-cta-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 46px;
+    padding: 0 14px 0 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #0B6FBF, #00489a);
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 800;
+    box-shadow: 0 6px 16px rgba(11, 111, 191, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .rc-card:hover .rc-cta-btn,
+  .rc-link:focus-visible .rc-cta-btn {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(11, 111, 191, 0.32);
+  }
+  .rc-cta-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    opacity: 0.95;
   }
   .rc-cta-arrow {
-    flex-shrink: 0;
+    font-size: 0.8rem;
     transition: transform 0.18s ease;
   }
   .rc-card:hover .rc-cta-arrow {
     transform: translateX(3px);
+  }
+  .rc-cta-note {
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text-muted);
+  }
+  .rc-cta-note .fa-lock {
+    margin-right: 3px;
+    color: var(--link);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rc-cta-btn, .rc-cta-arrow { transition: none; }
   }
 
   @media (max-width: 480px) {

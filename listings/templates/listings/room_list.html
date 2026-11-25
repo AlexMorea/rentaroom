@@ -506,6 +506,117 @@
   🛡 Never pay deposits upfront without viewing the property and confirming the landlord's identity.
 </div>
 
+<!-- HOW IT WORKS - three steps that teach "open the room, then contact
+     the landlord" (the floating Help button is for app support). Can be
+     closed; stays closed on this browser. -->
+<section class="rl-howto" id="rlHowto" aria-label="How Rooms4You works">
+  <ol class="rl-howto-steps">
+    <li>
+      <span class="rl-howto-num">1</span>
+      <span class="rl-howto-text"><strong>Browse</strong> rooms near you</span>
+    </li>
+    <li>
+      <span class="rl-howto-num">2</span>
+      <span class="rl-howto-text"><strong>Tap a room</strong> for photos &amp; details</span>
+    </li>
+    <li>
+      <span class="rl-howto-num">3</span>
+      {% if user.is_authenticated %}
+      <span class="rl-howto-text"><strong>Contact the landlord</strong> by call, WhatsApp or chat</span>
+      {% else %}
+      <span class="rl-howto-text"><strong>Sign up free</strong> to call or WhatsApp the landlord</span>
+      {% endif %}
+    </li>
+  </ol>
+  <button type="button" class="rl-howto-close" id="rlHowtoClose" aria-label="Hide these tips">×</button>
+</section>
+<script>
+  // Runs before the strip paints, so a closed strip never flashes back.
+  (function () {
+    var box = document.getElementById("rlHowto");
+    var KEY = "r4y_howto_closed";
+    try { if (localStorage.getItem(KEY) === "1") { box.hidden = true; return; } } catch (e) {}
+    document.getElementById("rlHowtoClose").addEventListener("click", function () {
+      box.hidden = true;
+      try { localStorage.setItem(KEY, "1"); } catch (e) {}
+    });
+  })();
+</script>
+<style>
+  .rl-howto {
+    position: relative;
+    margin: 14px 0 6px;
+    padding: 12px 40px 12px 12px;
+    border-radius: 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+  }
+  .rl-howto[hidden] {
+    display: none;
+  }
+  .rl-howto-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .rl-howto-steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  }
+  .rl-howto-num {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--link);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+  .rl-howto-text {
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+  }
+  .rl-howto-text strong {
+    color: var(--text);
+  }
+  .rl-howto-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .rl-howto-close:hover {
+    background: var(--card-sunken);
+    color: var(--text);
+  }
+  @media (max-width: 520px) {
+    .rl-howto-steps {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .rl-howto-steps li {
+      align-items: center;
+    }
+  }
+</style>
+
 {% if values.q or values.location or values.type or values.min_price or values.max_price %}
 <div class="rl-chips">
   {% if values.q %}
