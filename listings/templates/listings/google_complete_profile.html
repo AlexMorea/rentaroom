@@ -15,7 +15,7 @@
       to finish setting up your Rooms4You account.
     </p>
 
-    <form method="post" class="auth-form gcp-form">
+    <form method="post" class="auth-form gcp-form" id="googleProfileForm">
       {% csrf_token %}
       {{ form.non_field_errors }}
 
@@ -33,6 +33,7 @@
         </div>
         <div class="pr-role-select-wrap">{{ form.role }}</div>
         {% if form.role.errors %}<div class="pr-field-error" role="alert">{{ form.role.errors.0 }}</div>{% endif %}
+        <div class="pr-field-error" role="alert" id="roleClientError" hidden>Please choose whether you're a tenant or a landlord.</div>
       </div>
 
       <div class="pr-field">
@@ -92,6 +93,12 @@
 </div>
 
 <style>
+  .pr-field-error {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #dc2626;
+  }
   .gcp-card {
     background: var(--card) !important;
     box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
@@ -209,7 +216,26 @@
     });
   });
 
-  roleSel?.addEventListener("change", toggle);
+  roleSel?.addEventListener("change", () => {
+    toggle();
+    const roleError = document.getElementById("roleClientError");
+    if (roleError && roleSel.value) roleError.hidden = true;
+  });
   toggle();
+
+  // Same as the signup page: the role <select> is hidden behind the
+  // cards, so ask for a role here instead of the browser silently
+  // refusing to submit.
+  document.getElementById("googleProfileForm")?.addEventListener("submit", (e) => {
+    if (!roleSel || roleSel.value) return;
+    e.preventDefault();
+    const roleError = document.getElementById("roleClientError");
+    if (roleError) roleError.hidden = false;
+    const firstCard = roleCards[0];
+    if (firstCard) {
+      firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstCard.focus({ preventScroll: true });
+    }
+  });
 </script>
 {% endblock %}

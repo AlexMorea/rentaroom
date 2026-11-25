@@ -284,7 +284,7 @@
 
             <div class="auth-actions">
               <a class="btn-primary rd-contact-btn" href="{% url 'login' %}?next={% url 'room_detail' room.id %}">Login</a>
-              <a class="btn-secondary rd-btn-secondary" href="{% url 'register' %}">Create account</a>
+              <a class="btn-secondary rd-btn-secondary" href="{% url 'register' %}?next={% url 'room_detail' room.id %}">Create account</a>
             </div>
           </div>
 

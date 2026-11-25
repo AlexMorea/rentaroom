@@ -65,9 +65,8 @@ def send_web_push(subscription, *, title: str, body: str, url: str = "/") -> boo
     # has to be parsed into a Vapid instance first via from_pem(), or this
     # raises ValueError deep inside `cryptography` instead of the
     # WebPushException this function is built to handle.
-    vapid = Vapid.from_pem(settings.VAPID_PRIVATE_KEY_PEM.encode("utf-8"))
-
     try:
+        vapid = Vapid.from_pem(settings.VAPID_PRIVATE_KEY_PEM.encode("utf-8"))
         webpush(
             subscription_info={
                 "endpoint": subscription.endpoint,
@@ -86,6 +85,11 @@ def send_web_push(subscription, *, title: str, body: str, url: str = "/") -> boo
             subscription.delete()
         else:
             logger.warning("Web push failed (%s): %s", status_code, exc)
+        return False
+    except Exception:  # noqa: BLE001 - e.g. push service unreachable, bad VAPID key
+        # Callers (sending a chat message, a landlord reopening a full
+        # room) treat push as best-effort - it must never raise into them.
+        logger.exception("Web push failed")
         return False
 
 

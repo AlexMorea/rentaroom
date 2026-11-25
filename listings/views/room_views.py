@@ -42,7 +42,7 @@ from ..models import Favorite, Room, RoomImage, RoomStat
 from ..seo import ld_json
 from ..utils import clear_room_list_cache
 from .helpers import get_or_create_membership, is_landlord
-from .room_image_views import is_valid_room_image, skipped_images_message
+from .room_image_views import skipped_images_message, store_room_images
 
 POPULAR_SCORE_THRESHOLD = getattr(settings, "POPULAR_SCORE_THRESHOLD", 100)
 
@@ -754,15 +754,8 @@ def create_room(request):
 
         # IMAGES
         uploaded_images = request.FILES.getlist("images")[:10]
-        added = 0
-        for f in uploaded_images:
-            if not is_valid_room_image(f):
-                continue
-            try:
-                RoomImage.objects.create(room=room, image=f)
-                added += 1
-            except Exception:  # noqa: BLE001 - storage hiccup on one photo must not lose the listing
-                logger.exception("Could not store photo for new room %s", room.id)
+        # A storage hiccup on one photo must not lose the listing.
+        added, _skipped = store_room_images(room, uploaded_images)
 
         messages.success(request, "Your room is live. Add or change photos below.")
         if len(uploaded_images) > added:
@@ -770,13 +763,22 @@ def create_room(request):
 
         clear_room_list_cache(request.user.id)
 
-        # EMAIL AFTER COMMIT
-        transaction.on_commit(lambda: send_template_email(
-            subject="Your room is now live on Rooms4You",
-            to_email=request.user.email,
-            template="emails/room_live.html",
-            context={"room": room}
-        ))
+        # EMAIL AFTER COMMIT. Outside an atomic block on_commit runs right
+        # away, so an email outage raised straight out of this view: the
+        # room was saved, but the landlord got an error page, tried again
+        # and was told they'd "already posted this listing".
+        def send_room_live_email():
+            try:
+                send_template_email(
+                    subject="Your room is now live on Rooms4You",
+                    to_email=request.user.email,
+                    template="emails/room_live.html",
+                    context={"room": room}
+                )
+            except Exception:  # noqa: BLE001 - the listing is already live
+                logger.exception("Failed to send room-live email for room %s", room.id)
+
+        transaction.on_commit(send_room_live_email)
 
         transaction.on_commit(lambda: auto_flag_if_scammy(
             text=f"{room.title}\n\n{room.description}",

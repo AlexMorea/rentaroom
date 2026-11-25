@@ -13,14 +13,15 @@ from ..models import Room, RoomImage
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
+# .jfif is plain JPEG - it's what Windows/Chrome save many web photos as.
+ALLOWED_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".jfif", ".png", ".webp")
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 
 def is_valid_room_image(img) -> bool:
-    """A real JPG/PNG/WebP photo under 10 MB. Shared by the photo page and
-    the Add Room form, so a bad file is skipped rather than breaking the
-    upload after the room has been saved."""
+    """A real JPG/PNG/WebP photo under 10 MB. Shared by every photo upload
+    (the Add Room form, the photo page and Manage Images), so a bad file
+    is skipped rather than breaking the upload after the room is saved."""
     if not (img.name or "").lower().endswith(ALLOWED_IMAGE_EXTENSIONS):
         return False
     if img.size > MAX_IMAGE_BYTES:
@@ -30,6 +31,9 @@ def is_valid_room_image(img) -> bool:
     except (UnidentifiedImageError, OSError) as exc:
         logger.warning("Invalid image upload %s: %s", img.name, exc)
         return False
+    except Exception as exc:  # noqa: BLE001 - Pillow also raises SyntaxError, DecompressionBombError, ...
+        logger.warning("Unreadable image upload %s: %r", img.name, exc)
+        return False
     finally:
         img.seek(0)
     return True
@@ -38,8 +42,30 @@ def is_valid_room_image(img) -> bool:
 def skipped_images_message(skipped: int) -> str:
     return (
         f"{skipped} file{'s' if skipped != 1 else ''} couldn't be added. "
-        "Please use JPG or PNG photos smaller than 10 MB."
+        "Please use JPG, PNG or WebP photos smaller than 10 MB."
     )
+
+
+def store_room_images(room, uploads) -> tuple[int, int]:
+    """
+    Saves each valid photo on its own, returning (added, skipped). One bad
+    file or one storage hiccup skips that photo only - previously a single
+    failed upload on the photo pages raised, showed the landlord an error
+    page and threw away every other photo in the batch.
+    """
+    added = skipped = 0
+    for img in uploads:
+        if not is_valid_room_image(img):
+            skipped += 1
+            continue
+        try:
+            RoomImage.objects.create(room=room, image=img)
+        except Exception:  # noqa: BLE001 - e.g. Cloudinary timeout or the 10-photo limit
+            logger.exception("Could not store photo %s for room %s", img.name, room.id)
+            skipped += 1
+            continue
+        added += 1
+    return added, skipped
 
 
 
@@ -81,16 +107,7 @@ def upload_room_images(request, room_id):
 
         uploads = uploads[:remaining]
 
-        uploaded_count = 0
-        skipped = 0
-
-        with transaction.atomic():
-            for img in uploads:
-                if not is_valid_room_image(img):
-                    skipped += 1
-                    continue
-                RoomImage.objects.create(room=room, image=img)
-                uploaded_count += 1
+        uploaded_count, skipped = store_room_images(room, uploads)
 
         if skipped:
             messages.warning(request, skipped_images_message(skipped))
@@ -172,13 +189,15 @@ def edit_room_images(request, pk):
                 )
             else:
                 to_add = uploads[:remaining_slots]
-                for img in to_add:
-                    RoomImage.objects.create(room=room, image=img)
+                added, skipped = store_room_images(room, to_add)
 
-                messages.success(
-                    request,
-                    f"Uploaded {len(to_add)} image(s). ({RoomImage.objects.filter(room=room).count()}/{MAX_IMAGES_PER_ROOM})",
-                )
+                if added:
+                    messages.success(
+                        request,
+                        f"Uploaded {added} image(s). ({RoomImage.objects.filter(room=room).count()}/{MAX_IMAGES_PER_ROOM})",
+                    )
+                if skipped:
+                    messages.warning(request, skipped_images_message(skipped))
 
                 if len(uploads) > remaining_slots:
                     messages.warning(

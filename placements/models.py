@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from typing import ClassVar
 
@@ -12,6 +13,8 @@ from accounts.push import notify_user
 from listings.models import Room
 from utils.email import send_template_email
 from utils.whatsapp import send_whatsapp_template
+
+logger = logging.getLogger(__name__)
 
 
 class Placement(models.Model):
@@ -517,17 +520,23 @@ class Waitlist(models.Model):
             entry.notified_at = timezone.now()
             entry.save(update_fields=["status", "notified_at"])
 
+            # Runs inside the landlord's own save (a post_save signal on
+            # Room), so a failed email used to surface as their error page -
+            # and inside edit_room's transaction it rolled their edit back.
             if entry.tenant.email:
-                send_template_email(
-                    subject=f'"{room.title}" is available again',
-                    to_email=entry.tenant.email,
-                    template="emails/waitlist_room_available.html",
-                    context={
-                        "tenant": entry.tenant,
-                        "room": room,
-                        "year": timezone.now().year,
-                    },
-                )
+                try:
+                    send_template_email(
+                        subject=f'"{room.title}" is available again',
+                        to_email=entry.tenant.email,
+                        template="emails/waitlist_room_available.html",
+                        context={
+                            "tenant": entry.tenant,
+                            "room": room,
+                            "year": timezone.now().year,
+                        },
+                    )
+                except Exception:  # noqa: BLE001 - push/WhatsApp below still go out
+                    logger.exception("Failed to email waitlist entry %s for room %s", entry.pk, room.pk)
 
             if hasattr(entry.tenant, "profile"):
                 send_whatsapp_template(

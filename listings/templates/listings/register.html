@@ -46,8 +46,9 @@
         <h2 class="pr-form-title">Create your account</h2>
         <p class="pr-form-sub">Takes less than a minute.</p>
 
-        <form method="post" class="pr-form">
-          {% csrf_token %} {{ form.non_field_errors }}
+        <form method="post" class="pr-form" id="registerForm">
+          {% csrf_token %}
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
           {% if form.errors %}
           <div class="pr-error-summary" role="alert" id="prErrorSummary" tabindex="-1">
             <strong>Please check the following and try again:</strong>
@@ -88,6 +89,7 @@
 
             <div class="pr-role-select-wrap">{{ form.role }}</div>
             {% if form.role.errors %}<div class="pr-field-error" role="alert">{{ form.role.errors.0 }}</div>{% endif %}
+            <div class="pr-field-error" role="alert" id="roleClientError" hidden>Please choose whether you're a tenant or a landlord.</div>
           </div>
 
           <!-- BASIC INFO -->
@@ -262,6 +264,7 @@
 
         <form method="post" action="{% url 'google_auth' %}" id="googleAuthForm" class="pr-google-form">
           {% csrf_token %}
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
           <input type="hidden" name="credential" id="googleCredential" />
         </form>
 
@@ -270,7 +273,7 @@
 
         <p class="pr-login-hint">
           Already have an account?
-          <a class="pr-inline-link" href="{% url 'login' %}">Log in</a>
+          <a class="pr-inline-link" href="{% url 'login' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">Log in</a>
         </p>
       </div>
     </div>
@@ -796,17 +799,38 @@
     });
   });
 
-  roleSel?.addEventListener("change", toggle);
+  roleSel?.addEventListener("change", () => {
+    toggle();
+    const roleError = document.getElementById("roleClientError");
+    if (roleError && roleSel.value) roleError.hidden = true;
+  });
   toggle();
-</script>
 
-{% if GOOGLE_OAUTH_CLIENT_ID %}
-<script>
+  // The role <select> is hidden behind the cards, so the browser can't
+  // point at it - without this, "Create account" with no card picked
+  // silently did nothing. Ask for the role right next to the cards.
+  document.getElementById("registerForm")?.addEventListener("submit", (e) => {
+    if (!roleSel || roleSel.value) return;
+    e.preventDefault();
+    const roleError = document.getElementById("roleClientError");
+    if (roleError) roleError.hidden = false;
+    const firstCard = roleCards[0];
+    if (firstCard) {
+      firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstCard.focus({ preventScroll: true });
+    }
+  });
+
+  // After a failed submit, bring the list of problems into view - on a
+  // phone it can sit below the fold. (This used to live inside the
+  // Google-only block, so it never ran when Google sign-in was off.)
   document.addEventListener("DOMContentLoaded", function () {
     var summary = document.getElementById("prErrorSummary");
     if (summary) { summary.scrollIntoView({ block: "center" }); summary.focus({ preventScroll: true }); }
   });
 </script>
+
+{% if GOOGLE_OAUTH_CLIENT_ID %}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
   function handleGoogleCredential(response) {
@@ -904,7 +928,7 @@
       }
       if (pw1.value === pw2.value) {
         matchHint.textContent = "✓ Passwords match";
-        matchHint.className = "pr-hint pr-match-hint pr-match-bad";
+        matchHint.className = "pr-hint pr-match-hint pr-match-ok";
       } else {
         matchHint.textContent = "Passwords do not match yet";
         matchHint.className = "pr-hint pr-match-hint pr-match-bad";

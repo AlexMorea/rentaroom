@@ -1,8 +1,9 @@
 import re
+import unicodedata
 from typing import ClassVar
 
 from django import forms
-from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -11,7 +12,14 @@ from django.utils import timezone
 from accounts.models import Membership
 
 from .models import Profile, Room, RoomImage
-from .utils import is_disposable_email, normalize_sa_phone
+from .utils import (
+    PHONE_INVALID_MESSAGE,
+    SA_PHONE_INVALID_MESSAGE,
+    is_disposable_email,
+    normalize_sa_phone,
+    parse_phone,
+    unique_username_for,
+)
 
 
 # No role is preselected on signup. The select used to default to
@@ -19,6 +27,35 @@ from .utils import is_disposable_email, normalize_sa_phone
 # landlord who didn't tap "Landlord" was silently registered as a tenant.
 ROLE_FORM_CHOICES = [("", "Choose one"), *Profile.ROLE_CHOICES]
 ROLE_REQUIRED_MESSAGE = "Please choose whether you're a tenant or a landlord."
+
+
+class RoleCardSelect(forms.Select):
+    """
+    The role <select> on signup sits hidden behind the Tenant/Landlord
+    cards. Rendered with `required`, a browser refuses to submit while
+    it's empty but can't point at a hidden field, so tapping "Create
+    account" without picking a card did nothing at all - no message, no
+    request. The page's script asks for a role instead, and the form
+    still rejects a missing one on the server.
+    """
+
+    def use_required_attribute(self, initial):
+        return False
+
+
+def _clean_phone_fields(form, cleaned, names, country_code: str | None = "+27"):
+    """Validates and normalizes each named phone field that has a value
+    (blank ones are left to the field's own required/optional rule)."""
+    message = SA_PHONE_INVALID_MESSAGE if (country_code or "+27") == "+27" else PHONE_INVALID_MESSAGE
+    for name in names:
+        raw = (cleaned.get(name) or "").strip()
+        if not raw:
+            continue
+        number = parse_phone(raw, country_code)
+        if number is None:
+            form.add_error(name, message)
+        else:
+            cleaned[name] = number
 
 
 class ContactMessageForm(forms.Form):
@@ -66,7 +103,7 @@ class UserRegisterForm(forms.Form):
     role = forms.ChoiceField(
         choices=ROLE_FORM_CHOICES,
         error_messages={"required": ROLE_REQUIRED_MESSAGE},
-        widget=forms.Select(attrs={"class": "input"}),
+        widget=RoleCardSelect(attrs={"class": "input"}),
     )
 
     persona = forms.ChoiceField(
@@ -176,11 +213,20 @@ class UserRegisterForm(forms.Form):
             self.add_error("password2", "Passwords do not match.")
 
         if p1:
-            validate_password(p1)
+            # Attached to the password field (not raised), so the rest of
+            # this method still runs and every problem shows at once.
+            try:
+                validate_password(p1)
+            except ValidationError as exc:
+                self.add_error("password1", exc)
 
-        if not cleaned.get("phone_number"):
+        if not cleaned.get("phone_number") and "phone_number" not in self.errors:
             self.add_error("phone_number", "Phone number is required.")
 
+        phone_fields = ["phone_number", "whatsapp_number"]
+        if role == "landlord":
+            phone_fields.append("alt_no")
+        _clean_phone_fields(self, cleaned, phone_fields, cleaned.get("country_code"))
 
         # ================= LANDLORD ADDRESS =================
         # Used for landlord verification only, never shown publicly. Many
@@ -216,7 +262,7 @@ class UserRegisterForm(forms.Form):
         last_name = (self.cleaned_data["last_name"] or "").strip()
 
         user = User.objects.create(
-            username=email,
+            username=unique_username_for(email),
             email=email,
             first_name=first_name,
             last_name=last_name,
@@ -272,7 +318,7 @@ class GoogleCompleteProfileForm(forms.Form):
     role = forms.ChoiceField(
         choices=ROLE_FORM_CHOICES,
         error_messages={"required": ROLE_REQUIRED_MESSAGE},
-        widget=forms.Select(attrs={"class": "input"}),
+        widget=RoleCardSelect(attrs={"class": "input"}),
     )
 
     persona = forms.ChoiceField(
@@ -315,8 +361,11 @@ class GoogleCompleteProfileForm(forms.Form):
         cleaned = super().clean()
         role = cleaned.get("role")
 
-        if not cleaned.get("phone_number"):
+        if not cleaned.get("phone_number") and "phone_number" not in self.errors:
             self.add_error("phone_number", "Phone number is required.")
+
+        phone_fields = ["phone_number", "alt_no"] if role == "landlord" else ["phone_number"]
+        _clean_phone_fields(self, cleaned, phone_fields, cleaned.get("country_code"))
 
         if role == "tenant" and not cleaned.get("persona"):
             self.add_error("persona", "Select your persona.")
@@ -669,19 +718,10 @@ class RoomForm(forms.ModelForm):
 
         cleaned["location"] = location
 
-        # PHONE NORMALIZER
-        phone = normalize_sa_phone(cleaned.get("contact_phone"))
-        if phone:
-            cleaned["contact_phone"] = phone
-        else:
-            cleaned["contact_phone"] = ""
-
-        if cleaned.get("contact_whatsapp"):
-            whatsapp = normalize_sa_phone(cleaned.get("contact_whatsapp"))
-            if whatsapp:
-                cleaned["contact_whatsapp"] = whatsapp
-            else:
-                cleaned["contact_whatsapp"] = ""
+        # PHONE NORMALIZER - a mistyped number goes back to the landlord to
+        # fix rather than being published: tenants can't call or WhatsApp
+        # a number with a digit missing.
+        _clean_phone_fields(self, cleaned, ["contact_phone", "contact_whatsapp"])
 
         # Landlords must give a number tenants can call (WhatsApp falls back to it)
         try:
@@ -690,7 +730,7 @@ class RoomForm(forms.ModelForm):
             role = None
 
         if role == "landlord":
-            if not cleaned.get("contact_phone"):
+            if not cleaned.get("contact_phone") and "contact_phone" not in self.errors:
                 self.add_error(
                     "contact_phone",
                     "Landlords must provide a contact phone number."
@@ -766,6 +806,30 @@ class ListingForm(forms.ModelForm):
         exclude = ("owner", "created_at")
 
 
+class AccountPasswordResetForm(PasswordResetForm):
+    """
+    Django's reset form silently skips accounts without a usable password.
+    Here those are Google sign-ups: someone who later tried email + password
+    and then "Forgot password?" got the "check your inbox" page and no
+    email, with no way in except Google. Owning the inbox is what a reset
+    proves, so it's allowed for them too - it just gives them a password.
+    """
+
+    def get_users(self, email):
+        # Same as Django's own get_users() minus the has_usable_password()
+        # filter - including its Unicode-safe comparison, which stops a
+        # look-alike address matching someone else's account.
+        def folded(value):
+            return unicodedata.normalize("NFKC", value or "").casefold()
+
+        target = folded(email)
+        return (
+            user
+            for user in User._default_manager.filter(email__iexact=email, is_active=True)
+            if folded(user.email) == target
+        )
+
+
 class ResetPasswordForm(SetPasswordForm):
     """Forgot-password reset: once the new password is saved, every
     remembered device has to confirm by email again."""
@@ -804,6 +868,15 @@ class BecomeLandlordForm(forms.Form):
         if len(home_address) < 10:
             raise ValidationError("Please add a bit more detail to your address, such as the street and the area.")
         return home_address
+
+    def clean_alt_no(self):
+        alt = (self.cleaned_data.get("alt_no") or "").strip()
+        if not alt:
+            return ""
+        number = parse_phone(alt)
+        if number is None:
+            raise ValidationError(SA_PHONE_INVALID_MESSAGE)
+        return number
 
     def apply_to(self, user):
         profile, _ = Profile.objects.get_or_create(user=user)
