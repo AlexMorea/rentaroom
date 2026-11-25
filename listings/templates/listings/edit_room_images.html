@@ -108,8 +108,8 @@
        independently of the upload/delete form above without needing
        JavaScript to intercept anything. -->
   {% for img in room.images.all|slice:":10" %}
-  <form method="post" action="{% url 'reorder_room_image' img.id 'up' %}" id="imReorderForm{{ img.id }}up" class="im-hidden-form"></form>
-  <form method="post" action="{% url 'reorder_room_image' img.id 'down' %}" id="imReorderForm{{ img.id }}down" class="im-hidden-form"></form>
+  <form method="post" action="{% url 'reorder_room_image' img.id 'up' %}" id="imReorderForm{{ img.id }}up" class="im-hidden-form">{% csrf_token %}</form>
+  <form method="post" action="{% url 'reorder_room_image' img.id 'down' %}" id="imReorderForm{{ img.id }}down" class="im-hidden-form">{% csrf_token %}</form>
   {% endfor %}
 
 </div>

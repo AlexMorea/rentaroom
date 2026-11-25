@@ -103,7 +103,7 @@
 
         <p class="pr-login-hint">
           Don't have an account?
-          <a class="pr-inline-link" href="{% url 'register' %}">Sign up</a>
+          <a class="pr-inline-link" href="{% url 'register' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">Sign up</a>
         </p>
 
       </div>

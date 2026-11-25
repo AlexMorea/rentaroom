@@ -13,7 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("form").forEach((form) => {
     if (form.hasAttribute("data-no-loading-state")) return;
 
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (event) => {
+      // A page script cancelled this submit (sending a chat message by
+      // fetch, asking for a missing role on signup...) - nothing is being
+      // sent, so locking the button would leave it stuck on "Please
+      // wait…". Page scripts register before this one (it waits for
+      // DOMContentLoaded), so their decision is already made here.
+      if (event.defaultPrevented) return;
+
       // The native "submit" event only fires after built-in HTML5
       // validation passes, so it's safe to lock the button here.
       const submitBtn = form.querySelector(

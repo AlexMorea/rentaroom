@@ -1,6 +1,5 @@
 import logging
 import re
-from smtplib import SMTPException
 from urllib.parse import quote
 
 from django.conf import settings
@@ -19,6 +18,7 @@ from accounts.push import notify_user
 from trust.models import FraudReport
 
 from ..models import Contact, Message, Review, Room, RoomStat
+from ..utils import normalize_sa_phone
 
 try:
     from twilio.base.exceptions import TwilioException
@@ -158,23 +158,26 @@ def track_contact(request, room_id, method):
         messages.error(request, "You can't contact yourself about your own listing.")
         return redirect("room_detail", pk=room.id)
 
+    # Only the bookkeeping is de-duplicated. This used to bounce a second
+    # tap within 5 minutes straight back to the listing, so a tenant who
+    # closed WhatsApp or the dialer and tapped again got nowhere.
     cache_key = f"contact:{request.user.id}:{room.id}:{method}"
+    first_tap = not cache.get(cache_key)
 
-    if cache.get(cache_key):
-        return redirect("room_detail", pk=room.id)
+    if first_tap:
+        cache.set(cache_key, True, 300)
 
-    cache.set(cache_key, True, 300)
-
-    RoomStat.objects.get_or_create(
-        room=room,
-        user=request.user,
-        stat_type=f"contact_{method}",
-    )
-    Contact.objects.get_or_create(room=room, user=request.user)
+        RoomStat.objects.get_or_create(
+            room=room,
+            user=request.user,
+            stat_type=f"contact_{method}",
+        )
+        Contact.objects.get_or_create(room=room, user=request.user)
 
     phone_raw = (room.contact_phone or "").strip()
     whatsapp_raw = (room.contact_whatsapp or "").strip() or phone_raw
-    phone_digits = re.sub(r"\D", "", whatsapp_raw)
+    # wa.me needs the international form - older listings may hold "082...".
+    phone_digits = re.sub(r"\D", "", normalize_sa_phone(whatsapp_raw))
     landlord_email = (room.contact_email or room.owner.email or "").strip()
 
     if method == "phone":
@@ -218,25 +221,26 @@ def track_contact(request, room_id, method):
         body = quote(f"Hi, I'm interested in your room listing ({room.title}) in {room.location}.")
         mailto = f"mailto:{landlord_email}?subject={subject}&body={body}"
 
-        try:
-            send_template_email(
-                subject=f'Someone is interested in "{room.title}"',
-                to_email=room.owner.email,
-                template="emails/new_inquiry.html",
-                context={
-                    "room": room,
-                    "user": request.user
-                }
-            )
-        except (SMTPException, OSError):
-            logger.warning("Failed to send new-inquiry notification email for room %s", room.id)
+        if first_tap:
+            try:
+                send_template_email(
+                    subject=f'Someone is interested in "{room.title}"',
+                    to_email=room.owner.email,
+                    template="emails/new_inquiry.html",
+                    context={
+                        "room": room,
+                        "user": request.user
+                    }
+                )
+            except Exception:  # noqa: BLE001 - the tenant still gets the landlord's email address
+                logger.warning("Failed to send new-inquiry notification email for room %s", room.id, exc_info=True)
 
-        notify_user(
-            room.owner,
-            title=f"New inquiry on {room.title}",
-            body=f"{request.user.first_name or request.user.username} is interested in your listing.",
-            url=reverse("room_detail", args=[room.id]),
-        )
+            notify_user(
+                room.owner,
+                title=f"New inquiry on {room.title}",
+                body=f"{request.user.first_name or request.user.username} is interested in your listing.",
+                url=reverse("room_detail", args=[room.id]),
+            )
 
         return render(
             request,
