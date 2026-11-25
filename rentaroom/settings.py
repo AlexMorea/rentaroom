@@ -364,6 +364,11 @@ else:
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "thabisomorea@gmail.com")
 DEFAULT_FROM_NAME = os.environ.get("DEFAULT_FROM_NAME", "Rooms4You")
 
+# The Rooms4You support WhatsApp (digits only, with country code) behind
+# the floating "Help" button and the other "WhatsApp us" links - see
+# listings/templatetags/support_tags.py.
+SUPPORT_WHATSAPP_NUMBER = os.environ.get("SUPPORT_WHATSAPP_NUMBER", "27717243852").strip()
+
 # Where new fraud reports get emailed for staff triage - see
 # trust/signals.py. Defaults to the address already shown across the
 # Trust Centre/Report Fraud pages.

@@ -1,3 +1,4 @@
+{% load support_tags %}
 {% comment %} Safety & Services: a side panel opened from the "Safety" tab on the
    left edge. Holds only the tools that keep people safe and help them
    move, plus a short personal note. Navigation lives in the header. {% endcomment %}
@@ -74,7 +75,7 @@
 
   <p class="sp-foot">
     Need help? <a href="{% url 'support' %}">Help &amp; support</a> ·
-    <a href="https://wa.me/27717243852" target="_blank" rel="noopener noreferrer">WhatsApp us</a>
+    <a href="{% support_whatsapp_url %}" target="_blank" rel="noopener noreferrer">WhatsApp us</a>
   </p>
 </aside>
 

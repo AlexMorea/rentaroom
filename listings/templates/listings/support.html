@@ -1,4 +1,5 @@
 {% extends "listings/base.html" %}
+{% load support_tags %}
 {% block content %}
 
 <h1 class="page-title">Support Centre</h1>
@@ -74,7 +75,7 @@
         📧 Email Support
       </a>
 
-      <a class="btn-primary whatsapp-btn" href="https://wa.me/27717243852" target="_blank">
+      <a class="btn-primary whatsapp-btn" href="{% support_whatsapp_url %}" target="_blank" rel="noopener noreferrer">
         <i class="fa-brands fa-whatsapp"></i> WhatsApp Support
       </a>
       

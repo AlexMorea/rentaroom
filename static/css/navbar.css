@@ -27,7 +27,7 @@
 /* While the phone menu is open: the floating WhatsApp button would sit
    on top of it, and the unread dot belongs on the closed menu icon, not
    the close button. */
-body.nav-open .support-fab,
+body.nav-open .support-fab-wrap,
 .burger.active .burger-dot {
   display: none !important;
 }
