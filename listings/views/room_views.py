@@ -710,8 +710,11 @@ def room_detail(request, pk):
 
 
 @login_required
-@user_passes_test(is_landlord)
 def create_room(request):
+    # A tenant account used to be bounced to the login page here, which
+    # looked like a broken signup. Offer the switch to landlord instead.
+    if not is_landlord(request.user):
+        return redirect("become_landlord")
 
     # ALWAYS ensure membership exists (SAFE)
     membership = get_or_create_membership(request.user)
