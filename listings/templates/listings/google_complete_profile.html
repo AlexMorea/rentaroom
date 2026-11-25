@@ -32,6 +32,7 @@
           </button>
         </div>
         <div class="pr-role-select-wrap">{{ form.role }}</div>
+        {% if form.role.errors %}<div class="pr-field-error" role="alert">{{ form.role.errors.0 }}</div>{% endif %}
       </div>
 
       <div class="pr-field">
@@ -192,13 +193,9 @@
 
   function toggle() {
     const role = roleSel?.value;
-    if (role === "landlord") {
-      landlord.style.display = "block";
-      tenant.style.display = "none";
-    } else {
-      landlord.style.display = "none";
-      tenant.style.display = "block";
-    }
+    // Nothing is preselected: show neither group until a role is picked.
+    landlord.style.display = role === "landlord" ? "block" : "none";
+    tenant.style.display = role === "tenant" ? "block" : "none";
     roleCards.forEach((card) => {
       card.classList.toggle("pr-role-active", card.dataset.role === role);
     });

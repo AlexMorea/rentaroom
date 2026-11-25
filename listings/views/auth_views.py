@@ -25,7 +25,7 @@ from accounts.devices import is_known_device, remember_device
 from utils.email import send_template_email
 from accounts.state_engine import get_user_state
 
-from ..forms import GoogleCompleteProfileForm, UserRegisterForm
+from ..forms import BecomeLandlordForm, GoogleCompleteProfileForm, UserRegisterForm
 from ..models import PhoneOTP, Profile
 from ..utils import (
     generate_otp,
@@ -95,7 +95,10 @@ def _client_ip(request):
 # flood of unverified accounts is its own cost: DB rows, email volume,
 # noise in every admin list). Counts every POST attempt, not just
 # successful ones, so a script probing for valid form data still trips it.
-SIGNUP_MAX_ATTEMPTS = 8
+# 20 rather than 8: mobile networks put many people behind one shared IP
+# (carrier-grade NAT), and a landlord fixing a couple of form errors used
+# to share that budget with everyone else on their network.
+SIGNUP_MAX_ATTEMPTS = 20
 SIGNUP_WINDOW_SECONDS = 3600
 
 # Login attempt limits. Two separate counters, not one:
@@ -131,7 +134,10 @@ def register(request):
 
         cache.set(signup_key, attempts + 1, timeout=SIGNUP_WINDOW_SECONDS)
 
-    form = UserRegisterForm(request.POST or None)
+    # ?role=landlord (or tenant) preselects the role - for links sent to
+    # landlords - and is remembered for a Google sign-in from this page.
+    role_hint = _role_hint(request)
+    form = UserRegisterForm(request.POST or None, initial={"role": role_hint} if role_hint else None)
 
     if request.method == "POST" and form.is_valid():
 
@@ -1021,7 +1027,36 @@ def google_complete_profile(request):
             remember_device(response, request, user)
             return response
     else:
-        form = GoogleCompleteProfileForm()
+        role_hint = request.session.get("signup_role_hint")
+        form = GoogleCompleteProfileForm(initial={"role": role_hint} if role_hint else None)
 
     return render(request, "listings/google_complete_profile.html", {"form": form})
+
+
+def _role_hint(request):
+    """Reads ?role= on the signup page and keeps it in the session, so the
+    Google path (which leaves the page) can preselect the same role."""
+    role = (request.GET.get("role") or "").strip().lower()
+    if role in {"tenant", "landlord"}:
+        request.session["signup_role_hint"] = role
+        return role
+    return None
+
+
+@login_required
+def become_landlord(request):
+    """A tenant account that wants to list a room. Landlords who skipped
+    the role step at signup ended up here with no way to switch; this
+    collects the same verification details landlord signup asks for."""
+    profile = getattr(request.user, "profile", None)
+    if profile is not None and profile.role == "landlord":
+        return redirect("create_room")
+
+    form = BecomeLandlordForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.apply_to(request.user)
+        messages.success(request, "Your account is now a landlord account. Let's list your first room.")
+        return redirect("create_room")
+
+    return render(request, "listings/become_landlord.html", {"form": form})
 

@@ -14,6 +14,13 @@ from .models import Profile, Room, RoomImage
 from .utils import is_disposable_email, normalize_sa_phone
 
 
+# No role is preselected on signup. The select used to default to
+# "tenant" (the first choice) and sits hidden behind the role cards, so a
+# landlord who didn't tap "Landlord" was silently registered as a tenant.
+ROLE_FORM_CHOICES = [("", "Choose one"), *Profile.ROLE_CHOICES]
+ROLE_REQUIRED_MESSAGE = "Please choose whether you're a tenant or a landlord."
+
+
 class ContactMessageForm(forms.Form):
     REASON_CHOICES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("general", "General enquiry"),
@@ -57,7 +64,8 @@ class UserRegisterForm(forms.Form):
     )
 
     role = forms.ChoiceField(
-        choices=Profile.ROLE_CHOICES,
+        choices=ROLE_FORM_CHOICES,
+        error_messages={"required": ROLE_REQUIRED_MESSAGE},
         widget=forms.Select(attrs={"class": "input"}),
     )
 
@@ -262,7 +270,8 @@ class GoogleCompleteProfileForm(forms.Form):
     """
 
     role = forms.ChoiceField(
-        choices=Profile.ROLE_CHOICES,
+        choices=ROLE_FORM_CHOICES,
+        error_messages={"required": ROLE_REQUIRED_MESSAGE},
         widget=forms.Select(attrs={"class": "input"}),
     )
 
@@ -768,3 +777,44 @@ class ResetPasswordForm(SetPasswordForm):
         if commit:
             forget_devices(user)
         return user
+
+
+class BecomeLandlordForm(forms.Form):
+    """Switches an existing tenant account to a landlord one, collecting
+    the same verification details landlord signup asks for."""
+
+    home_address = forms.CharField(
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Full home address", "autocomplete": "street-address"}),
+    )
+    postal_code = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class": "input", "placeholder": "Postal code", "inputmode": "numeric", "autocomplete": "postal-code",
+        }),
+    )
+    alt_no = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "Alternative number (optional)", "inputmode": "tel"}),
+    )
+    terms_accepted = forms.BooleanField(
+        error_messages={"required": "You must accept the Terms of Service and Privacy Policy to continue."},
+    )
+
+    def clean_home_address(self):
+        home_address = (self.cleaned_data.get("home_address") or "").strip()
+        if len(home_address) < 10:
+            raise ValidationError("Please add a bit more detail to your address, such as the street and the area.")
+        return home_address
+
+    def apply_to(self, user):
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.role = "landlord"
+        profile.home_address = self.cleaned_data["home_address"]
+        profile.postal_code = self.cleaned_data["postal_code"].strip()
+        alt = (self.cleaned_data.get("alt_no") or "").strip()
+        profile.alt_no = normalize_sa_phone(alt) if alt else ""
+        profile.terms_accepted = True
+        profile.terms_accepted_at = timezone.now()
+        profile.privacy_accepted_at = timezone.now()
+        profile.save()
+
+        Membership.objects.get_or_create(user=user)
