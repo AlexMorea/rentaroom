@@ -273,6 +273,17 @@ STORAGES = {
 
 
 # ================= AUTH =================
+# Applies wherever a password is set: signup, forgot-password reset,
+# change password and the admin. Existing passwords keep working - this
+# only checks new ones. (Nothing was configured before, so any password,
+# even one character, was accepted.)
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+]
+
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/rooms/"
@@ -438,6 +449,13 @@ LISTING_AUTO_HIDE_DAYS = int(os.environ.get("LISTING_AUTO_HIDE_DAYS", "30"))
 # ...and only after the landlord has ignored a "please confirm" nudge for
 # at least this many days, so nobody is ever hidden without warning.
 LISTING_HIDE_GRACE_DAYS = int(os.environ.get("LISTING_HIDE_GRACE_DAYS", "7"))
+
+# Hiding unconfirmed listings is OFF by default. With only a handful of
+# landlords, it took real rooms off Browse whenever a landlord missed one
+# email. Unconfirmed rooms stay listed, but show tenants "Not confirmed
+# in N days", rank lower (compute_scores) and keep getting nudges. Set
+# LISTING_AUTO_HIDE_ENABLED=1 to bring hiding back once supply is larger.
+LISTING_AUTO_HIDE_ENABLED = env_bool("LISTING_AUTO_HIDE_ENABLED", "False")
 
 # A landlord who signed up but still has zero rooms after this many days
 # gets the one-time "complete your listing" nudge - see

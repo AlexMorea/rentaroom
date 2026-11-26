@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.core import signing
 from django.core.management.base import BaseCommand
@@ -10,6 +12,8 @@ from listings.models import Room
 from utils.email import send_template_email
 
 SITE_URL = "https://www.rooms4you.co.za"
+
+logger = logging.getLogger(__name__)
 
 
 def _sign(room_id: int, action: str) -> str:
@@ -52,12 +56,18 @@ class Command(BaseCommand):
         # LISTING_AUTO_HIDE_DAYS *and* have ignored a nudge for at least
         # LISTING_HIDE_GRACE_DAYS. A room that has never been nudged gets
         # the nudge first, however old its last confirmation is.
+        # Hiding is opt-in (LISTING_AUTO_HIDE_ENABLED, off by default): an
+        # unconfirmed room stays on Browse, labelled and ranked lower, and
+        # its landlord keeps getting a nudge every LISTING_STALE_DAYS.
         grace_cutoff = now - timezone.timedelta(days=settings.LISTING_HIDE_GRACE_DAYS)
-        to_hide = candidates.filter(
-            last_confirmed_at__lte=auto_hide_cutoff,
-            last_nudge_sent_at__isnull=False,
-            last_nudge_sent_at__lte=grace_cutoff,
-        )
+        if settings.LISTING_AUTO_HIDE_ENABLED:
+            to_hide = candidates.filter(
+                last_confirmed_at__lte=auto_hide_cutoff,
+                last_nudge_sent_at__isnull=False,
+                last_nudge_sent_at__lte=grace_cutoff,
+            )
+        else:
+            to_hide = candidates.none()
         # Don't re-nudge every run: only once per LISTING_STALE_DAYS.
         to_nudge = candidates.exclude(pk__in=to_hide.values("pk")).filter(
             Q(last_nudge_sent_at__isnull=True) | Q(last_nudge_sent_at__lte=stale_cutoff)
@@ -73,9 +83,16 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Dry run only - use --force to apply."))
             return
 
+        # Each landlord's email is tried on its own: one failure used to
+        # stop the whole run, leaving other landlords un-nudged - or, when
+        # hiding, a room hidden without its landlord ever being told.
         nudged = 0
         for room in to_nudge:
-            self._send_nudge(room)
+            try:
+                self._send_nudge(room)
+            except Exception:  # noqa: BLE001 - retried on the next daily run
+                logger.exception("Could not send the confirm nudge for room %s", room.id)
+                continue
             room.last_nudge_sent_at = now
             room.save(update_fields=["last_nudge_sent_at"])
             nudged += 1
@@ -86,7 +103,10 @@ class Command(BaseCommand):
             # Keep available_units so reactivating restores the vacancy.
             room.is_available = False
             room.save(update_fields=["is_available"])
-            self._send_auto_hidden(room, days)
+            try:
+                self._send_auto_hidden(room, days)
+            except Exception:  # noqa: BLE001 - the room is paused either way
+                logger.exception("Could not tell the landlord room %s was paused", room.id)
             hidden += 1
 
         self.stdout.write(self.style.SUCCESS(f"Nudged {nudged} listing(s), auto-hid {hidden} listing(s)."))
@@ -96,6 +116,7 @@ class Command(BaseCommand):
             "room": room,
             "days": room.days_since_confirmed,
             "auto_hide_days": settings.LISTING_AUTO_HIDE_DAYS,
+            "auto_hide_enabled": settings.LISTING_AUTO_HIDE_ENABLED,
             "confirm_url": _link(room.id, "confirm"),
             "vacate_url": _link(room.id, "vacate"),
             "year": timezone.now().year,

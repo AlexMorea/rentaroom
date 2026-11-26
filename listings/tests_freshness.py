@@ -262,7 +262,7 @@ class FlagStaleListingsCommandTests(TestCase):
 
         mail.assert_not_called()
 
-    @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30)
+    @override_settings(LISTING_STALE_DAYS=14, LISTING_AUTO_HIDE_DAYS=30, LISTING_AUTO_HIDE_ENABLED=True)
     def test_force_auto_hides_past_hide_threshold(self):
         room = make_room(self.owner, total_units=2, available_units=2)
         age_room(room, 40)
