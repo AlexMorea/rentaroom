@@ -139,7 +139,7 @@ Dashboard | Rooms4You
       <p>
         Thank you for joining Rooms4You early. Listing is free forever, with no success fee.
         {% if membership.on_pro_trial %}You have <strong>Pro free until {{ membership.trial_end|date:"j F Y" }}</strong>,
-        then {% else %}You keep {% endif %}<strong>{{ membership.founding_discount_percent }}% off Pro for life</strong>
+        then {% else %}You get {% endif %}<strong>{{ membership.founding_discount_percent }}% off Pro until {{ membership.founding_discount_ends_at|date:"j F Y" }}</strong>
         while you stay subscribed.
       </p>
     </div>
@@ -153,7 +153,7 @@ Dashboard | Rooms4You
       <h3>Fill your rooms faster with Pro 🚀</h3>
       <p>
         You're on <strong>Free</strong>: unlimited listings, always. Pro adds free monthly
-        boosts and a ranking lift, from R99/month.
+        boosts and a ranking lift, from R{{ pro_from }}/month.
       </p>
     </div>
 

@@ -24,7 +24,9 @@ unit) and is shown on the Plans page before you pay.
 A boost does not guarantee enquiries or tenants. Only listings with a
 vacancy that have been recently confirmed as accurate can be boosted.
 2.3 Paid services never affect verification. The Verified badge is awarded
-only after Rooms4You's own checks and cannot be bought.
+only after Rooms4You's own checks and cannot be bought. Only verified
+landlords can buy Pro or Boosts, and a landlord whose verification is
+withdrawn stops being Featured straight away.
 
 ## 3. Payment and renewal
 3.1 Payments are processed by PayFast. Rooms4You does not store card details.
@@ -40,9 +42,11 @@ price of an active subscription.
 4.1 Landlords who registered on or before 31 January 2027 receive Pro free
 until 30 April 2027.
 4.2 After that, Founding Landlords may subscribe to Pro at 50% off the
-standard price for as long as the subscription stays active. If a paid
-subscription ends and is not renewed within 30 days, the founding discount
-ends.
+standard price for their first 12 months, until 30 April 2028, while the
+subscription stays active. If a paid subscription ends and is not renewed
+within 30 days, the founding discount ends early.
+4.3 From 1 May 2028 the standard price applies. We will give at least 30
+days' notice by email before a Founding Landlord's price changes (3.4).
 
 ## 5. Refunds
 5.1 [Lawyer to confirm, incl. ECTA cooling-off] Boosts start immediately

@@ -64,7 +64,8 @@ class Membership(models.Model):
     payfast_token = models.CharField(max_length=64, blank=True)
     auto_renew = models.BooleanField(default=False)
 
-    # Founding price lock: % off Pro for life, while subscribed.
+    # Founding discount: % off Pro for the first 12 months after the free
+    # founding period, while subscribed (see founding_lock_active).
     founding_discount_percent = models.PositiveSmallIntegerField(default=0)
 
     payment_reference = models.CharField(max_length=50, unique=True, null=True, blank=True)
@@ -137,13 +138,25 @@ class Membership(models.Model):
         return max(ends) if ends else None
 
     @property
+    def founding_discount_ends_at(self):
+        """When the founding discount window closes (None if this
+        membership has no founding discount)."""
+        if not self.founding_discount_percent:
+            return None
+        return founding.discount_until()
+
+    @property
     def founding_lock_active(self) -> bool:
-        """The founding discount holds until a paid Pro period has lapsed
-        for longer than the grace period. Before they ever pay (still on
-        the free founding trial), it always holds."""
+        """The founding discount holds for the first
+        FOUNDING_DISCOUNT_MONTHS after the free founding period, and ends
+        early if a paid Pro period lapses for longer than the grace
+        period. Before they ever pay (still on the free founding trial),
+        it holds."""
         from billing.pricing import FOUNDING_LOCK_GRACE_DAYS
 
         if not self.founding_discount_percent:
+            return False
+        if timezone.now() > founding.discount_until():
             return False
         if self.paid_until is None or self.has_pro:
             return True

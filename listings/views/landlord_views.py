@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 
+from billing import pricing
 from placements.models import Placement, Waitlist
 
 from ..models import Contact, Message, Review, Room, RoomImage, RoomStat
@@ -314,6 +315,7 @@ def dashboard(request):
             "contact_count": contact_count,
             "show_profile_warning": show_profile_warning,
             "membership": membership,
+            "pro_from": pricing.PRO_BANDS[0].monthly_price,
             "attention": attention,
             "week_views": week_views,
             "week_contacts": week_contacts,

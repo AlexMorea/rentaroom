@@ -97,10 +97,10 @@ call, and an amount check — see `billing/payfast.py` and
 | Plan | Who | What |
 |------|-----|------|
 | **Free** | Everyone, forever | Unlimited listings, verification, enquiries, placement tracking, analytics |
-| **Pro**  | Paid, or founding trial | 2 free 7-day boosts a month, a 10% ranking lift on real engagement (`compute_scores`), and new tools as they launch |
+| **Pro**  | Paid, or founding trial | 1 free 7-day boost a month, a 10% ranking lift on real engagement (`compute_scores`), and new tools as they launch |
 
-Pro pricing by rooms (sum of `Room.total_units`): **R99/month** up to 5,
-**R199** for 6–15, **R349** for 16+. Annual = 10× monthly (2 months free).
+Pro pricing by rooms (sum of `Room.total_units`): **R49/month** up to 5,
+**R99** for 6–15, **R199** for 16+. Annual = 10× monthly (2 months free).
 
 Pro is held as a trial (`is_trial` + `trial_end`) or a paid period
 (`paid_until`, extended by each verified payment). When it runs out,
@@ -109,14 +109,20 @@ blocked or hidden for payment reasons. `status`/`is_active` are Trust &
 Safety controls only.
 
 **Founding Landlords** (signed up by `FOUNDING_LANDLORD_SIGNUP_DEADLINE`):
-Pro free until `FOUNDING_LANDLORD_FREE_UNTIL`, then **50% off for life**
-(`founding_discount_percent`), kept while subscribed and for a 30-day grace
-after a paid period lapses.
+Pro free until `FOUNDING_LANDLORD_FREE_UNTIL`, then **50% off for 12 months**
+(`founding_discount_percent`, window ends at `accounts.founding.discount_until()`,
+i.e. 30 April 2028), kept while subscribed and for a 30-day grace after a paid
+period lapses. Recurring PayFast subscriptions keep the amount of their first
+payment, so a discounted subscription must be re-priced (with 30 days' notice)
+when the window closes.
 
 ### Boosts (`billing.Boost`)
 
-**R29 for 7 days, R79 for 30 days.** Only rooms with a vacancy and a
-recently confirmed listing can be boosted. In the default "best match" sort,
+**R29 for 7 days, R79 for 30 days.** Only verified landlords
+(`Profile.is_verified_landlord`) can buy Pro or Boosts or use Pro's free
+Boost, and a landlord whose verification is withdrawn drops out of the
+Featured slots at once. Only rooms with a vacancy and a recently confirmed
+listing can be boosted. In the default "best match" sort,
 up to 3 boosted rooms are pinned to the top of the results, labelled
 "Featured", rotating hourly when more are boosted. Boosts never change
 `Room.score`. Switched off until tenant launch (`BOOSTS_ENABLED`).
@@ -506,6 +512,7 @@ emails users, hides listings or mutates a score does so until run with `--force`
 > |-----|-------------|---------|
 > | `compute_scores` | hourly | no |
 > | `compute_response_stats` | daily 06:30 | no |
+> | `purge_guardian_data` | daily 03:00 | no |
 > | `flag_stale_listings` | daily 06:00 | yes, landlords |
 > | `flag_landlords_without_listing` | daily 06:15 | yes, landlords |
 > | `check_move_ins` | daily 07:00 | yes, both sides |
@@ -538,6 +545,7 @@ then +10% for Pro landlords. Boosts never change the score; they pin up to
 | `flag_stalled_placements`     | placements | Nudge placements stuck mid-pipeline |
 | `flag_overdue_booking_fees`   | stays      | Report overdue guest-house booking fees |
 | `cleanup_users`               | core       | Maintenance: prune incomplete/abandoned signups |
+| `purge_guardian_data`         | services   | POPIA retention: delete Guardian location pings and clear position/emergency-contact details after 30 days; panic sessions, alerts and events after 12 months |
 
 ---
 

@@ -8,6 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts import founding
 from accounts.models import Membership
 from listings.models import Profile, Room
 
@@ -25,9 +26,9 @@ PAYFAST = override_settings(
 PROGRAMME_CLOSED = override_settings(FOUNDING_LANDLORD_SIGNUP_DEADLINE=date(2020, 1, 1))
 
 
-def make_landlord(username="landlord@example.com"):
+def make_landlord(username="landlord@example.com", verified=True):
     user = User.objects.create_user(username=username, email=username, password="password123")
-    Profile.objects.filter(user=user).update(role="landlord")
+    Profile.objects.filter(user=user).update(role="landlord", is_verified_landlord=verified)
     return user
 
 
@@ -57,11 +58,13 @@ class PricingTests(TestCase):
 
     def test_prices(self):
         small, medium, large = pricing.PRO_BANDS
-        self.assertEqual(pricing.pro_price(small, "monthly"), Decimal(99))
-        self.assertEqual(pricing.pro_price(medium, "annual"), Decimal(1990))
+        self.assertEqual(pricing.pro_price(small, "monthly"), Decimal(49))
+        self.assertEqual(pricing.pro_price(medium, "monthly"), Decimal(99))
+        self.assertEqual(pricing.pro_price(large, "monthly"), Decimal(199))
+        self.assertEqual(pricing.pro_price(medium, "annual"), Decimal(990))
         # Founding 50%: rounded down to whole rands, landlord's favour.
-        self.assertEqual(pricing.pro_price(small, "monthly", 50), Decimal(49))
-        self.assertEqual(pricing.pro_price(large, "monthly", 50), Decimal(174))
+        self.assertEqual(pricing.pro_price(small, "monthly", 50), Decimal(24))
+        self.assertEqual(pricing.pro_price(large, "monthly", 50), Decimal(99))
 
     def test_rooms_count_units_not_listings(self):
         landlord = make_landlord()
@@ -127,7 +130,7 @@ class ProCheckoutAndNotifyTests(TestCase):
     def test_checkout_creates_pending_payment_at_band_price(self):
         payment = self.checkout()
         self.assertEqual(payment.status, Payment.STATUS_PENDING)
-        self.assertEqual(payment.amount, Decimal(99))
+        self.assertEqual(payment.amount, Decimal(49))
         self.assertEqual(payment.pro_band, "small")
 
     def test_checkout_page_posts_signed_form_to_payfast_sandbox(self):
@@ -136,7 +139,7 @@ class ProCheckoutAndNotifyTests(TestCase):
         self.assertContains(resp, 'name="signature"')
         self.assertContains(resp, 'name="subscription_type" value="1"')
         self.assertContains(resp, 'name="frequency" value="6"')
-        self.assertEqual(Payment.objects.get().amount, Decimal(990))
+        self.assertEqual(Payment.objects.get().amount, Decimal(490))
 
     def test_verified_notification_activates_pro(self):
         payment = self.checkout()
@@ -286,7 +289,7 @@ class FoundingPricingTests(TestCase):
         self.membership.trial_end = timezone.now() - timedelta(days=1)
         self.membership.save()
         self.client.post(reverse("billing:pro_checkout"), {"cycle": "monthly"})
-        self.assertEqual(Payment.objects.get().amount, Decimal(49))
+        self.assertEqual(Payment.objects.get().amount, Decimal(24))
 
     def test_lock_is_lost_after_paid_pro_lapses_past_grace(self):
         self.membership.is_trial = False
@@ -294,10 +297,23 @@ class FoundingPricingTests(TestCase):
         self.membership.save()
         self.assertEqual(self.membership.current_discount_percent, 0)
 
-    def test_plans_page_shows_locked_price(self):
+    def test_discount_ends_twelve_months_after_free_period(self):
+        # Free until 30 April 2099 -> discount until the end of 30 April 2100.
+        ends_at = self.membership.founding_discount_ends_at
+        assert ends_at is not None  # narrows the Optional for the type checker
+        end = ends_at.astimezone(founding.SAST)
+        self.assertEqual((end.date(), end.hour), (date(2100, 4, 30), 23))
+        self.membership.trial_end = timezone.now() - timedelta(days=1)
+        self.membership.save()
+        with mock.patch("accounts.founding.discount_until", return_value=timezone.now() - timedelta(seconds=1)):
+            self.assertEqual(self.membership.current_discount_percent, 0)
+            self.client.post(reverse("billing:pro_checkout"), {"cycle": "monthly"})
+        self.assertEqual(Payment.objects.get().amount, Decimal(49))
+
+    def test_plans_page_shows_discounted_price_and_end_date(self):
         resp = self.client.get(reverse("membership"))
-        self.assertContains(resp, "50% off Pro for life")
-        self.assertContains(resp, "R49")
+        self.assertContains(resp, "50% off Pro until 30 April 2100")
+        self.assertContains(resp, "R24")
 
 
 @PROGRAMME_CLOSED
@@ -346,14 +362,15 @@ class BoostTests(TestCase):
         self.client.post(reverse("billing:boost_room", args=[self.room.pk]), {"option": "week"})
         self.assertFalse(Payment.objects.exists())
 
-    def test_pro_gets_two_free_boosts_a_month(self):
+    def test_pro_gets_one_free_boost_a_month(self):
         self.give_pro()
         url = reverse("billing:boost_room", args=[self.room.pk])
         for _ in range(3):
             self.client.post(url, {"option": "pro_credit"})
-        self.assertEqual(Boost.objects.filter(source=Boost.SOURCE_PRO_CREDIT).count(), 2)
+        self.assertEqual(Boost.objects.filter(source=Boost.SOURCE_PRO_CREDIT).count(), 1)
         self.assertEqual(pro_credits_left(self.membership), 0)
 
+    @mock.patch.object(pricing, "PRO_FREE_BOOSTS_PER_MONTH", 2)
     def test_second_boost_extends_instead_of_overlapping(self):
         self.give_pro()
         url = reverse("billing:boost_room", args=[self.room.pk])
@@ -510,3 +527,51 @@ class CancelSubscriptionApiTests(TestCase):
         with mock.patch("billing.payfast.requests.put", return_value=mock.Mock(status_code=400, text="bad")), \
              mock.patch("billing.payfast.requests.get", side_effect=requests.ConnectionError):
             self.assertFalse(payfast.cancel_subscription("tok"))
+
+
+@PAYFAST
+@PROGRAMME_CLOSED
+@override_settings(BOOSTS_ENABLED=True)
+class VerifiedOnlyTests(TestCase):
+    """Only verified landlords can buy Pro or Boosts, so a scammer can't
+    pay to be seen - and losing verification ends Featured placement."""
+
+    def setUp(self):
+        self.landlord = make_landlord(verified=False)
+        self.room = make_room(self.landlord)
+        self.client.force_login(self.landlord)
+        self.membership, _ = Membership.objects.get_or_create(user=self.landlord)
+
+    def test_unverified_landlord_cannot_buy_pro(self):
+        resp = self.client.post(reverse("billing:pro_checkout"), {"cycle": "monthly"})
+        self.assertRedirects(resp, reverse("membership"), fetch_redirect_response=False)
+        self.assertFalse(Payment.objects.exists())
+
+    def test_plans_page_explains_verification_instead_of_checkout(self):
+        resp = self.client.get(reverse("membership"))
+        self.assertContains(resp, "only for verified landlords")
+        self.assertNotContains(resp, reverse("billing:pro_checkout"))
+
+    def test_unverified_landlord_cannot_buy_or_use_free_boost(self):
+        self.membership.extend_pro(band="small", cycle="monthly", months=1)
+        url = reverse("billing:boost_room", args=[self.room.pk])
+        self.assertContains(self.client.get(url), "Only verified landlords can buy Pro or Boosts")
+        self.client.post(url, {"option": "week"})
+        self.client.post(url, {"option": "pro_credit"})
+        self.assertFalse(Payment.objects.exists())
+        self.assertFalse(Boost.objects.exists())
+
+    def test_verified_landlord_can_buy_pro(self):
+        Profile.objects.filter(user=self.landlord).update(is_verified_landlord=True)
+        self.client.post(reverse("billing:pro_checkout"), {"cycle": "monthly"})
+        self.assertEqual(Payment.objects.get().amount, Decimal(49))
+
+    def test_losing_verification_ends_featured_placement(self):
+        Profile.objects.filter(user=self.landlord).update(is_verified_landlord=True)
+        Boost.objects.create(
+            room=self.room, landlord=self.landlord, source=Boost.SOURCE_PAID,
+            starts_at=timezone.now() - timedelta(hours=1), ends_at=timezone.now() + timedelta(days=6),
+        )
+        self.assertEqual(featured_room_ids([self.room.pk]), [self.room.pk])
+        Profile.objects.filter(user=self.landlord).update(is_verified_landlord=False)
+        self.assertEqual(featured_room_ids([self.room.pk]), [])

@@ -27,7 +27,7 @@
       <li><strong>Landlords list for free</strong>, with no limit on the number of rooms.</li>
       <li>We do <strong>not</strong> charge a success fee, placement fee or commission on rent, and we never collect rent or deposits.</li>
     </ul>
-    <p>The paid services below are optional extras for landlords who want to fill rooms faster.</p>
+    <p>The paid services below are optional extras for verified landlords who want to fill rooms faster. Only landlords who have passed our free verification can buy them, so scammers can't pay to be seen.</p>
   </section>
 
   <section id="pro" class="form-card legal-section">
@@ -52,12 +52,13 @@
       </table>
     </div>
     <p>Yearly billing charges {{ annual_months_charged }} months for 12 months of Pro.</p>
-    <p><strong>Pro includes:</strong> {{ free_boosts_per_month }} free 7-day Boosts every calendar month, a ranking lift in search results, and new Pro tools as they are released. Unused free Boosts don't carry over.</p>
+    <p><strong>Pro includes:</strong> {{ free_boosts_per_month }} free 7-day Boost{{ free_boosts_per_month|pluralize }} every calendar month, a ranking lift in search results, and new Pro tools as they are released. Unused free Boosts don't carry over.</p>
     <p>
       <strong>Founding Landlords</strong> (registered on or before 31 January 2027) get Pro free until
-      30 April 2027, and then {{ founding_discount }}% off the prices above for as long as their subscription
-      stays active. If a paid subscription ends and isn't renewed within {{ founding_grace_days }} days, the
-      founding discount ends.
+      30 April 2027, and then {{ founding_discount }}% off the prices above for their first
+      {{ founding_discount_months }} months, until {{ founding_discount_until|date:"j F Y" }}. After that the standard
+      prices apply, and we'll email you at least 30 days before your price changes. If a paid subscription
+      ends and isn't renewed within {{ founding_grace_days }} days, the founding discount ends early.
     </p>
   </section>
 

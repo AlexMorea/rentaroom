@@ -59,7 +59,7 @@ class MembershipAdmin(admin.ModelAdmin):
     )
 
     # 🏅 FOUNDING LANDLORD
-    @admin.action(description="Enrol as Founding Landlord (Pro free until programme date + 50%% off for life)")
+    @admin.action(description="Enrol as Founding Landlord (Pro free until programme date, then 50%% off for 12 months)")
     def enrol_founding_landlords(self, request, queryset):
         enrolled, skipped = 0, []
 

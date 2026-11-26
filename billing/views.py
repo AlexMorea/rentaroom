@@ -17,7 +17,14 @@ from listings.models import Room
 from listings.views.helpers import is_landlord
 
 from . import payfast, pricing
-from .boosts import active_boost_for, boost_blocker, create_boost, pro_credits_left
+from .boosts import (
+    NOT_VERIFIED_MESSAGE,
+    active_boost_for,
+    boost_blocker,
+    create_boost,
+    is_verified_landlord,
+    pro_credits_left,
+)
 from .models import Boost, Payment
 from .services import handle_notification
 
@@ -82,6 +89,10 @@ def pro_checkout(request):
 
     if membership.auto_renew and membership.payfast_token:
         messages.info(request, "You already have an active Pro subscription.")
+        return redirect("membership")
+
+    if not is_verified_landlord(request.user):
+        messages.info(request, NOT_VERIFIED_MESSAGE)
         return redirect("membership")
 
     cycle = request.POST.get("cycle", pricing.CYCLE_MONTHLY)
