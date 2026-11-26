@@ -170,11 +170,18 @@ class UserRegisterForm(forms.Form):
         required=True,
     )
 
+    # minlength mirrors AUTH_PASSWORD_VALIDATORS, so the browser says
+    # "too short" before the form is even sent.
     password1 = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Create a password"})
+        widget=forms.PasswordInput(attrs={
+            "class": "input", "placeholder": "Create a password (8+ characters)",
+            "minlength": "8", "autocomplete": "new-password",
+        })
     )
     password2 = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": "input", "placeholder": "Repeat password"})
+        widget=forms.PasswordInput(attrs={
+            "class": "input", "placeholder": "Repeat password", "autocomplete": "new-password",
+        })
     )
 
     # Honeypot - invisible to real users (hidden via CSS in register.html),

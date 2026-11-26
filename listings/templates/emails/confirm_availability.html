@@ -25,9 +25,14 @@ Please let us know whether that's still true. Listings that are kept up to date 
 </p>
 
 <p class="muted" style="margin-top:24px;">
+{% if auto_hide_enabled %}
 Both buttons work without logging in. If we don't hear from you within {{ auto_hide_days }} days of your last
 confirmation, we'll hide the listing for now so tenants don't make a trip to a room that's already taken. You can
 switch it back on at any time.
+{% else %}
+Both buttons work without logging in. Until you confirm, tenants see that the listing hasn't been confirmed
+recently and it shows lower in search, so one tap keeps your room near the top.
+{% endif %}
 </p>
 
 {% endblock %}

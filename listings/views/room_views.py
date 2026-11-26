@@ -821,6 +821,12 @@ def edit_room(request, pk):
 
                     updated_room = form.save(commit=False)
                     updated_room.owner = request.user
+                    # Saving the edit form is the landlord vouching for the
+                    # listing right now - same as the dashboard "Confirm"
+                    # button. It used to leave the stale clock running, so
+                    # an actively edited room could still be flagged stale.
+                    updated_room.last_confirmed_at = timezone.now()
+                    updated_room.last_nudge_sent_at = None
                     updated_room.full_clean()
                     updated_room.save()
 

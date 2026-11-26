@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.urls import reverse
@@ -8,8 +8,31 @@ from accounts.moderation import suspend_account
 from trust.models import FraudReport
 
 from .models import Profile, Review, Room, RoomImage, ScheduledJobRun
+from .utils import clear_room_list_cache
 
 _OPEN_REPORT_STATUSES = (FraudReport.STATUS_NEW, FraudReport.STATUS_INVESTIGATING)
+
+
+@admin.action(description="Put back on Browse (marks the listing confirmed today)")
+def relist_on_browse(modeladmin, request, queryset):
+    """Shows the selected rooms on Browse again - e.g. ones paused for not
+    being confirmed. Rooms of suspended/deactivated accounts are skipped."""
+    relisted = skipped = 0
+    for room in queryset.select_related("owner"):
+        if not room.owner.is_active:
+            skipped += 1
+            continue
+        room.confirm_availability()
+        relisted += 1
+    if relisted:
+        clear_room_list_cache()
+        modeladmin.message_user(request, f"{relisted} listing(s) are back on Browse.", messages.SUCCESS)
+    if skipped:
+        modeladmin.message_user(
+            request,
+            f"{skipped} listing(s) skipped: the landlord's account is deactivated or suspended.",
+            messages.WARNING,
+        )
 
 
 class RoomImageInline(admin.TabularInline):
@@ -28,8 +51,11 @@ class RoomAdmin(admin.ModelAdmin):
         "price",
         "room_type",
         "is_available",
+        "last_confirmed",
         "open_reports_count",
     )
+
+    actions = (relist_on_browse,)
 
     list_filter = (
         "room_type",
@@ -56,6 +82,11 @@ class RoomAdmin(admin.ModelAdmin):
     @admin.display(description="Open reports", ordering="_open_reports")
     def open_reports_count(self, obj):
         return obj._open_reports
+
+    @admin.display(description="Last confirmed", ordering="last_confirmed_at")
+    def last_confirmed(self, obj):
+        # Same wording tenants see on the room page.
+        return obj.freshness_label
 
 
 @admin.action(description="Suspend account (deactivate + hide all listings + pause billing)")
