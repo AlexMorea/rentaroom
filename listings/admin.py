@@ -1,5 +1,8 @@
 from django.contrib import admin
-from django.db.models import Count, Q
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
+from django.urls import reverse
+from django.utils.html import format_html, format_html_join
 
 from accounts.moderation import suspend_account
 from trust.models import FraudReport
@@ -70,6 +73,35 @@ def suspend_selected_accounts(modeladmin, request, queryset):
     )
 
 
+def _accounts_on_same_phone():
+    """How many profiles share this profile's phone number (0 when it has
+    none). One person signing up under several names with one number is a
+    known fake-landlord pattern, so staff should see it at a glance."""
+    shared = (
+        Profile.objects.filter(phone_number=OuterRef("phone_number"))
+        .exclude(phone_number="")
+        .values("phone_number")
+        .annotate(n=Count("pk"))
+        .values("n")[:1]
+    )
+    return Coalesce(Subquery(shared, output_field=IntegerField()), 0)
+
+
+class SharedPhoneFilter(admin.SimpleListFilter):
+    title = "phone shared with other accounts"
+    parameter_name = "shared_phone"
+
+    def lookups(self, request, model_admin):
+        return (("yes", "Yes"), ("no", "No"))
+
+    def queryset(self, request, queryset):
+        if self.value() == "yes":
+            return queryset.filter(_phone_accounts__gt=1)
+        if self.value() == "no":
+            return queryset.filter(_phone_accounts__lte=1)
+        return queryset
+
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = (
@@ -79,9 +111,11 @@ class ProfileAdmin(admin.ModelAdmin):
         "is_phone_verified",
         "is_email_verified",
         "open_reports_count",
+        "phone_accounts",
     )
 
     list_filter = (
+        SharedPhoneFilter,
         "role",
         "is_verified_landlord",
         "is_phone_verified",
@@ -99,13 +133,43 @@ class ProfileAdmin(admin.ModelAdmin):
 
     actions = (suspend_selected_accounts,)
 
+    readonly_fields = ("other_accounts_on_phone",)
+
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
             _open_reports=Count(
                 "user__fraud_reports_against",
                 filter=Q(user__fraud_reports_against__status__in=_OPEN_REPORT_STATUSES),
                 distinct=True,
-            )
+            ),
+            _phone_accounts=_accounts_on_same_phone(),
+        )
+
+    @admin.display(description="Same phone", ordering="_phone_accounts")
+    def phone_accounts(self, obj):
+        if obj._phone_accounts <= 1:
+            return "-"
+        url = reverse("admin:listings_profile_changelist") + f"?q={obj.phone_number}"
+        return format_html('<a href="{}">⚠️ {} accounts</a>', url, obj._phone_accounts)
+
+    @admin.display(description="Other accounts on this phone number")
+    def other_accounts_on_phone(self, obj):
+        if not obj.pk or not obj.phone_number:
+            return "-"
+        others = (
+            Profile.objects.filter(phone_number=obj.phone_number)
+            .exclude(pk=obj.pk)
+            .select_related("user")
+        )
+        if not others:
+            return "None"
+        return format_html_join(
+            ", ",
+            '<a href="{}">{} ({})</a>',
+            (
+                (reverse("admin:listings_profile_change", args=[p.pk]), p.user.get_full_name() or p.user.username, p.user.email)
+                for p in others
+            ),
         )
 
     @admin.display(description="Open reports", ordering="_open_reports")

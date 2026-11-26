@@ -1,0 +1,168 @@
+{% load support_tags %}
+<!-- WhatsApp SUPPORT ("Help"). For help using Rooms4You, not for reaching
+     a landlord: that's inside each room. The visible "Help" label and the
+     one-time tip below say so; the chat opens tagged with the page it was
+     tapped on (see support_tags.py). Hidden on room pages, where the only
+     green WhatsApp button should be the landlord's. -->
+<div class="support-fab-wrap" data-support-fab>
+  <div class="support-tip" id="supportTip" role="dialog" aria-labelledby="supportTipTitle" hidden>
+    <p class="support-tip-title" id="supportTipTitle">Need help with the app?</p>
+    <p class="support-tip-text">
+      Chat to the Rooms4You team here. To reach a landlord, open a room and tap
+      <strong>Contact landlord</strong>.
+    </p>
+    <button type="button" class="support-tip-ok" data-support-tip-ok>Got it</button>
+  </div>
+
+  <a
+    class="support-fab"
+    href="{% support_whatsapp_url %}"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Help: chat to Rooms4You support on WhatsApp"
+    title="Help using Rooms4You? Chat to our support team on WhatsApp"
+  >
+    <i class="fab fa-whatsapp support-fab-icon" aria-hidden="true"></i>
+    <span class="support-fab-label">Help</span>
+  </a>
+</div>
+
+<style>
+  .support-fab-wrap {
+    position: fixed;
+    right: 16px;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .support-fab-wrap > * {
+    pointer-events: auto;
+  }
+
+  .support-fab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 50px;
+    padding: 0 18px 0 14px;
+    border-radius: 999px;
+    background: #25d366;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .support-fab:hover,
+  .support-fab:focus-visible {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.26);
+  }
+  .support-fab:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+  }
+  .support-fab-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  /* One-time tip, pointing at the button. */
+  .support-tip {
+    position: relative;
+    width: min(270px, calc(100vw - 32px));
+    padding: 14px 14px 12px;
+    border-radius: 16px;
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+    animation: support-tip-in 0.22s ease-out;
+  }
+  .support-tip[hidden] {
+    display: none;
+  }
+  .support-tip::after {
+    content: "";
+    position: absolute;
+    right: 30px;
+    bottom: -7px;
+    width: 12px;
+    height: 12px;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transform: rotate(45deg);
+  }
+  .support-tip-title {
+    margin: 0 0 4px;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+  .support-tip-text {
+    margin: 0 0 10px;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+  .support-tip-text strong {
+    color: var(--text);
+  }
+  .support-tip-ok {
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 16px;
+    background: var(--link);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  @keyframes support-tip-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .support-tip { animation: none; }
+    .support-fab { transition: none; }
+  }
+</style>
+
+<script>
+  // Show the tip once per browser, a moment after the first page loads.
+  (function () {
+    var tip = document.getElementById("supportTip");
+    var wrap = document.querySelector("[data-support-fab]");
+    if (!tip || !wrap) return;
+    var KEY = "r4y_help_tip_seen";
+
+    function seen() {
+      try { return localStorage.getItem(KEY) === "1"; } catch (e) { return true; }
+    }
+    function remember() {
+      try { localStorage.setItem(KEY, "1"); } catch (e) { /* private mode */ }
+    }
+    function hide() {
+      tip.hidden = true;
+      remember();
+    }
+
+    if (seen()) return;
+    tip.querySelector("[data-support-tip-ok]").addEventListener("click", hide);
+    wrap.querySelector(".support-fab").addEventListener("click", remember);
+
+    setTimeout(function () {
+      // Not on pages that hide the button (room pages, chat, open menu).
+      if (getComputedStyle(wrap).display === "none") return;
+      tip.hidden = false;
+      setTimeout(function () { if (!tip.hidden) hide(); }, 12000);
+    }, 1800);
+  })();
+</script>

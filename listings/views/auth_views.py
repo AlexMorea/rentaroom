@@ -1,5 +1,5 @@
 import logging
-import re
+import unicodedata
 from datetime import timedelta
 from secrets import compare_digest
 from urllib.parse import quote
@@ -25,7 +25,12 @@ from accounts.devices import is_known_device, remember_device
 from utils.email import send_template_email
 from accounts.state_engine import get_user_state
 
-from ..forms import GoogleCompleteProfileForm, UserRegisterForm
+from ..forms import (
+    AccountPasswordResetForm,
+    BecomeLandlordForm,
+    GoogleCompleteProfileForm,
+    UserRegisterForm,
+)
 from ..models import PhoneOTP, Profile
 from ..utils import (
     generate_otp,
@@ -35,6 +40,8 @@ from ..utils import (
     send_otp_whatsapp,
     send_welcome_email,
     send_welcome_whatsapp,
+    parse_phone,
+    unique_username_for,
 )
 from .helpers import get_display_name, get_or_create_membership
 
@@ -74,6 +81,35 @@ def _safe_next_url(request, raw_next):
     return ""
 
 
+def _clean_code(raw):
+    """
+    The digits of a typed or pasted code. Drops the spaces and dashes a
+    paste can bring along, and turns other scripts' digits (some phone
+    keyboards send full-width or Arabic-Indic ones) into plain 0-9 - those
+    used to make compare_digest() raise TypeError, a 500 on the verify page.
+    """
+    digits = []
+    for ch in raw or "":
+        value = unicodedata.decimal(ch, None)
+        if value is not None:
+            digits.append(str(value))
+    return "".join(digits)
+
+
+def _remember_next(request, next_url):
+    """Carries a validated ?next= across a detour (sign-up code, device
+    code, Google profile step) so the person lands where they were headed -
+    usually the room they wanted to contact. Clears a stale one otherwise."""
+    if next_url:
+        request.session[POST_LOGIN_NEXT_SESSION_KEY] = next_url
+    else:
+        request.session.pop(POST_LOGIN_NEXT_SESSION_KEY, None)
+
+
+def _pop_next(request):
+    return _safe_next_url(request, request.session.pop(POST_LOGIN_NEXT_SESSION_KEY, ""))
+
+
 def _redirect_to_login(next_url):
     """Back to the login form, keeping `next` in the URL so a mistyped
     password doesn't lose where the user was headed."""
@@ -95,8 +131,17 @@ def _client_ip(request):
 # flood of unverified accounts is its own cost: DB rows, email volume,
 # noise in every admin list). Counts every POST attempt, not just
 # successful ones, so a script probing for valid form data still trips it.
-SIGNUP_MAX_ATTEMPTS = 8
+# Generous on purpose: mobile networks put many people behind one shared
+# IP (carrier-grade NAT), and so does campus or office WiFi - signing up a
+# room of students at once used to hit the old limit of 20 within the
+# hour. Each account still has to clear the emailed code to do anything.
+SIGNUP_MAX_ATTEMPTS = 60
 SIGNUP_WINDOW_SECONDS = 3600
+
+# Failed logins per IP per 15 minutes. Same shared-IP reasoning as above;
+# a single targeted account is protected separately (and more tightly)
+# by ACCOUNT_LOGIN_MAX_ATTEMPTS below.
+LOGIN_IP_MAX_ATTEMPTS = 30
 
 # Login attempt limits. Two separate counters, not one:
 # - IP-based (existing) stops one attacker hammering many accounts from
@@ -111,12 +156,16 @@ ACCOUNT_LOGIN_MAX_ATTEMPTS = 7
 ACCOUNT_LOGIN_LOCKOUT_SECONDS = 1800
 
 def register(request):
+    # Where to land after the sign-up code - e.g. the room a new tenant
+    # tapped "Create account" on, so they don't have to find it again.
+    next_url = _safe_next_url(request, request.POST.get("next") or request.GET.get("next", ""))
+
     if request.method == "POST" and (request.POST.get("website") or "").strip():
         # Honeypot tripped - a scripted bot filled a field that's
         # invisible to real users. Fail silently (fresh empty form, no
         # error) rather than tipping the bot off to what caught it.
         logger.info("Signup honeypot triggered from IP %s", _client_ip(request))
-        return render(request, "listings/register.html", {"form": UserRegisterForm()})
+        return render(request, "listings/register.html", {"form": UserRegisterForm(), "next_url": next_url})
 
     if request.method == "POST":
         signup_key = f"signup_attempts:{_client_ip(request)}"
@@ -127,11 +176,14 @@ def register(request):
                 request,
                 "Too many signup attempts from this network. Please try again later."
             )
-            return render(request, "listings/register.html", {"form": UserRegisterForm()})
+            return render(request, "listings/register.html", {"form": UserRegisterForm(), "next_url": next_url})
 
         cache.set(signup_key, attempts + 1, timeout=SIGNUP_WINDOW_SECONDS)
 
-    form = UserRegisterForm(request.POST or None)
+    # ?role=landlord (or tenant) preselects the role - for links sent to
+    # landlords - and is remembered for a Google sign-in from this page.
+    role_hint = _role_hint(request)
+    form = UserRegisterForm(request.POST or None, initial={"role": role_hint} if role_hint else None)
 
     if request.method == "POST" and form.is_valid():
 
@@ -170,13 +222,14 @@ def register(request):
             send_otp_whatsapp(user, otp)
 
             request.session["pending_user_id"] = user.id
+            _remember_next(request, next_url)
 
             return redirect("verify_account")
 
     return render(
         request,
         "listings/register.html",
-        {"form": form}
+        {"form": form, "next_url": next_url}
     )
 
 
@@ -208,7 +261,7 @@ def verify_account(request):
 
     if request.method == "POST":
 
-        otp_input = request.POST.get("otp")
+        otp_input = _clean_code(request.POST.get("otp"))
 
         attempt_key = f"otp_attempts_{user.id}"
         attempts = cache.get(attempt_key, 0)
@@ -260,8 +313,9 @@ def verify_account(request):
 
             cache.delete(attempt_key)
 
+            next_url = _pop_next(request)
             state = get_user_state(user)
-            response = redirect(state["next_route"])
+            response = redirect(next_url or state["next_route"])
             # This device just completed a real OTP challenge (the signup
             # one) - no need to challenge it again on its very next
             # request, so it's trusted from here on.
@@ -277,14 +331,6 @@ def verify_account(request):
 
 @never_cache
 def user_login(request):
-    ip = _client_ip(request)
-    login_key = f"login_attempts:{ip}"
-    attempts = cache.get(login_key, 0)
-
-    if attempts >= 10:
-        messages.error(request, "Too many login attempts. Try again later.")
-        return redirect("login")
-
     if request.method != "POST":
         next_url = _safe_next_url(request, request.GET.get("next", ""))
         return render(request, "listings/login.html", {"next_url": next_url})
@@ -292,6 +338,17 @@ def user_login(request):
     next_url = _safe_next_url(
         request, request.POST.get("next") or request.GET.get("next", "")
     )
+
+    ip = _client_ip(request)
+    login_key = f"login_attempts:{ip}"
+    attempts = cache.get(login_key, 0)
+
+    if attempts >= LOGIN_IP_MAX_ATTEMPTS:
+        # Rendered, not redirected: this used to redirect to the login
+        # page, which ran this same check again and redirected again -
+        # a loop that left the whole network on "too many redirects".
+        messages.error(request, "Too many login attempts. Try again later.")
+        return render(request, "listings/login.html", {"next_url": next_url}, status=429)
 
     login_value = (request.POST.get("email") or "").strip()
     password = request.POST.get("password") or ""
@@ -348,7 +405,9 @@ def user_login(request):
     # OTP CHECK (ONLY ONE SYSTEM: verify_account)
     if not profile.is_phone_verified:
         request.session["pending_user_id"] = user.id
+        _remember_next(request, next_url)
         logger.info(f"OTP BLOCK: user {user.id}")
+        _ensure_signup_code(request, user)
         return redirect("verify_account")
 
     cache.delete(login_key)
@@ -381,6 +440,46 @@ def user_login(request):
     # Refreshes the remembered-device cookie, so trust lasts as long as
     # the person keeps using this device.
     return remember_device(redirect(next_url or state["next_route"]), request, user)
+
+
+def _ensure_signup_code(request, user):
+    """
+    Someone who signed up but never entered their code, logging in later.
+    The verify page says a code was emailed, so make that true: their old
+    one has usually expired, and without this they had to work out that
+    "Send a new code" was the only way forward.
+    """
+    live_code = (
+        PhoneOTP.objects.filter(
+            user=user,
+            is_verified=False,
+            created_at__gte=timezone.now() - timedelta(minutes=OTP_VALID_MINUTES),
+        )
+        .exclude(phone_number__in=[DEVICE_OTP_PURPOSE, "email_change"])
+        .exists()
+    )
+    if live_code or cache.get(f"otp_resend_{user.id}"):
+        messages.info(request, "Please verify your account to continue. Enter the 6-digit code we emailed you.")
+        return
+
+    otp = generate_otp()
+    PhoneOTP.objects.filter(user=user).delete()
+    PhoneOTP.objects.create(user=user, phone_number="email_verification", otp=otp)
+
+    try:
+        send_otp_email(user, otp)
+    except Exception:
+        logger.exception("Failed to send login-time signup OTP email for user %s", user.pk)
+        messages.warning(
+            request,
+            "Please verify your account to continue. We couldn't email your code just now, "
+            "so use \"Send a new code\" below to try again."
+        )
+        return
+
+    send_otp_whatsapp(user, otp)
+    set_otp_cooldown(user.id)
+    messages.info(request, "Please verify your account to continue. We've emailed you a new 6-digit code.")
 
 
 def _start_device_challenge(request, user):
@@ -433,7 +532,7 @@ def verify_device(request):
 
     if request.method == "POST":
 
-        otp_input = request.POST.get("otp")
+        otp_input = _clean_code(request.POST.get("otp"))
 
         attempt_key = f"device_otp_attempts_{user.id}"
         attempts = cache.get(attempt_key, 0)
@@ -462,9 +561,7 @@ def verify_device(request):
             login(request, user)
 
             request.session.pop("pending_device_user_id", None)
-            next_url = _safe_next_url(
-                request, request.session.pop(POST_LOGIN_NEXT_SESSION_KEY, "")
-            )
+            next_url = _pop_next(request)
             cache.delete(attempt_key)
 
             messages.success(request, f"Welcome back {get_display_name(user)} 👋")
@@ -608,7 +705,7 @@ def confirm_email_change(request):
 
     if request.method == "POST":
 
-        otp = request.POST.get("otp")
+        otp = _clean_code(request.POST.get("otp"))
         pending_email = request.session.get("pending_email")
 
         if not pending_email:
@@ -735,16 +832,14 @@ def change_email(request):
 def change_phone(request):
     if request.method == "POST":
 
-        phone = (request.POST.get("phone_number") or "").strip()
         country_code = (request.POST.get("country_code") or "+27").strip()
+        if country_code not in {"+27", "+1", "+44"}:
+            country_code = "+27"
 
-        # 🔥 CLEAN INPUT
-        phone = re.sub(r"[^\d]", "", phone)
+        # Same rules (and stored shape) as the signup form's phone number.
+        phone = parse_phone(request.POST.get("phone_number"), country_code)
 
-        if phone.startswith("0"):
-            phone = phone[1:]
-
-        if not phone or len(phone) < 9:
+        if not phone:
             messages.error(request, "Enter a valid phone number.")
             return redirect("change_phone")
 
@@ -762,7 +857,12 @@ def change_phone(request):
             otp=otp
         )
 
-        send_otp_email(user, otp)
+        try:
+            send_otp_email(user, otp)
+        except Exception:
+            logger.exception("Failed to send phone-change code for user %s", user.pk)
+            messages.error(request, "We couldn't send your code just now. Please try again shortly.")
+            return redirect("change_phone")
         send_otp_whatsapp(user, otp)
 
         # Store BOTH for confirmation step
@@ -779,7 +879,7 @@ def change_phone(request):
 def confirm_phone_change(request):
     if request.method == "POST":
 
-        otp = request.POST.get("otp")
+        otp = _clean_code(request.POST.get("otp"))
         pending_phone = request.session.get("pending_phone")
         pending_country_code = request.session.get("pending_country_code")
 
@@ -835,6 +935,7 @@ def delete_account(request):
 
 
 class RateLimitedPasswordResetView(PasswordResetView):
+    form_class = AccountPasswordResetForm
     subject_template_name = "registration/password_reset_subject.txt"
     email_template_name = "registration/password_reset_email.html"
     html_email_template_name = "registration/password_reset_email.html"
@@ -903,7 +1004,11 @@ def _verify_google_credential(credential):
     if resp.status_code != 200:
         return None
 
-    data = resp.json()
+    try:
+        data = resp.json()
+    except ValueError:
+        logger.warning("Google tokeninfo returned a non-JSON body")
+        return None
 
     if data.get("aud") != settings.GOOGLE_OAUTH_CLIENT_ID:
         logger.warning("Google credential audience mismatch")
@@ -954,7 +1059,7 @@ def google_auth(request):
         last_name = (data.get("family_name") or "").strip()
 
         user = User.objects.create(
-            username=email,
+            username=unique_username_for(email),
             email=email,
             first_name=first_name,
             last_name=last_name,
@@ -968,7 +1073,14 @@ def google_auth(request):
         profile.save(update_fields=["is_email_verified"])
 
         request.session["google_pending_user_id"] = user.id
+        _remember_next(request, next_url)
         return redirect("google_complete_profile")
+
+    # Checked before the onboarding branch below, so a deactivated account
+    # can't be walked back in through the complete-profile step.
+    if not user.is_active:
+        messages.error(request, "This account has been deactivated.")
+        return redirect("login")
 
     profile = getattr(user, "profile", None)
 
@@ -977,11 +1089,8 @@ def google_auth(request):
         # was created outside the normal signup flow) - finish it the
         # same way a fresh Google signup would.
         request.session["google_pending_user_id"] = user.id
+        _remember_next(request, next_url)
         return redirect("google_complete_profile")
-
-    if not user.is_active:
-        messages.error(request, "This account has been deactivated.")
-        return redirect("login")
 
     if is_known_device(request, user):
         login(request, user)
@@ -1013,15 +1122,45 @@ def google_complete_profile(request):
 
             messages.success(request, f"Welcome to Rooms4You, {get_display_name(user)} 🎉")
 
+            next_url = _pop_next(request)
             state = get_user_state(user)
-            response = redirect(state["next_route"])
+            response = redirect(next_url or state["next_route"])
             # Google's own auth just verified this person, and this
             # profile step stands in for the OTP step - this device is
             # trusted from here on, same as a fresh normal signup.
             remember_device(response, request, user)
             return response
     else:
-        form = GoogleCompleteProfileForm()
+        role_hint = request.session.get("signup_role_hint")
+        form = GoogleCompleteProfileForm(initial={"role": role_hint} if role_hint else None)
 
     return render(request, "listings/google_complete_profile.html", {"form": form})
+
+
+def _role_hint(request):
+    """Reads ?role= on the signup page and keeps it in the session, so the
+    Google path (which leaves the page) can preselect the same role."""
+    role = (request.GET.get("role") or "").strip().lower()
+    if role in {"tenant", "landlord"}:
+        request.session["signup_role_hint"] = role
+        return role
+    return None
+
+
+@login_required
+def become_landlord(request):
+    """A tenant account that wants to list a room. Landlords who skipped
+    the role step at signup ended up here with no way to switch; this
+    collects the same verification details landlord signup asks for."""
+    profile = getattr(request.user, "profile", None)
+    if profile is not None and profile.role == "landlord":
+        return redirect("create_room")
+
+    form = BecomeLandlordForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.apply_to(request.user)
+        messages.success(request, "Your account is now a landlord account. Let's list your first room.")
+        return redirect("create_room")
+
+    return render(request, "listings/become_landlord.html", {"form": form})
 

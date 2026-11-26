@@ -250,23 +250,31 @@
       </div>
 
       <div class="form-field">
-        <label>Suburb</label>
-        {{ form.suburb }}
+        <label for="id_suburb">Suburb</label>
+        {{ form.suburb }} {% if form.suburb.errors %}
+        <div class="field-error">{{ form.suburb.errors }}</div>
+        {% endif %}
       </div>
 
       <div class="form-field">
-        <label>Town</label>
-        {{ form.town }}
+        <label for="id_town">Town</label>
+        {{ form.town }} {% if form.town.errors %}
+        <div class="field-error">{{ form.town.errors }}</div>
+        {% endif %}
       </div>
 
       <div class="form-field">
-        <label>City</label>
-        {{ form.city }}
+        <label for="id_city">City</label>
+        {{ form.city }} {% if form.city.errors %}
+        <div class="field-error">{{ form.city.errors }}</div>
+        {% endif %}
       </div>
 
       <div class="form-field">
-        <label>Province</label>
-        {{ form.province }}
+        <label for="id_province">Province</label>
+        {{ form.province }} {% if form.province.errors %}
+        <div class="field-error">{{ form.province.errors }}</div>
+        {% endif %}
       </div>
 
       <div class="form-field">

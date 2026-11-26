@@ -66,6 +66,26 @@ def generate_otp():
     return str(secrets.randbelow(900000) + 100000)
 
 
+def unique_username_for(email):
+    """
+    New accounts use their email as the username. The username can still
+    be taken when the email isn't: someone who changes their email keeps
+    the old address as their username, so the next person to sign up with
+    that old address used to hit a unique-constraint error (a 500) instead
+    of getting an account. Login goes by email first, so a suffix here
+    changes nothing for the person signing up.
+    """
+    from django.contrib.auth.models import User
+
+    base = (email or "").strip().lower()[:150]
+    if base and not User.objects.filter(username=base).exists():
+        return base
+    while True:
+        candidate = f"{base[:141]}-{secrets.token_hex(4)}"
+        if not User.objects.filter(username=candidate).exists():
+            return candidate
+
+
 def send_otp_email(user, otp):
     send_template_email(
         subject="Your Rooms4You verification code",
@@ -121,6 +141,45 @@ def send_welcome_whatsapp(user):
     if hasattr(user, "profile"):
         name = (user.first_name or user.username or "").strip()
         send_whatsapp_template(user.profile, settings.WHATSAPP_TEMPLATE_WELCOME, params=[name])
+
+
+SA_PHONE_INVALID_MESSAGE = "Please enter a valid South African number, e.g. 082 123 4567."
+PHONE_INVALID_MESSAGE = "Please enter a valid phone number."
+
+
+def parse_phone(raw, country_code: str | None = "+27"):
+    """
+    Turns whatever someone typed into the number we store, or None if it
+    can't be a real number.
+
+    South African numbers (the default) need exactly 9 digits after the
+    country code. "082 123 4567", "+27 82 123 4567", "27821234567",
+    "0027 82 123 4567" and "+27 (0)82 123 4567" all become "+27821234567".
+    Two numbers typed into one box, or a digit too few, are rejected here
+    rather than saved: they used to be stored as-is, which left tenants
+    with a number they couldn't call, and anything over 20 characters
+    made the save itself fail on Postgres.
+
+    Other country codes only need a plausible length; they're stored the
+    way normalize_sa_phone always stored them, since Profile._format_number
+    relies on that shape.
+    """
+    digits = re.sub(r"\D", "", str(raw or ""))
+    if not digits:
+        return None
+
+    if (country_code or "+27") != "+27":
+        return normalize_sa_phone(digits) if 6 <= len(digits) <= 15 else None
+
+    if digits.startswith("00"):
+        digits = digits[2:]
+    if digits.startswith("27") and len(digits) in (11, 12):
+        digits = digits[2:]
+    if digits.startswith("0") and len(digits) == 10:
+        digits = digits[1:]
+    if len(digits) != 9 or digits.startswith("0"):
+        return None
+    return f"+27{digits}"
 
 
 def normalize_sa_phone(phone):

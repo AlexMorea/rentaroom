@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% load profile_extras %}
+{% load support_tags %}
 
 {% block title %}{{ room.title }} - R{{ room.price|floatformat:0|intcomma }}/month in {{ room.location }} | Rooms4You{% endblock %}
 
@@ -127,7 +128,7 @@
         <section class="detail-section rd-section">
           <div class="detail-actions rd-actions">
             <a href="#contact-landlord" class="btn-primary rd-btn-contact-jump">
-              💬 Contact Landlord
+              {% if user.is_authenticated %}💬 Contact Landlord{% else %}🔒 Contact landlord · free sign-up{% endif %}
             </a>
 
             <button type="button" class="btn-secondary rd-btn-secondary" id="shareBtn">
@@ -245,22 +246,27 @@
           <div class="contact-actions rd-contact-actions">
 
             {% if room.contact_phone %}
-            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'phone' %}">📞 Call Landlord</a>
+            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'phone' %}" title="Opens your phone's dialer with the landlord's number">📞 Call Landlord</a>
             {% endif %}
 
             {% if room.contact_whatsapp or room.contact_phone %}
-            <a class="btn-primary whatsapp-btn rd-contact-btn rd-contact-btn-whatsapp" href="{% url 'track_contact' room.id 'whatsapp' %}">
+            <a class="btn-primary whatsapp-btn rd-contact-btn rd-contact-btn-whatsapp" href="{% url 'track_contact' room.id 'whatsapp' %}" title="Opens a WhatsApp chat with the landlord">
               <i class="fa-brands fa-whatsapp"></i> WhatsApp Landlord
             </a>
             {% endif %}
 
             {% if room.owner.email or room.contact_email %}
-            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'email' %}">
+            <a class="btn-primary rd-contact-btn" href="{% url 'track_contact' room.id 'email' %}" title="Opens your email app, addressed to the landlord">
               📧 Email Landlord
             </a>
             {% endif %}
 
           </div>
+
+          <p class="rd-contact-hint">
+            These go straight to {{ room.owner.first_name|default:"the landlord" }}: <strong>Call</strong> and <strong>WhatsApp</strong>
+            open on your phone with their number. Prefer to keep it in the app? Use the chat below.
+          </p>
 
           <div class="section-header rd-subsection-header">
             <h3 class="rd-section-title">Or chat right here</h3>
@@ -279,16 +285,43 @@
 
           {% else %}
 
-          <div class="empty-card rd-empty-card">
-            <p>Please login to contact the landlord.</p>
-
-            <div class="auth-actions">
-              <a class="btn-primary rd-contact-btn" href="{% url 'login' %}?next={% url 'room_detail' room.id %}">Login</a>
-              <a class="btn-secondary rd-btn-secondary" href="{% url 'register' %}">Create account</a>
+          {% url 'room_detail' room.id as room_url %}
+          {% with contact_next=room_url|add:"#contact-landlord" landlord_name=room.owner.first_name|default:"the landlord" %}
+          <div class="rd-gate">
+            <div class="rd-gate-head">
+              <span class="rd-gate-lock" aria-hidden="true"><i class="fa-solid fa-lock"></i></span>
+              <div>
+                <p class="rd-gate-title">Sign in to contact {{ landlord_name }}</p>
+                <p class="rd-gate-text">
+                  Only Rooms4You members can see a landlord's number, WhatsApp and chat.
+                  It's free, takes about a minute, and lets landlords know who they're talking to.
+                </p>
+              </div>
             </div>
+
+            <ul class="rd-gate-locked" aria-label="What you can do once you're signed in">
+              {% if room.contact_phone %}
+              <li><a href="{% url 'register' %}?next={{ contact_next|urlencode }}"><i class="fa-solid fa-phone" aria-hidden="true"></i> Call <span class="rd-gate-mask" aria-label="number hidden">••• ••• ••••</span><i class="fa-solid fa-lock rd-gate-item-lock" aria-hidden="true"></i></a></li>
+              {% endif %}
+              {% if room.contact_whatsapp or room.contact_phone %}
+              <li><a href="{% url 'register' %}?next={{ contact_next|urlencode }}"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp {{ landlord_name }}<i class="fa-solid fa-lock rd-gate-item-lock" aria-hidden="true"></i></a></li>
+              {% endif %}
+              <li><a href="{% url 'register' %}?next={{ contact_next|urlencode }}"><i class="fa-regular fa-comments" aria-hidden="true"></i> Chat in the app<i class="fa-solid fa-lock rd-gate-item-lock" aria-hidden="true"></i></a></li>
+            </ul>
+
+            <a class="btn-primary rd-gate-primary" href="{% url 'register' %}?next={{ contact_next|urlencode }}">Create a free account</a>
+            <a class="rd-gate-secondary" href="{% url 'login' %}?next={{ contact_next|urlencode }}">Already have an account? <strong>Log in</strong></a>
+            <p class="rd-gate-after">You'll come straight back to this room.</p>
           </div>
+          {% endwith %}
 
           {% endif %}
+
+          <p class="rd-support-note">
+            Stuck, or something wrong with this listing?
+            <a href="{% support_whatsapp_url %}" target="_blank" rel="noopener noreferrer">Ask Rooms4You support</a>
+            (this goes to our team, not the landlord).
+          </p>
 
         </section>
 
@@ -400,7 +433,7 @@
      way down to the contact section. Desktop already has the quick-jump
      button in the actions row up top, so this is mobile-only. -->
 <a href="#contact-landlord" class="rd-sticky-contact-bar">
-  💬 Contact Landlord
+  {% if user.is_authenticated %}💬 Contact Landlord{% else %}🔒 Contact landlord · free sign-up{% endif %}
 </a>
 
 <style>
@@ -637,13 +670,6 @@
       text-decoration: none;
       box-shadow: 0 -8px 20px rgba(15, 23, 42, 0.18);
     }
-    /* The global WhatsApp support FAB (_footer.html) is fixed
-       bottom-right at the same height this bar now occupies - nudge it
-       up above the bar instead of letting the two overlap. !important
-       is needed to beat the FAB's own inline bottom:22px style. */
-    body.rd-sticky-cta-active a[aria-label="WhatsApp Support"] {
-      bottom: 78px !important;
-    }
     /* Leaves room at the bottom of the page so the sticky bar doesn't
        sit on top of the report-listing section. */
     body.rd-sticky-cta-active main.container {
@@ -812,11 +838,127 @@
     margin-top: 14px;
   }
 
-  .rd-empty-card {
-    text-align: center;
-    padding: 20px;
+  /* The floating support "Help" button isn't shown on room pages: here
+     the only green WhatsApp button should be the landlord's, so nobody
+     messages support thinking they're reaching the landlord. Support
+     stays one tap away in the note under the contact section. */
+  .support-fab-wrap {
+    display: none !important;
+  }
+
+  .rd-contact-hint,
+  .rd-support-note {
+    margin: 10px 0 0;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .rd-contact-hint strong {
+    color: var(--text);
+  }
+  .rd-support-note {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+  .rd-support-note a {
+    color: var(--link);
+    font-weight: 700;
+  }
+
+  /* Logged-out contact panel: shows what a free account unlocks. */
+  .rd-gate {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 18px;
     background: var(--card-sunken);
-    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+  .rd-gate-head {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .rd-gate-lock {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(11, 111, 191, 0.12);
+    color: var(--link);
+    font-size: 1.05rem;
+  }
+  .rd-gate-title {
+    margin: 0 0 4px;
+    font-weight: 800;
+    font-size: 1.02rem;
+    color: var(--text);
+  }
+  .rd-gate-text {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .rd-gate-locked {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .rd-gate-locked a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+  .rd-gate-locked a:hover {
+    border-color: var(--link);
+    color: var(--text);
+  }
+  .rd-gate-locked .fa-whatsapp {
+    color: #25d366;
+  }
+  .rd-gate-mask {
+    letter-spacing: 0.08em;
+    filter: blur(0.6px);
+  }
+  .rd-gate-item-lock {
+    margin-left: auto;
+    font-size: 0.8rem;
+    opacity: 0.7;
+  }
+  .rd-gate-primary {
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+  .rd-gate-secondary {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .rd-gate-secondary strong {
+    color: var(--link);
+  }
+  .rd-gate-after {
+    margin: -4px 0 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
   }
 
   /* Rating summary */
