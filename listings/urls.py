@@ -106,6 +106,7 @@ urlpatterns = [
 
     # ROOMS (CORE RESOURCE)
     path("rooms/", views.room_list, name="room_list"),
+    path("rooms/suggest/", views.room_search_suggest, name="room_search_suggest"),
     path("rooms/new/", views.create_room, name="create_room"),
     path("account/become-landlord/", views.become_landlord, name="become_landlord"),
 

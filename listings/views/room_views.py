@@ -1,5 +1,5 @@
 import logging
-from difflib import get_close_matches
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -39,6 +39,7 @@ from trust.scam_detection import auto_flag_if_scammy
 
 from ..forms import RoomForm
 from ..models import Favorite, Room, RoomImage, RoomStat
+from ..search import apply_search, best_correction, parse_query, suggestions
 from ..seo import ld_json
 from ..utils import clear_room_list_cache
 from .helpers import get_or_create_membership, is_landlord
@@ -75,10 +76,12 @@ def room_list(request):
 
     min_price = (request.GET.get("min_price") or "").strip()
     max_price = (request.GET.get("max_price") or "").strip()
+    # "Search instead for <exactly what I typed>" - no spelling fixes.
+    exact = request.GET.get("exact") == "1"
 
     # ================= SANITIZE INPUT =================
     # whitelist sort values and room types to avoid unexpected filters
-    valid_sorts = {"", "new", "price_low", "price_high"}
+    valid_sorts = {"", "new", "newest", "oldest", "price_low", "price_high"}
     if sort not in valid_sorts:
         sort = ""
 
@@ -113,9 +116,12 @@ def room_list(request):
         cached_ids = cached_ids_payload["ids"]
         suggested_location = cached_ids_payload["suggested_location"]
         searched_location = cached_ids_payload["searched_location"]
+        search_info = cached_ids_payload.get("search_info")
+        popular_areas = cached_ids_payload.get("popular_areas", [])
 
         preserved_order = Case(
-            *[When(pk=pk, then=pos) for pos, pk in enumerate(cached_ids)]
+            *[When(pk=pk, then=pos) for pos, pk in enumerate(cached_ids)],
+            default=len(cached_ids),
         )
         rooms = (
             Room.objects.filter(id__in=cached_ids)
@@ -196,6 +202,8 @@ def room_list(request):
                 "popular_ids": popular_ids,
                 "featured_ids": featured_ids,
                 "favorited_ids": favorited_ids,
+                "search_info": search_info,
+                "popular_areas": popular_areas,
             },
         )
     # ================= END FULL-PAGE CACHE fast path =================
@@ -244,13 +252,40 @@ def room_list(request):
     searched_location = location
 
     # ================= SEARCH =================
+    # Understands the words (type, budget, postal code, places), fixes
+    # misspellings ("mid-rind" -> Midrand) and never matches the whole
+    # phrase as one string - see listings/search.py.
+    search_info = None
+    rank_by_matches = False
     if q:
-        rooms_qs = rooms_qs.filter(
-            Q(title__icontains=q)
-            | Q(description__icontains=q)
-            | Q(location__icontains=q)
-            | Q(room_type__icontains=q)
-        )
+        parsed = parse_query(q)
+        # Explicit Filters choices win over what's read from the text.
+        use_type = not room_type
+        use_price = not (min_price or max_price)
+        if not parsed.is_empty:
+            rooms_qs, outcome = apply_search(
+                rooms_qs, parsed, use_type=use_type, use_price=use_price, allow_fuzzy=not exact
+            )
+            rank_by_matches = outcome.rank_by_matches
+            understood = []
+            if parsed.room_type and use_type and not outcome.relaxed_filters:
+                understood.append(parsed.room_type)
+            if use_price and not outcome.relaxed_filters:
+                if parsed.min_price and parsed.max_price:
+                    understood.append(f"R{parsed.min_price:,} to R{parsed.max_price:,}".replace(",", " "))
+                elif parsed.max_price:
+                    understood.append(f"Up to R{parsed.max_price:,}".replace(",", " "))
+                elif parsed.min_price:
+                    understood.append(f"From R{parsed.min_price:,}".replace(",", " "))
+            if parsed.postal_code:
+                understood.append(f"Postal code {parsed.postal_code}")
+            search_info = {
+                "corrected_text": ", ".join(outcome.corrections.values()),
+                "typed_text": ", ".join(outcome.corrections.keys()),
+                "mode": outcome.mode,
+                "relaxed": outcome.relaxed_filters,
+                "understood": understood,
+            }
 
     # ================= LOCATION =================
     if location:
@@ -287,14 +322,8 @@ def room_list(request):
                 if location_lower in key or key in location_lower
             ]
 
-            close_keys = get_close_matches(
-                location_lower,
-                list(lowered_map.keys()),
-                n=5,
-                cutoff=0.6,
-            )
-
-            close_matches = [lowered_map[key] for key in close_keys]
+            fix = None if exact else best_correction(location)
+            close_matches = [fix[0]] if fix else []
 
             candidate_locations = []
 
@@ -358,6 +387,10 @@ def room_list(request):
     elif sort == "price_high":
         rooms = rooms_qs.order_by("is_full", "-price", "-created_at")
 
+    elif rank_by_matches:
+        # No room had every searched word: most words matched first.
+        rooms = rooms_qs.order_by("-match_count", "is_full", "-score", "-created_at")
+
     else:
         # Default 'best match' -- order by composite score then newest,
         # with up to FEATURED_SLOTS boosted rooms pinned on top. Boosts
@@ -376,6 +409,17 @@ def room_list(request):
     page_number = request.GET.get("page") or 1
     paginator = Paginator(rooms, 8)
     page_obj = paginator.get_page(page_number)
+
+    # Nothing found: point at areas that do have rooms right now.
+    popular_areas = []
+    if not paginator.count:
+        popular_areas = list(
+            Room.objects.filter(is_available=True)
+            .exclude(suburb="")
+            .values("suburb")
+            .annotate(rooms=Count("id"))
+            .order_by("-rooms", "suburb")[:6]
+        )
 
     # ================= MAP DATA =================
     map_rooms = list(
@@ -497,6 +541,8 @@ def room_list(request):
                 "featured_ids": featured_ids,
                 "suggested_location": suggested_location,
                 "searched_location": searched_location,
+                "search_info": search_info,
+                "popular_areas": popular_areas,
             },
             60,
         )
@@ -525,10 +571,21 @@ def room_list(request):
             "popular_ids": popular_ids,
             "featured_ids": featured_ids,
             "favorited_ids": favorited_ids,
+            "search_info": search_info,
+            "popular_areas": popular_areas,
         },
     )
 
     return response
+
+
+def room_search_suggest(request):
+    """Live suggestions under the search box (places and room types),
+    tolerant of typos. Public and cheap: results are cached for a minute."""
+    items = suggestions((request.GET.get("q") or "")[:60])
+    for item in items:
+        item["url"] = f"{reverse('room_list')}?q={quote(item['label'])}"
+    return JsonResponse({"suggestions": items})
 
 
 def room_detail(request, pk):

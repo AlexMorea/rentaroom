@@ -120,8 +120,108 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--card);
-  font-size: 15px;
+  /* Without this the browser's default black text sat on the dark-mode
+     background - typed searches were invisible on phones in dark mode. */
+  color: var(--text);
+  caret-color: var(--link);
+  font-size: 16px; /* 16px+ stops iPhones zooming in on focus */
   transition: all 0.2s ease;
+}
+.search-input::placeholder,
+.filter-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+.search-input {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Live suggestions under the search box */
+.search-suggest {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+}
+.search-suggest[hidden] {
+  display: none;
+}
+.search-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.search-suggest-item[aria-selected="true"],
+.search-suggest-item:hover {
+  background: var(--card-sunken);
+}
+.search-suggest-icon {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+.search-suggest-label {
+  flex: 1;
+  min-width: 0;
+}
+.search-suggest-count {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.rl-understood {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  max-width: 1100px;
+  margin: 0 auto 10px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.rl-understood .rl-chip {
+  margin: 0;
+}
+.rl-suggestion a {
+  color: var(--link);
+  font-weight: 700;
+}
+.rl-areas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 16px;
+}
+.rl-area-link {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+.rl-area-link:hover {
+  border-color: var(--link);
 }
 
 .search-input:focus,
@@ -287,13 +387,24 @@
         >
 
           <input
-            type="text"
+            type="search"
             name="q"
+            id="roomSearchInput"
             class="search-input"
-            placeholder="Search rooms, area or location"
+            placeholder="Area, room type or budget, e.g. Midrand under R3000"
             value="{{ values.q }}"
             style="padding-right:55px;"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            enterkeyhint="search"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="roomSearchSuggest"
+            data-suggest-url="{% url 'room_search_suggest' %}"
           />
+          <ul class="search-suggest" id="roomSearchSuggest" role="listbox" aria-label="Suggestions" hidden></ul>
 
           <button
             type="submit"
@@ -648,6 +759,31 @@
 </div>
 {% endif %}
 
+{% if search_info %}
+  {% if search_info.corrected_text %}
+  <div class="rl-suggestion" role="status">
+    Showing results for <strong>{{ search_info.corrected_text }}</strong>.
+    <a href="{% querystring exact=1 page=None %}">Search instead for “{{ values.q }}”</a>
+  </div>
+  {% endif %}
+  {% if search_info.mode == "partial" %}
+  <div class="rl-suggestion" role="status">
+    No room matches every word in “{{ values.q }}”, so these match the most.
+  </div>
+  {% endif %}
+  {% if search_info.relaxed %}
+  <div class="rl-suggestion" role="status">
+    Nothing there matches that room type or budget right now, so here's everything in that area.
+  </div>
+  {% endif %}
+  {% if search_info.understood %}
+  <div class="rl-understood">
+    Searching for:
+    {% for label in search_info.understood %}<span class="rl-chip">{{ label }}</span>{% endfor %}
+  </div>
+  {% endif %}
+{% endif %}
+
 <!-- EMPTY STATE -->
 {% if not rooms %}
 <div class="rl-empty">
@@ -655,8 +791,21 @@
   <h2 class="rl-empty-title">No rooms found</h2>
 
   <p class="rl-empty-text">
-    No rooms match your current filters.
+    {% if search_info.corrected_text and search_info.mode == "none" %}
+      No rooms listed in {{ search_info.corrected_text }} yet.
+    {% else %}
+      No rooms match your current filters.
+    {% endif %}
   </p>
+
+  {% if popular_areas %}
+  <p class="rl-empty-text">Areas with rooms right now:</p>
+  <div class="rl-areas">
+    {% for area in popular_areas %}
+      <a class="rl-area-link" href="{% url 'room_list' %}?q={{ area.suburb|urlencode }}">{{ area.suburb }} ({{ area.rooms }})</a>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <ul class="rl-empty-tips">
     <li>✓ Increase your maximum budget</li>
@@ -926,6 +1075,122 @@
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
+  })();
+</script>
+
+<script>
+  // Live suggestions under the search box: places (typo-tolerant, so
+  // "mudr" still offers Midrand) and room types, with how many rooms each
+  // has. Arrow keys + Enter, or tap. Without this script the box is an
+  // ordinary search field.
+  (function () {
+    const input = document.getElementById("roomSearchInput");
+    const list = document.getElementById("roomSearchSuggest");
+    if (!input || !list || !window.fetch) return;
+
+    let items = [];
+    let active = -1;
+    let timer = null;
+    let lastQuery = "";
+    let requestId = 0;
+
+    function close() {
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+      active = -1;
+    }
+
+    function setActive(index) {
+      active = index;
+      list.querySelectorAll(".search-suggest-item").forEach(function (li, i) {
+        li.setAttribute("aria-selected", i === index ? "true" : "false");
+      });
+      if (index >= 0) input.setAttribute("aria-activedescendant", "roomSuggest" + index);
+      else input.removeAttribute("aria-activedescendant");
+    }
+
+    function render() {
+      list.innerHTML = "";
+      if (!items.length) { close(); return; }
+      items.forEach(function (item, i) {
+        const li = document.createElement("li");
+        li.className = "search-suggest-item";
+        li.id = "roomSuggest" + i;
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", "false");
+
+        const icon = document.createElement("span");
+        icon.className = "search-suggest-icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.textContent = item.kind === "type" ? "🛏️" : "📍";
+
+        const label = document.createElement("span");
+        label.className = "search-suggest-label";
+        label.textContent = item.label;
+
+        const count = document.createElement("span");
+        count.className = "search-suggest-count";
+        count.textContent = item.count
+          ? item.count + (item.count === 1 ? " room" : " rooms")
+          : "no rooms yet";
+
+        li.append(icon, label, count);
+        li.addEventListener("mousedown", function (e) {
+          e.preventDefault(); // keep focus so the click lands
+          window.location.href = item.url;
+        });
+        list.appendChild(li);
+      });
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      setActive(-1);
+    }
+
+    async function load(query) {
+      const id = ++requestId;
+      try {
+        const res = await fetch(input.dataset.suggestUrl + "?q=" + encodeURIComponent(query), {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const data = await res.json();
+        if (id !== requestId) return; // an older reply arriving late
+        items = data.suggestions || [];
+        render();
+      } catch (e) {
+        close();
+      }
+    }
+
+    input.addEventListener("input", function () {
+      const query = input.value.trim();
+      clearTimeout(timer);
+      if (query.length < 2) { items = []; close(); return; }
+      if (query === lastQuery && items.length) { render(); return; }
+      lastQuery = query;
+      timer = setTimeout(function () { load(query); }, 160);
+    });
+
+    input.addEventListener("keydown", function (e) {
+      if (list.hidden) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActive(Math.min(active + 1, items.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActive(Math.max(active - 1, -1));
+      } else if (e.key === "Enter" && active >= 0) {
+        e.preventDefault();
+        window.location.href = items[active].url;
+      } else if (e.key === "Escape") {
+        // Close the list only - search fields otherwise clear on Escape.
+        e.preventDefault();
+        close();
+      }
+    });
+
+    input.addEventListener("blur", function () { setTimeout(close, 120); });
+    input.addEventListener("focus", function () { if (items.length && input.value.trim().length >= 2) render(); });
   })();
 </script>
 
