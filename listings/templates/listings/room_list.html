@@ -690,7 +690,7 @@
 >
   {% if page_obj.has_previous %}
   <a
-    href="#"
+    href="{% querystring page=page_obj.previous_page_number %}"
     class="pagination-btn pagination-back"
     id="btnBack"
   >
@@ -698,12 +698,12 @@
   </a>
   {% endif %}
 
-  <div class="page-indicator" id="pageIndicator">
+  <div class="page-indicator" id="pageIndicator" aria-live="polite">
     Page {{ page_obj.number }} of {{ paginator.num_pages }}
   </div>
 
   <a
-    href="#"
+    href="{% if page_obj.has_next %}{% querystring page=page_obj.next_page_number %}{% else %}{% querystring %}{% endif %}"
     class="pagination-btn pagination-next"
     id="btnNext"
     style="{% if not page_obj.has_next %}display:none{% endif %}"
@@ -797,13 +797,18 @@
 
 <script>
   (function () {
+    // "Browse More Rooms" adds the next page's rooms under the ones
+    // already shown. Page 1 has no Back button, and this used to give up
+    // when Back was missing - so the button fell through to its old
+    // href="#" and jumped to the top of the page instead. Both buttons
+    // are now real links, used as-is if anything here fails.
     const wrap = document.getElementById("paginationWrap");
     const grid = document.getElementById("roomGrid");
     const btnNext = document.getElementById("btnNext");
     const btnBack = document.getElementById("btnBack");
     const indicator = document.getElementById("pageIndicator");
 
-    if (!wrap || !grid || !btnNext || !btnBack) return;
+    if (!wrap || !grid || !indicator) return;
 
     function getBaseParams() {
       return {
@@ -843,46 +848,83 @@
       return await res.json();
     }
 
-    btnNext.addEventListener("click", async function (e) {
+    function pageHref(page) {
+      const url = new URL(btnNext ? btnNext.href : window.location.href);
+      url.searchParams.set("page", page);
+      return url.pathname + url.search;
+    }
+
+    btnNext?.addEventListener("click", async function (e) {
       e.preventDefault();
+      if (btnNext.dataset.loading) return;
 
-      const next = parseInt(wrap.dataset.page) + 1;
+      const next = parseInt(wrap.dataset.page, 10) + 1;
+      const label = btnNext.textContent;
+      btnNext.dataset.loading = "1";
+      btnNext.setAttribute("aria-busy", "true");
+      btnNext.textContent = "Loading more rooms…";
 
-      const data = await fetchPage(next);
+      let data;
+      try {
+        data = await fetchPage(next);
+        if (!data || typeof data.html !== "string") throw new Error("bad response");
+      } catch (err) {
+        // Offline for a moment, or an unexpected reply: open page 2 the
+        // ordinary way instead of leaving the button doing nothing.
+        window.location.href = btnNext.href;
+        return;
+      }
 
       grid.insertAdjacentHTML("beforeend", data.html);
+      // Photo arrows on the new cards (slider.js only set up the first page).
+      if (window.initRoomSliders) window.initRoomSliders(grid);
 
       wrap.dataset.page = data.page;
-      indicator.textContent = `Page ${data.page} of ${data.num_pages}`;
+      indicator.textContent = data.has_next
+        ? `Page ${data.page} of ${data.num_pages}`
+        : `That's every room for now (${data.num_pages} pages)`;
 
-      if (!data.has_next) btnNext.style.display = "none";
+      delete btnNext.dataset.loading;
+      btnNext.removeAttribute("aria-busy");
+      btnNext.textContent = label;
 
-      btnBack.style.display = "inline-block";
+      if (data.has_next) {
+        btnNext.href = pageHref(data.page + 1);
+      } else {
+        btnNext.style.display = "none";
+      }
     });
 
-    btnBack.addEventListener("click", async function (e) {
+    // Only on page 2+ (opened from a shared link or without this script):
+    // swaps back to the previous page's rooms.
+    btnBack?.addEventListener("click", async function (e) {
       e.preventDefault();
 
-      const prev = parseInt(wrap.dataset.page) - 1;
-
+      const prev = parseInt(wrap.dataset.page, 10) - 1;
       if (prev < 1) return;
 
-      const data = await fetchPage(prev);
+      let data;
+      try {
+        data = await fetchPage(prev);
+        if (!data || typeof data.html !== "string") throw new Error("bad response");
+      } catch (err) {
+        window.location.href = btnBack.href;
+        return;
+      }
 
       grid.innerHTML = data.html;
+      if (window.initRoomSliders) window.initRoomSliders(grid);
 
       wrap.dataset.page = data.page;
-
       indicator.textContent = `Page ${data.page} of ${data.num_pages}`;
-
+      btnBack.href = pageHref(Math.max(data.page - 1, 1));
       if (data.page <= 1) btnBack.style.display = "none";
+      if (btnNext) {
+        btnNext.href = pageHref(data.page + 1);
+        btnNext.style.display = "";
+      }
 
-      btnNext.style.display = "inline-block";
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   })();
 </script>

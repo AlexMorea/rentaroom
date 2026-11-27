@@ -1,5 +1,9 @@
 (function () {
   function initSlider(slider) {
+    // Safe to call again on a page that gained cards ("Browse More").
+    if (slider.dataset.sliderReady) return;
+    slider.dataset.sliderReady = "1";
+
     const track = slider.querySelector("[data-slider-track]");
     const images = track?.querySelectorAll("img") || [];
     const prev = slider.querySelector("[data-slider-prev]");
@@ -56,7 +60,11 @@
     track.style.touchAction = "pan-x pan-y";
   }
 
+  window.initRoomSliders = function (root) {
+    (root || document).querySelectorAll("[data-slider]").forEach(initSlider);
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("[data-slider]").forEach(initSlider);
+    window.initRoomSliders(document);
   });
 })();
