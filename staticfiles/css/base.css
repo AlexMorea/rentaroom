@@ -42,6 +42,9 @@ input.is-submitting {
 
 
 :root {
+  /* Tells the browser which palette its own form parts (text in inputs,
+     dropdown lists, number spinners, autofill) should use. */
+  color-scheme: light;
   --blue: #0B6FBF;
   --blue-dark: #002A5C;
   --orange: #FF8000;
@@ -70,6 +73,7 @@ input.is-submitting {
    OS preference, and persists it in localStorage - see theme-toggle.js). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0f172a;
     --text: #e2e8f0;
     --text-muted: #94a3b8;
@@ -108,6 +112,7 @@ input.is-submitting {
   }
 }
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0f172a;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
